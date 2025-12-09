@@ -39,22 +39,46 @@ LEAGUE_NAMES = {
 }
 
 
+def load_valid_leagues():
+    """Load valid league IDs from leagues.json"""
+    import json
+    leagues_file = DATA_DIR / "leagues.json"
+    if leagues_file.exists():
+        with open(leagues_file, 'r') as f:
+            leagues = json.load(f)
+            return [league['id'] for league in leagues]
+    return list(LEAGUE_NAMES.keys())
+
+
 def load_fixtures():
-    """Load real fixtures from CSV"""
+    """Load real fixtures from CSV, filtered by valid leagues"""
     fixture_file = DATA_DIR / "upcoming" / "fixtures.csv"
     if not fixture_file.exists():
         return pd.DataFrame()
     
     df = pd.read_csv(fixture_file)
     df['Date'] = pd.to_datetime(df['Date'], format='%d/%m/%Y', errors='coerce')
+    
+    # Filter by valid leagues from leagues.json
+    valid_leagues = load_valid_leagues()
+    df = df[df['Div'].isin(valid_leagues)]
+    
     return df
 
 
 def analyze_match(row) -> dict:
-    """Analyze single match with all methods"""
+    """Analyze single match with all methods using REAL historical data"""
+    from app.services.team_stats import get_team_stats_service
+    
     home_team = row['HomeTeam']
     away_team = row['AwayTeam']
     league_id = row['Div']
+    match_date = row['Date'] if pd.notna(row['Date']) else datetime.now()
+    
+    # Get REAL team stats from historical Excel data
+    stats_service = get_team_stats_service()
+    home_stats = stats_service.get_team_stats(home_team, league_id, before_date=match_date)
+    away_stats = stats_service.get_team_stats(away_team, league_id, before_date=match_date)
     
     # Get odds
     home_odds = float(row.get('B365H', 2.0)) if pd.notna(row.get('B365H')) else 2.0
@@ -62,18 +86,13 @@ def analyze_match(row) -> dict:
     away_odds = float(row.get('B365A', 3.0)) if pd.notna(row.get('B365A')) else 3.0
     over25_odds = float(row.get('B365>2.5', 1.9)) if pd.notna(row.get('B365>2.5')) else 1.9
     
-    # Calculate implied probabilities for attack/defense estimates
-    total_prob = (1/home_odds + 1/draw_odds + 1/away_odds)
-    home_prob = (1/home_odds) / total_prob
-    away_prob = (1/away_odds) / total_prob
+    # Use REAL attack/defense stats for predictions
+    home_attack = home_stats['avg_goals_scored'] if home_stats['avg_goals_scored'] > 0 else 1.3
+    away_attack = away_stats['avg_goals_scored'] if away_stats['avg_goals_scored'] > 0 else 1.2
+    home_defense = home_stats['avg_goals_conceded'] if home_stats['avg_goals_conceded'] > 0 else 1.0
+    away_defense = away_stats['avg_goals_conceded'] if away_stats['avg_goals_conceded'] > 0 else 1.1
     
-    # Estimate attack/defense from odds (simplified)
-    home_attack = 1.0 + home_prob
-    away_attack = 1.0 + away_prob
-    home_defense = 1.0 / (1 + away_prob)
-    away_defense = 1.0 / (1 + home_prob)
-    
-    # Poisson prediction
+    # Poisson prediction with REAL stats
     poisson_result = poisson.predict(
         home_attack=home_attack,
         away_attack=away_attack,
@@ -81,7 +100,7 @@ def analyze_match(row) -> dict:
         away_defense=away_defense
     )
     
-    # Monte Carlo prediction
+    # Monte Carlo prediction with REAL stats
     mc_result = monte_carlo.simulate(
         home_attack=home_attack,
         away_attack=away_attack,
@@ -95,49 +114,27 @@ def analyze_match(row) -> dict:
     all_agree = ml_hdw == mc_hdw
     pattern = "STRONG_CONSENSUS" if all_agree else "PARTIAL_CONSENSUS"
     
-    # Trap detection
+    # Trap detection with REAL stats
     trap_result = trap_detector.detect({
-        'home_stats': {'avg_goals_scored': home_attack, 'form': ['W', 'D', 'W', 'L', 'W']},
-        'away_stats': {'avg_goals_scored': away_attack, 'form': ['D', 'W', 'L', 'W', 'D']},
+        'home_stats': home_stats,
+        'away_stats': away_stats,
         'h2h': {'draw_rate': 0.25, 'under_2_rate': 0.3},
         'odds': {'home': home_odds, 'draw': draw_odds, 'away': away_odds}
     })
     
-    # Team stats (estimated from odds)
+    # REAL team stats
     team_stats = {
-        "home": {
-            "played": 15,
-            "wins": int(home_prob * 15),
-            "draws": 3,
-            "losses": 15 - int(home_prob * 15) - 3,
-            "goals_for": int(home_attack * 15),
-            "goals_against": int(15 - home_attack * 5),
-            "form": ["W", "D", "W", "L", "W"],
-            "clean_sheets": 5,
-            "avg_goals_scored": round(home_attack, 2),
-            "avg_goals_conceded": round(1.0 - home_prob + 0.5, 2)
-        },
-        "away": {
-            "played": 15,
-            "wins": int(away_prob * 15),
-            "draws": 3,
-            "losses": 15 - int(away_prob * 15) - 3,
-            "goals_for": int(away_attack * 15),
-            "goals_against": int(15 - away_attack * 5),
-            "form": ["D", "W", "L", "W", "D"],
-            "clean_sheets": 4,
-            "avg_goals_scored": round(away_attack, 2),
-            "avg_goals_conceded": round(1.0 - away_prob + 0.5, 2)
-        }
+        "home": home_stats,
+        "away": away_stats
     }
     
-    match_date = row['Date'].strftime('%Y-%m-%d') if pd.notna(row['Date']) else 'TBD'
+    formatted_date = match_date.strftime('%Y-%m-%d') if pd.notna(match_date) else 'TBD'
     
     return {
-        "match_id": f"{home_team[:3]}_{away_team[:3]}_{match_date}".lower().replace(" ", ""),
+        "match_id": f"{home_team[:3]}_{away_team[:3]}_{formatted_date}".lower().replace(" ", ""),
         "home_team": home_team,
         "away_team": away_team,
-        "date": match_date,
+        "date": formatted_date,
         "time": str(row.get('Time', '15:00')),
         "league": LEAGUE_NAMES.get(league_id, league_id),
         "league_id": league_id,
@@ -237,7 +234,7 @@ async def analyze_matches(
     if request.league_id:
         fixtures_df = fixtures_df[fixtures_df['Div'] == request.league_id]
     
-    # Analyze each match
+    # Analyze each match (statistical analysis)
     analyses = []
     for _, row in fixtures_df.iterrows():
         try:
@@ -247,9 +244,31 @@ async def analyze_matches(
             print(f"Error analyzing {row.get('HomeTeam', 'Unknown')}: {e}")
             continue
     
+    # Group by league for Gemini batch analysis
+    from app.services.gemini_service import get_gemini_service
+    gemini = get_gemini_service()
+    
+    # Group matches by league
+    leagues = {}
+    for match in analyses:
+        league_id = match.get("league_id", "unknown")
+        if league_id not in leagues:
+            leagues[league_id] = []
+        leagues[league_id].append(match)
+    
+    # Send each league batch to Gemini
+    gemini_analyzed = []
+    for league_id, league_matches in leagues.items():
+        league_name = LEAGUE_NAMES.get(league_id, league_id)
+        analyzed = await gemini.analyze_matches_batch(league_matches, league_name)
+        gemini_analyzed.extend(analyzed)
+    
+    # Sort by date
+    gemini_analyzed.sort(key=lambda x: x.get("date", ""))
+    
     # Apply pagination
-    total = len(analyses)
-    items = analyses[offset:offset + limit]
+    total = len(gemini_analyzed)
+    items = gemini_analyzed[offset:offset + limit]
     
     return {
         "offset": offset,

@@ -15,10 +15,6 @@ uvicorn main:app --reload --port 8000
 - **Swagger UI**: <http://localhost:8000/docs>
 - **Scalar Docs**: <http://localhost:8000/scalar>
 
-## Endpoints (v1)
-
-All endpoints use `/api/v1/` prefix with pagination.
-
 ### 1. GET `/api/v1/leagues`
 
 Get supported leagues.
@@ -105,4 +101,4 @@ soccer-gpt-api/
 
 ## License
 
-Private - Goalai Project
+Private - Appoint. Project
