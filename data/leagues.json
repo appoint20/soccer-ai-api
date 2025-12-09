@@ -1,0 +1,79 @@
+[
+    {
+        "id": "E0",
+        "name": "Premier League",
+        "country": "England",
+        "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "teams_count": 20
+    },
+    {
+        "id": "E1",
+        "name": "Championship",
+        "country": "England",
+        "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "teams_count": 24
+    },
+    {
+        "id": "E2",
+        "name": "League One",
+        "country": "England",
+        "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "teams_count": 24
+    },
+    {
+        "id": "E3",
+        "name": "League Two",
+        "country": "England",
+        "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "teams_count": 24
+    },
+    {
+        "id": "D1",
+        "name": "Bundesliga",
+        "country": "Germany",
+        "flag": "🇩🇪",
+        "teams_count": 18
+    },
+    {
+        "id": "D2",
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "flag": "🇩🇪",
+        "teams_count": 18
+    },
+    {
+        "id": "I1",
+        "name": "Serie A",
+        "country": "Italy",
+        "flag": "🇮🇹",
+        "teams_count": 20
+    },
+    {
+        "id": "I2",
+        "name": "Serie B",
+        "country": "Italy",
+        "flag": "🇮🇹",
+        "teams_count": 20
+    },
+    {
+        "id": "F1",
+        "name": "Ligue 1",
+        "country": "France",
+        "flag": "🇫🇷",
+        "teams_count": 18
+    },
+    {
+        "id": "F2",
+        "name": "Ligue 2",
+        "country": "France",
+        "flag": "🇫🇷",
+        "teams_count": 20
+    },
+    {
+        "id": "SP1",
+        "name": "La Liga",
+        "country": "Spain",
+        "flag": "🇪🇸",
+        "teams_count": 20
+    }
+]
