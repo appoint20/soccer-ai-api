@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386230,
+  "date": "2025-12-13",
+  "home_team": "Grimsby",
+  "away_team": "Notts County",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1376,
+      "name": "Notts County",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Notts County",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "17%",
+      "away": "83%"
+    },
+    "att": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "def": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "poisson_distribution": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "h2h": {
+      "home": "29%",
+      "away": "71%"
+    },
+    "goals": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "total": {
+      "home": "37.8%",
+      "away": "62.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1217252,
+        "referee": "S. Oldham",
+        "timezone": "UTC",
+        "date": "2025-03-11T19:45:00+00:00",
+        "timestamp": 1741722300,
+        "periods": {
+          "first": 1741722300,
+          "second": 1741725900
+        },
+        "venue": {
+          "id": 538,
+          "name": "Blundell Park",
+          "city": "Cleethorpes, North East Lincolnshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1365,
+          "name": "Grimsby",
+          "logo": "https://media.api-sports.io/football/teams/1365.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1376,
+          "name": "Notts County",
+          "logo": "https://media.api-sports.io/football/teams/1376.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216981,
+        "referee": "O. Yates",
+        "timezone": "UTC",
+        "date": "2024-08-22T19:00:00+00:00",
+        "timestamp": 1724353200,
+        "periods": {
+          "first": 1724353200,
+          "second": 1724356800
+        },
+        "venue": {
+          "id": 567,
+          "name": "Meadow Lane",
+          "city": "Nottingham, Nottinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 3",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1376,
+          "name": "Notts County",
+          "logo": "https://media.api-sports.io/football/teams/1376.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1365,
+          "name": "Grimsby",
+          "logo": "https://media.api-sports.io/football/teams/1365.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1040144,
+        "referee": "C. Hicks",
+        "timezone": "UTC",
+        "date": "2024-01-13T15:00:00+00:00",
+        "timestamp": 1705158000,
+        "periods": {
+          "first": 1705158000,
+          "second": 1705161600
+        },
+        "venue": {
+          "id": 538,
+          "name": "Blundell Park",
+          "city": "Cleethorpes, North East Lincolnshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 28",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1365,
+          "name": "Grimsby",
+          "logo": "https://media.api-sports.io/football/teams/1365.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1376,
+          "name": "Notts County",
+          "logo": "https://media.api-sports.io/football/teams/1376.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 5,
+        "away": 5
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 5,
+          "away": 5
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1039834,
+        "referee": "E. Duckworth",
+        "timezone": "UTC",
+        "date": "2023-08-12T14:00:00+00:00",
+        "timestamp": 1691848800,
+        "periods": {
+          "first": 1691848800,
+          "second": 1691852400
+        },
+        "venue": {
+          "id": 567,
+          "name": "Meadow Lane",
+          "city": "Nottingham, Nottinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 2",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1376,
+          "name": "Notts County",
+          "logo": "https://media.api-sports.io/football/teams/1376.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1365,
+          "name": "Grimsby",
+          "logo": "https://media.api-sports.io/football/teams/1365.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 862092,
+        "referee": "S. Gill",
+        "timezone": "UTC",
+        "date": "2022-05-23T18:45:00+00:00",
+        "timestamp": 1653331500,
+        "periods": {
+          "first": 1653331500,
+          "second": 1653335100
+        },
+        "venue": {
+          "id": 567,
+          "name": "Meadow Lane",
+          "city": "Nottingham, Nottinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "AET",
+          "elapsed": 120,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Promotion Play-offs - Qualifying Round",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1376,
+          "name": "Notts County",
+          "logo": "https://media.api-sports.io/football/teams/1376.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1365,
+          "name": "Grimsby",
+          "logo": "https://media.api-sports.io/football/teams/1365.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": 0,
+          "away": 1
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:37.858964"
+}

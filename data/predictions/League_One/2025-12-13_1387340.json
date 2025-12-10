@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1387340,
+  "date": "2025-12-13",
+  "home_team": "Plymouth",
+  "away_team": "Rotherham",
+  "league": "League_One",
+  "api_prediction": {
+    "winner": {
+      "id": 73,
+      "name": "Rotherham",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Rotherham",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "30%",
+      "away": "70%"
+    },
+    "att": {
+      "home": "22%",
+      "away": "78%"
+    },
+    "def": {
+      "home": "31%",
+      "away": "69%"
+    },
+    "poisson_distribution": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "h2h": {
+      "home": "60%",
+      "away": "40%"
+    },
+    "goals": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "total": {
+      "home": "39.3%",
+      "away": "60.7%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1047919,
+        "referee": "O. Langford",
+        "timezone": "UTC",
+        "date": "2024-04-05T19:00:00+00:00",
+        "timestamp": 1712343600,
+        "periods": {
+          "first": 1712343600,
+          "second": 1712347200
+        },
+        "venue": {
+          "id": 578,
+          "name": "AESSEAL New York Stadium",
+          "city": "Rotherham, South Yorkshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 41",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 73,
+          "name": "Rotherham",
+          "logo": "https://media.api-sports.io/football/teams/73.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1357,
+          "name": "Plymouth",
+          "logo": "https://media.api-sports.io/football/teams/1357.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1047691,
+        "referee": "G. Ward",
+        "timezone": "UTC",
+        "date": "2023-12-16T15:00:00+00:00",
+        "timestamp": 1702738800,
+        "periods": {
+          "first": 1702738800,
+          "second": 1702742400
+        },
+        "venue": {
+          "id": 571,
+          "name": "Home Park",
+          "city": "Plymouth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 22",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1357,
+          "name": "Plymouth",
+          "logo": "https://media.api-sports.io/football/teams/1357.png",
+          "winner": true
+        },
+        "away": {
+          "id": 73,
+          "name": "Rotherham",
+          "logo": "https://media.api-sports.io/football/teams/73.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 715844,
+        "referee": "W. Finnie",
+        "timezone": "UTC",
+        "date": "2022-02-26T15:00:00+00:00",
+        "timestamp": 1645887600,
+        "periods": {
+          "first": 1645887600,
+          "second": 1645891200
+        },
+        "venue": {
+          "id": 571,
+          "name": "Home Park",
+          "city": "Plymouth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Regular Season - 36",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1357,
+          "name": "Plymouth",
+          "logo": "https://media.api-sports.io/football/teams/1357.png",
+          "winner": false
+        },
+        "away": {
+          "id": 73,
+          "name": "Rotherham",
+          "logo": "https://media.api-sports.io/football/teams/73.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 715424,
+        "referee": "S. Stockbridge",
+        "timezone": "UTC",
+        "date": "2021-08-07T14:00:00+00:00",
+        "timestamp": 1628344800,
+        "periods": {
+          "first": 1628344800,
+          "second": 1628348400
+        },
+        "venue": {
+          "id": 578,
+          "name": "AESSEAL New York Stadium",
+          "city": "Rotherham, South Yorkshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Regular Season - 1",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 73,
+          "name": "Rotherham",
+          "logo": "https://media.api-sports.io/football/teams/73.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1357,
+          "name": "Plymouth",
+          "logo": "https://media.api-sports.io/football/teams/1357.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 47599,
+        "referee": "Darren Handley, England",
+        "timezone": "UTC",
+        "date": "2018-04-28T14:00:00+00:00",
+        "timestamp": 1524924000,
+        "periods": {
+          "first": 1524924000,
+          "second": 1524927600
+        },
+        "venue": {
+          "id": 571,
+          "name": "Home Park",
+          "city": "Plymouth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2017,
+        "round": "Regular Season - 45",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1357,
+          "name": "Plymouth",
+          "logo": "https://media.api-sports.io/football/teams/1357.png",
+          "winner": true
+        },
+        "away": {
+          "id": 73,
+          "name": "Rotherham",
+          "logo": "https://media.api-sports.io/football/teams/73.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:16.138710"
+}

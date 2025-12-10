@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 
-from app.api.routes import leagues, matches, tickets, backtest
+from app.api.routes import leagues, analyze, tickets, backtest
 
 # API version
 API_VERSION = "v1"
@@ -21,18 +21,18 @@ app = FastAPI(
     description="""
     ## Football Betting Predictions API
     
-    Predictions powered by ML + Poisson + Monte Carlo analysis.
+    Predictions powered by Gemini AI + Poisson + Monte Carlo analysis.
     
-    ### Endpoints
+    ### 4 Endpoints
     - **Leagues** - Get supported leagues
-    - **Matches** - Analyze upcoming fixtures
+    - **Analyze** - Analyze upcoming fixtures with AI
     - **Tickets** - Generate betting tickets
-    - **Backtest** - View historical performance
+    - **Backtest** - View historical accuracy
     
     ### Features
-    - Pattern detection (69.3% accuracy when consensus)
-    - Trap detection for risky bets
-    - ChatGPT analysis integration
+    - Multi-opinion consensus (69.3% when all agree)
+    - 24-hour Gemini response caching
+    - Real team stats from Football API
     """,
     version="1.0.0",
     docs_url=None,  # Custom docs
@@ -48,9 +48,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API v1 routes
+# API v1 routes (exactly 4)
 app.include_router(leagues.router, prefix=f"/api/{API_VERSION}", tags=["Leagues"])
-app.include_router(matches.router, prefix=f"/api/{API_VERSION}", tags=["Matches"])
+app.include_router(analyze.router, prefix=f"/api/{API_VERSION}", tags=["Analyze"])
 app.include_router(tickets.router, prefix=f"/api/{API_VERSION}", tags=["Tickets"])
 app.include_router(backtest.router, prefix=f"/api/{API_VERSION}", tags=["Backtest"])
 

@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 from pathlib import Path
 
-from app.api.routes.matches import load_fixtures, analyze_match, load_valid_leagues
+from app.api.routes.analyze import load_fixtures, analyze_match, load_valid_leagues
 from app.services.gemini_service import get_gemini_service
 
 router = APIRouter()

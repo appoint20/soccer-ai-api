@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386792,
+  "date": "2025-12-13",
+  "home_team": "Birmingham",
+  "away_team": "Charlton",
+  "league": "Championship",
+  "api_prediction": {
+    "winner": {
+      "id": 54,
+      "name": "Birmingham",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-1.5"
+    },
+    "advice": "Winner : Birmingham",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "100%",
+      "away": "0%"
+    },
+    "att": {
+      "home": "75%",
+      "away": "25%"
+    },
+    "def": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "poisson_distribution": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "h2h": {
+      "home": "62%",
+      "away": "38%"
+    },
+    "goals": {
+      "home": "57%",
+      "away": "43%"
+    },
+    "total": {
+      "home": "67.6%",
+      "away": "32.4%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216768,
+        "referee": "S. Stockbridge",
+        "timezone": "UTC",
+        "date": "2025-02-15T15:00:00+00:00",
+        "timestamp": 1739631600,
+        "periods": {
+          "first": 1739631600,
+          "second": 1739635200
+        },
+        "venue": {
+          "id": null,
+          "name": "St. Andrew's @ Knighthead Park",
+          "city": "Birmingham"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 9
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 54,
+          "name": "Birmingham",
+          "logo": "https://media.api-sports.io/football/teams/54.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1335,
+          "name": "Charlton",
+          "logo": "https://media.api-sports.io/football/teams/1335.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216505,
+        "referee": "B. Speedie",
+        "timezone": "UTC",
+        "date": "2024-10-05T14:00:00+00:00",
+        "timestamp": 1728136800,
+        "periods": {
+          "first": 1728136800,
+          "second": 1728140400
+        },
+        "venue": {
+          "id": 518,
+          "name": "The Valley",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 10",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1335,
+          "name": "Charlton",
+          "logo": "https://media.api-sports.io/football/teams/1335.png",
+          "winner": true
+        },
+        "away": {
+          "id": 54,
+          "name": "Birmingham",
+          "logo": "https://media.api-sports.io/football/teams/54.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1218716,
+        "referee": "A. Chilowicz",
+        "timezone": "UTC",
+        "date": "2024-08-13T18:45:00+00:00",
+        "timestamp": 1723574700,
+        "periods": {
+          "first": 1723574700,
+          "second": 1723578300
+        },
+        "venue": {
+          "id": 518,
+          "name": "The Valley",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 48,
+        "name": "League Cup",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/48.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "1st Round",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1335,
+          "name": "Charlton",
+          "logo": "https://media.api-sports.io/football/teams/1335.png",
+          "winner": false
+        },
+        "away": {
+          "id": 54,
+          "name": "Birmingham",
+          "logo": "https://media.api-sports.io/football/teams/54.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 597135,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2020-08-22T11:00:00+00:00",
+        "timestamp": 1598094000,
+        "periods": {
+          "first": 1598094000,
+          "second": 1598097600
+        },
+        "venue": {
+          "id": null,
+          "name": "Trillion Trophy Training Centre",
+          "city": "Kings Norton, West Midlands"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2020,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 54,
+          "name": "Birmingham",
+          "logo": "https://media.api-sports.io/football/teams/54.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1335,
+          "name": "Charlton",
+          "logo": "https://media.api-sports.io/football/teams/1335.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 164690,
+        "referee": "D. Webb",
+        "timezone": "UTC",
+        "date": "2020-07-15T17:00:00+00:00",
+        "timestamp": 1594832400,
+        "periods": {
+          "first": 1594832400,
+          "second": 1594836000
+        },
+        "venue": {
+          "id": 499,
+          "name": "St Andrew's Trillion Trophy Stadium",
+          "city": "Birmingham"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2019,
+        "round": "Regular Season - 44",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 54,
+          "name": "Birmingham",
+          "logo": "https://media.api-sports.io/football/teams/54.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1335,
+          "name": "Charlton",
+          "logo": "https://media.api-sports.io/football/teams/1335.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:02:47.052550"
+}

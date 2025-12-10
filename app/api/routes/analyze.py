@@ -1,5 +1,5 @@
 """
-Matches Analysis API Route - REAL DATA
+Matches Analysis API Route - REAL DATA with ML Model
 """
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ from pathlib import Path
 from app.core.poisson import PoissonPredictor
 from app.core.monte_carlo import MonteCarloSimulator
 from app.core.trap_detector import TrapDetector
+from app.core.ml_predictor import get_ml_predictor
 
 router = APIRouter()
 
@@ -18,6 +19,7 @@ router = APIRouter()
 poisson = PoissonPredictor()
 monte_carlo = MonteCarloSimulator()
 trap_detector = TrapDetector()
+ml_predictor = get_ml_predictor()
 
 DATA_DIR = Path(__file__).parent.parent.parent.parent / "data"
 
@@ -108,11 +110,35 @@ def analyze_match(row) -> dict:
         away_defense=away_defense
     )
     
-    # Pattern analysis
-    ml_hdw = poisson_result['hdw']
-    mc_hdw = mc_result['hdw']
-    all_agree = ml_hdw == mc_hdw
-    pattern = "STRONG_CONSENSUS" if all_agree else "PARTIAL_CONSENSUS"
+    # ML Model prediction with team stats + odds
+    odds_dict = {'home': home_odds, 'draw': draw_odds, 'away': away_odds}
+    ml_result = ml_predictor.predict(home_stats, away_stats, odds_dict)
+    
+    # 3-Model Consensus Analysis (ML, Poisson, Monte Carlo)
+    predictions = [
+        ml_result.get('prediction', 'H'),
+        poisson_result['hdw'],
+        mc_result['hdw']
+    ]
+    
+    # Count agreement
+    pred_counts = {}
+    for p in predictions:
+        pred_counts[p] = pred_counts.get(p, 0) + 1
+    
+    max_agreement = max(pred_counts.values())
+    if max_agreement == 3:
+        pattern = "STRONG_CONSENSUS"
+        consensus_pred = predictions[0]
+        all_agree = True
+    elif max_agreement == 2:
+        pattern = "PARTIAL_CONSENSUS"
+        consensus_pred = max(pred_counts, key=pred_counts.get)
+        all_agree = False
+    else:
+        pattern = "DIVERGENT"
+        consensus_pred = ml_result.get('prediction', 'H')
+        all_agree = False
     
     # Trap detection with REAL stats
     trap_result = trap_detector.detect({

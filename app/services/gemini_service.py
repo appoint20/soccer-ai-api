@@ -1,26 +1,86 @@
 """
 Gemini AI Service for Match Analysis and Ticket Generation
+With 24-hour caching for cost optimization.
 """
 import os
 import json
 import httpx
+import hashlib
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
+
+
+# Cache directory
+CACHE_DIR = Path(__file__).parent.parent.parent / "data" / "cache"
+CACHE_TTL_HOURS = 24
 
 
 class GeminiService:
-    """Gemini AI integration for football analysis"""
+    """Gemini AI integration for football analysis with caching."""
     
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY", "")
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        self.model = "gemini-2.0-flash-exp"
+        self.model = "gemini-2.0-flash"
+        
+        # Ensure cache directory exists
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    
+    def _get_cache_key(self, league_name: str, matches: List[Dict]) -> str:
+        """Generate cache key from league and match data."""
+        match_ids = [f"{m.get('home_team', '')}_{m.get('away_team', '')}" for m in matches]
+        content = f"{league_name}_{'_'.join(sorted(match_ids))}"
+        return hashlib.md5(content.encode()).hexdigest()
+    
+    def _get_cached_response(self, cache_key: str) -> Optional[List[Dict]]:
+        """Get cached Gemini response if valid."""
+        cache_file = CACHE_DIR / f"{cache_key}.json"
+        
+        if not cache_file.exists():
+            return None
+        
+        try:
+            with open(cache_file, 'r') as f:
+                cached = json.load(f)
+            
+            # Check TTL
+            cached_time = datetime.fromisoformat(cached.get("timestamp", "2000-01-01"))
+            if datetime.now() - cached_time > timedelta(hours=CACHE_TTL_HOURS):
+                cache_file.unlink()  # Delete expired cache
+                return None
+            
+            return cached.get("data")
+        except Exception:
+            return None
+    
+    def _set_cache(self, cache_key: str, data: List[Dict]):
+        """Save Gemini response to cache."""
+        cache_file = CACHE_DIR / f"{cache_key}.json"
+        try:
+            with open(cache_file, 'w') as f:
+                json.dump({
+                    "timestamp": datetime.now().isoformat(),
+                    "data": data
+                }, f)
+        except Exception:
+            pass
     
     async def analyze_matches_batch(self, matches: List[Dict], league_name: str) -> List[Dict]:
         """
         Send batch of matches to Gemini for expert analysis.
-        Returns predictions with reasoning for each match.
+        Uses 24-hour cache to reduce API costs.
         """
+        if not matches:
+            return []
+        
+        # Check cache first
+        cache_key = self._get_cache_key(league_name, matches)
+        cached = self._get_cached_response(cache_key)
+        if cached:
+            print(f"📦 Cache hit for {league_name}")
+            return cached
+        
         if not self.api_key:
             return self._fallback_analysis(matches)
         
@@ -29,7 +89,12 @@ class GeminiService:
         
         try:
             response = await self._call_gemini(prompt)
-            return self._parse_analysis_response(response, matches)
+            result = self._parse_analysis_response(response, matches)
+            
+            # Cache the result
+            self._set_cache(cache_key, result)
+            
+            return result
         except Exception as e:
             print(f"Gemini error: {e}")
             return self._fallback_analysis(matches)

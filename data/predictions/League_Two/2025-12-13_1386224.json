@@ -1,0 +1,199 @@
+{
+  "fixture_id": 1386224,
+  "date": "2025-12-13",
+  "home_team": "Accrington ST",
+  "away_team": "Bromley",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1832,
+      "name": "Bromley",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Bromley",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "att": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "def": {
+      "home": "45%",
+      "away": "55%"
+    },
+    "poisson_distribution": {
+      "home": "63%",
+      "away": "37%"
+    },
+    "h2h": {
+      "home": "0%",
+      "away": "100%"
+    },
+    "goals": {
+      "home": "14%",
+      "away": "86%"
+    },
+    "total": {
+      "home": "43.0%",
+      "away": "57.0%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1217429,
+        "referee": "A. Young",
+        "timezone": "UTC",
+        "date": "2025-04-05T14:00:00+00:00",
+        "timestamp": 1743861600,
+        "periods": {
+          "first": 1743861600,
+          "second": 1743865200
+        },
+        "venue": {
+          "id": 511,
+          "name": "Hayes Lane",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 41",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1832,
+          "name": "Bromley",
+          "logo": "https://media.api-sports.io/football/teams/1832.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1360,
+          "name": "Accrington ST",
+          "logo": "https://media.api-sports.io/football/teams/1360.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1217163,
+        "referee": "M. Coy",
+        "timezone": "UTC",
+        "date": "2024-12-07T15:00:00+00:00",
+        "timestamp": 1733583600,
+        "periods": {
+          "first": 1733583600,
+          "second": 1733587200
+        },
+        "venue": {
+          "id": 490,
+          "name": "Wham Stadium",
+          "city": "Accrington, Lancashire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 4
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1360,
+          "name": "Accrington ST",
+          "logo": "https://media.api-sports.io/football/teams/1360.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1832,
+          "name": "Bromley",
+          "logo": "https://media.api-sports.io/football/teams/1832.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:34.299750"
+}

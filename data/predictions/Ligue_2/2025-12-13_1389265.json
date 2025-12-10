@@ -1,0 +1,199 @@
+{
+  "fixture_id": 1389265,
+  "date": "2025-12-13",
+  "home_team": "RED Star FC 93",
+  "away_team": "Reims",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 93,
+      "name": "Reims",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-3.5"
+    },
+    "advice": "Double chance : draw or Reims",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "att": {
+      "home": "24%",
+      "away": "76%"
+    },
+    "def": {
+      "home": "45%",
+      "away": "55%"
+    },
+    "poisson_distribution": {
+      "home": "38%",
+      "away": "62%"
+    },
+    "h2h": {
+      "home": "0%",
+      "away": "100%"
+    },
+    "goals": {
+      "home": "25%",
+      "away": "75%"
+    },
+    "total": {
+      "home": "34.4%",
+      "away": "65.6%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 7769,
+        "referee": "Nicolas Rainville, France",
+        "timezone": "UTC",
+        "date": "2017-01-30T19:45:00+00:00",
+        "timestamp": 1485805500,
+        "periods": {
+          "first": 1485805500,
+          "second": 1485809100
+        },
+        "venue": {
+          "id": 2067,
+          "name": "Stade Jean-Bouin",
+          "city": "Paris"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2016,
+        "round": "Regular Season - 22",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 104,
+          "name": "RED Star FC 93",
+          "logo": "https://media.api-sports.io/football/teams/104.png",
+          "winner": false
+        },
+        "away": {
+          "id": 93,
+          "name": "Reims",
+          "logo": "https://media.api-sports.io/football/teams/93.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 7948,
+        "referee": "William Lavis, France",
+        "timezone": "UTC",
+        "date": "2016-08-22T18:30:00+00:00",
+        "timestamp": 1471890600,
+        "periods": {
+          "first": 1471890600,
+          "second": 1471894200
+        },
+        "venue": {
+          "id": 22707,
+          "name": "Stade Auguste-Delaune",
+          "city": "Reims"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2016,
+        "round": "Regular Season - 4",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 93,
+          "name": "Reims",
+          "logo": "https://media.api-sports.io/football/teams/93.png",
+          "winner": true
+        },
+        "away": {
+          "id": 104,
+          "name": "RED Star FC 93",
+          "logo": "https://media.api-sports.io/football/teams/104.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:07:28.521220"
+}

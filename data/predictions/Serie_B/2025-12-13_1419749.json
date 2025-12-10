@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1419749,
+  "date": "2025-12-13",
+  "home_team": "Spezia",
+  "away_team": "Modena",
+  "league": "Serie_B",
+  "api_prediction": {
+    "winner": {
+      "id": 515,
+      "name": "Spezia",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Spezia or draw",
+    "percent": {
+      "home": "35%",
+      "draw": "35%",
+      "away": "30%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "att": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "def": {
+      "home": "45%",
+      "away": "55%"
+    },
+    "poisson_distribution": {
+      "home": "23%",
+      "away": "77%"
+    },
+    "h2h": {
+      "home": "75%",
+      "away": "25%"
+    },
+    "goals": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "total": {
+      "home": "51.3%",
+      "away": "48.7%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1234886,
+        "referee": "I. Pezzuto",
+        "timezone": "UTC",
+        "date": "2025-02-15T14:00:00+00:00",
+        "timestamp": 1739628000,
+        "periods": {
+          "first": 1739628000,
+          "second": 1739631600
+        },
+        "venue": {
+          "id": 2771,
+          "name": "Stadio Alberto Braglia",
+          "city": "Modena"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2024,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 899,
+          "name": "Modena",
+          "logo": "https://media.api-sports.io/football/teams/899.png",
+          "winner": null
+        },
+        "away": {
+          "id": 515,
+          "name": "Spezia",
+          "logo": "https://media.api-sports.io/football/teams/515.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1234749,
+        "referee": "D. Rutella",
+        "timezone": "UTC",
+        "date": "2024-11-02T14:00:00+00:00",
+        "timestamp": 1730556000,
+        "periods": {
+          "first": 1730556000,
+          "second": 1730559600
+        },
+        "venue": {
+          "id": 939,
+          "name": "Stadio Alberto Picco",
+          "city": "La Spezia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2024,
+        "round": "Regular Season - 12",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 515,
+          "name": "Spezia",
+          "logo": "https://media.api-sports.io/football/teams/515.png",
+          "winner": true
+        },
+        "away": {
+          "id": 899,
+          "name": "Modena",
+          "logo": "https://media.api-sports.io/football/teams/899.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1063233,
+        "referee": "D. Rutella",
+        "timezone": "UTC",
+        "date": "2024-02-25T15:15:00+00:00",
+        "timestamp": 1708874100,
+        "periods": {
+          "first": 1708874100,
+          "second": 1708877700
+        },
+        "venue": {
+          "id": 2771,
+          "name": "Stadio Alberto Braglia",
+          "city": "Modena"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 899,
+          "name": "Modena",
+          "logo": "https://media.api-sports.io/football/teams/899.png",
+          "winner": null
+        },
+        "away": {
+          "id": 515,
+          "name": "Spezia",
+          "logo": "https://media.api-sports.io/football/teams/515.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1063172,
+        "referee": "A. Giua",
+        "timezone": "UTC",
+        "date": "2023-12-26T14:00:00+00:00",
+        "timestamp": 1703599200,
+        "periods": {
+          "first": 1703599200,
+          "second": 1703602800
+        },
+        "venue": {
+          "id": 939,
+          "name": "Stadio Alberto Picco",
+          "city": "La Spezia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Regular Season - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 515,
+          "name": "Spezia",
+          "logo": "https://media.api-sports.io/football/teams/515.png",
+          "winner": null
+        },
+        "away": {
+          "id": 899,
+          "name": "Modena",
+          "logo": "https://media.api-sports.io/football/teams/899.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 28117,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2016-08-06T18:30:00+00:00",
+        "timestamp": 1470508200,
+        "periods": {
+          "first": 1470508200,
+          "second": 1470511800
+        },
+        "venue": {
+          "id": 939,
+          "name": "Stadio Alberto Picco",
+          "city": "La Spezia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 137,
+        "name": "Coppa Italia",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/137.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2016,
+        "round": "2nd Round",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 515,
+          "name": "Spezia",
+          "logo": "https://media.api-sports.io/football/teams/515.png",
+          "winner": true
+        },
+        "away": {
+          "id": 899,
+          "name": "Modena",
+          "logo": "https://media.api-sports.io/football/teams/899.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:06:04.654076"
+}
