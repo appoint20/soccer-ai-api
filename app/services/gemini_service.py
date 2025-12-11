@@ -4,6 +4,7 @@ With 24-hour caching for cost optimization.
 """
 import os
 import json
+import asyncio
 import httpx
 import hashlib
 from typing import List, Dict, Optional
@@ -20,9 +21,9 @@ class GeminiService:
     """Gemini AI integration for football analysis with caching."""
     
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY", "")
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        self.model = "gemini-2.0-flash"
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        # Gemini 3 Pro Preview (verified from API list)
+        self.model_name = "gemini-3-pro-preview"
         
         # Ensure cache directory exists
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,7 +80,14 @@ class GeminiService:
         cached = self._get_cached_response(cache_key)
         if cached:
             print(f"📦 Cache hit for {league_name}")
-            return cached
+            # IMPORTANT: Cached data should already have gemini_analysis populated
+            # Verify and return
+            if cached and isinstance(cached, list) and len(cached) > 0:
+                # Check if first match has gemini_analysis (it should if cache is valid)
+                if 'gemini_analysis' in cached[0]:
+                    return cached
+                # Cache is invalid/old format, regenerate
+                print(f"   ⚠️ Cache format outdated, regenerating...")
         
         if not self.api_key:
             return self._fallback_analysis(matches)
@@ -91,7 +99,7 @@ class GeminiService:
             response = await self._call_gemini(prompt)
             result = self._parse_analysis_response(response, matches)
             
-            # Cache the result
+            # Cache the ANALYZED result (with gemini_analysis populated)
             self._set_cache(cache_key, result)
             
             return result
@@ -117,72 +125,155 @@ class GeminiService:
             return self._fallback_tickets(matches, min_confidence)
     
     def _build_analysis_prompt(self, matches: List[Dict], league_name: str) -> str:
-        """Build prompt for match analysis with multi-opinion weighting."""
+        """Build enhanced analysis prompt for Gemini 3 Pro with logical reasoning"""
+        
+        # Format match data
         matches_data = []
         for m in matches:
-            # Include statistical predictions for Gemini to weigh
             matches_data.append({
-                "home_team": m.get("home_team"),
-                "away_team": m.get("away_team"),
-                "date": m.get("date"),
-                "home_stats": m.get("team_stats", {}).get("home", {}),
-                "away_stats": m.get("team_stats", {}).get("away", {}),
-                "odds": m.get("odds", {}),
-                # Statistical model predictions for Gemini to weigh
-                "poisson_prediction": m.get("poisson_analysis", {}),
-                "monte_carlo_prediction": m.get("monte_carlo_analysis", {}),
-                "pattern_analysis": m.get("pattern_analysis", {})
+                'home_team': m['home_team'],
+                'away_team': m['away_team'],
+                'date': m.get('date', ''),
+                'odds': m['odds'],
+                'home_stats': m['team_stats']['home'],
+                'away_stats': m['team_stats']['away'],
+                'ml_model': m['ml_analysis'],
+                'poisson_model': m['poisson_analysis'],
+                'monte_carlo_model': m['monte_carlo_analysis'],
+                'pattern': m['pattern_analysis'],
+                'trap_detector': m['trap_detector'],
             })
         
-        return f"""You are a professional football betting analyst. You are the FINAL JUDGE who weighs multiple independent predictions.
+        return f"""# SOCCER MATCH ANALYSIS - {league_name}
 
-## MATCHES - {league_name}
+You are an elite sports analytics AI with advanced logical reasoning. Your task is to analyze football matches and make superior predictions by identifying patterns that ML models miss.
+
+## CRITICAL CONTEXT: ML MODEL FAILURES (30% error rate)
+
+The ML model makes these systematic errors. YOU must identify and correct them:
+
+### 1. DRAW PATTERN (40% of failures)
+**Symptoms**: ML predicts H or A, but result is Draw
+**Root Causes**:
+- Odds balanced (all 2.5-3.5)
+- Teams have similar stats (win rate within 10%)
+- Both teams defensive (clean sheet rate > 30%)
+**YOUR TASK**: Check if match fits this pattern → increase Draw probability
+
+### 2. UPSET PATTERN (25% of failures)  
+**Symptoms**: ML predicts heavy favorite (>70% confidence), but they lose
+**Root Causes**:
+- Favorite has declining form (last 3 games worse than average)
+- Favorite has fixture congestion (congestion_index >= 3)
+- Underdog has momentum (improving form)
+**YOUR TASK**: Check favorite's recent form + congestion → reduce if red flags
+
+### 3. CLOSE MATCH PATTERN (20% of failures)
+**Symptoms**: Odds very tight (all outcomes 2.0-3.0)
+**Root Causes**: Inherently unpredictable 50/50 games
+**YOUR TASK**: Detect tight odds → cap confidence at 60% maximum
+
+### 4. OVERCONFIDENCE PATTERN (10% of failures)
+**Symptoms**: ML confidence >75% but wrong
+**Root Causes**: 
+- Models disagree (Poisson says H, MC says A)
+- Limited H2H data
+- Trap warning present
+**YOUR TASK**: If models diverge OR trap warning → reduce confidence by 15-20%
+
+### 5. AWAY STRENGTH PATTERN (5% of failures)
+**Symptoms**: Strong away team underestimated
+**Root Causes**:
+- Away team better form than home
+- Home team congested (congestion >= 3)
+- Away team superior stats
+**YOUR TASK**: Check form differential + home congestion → boost away if evident
+
+---
+
+## YOUR ANALYTICAL PROCESS (Step-by-Step Reasoning)
+
+For EACH match, follow this logical chain:
+
+### STEP 1: DATA SYNTHESIS
+- Review all 3 models (ML, Poisson, Monte Carlo)
+- Check team statistics and form
+- Examine odds and implied probabilities
+- Note fixture congestion levels
+- Read trap detector warnings
+
+### STEP 2: PATTERN DETECTION
+Ask yourself:
+1. **Is this a DRAW scenario?** (balanced odds + similar stats)
+2. **Is this an UPSET risk?** (favorite fatigued/declining)
+3. **Is this a CLOSE MATCH?** (tight odds 2.0-3.0)
+4. **Are models OVERCONFIDENT?** (divergence or warnings)
+5. **Is AWAY team underrated?** (better form + home congested)
+
+### STEP 3: MODEL AGREEMENT ANALYSIS
+- Do all 3 models agree? → Higher confidence
+- Do 2/3 agree? → Moderate confidence  
+- Do all disagree? → Low confidence, check for patterns
+
+### STEP 4: CORRECTION LOGIC
+IF pattern detected:
+- Apply probability adjustments
+- Reduce/increase confidence accordingly
+- Override ML if strong pattern evidence
+
+### STEP 5: FINAL DECISION
+- Weighted ensemble of corrected probabilities
+- Confidence based on agreement + pattern clarity
+- Flag uncertainties and traps
+
+---
+
+## DATA PROVIDED
+
 {json.dumps(matches_data, indent=2)}
 
-## YOUR TASK
-You have 3 independent statistical opinions for each match:
-1. POISSON MODEL - Expected goals and probabilities
-2. MONTE CARLO - Simulation-based predictions
-3. PATTERN ANALYSIS - Agreement detection
+---
 
-Your job:
-- Analyze team stats (form, goals, clean sheets)
-- Weigh the statistical predictions
-- Identify consensus patterns
-- Make your final prediction
+## OUTPUT FORMAT (JSON)
 
-## CONSENSUS RULES
-- ALL 3 AGREE = STRONG_CONSENSUS (69%+ accuracy historically)
-- 2/3 AGREE = PARTIAL_CONSENSUS (55% accuracy)
-- ALL DIFFER = DIVERGENT (caution advised)
+Return valid JSON with NO multi-line strings. Keep all text on single lines:
 
-## OUTPUT FORMAT (JSON only)
 {{
   "predictions": [
     {{
       "home_team": "Team A",
       "away_team": "Team B",
-      "prediction": "H" or "D" or "A",
-      "analysis": "4-5 sentence expert analysis weighing all factors",
-      "confidence": 10%-100%,
-      "consensus": "STRONG_CONSENSUS" or "PARTIAL_CONSENSUS" or "DIVERGENT",
-      "over_25": true or false,
-      "btts": true or false,
-      "value_bet": true or false,
-      "trap_warning": "" or "Warning message if trap detected",
-      "reasoning": "1-2 sentence final verdict"
+      "reasoning_summary": "Single line: ML H 75%, Poisson H 60%, MC H 55%. Home congested (index=4). Applied UPSET correction, reduced home 12%.",
+      "prediction": "H",
+      "confidence": 55,
+      "probabilities": {{
+        "home_win": 48,
+        "draw": 33,
+        "away_win": 19
+      }},
+      "consensus": "PARTIAL_CONSENSUS",
+      "pattern_detected": "UPSET_RISK",
+      "trap_warning": "Fixture congestion",
+      "over_25": true,
+      "over_25_confidence": 62,
+      "btts": false,
+      "btts_confidence": 45,
+      "value_bet": false
     }}
   ]
 }}
 
-## RULES
-- Be unbiased - don't automatically favor favorites
-- Higher confidence when Poisson + Monte Carlo + Form all agree
-- Flag traps: strong favorites in poor form, injury prone teams
-- Identify value: probability > implied odds probability
+## CRITICAL RULES
 
-Return ONLY valid JSON, no markdown."""
+1. **Single-line strings** - NO line breaks in JSON strings
+2. **Think logically** - Use ALL data provided
+3. **Detect patterns** - Apply corrections
+4. **Be brave** - Override ML when pattern is clear
+5. **Be humble** - Reduce confidence when uncertain
+6. **Return ONLY valid JSON** - No markdown
 
+Begin analysis.
+"""
     def _build_ticket_prompt(self, matches: List[Dict], min_confidence: float) -> str:
         """Build prompt for ticket generation"""
         # Prepare match summaries
@@ -236,9 +327,8 @@ Return in this exact JSON format:
 
 Return ONLY valid JSON, no markdown."""
 
-    async def _call_gemini(self, prompt: str) -> str:
-        """Call Gemini API"""
-        url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
+    async def _call_gemini(self, prompt: str, max_retries: int = 2) -> str:
+        """Call Gemini API with timeout and retry logic"""
         
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
@@ -249,38 +339,129 @@ Return ONLY valid JSON, no markdown."""
             }
         }
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            
-            # Extract text from response
-            text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
-            return text
+        for attempt in range(max_retries):
+            try:
+                timeout = httpx.Timeout(120.0, connect=10.0)
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+                    
+                    response = await client.post(url, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    # Extract text from response
+                    text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
+                    return text
+            except asyncio.TimeoutError:
+                if attempt < max_retries - 1:
+                    print(f"⏱️  Timeout, retrying... ({attempt + 1}/{max_retries})")
+                    await asyncio.sleep(1)  # Brief delay before retry
+                else:
+                    raise Exception("Gemini API timeout after retries")
+            except httpx.HTTPStatusError as e:
+                if attempt < max_retries - 1 and e.response.status_code in [429, 503]:
+                    print(f"🔄 Rate limit/unavailable, retrying... ({attempt + 1}/{max_retries})")
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    raise
     
     def _parse_analysis_response(self, response: str, matches: List[Dict]) -> List[Dict]:
-        """Parse Gemini analysis response with multi-opinion weighting."""
+        """Parse Gemini analysis response - handles both old and new chain-of-thought format"""
         try:
-            data = json.loads(response)
+            # Clean response - remove markdown code blocks if present
+            cleaned_response = response.strip()
+            if cleaned_response.startswith('```'):
+                # Remove markdown code fences
+                lines = cleaned_response.split('\n')
+                cleaned_response = '\n'.join(lines[1:-1] if len(lines) > 2 else lines)
+            
+            # Try to parse JSON
+            data = json.loads(cleaned_response)
             predictions = data.get("predictions", [])
             
-            # Merge Gemini analysis with original match data
-            result = []
-            for i, match in enumerate(matches):
-                gemini_pred = predictions[i] if i < len(predictions) else {}
-                match["gemini_analysis"] = {
-                    "prediction": gemini_pred.get("prediction", match.get("ml_predictions", {}).get("hdw", {}).get("prediction")),
-                    "analysis": gemini_pred.get("analysis", ""),
-                    "confidence": gemini_pred.get("confidence", 0.5),
-                    "consensus": gemini_pred.get("consensus", "UNKNOWN"),
-                    "over_25": gemini_pred.get("over_25", False),
-                    "btts": gemini_pred.get("btts", False),
-                    "value_bet": gemini_pred.get("value_bet", False),
-                    "trap_warning": gemini_pred.get("trap_warning", ""),
-                    "reasoning": gemini_pred.get("reasoning", "No analysis available")
-                }
-                result.append(match)
-            return result
+            for i, pred in enumerate(predictions):
+                if i >= len(matches):
+                    break
+                
+                try:
+                    # Extract prediction (works for both old and new format)
+                    prediction = pred.get("prediction", "H")
+                    confidence = pred.get("confidence", 50)
+                    
+                    # Normalize confidence to 0-1 range
+                    if isinstance(confidence, (int, float)):
+                        confidence = confidence / 100 if confidence > 1 else confidence
+                    else:
+                        confidence = 0.5
+                    
+                    # Handle new format with reasoning_chain and probabilities
+                    probabilities = pred.get("probabilities", {})
+                    if probabilities:
+                        home_win = probabilities.get("home_win", 33) / 100 if probabilities.get("home_win", 33) > 1 else probabilities.get("home_win", 0.33)
+                        draw = probabilities.get("draw", 33) / 100 if probabilities.get("draw", 33) > 1 else probabilities.get("draw", 0.33)
+                        away_win = probabilities.get("away_win", 33) / 100 if probabilities.get("away_win", 33) > 1 else probabilities.get("away_win", 0.33)
+                    else:
+                        # Old format or defaults
+                        home_win = 0.33
+                        draw = 0.33
+                        away_win = 0.33
+                    
+                    matches[i]["gemini_analysis"] = {
+                        "prediction": prediction,
+                        "confidence": confidence,
+                        "home_win": home_win,
+                        "draw": draw,
+                        "away_win": away_win,
+                        "consensus": pred.get("consensus", "UNKNOWN"),
+                        "pattern_detected": pred.get("pattern_detected", ""),
+                        "reasoning_summary": pred.get("reasoning_summary", ""),
+                        "over_25": pred.get("over_25", False),
+                        "btts": pred.get("btts", False),
+                        "trap_warning": pred.get("trap_warning", "")
+                    }
+                except Exception as match_error:
+                    # If individual match fails, use ML fallback for that match
+                    ml_pred = matches[i].get('ml_analysis', {})
+                    matches[i]["gemini_analysis"] = {
+                        "prediction": ml_pred.get('prediction', 'H'),
+                        "confidence": ml_pred.get('confidence', 0.5),
+                        "home_win": ml_pred.get('home_win', 0.33),
+                        "draw": ml_pred.get('draw', 0.33),
+                        "away_win": ml_pred.get('away_win', 0.33),
+                        "consensus": "UNKNOWN",
+                        "pattern_detected": "",
+                        "reasoning_summary": f"Parse error for match {i}",
+                        "over_25": False,
+                        "btts": False,
+                        "trap_warning": ""
+                    }
+            
+            return matches
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON Parse error: {e}")
+            # Try to extract partial JSON
+            try:
+                # Attempt to fix common JSON issues
+                fixed_response = response.replace('\n', ' ').replace('\r', '')
+                # Remove any trailing commas
+                fixed_response = fixed_response.replace(',]', ']').replace(',}', '}')
+                data = json.loads(fixed_response)
+                predictions = data.get("predictions", [])
+                
+                # Process what we can
+                for i, pred in enumerate(predictions[:len(matches)]):
+                    if "prediction" in pred:
+                        matches[i]["gemini_analysis"] = {
+                            "prediction": pred.get("prediction", "H"),
+                            "confidence": pred.get("confidence", 50) / 100 if pred.get("confidence", 50) > 1 else pred.get("confidence", 0.5),
+                            "over_25": pred.get("over_25", False),
+                            "btts": pred.get("btts", False),
+                        }
+                return matches
+            except:
+                # Full fallback
+                return self._fallback_analysis(matches)
         except Exception as e:
             print(f"Parse error: {e}")
             return self._fallback_analysis(matches)

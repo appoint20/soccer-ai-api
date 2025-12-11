@@ -389,16 +389,28 @@ async def run_backtest_with_gemini(weeks: int = 9, use_gemini: bool = True):
                 leagues[lid] = []
             leagues[lid].append(match)
         
+        # Process all leagues concurrently instead of sequentially
         gemini_analyzed = []
+        tasks = []
         for league_id, league_matches in leagues.items():
             league_name = LEAGUE_NAMES.get(league_id, league_id)
-            print(f"   → {league_name}: {len(league_matches)} matches")
-            try:
-                analyzed = await gemini.analyze_matches_batch(league_matches, league_name)
-                gemini_analyzed.extend(analyzed)
-            except Exception as e:
-                print(f"     ⚠️ Gemini error: {e}")
-                gemini_analyzed.extend(league_matches)
+            print(f"   → {league_name}: {len(league_matches)} matches (queued)")
+            tasks.append(gemini.analyze_matches_batch(league_matches, league_name))
+        
+        # Execute all league analyses concurrently
+        try:
+            results_list = await asyncio.gather(*tasks, return_exceptions=True)
+            for i, league_result in enumerate(results_list):
+                if isinstance(league_result, Exception):
+                    league_id = list(leagues.keys())[i]
+                    league_name = LEAGUE_NAMES.get(league_id, league_id)
+                    print(f"     ⚠️ {league_name} error: {league_result}")
+                    gemini_analyzed.extend(leagues[league_id])  # Use original data
+                else:
+                    gemini_analyzed.extend(league_result)
+        except Exception as e:
+            print(f"     ⚠️ Batch processing error: {e}")
+            gemini_analyzed = all_analyses  # Fallback to original
         
         all_analyses = gemini_analyzed
     

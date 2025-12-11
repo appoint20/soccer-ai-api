@@ -20,6 +20,22 @@ poisson = PoissonPredictor()
 monte_carlo = MonteCarloSimulator()
 trap_detector = TrapDetector()
 ml_predictor = get_ml_predictor()
+h2h_service = None
+derby_detector = None
+
+def get_h2h():
+    global h2h_service
+    if h2h_service is None:
+        from app.services.h2h_service import get_h2h_service
+        h2h_service = get_h2h_service()
+    return h2h_service
+
+def get_derby():
+    global derby_detector
+    if derby_detector is None:
+        from app.core.derby_detector import get_derby_detector
+        derby_detector = get_derby_detector()
+    return derby_detector
 
 DATA_DIR = Path(__file__).parent.parent.parent.parent / "data"
 
@@ -82,11 +98,30 @@ def analyze_match(row) -> dict:
     home_stats = stats_service.get_team_stats(home_team, league_id, before_date=match_date)
     away_stats = stats_service.get_team_stats(away_team, league_id, before_date=match_date)
     
+    # Get H2H stats
+    h2h_service = get_h2h()
+    h2h_stats = h2h_service.get_h2h_stats(home_team, away_team)
+    
+    # Get Derby status
+    derby_det = get_derby()
+    is_derby, derby_name = derby_det.is_derby(home_team, away_team)
+    
+    # Get Fixture Congestion
+    from app.core.fixture_congestion import add_congestion_features_to_match
+    
+    # Ensure H2H service has loaded data
+    if h2h_service.df is None:
+        h2h_service._load_data()
+        
+    congestion_features = add_congestion_features_to_match(
+        home_team, away_team, league_id, match_date, h2h_service.df
+    )
+    
     # Get odds
-    home_odds = float(row.get('B365H', 2.0)) if pd.notna(row.get('B365H')) else 2.0
-    draw_odds = float(row.get('B365D', 3.0)) if pd.notna(row.get('B365D')) else 3.0
-    away_odds = float(row.get('B365A', 3.0)) if pd.notna(row.get('B365A')) else 3.0
-    over25_odds = float(row.get('B365>2.5', 1.9)) if pd.notna(row.get('B365>2.5')) else 1.9
+    home_odds = float(row.get('B365H', 0.0)) if pd.notna(row.get('B365H')) else 0.0
+    draw_odds = float(row.get('B365D', 0.0)) if pd.notna(row.get('B365D')) else 0.0
+    away_odds = float(row.get('B365A', 0.0)) if pd.notna(row.get('B365A')) else 0.0
+    over25_odds = float(row.get('B365>2.5', 0.0)) if pd.notna(row.get('B365>2.5')) else 0.0
     
     # Use REAL attack/defense stats for predictions
     home_attack = home_stats['avg_goals_scored'] if home_stats['avg_goals_scored'] > 0 else 1.3
@@ -94,6 +129,25 @@ def analyze_match(row) -> dict:
     home_defense = home_stats['avg_goals_conceded'] if home_stats['avg_goals_conceded'] > 0 else 1.0
     away_defense = away_stats['avg_goals_conceded'] if away_stats['avg_goals_conceded'] > 0 else 1.1
     
+    # Enhance with H2H data if available (Weighted Average)
+    if h2h_stats.get('total_matches', 0) >= 3:
+        # If we have at least 3 recent meetings, give H2H 30% weight
+        h2h_weight = 0.3
+        season_weight = 0.7
+        
+        # H2H Avg Home Goals = Home Attack strength vs this specific opponent
+        h2h_home = h2h_stats.get('avg_home_goals', home_attack)
+        h2h_away = h2h_stats.get('avg_away_goals', away_attack)
+        
+        # Blend stats
+        home_attack = (home_attack * season_weight) + (h2h_home * h2h_weight)
+        away_attack = (away_attack * season_weight) + (h2h_away * h2h_weight)
+        
+        # For defense, we can infer that if Home scored X in H2H, Away conceded X
+        # So H2H Home Goals influences Away Defense
+        away_defense = (away_defense * season_weight) + (h2h_home * h2h_weight)
+        home_defense = (home_defense * season_weight) + (h2h_away * h2h_weight)
+
     # Poisson prediction with REAL stats
     poisson_result = poisson.predict(
         home_attack=home_attack,
@@ -114,38 +168,73 @@ def analyze_match(row) -> dict:
     odds_dict = {'home': home_odds, 'draw': draw_odds, 'away': away_odds}
     ml_result = ml_predictor.predict(home_stats, away_stats, odds_dict)
     
-    # 3-Model Consensus Analysis (ML, Poisson, Monte Carlo)
-    predictions = [
+    # --- Multi-Market Consensus Analysis ---
+    from collections import Counter
+    
+    # 1. Match Winner (HDW)
+    hdw_preds = [
         ml_result.get('prediction', 'H'),
         poisson_result['hdw'],
         mc_result['hdw']
     ]
+    hdw_counts = Counter(hdw_preds)
+    hdw_best = hdw_counts.most_common(1)[0] # (pred, count)
     
-    # Count agreement
-    pred_counts = {}
-    for p in predictions:
-        pred_counts[p] = pred_counts.get(p, 0) + 1
+    ml_pred_val = ml_result.get('prediction', 'H')
     
-    max_agreement = max(pred_counts.values())
-    if max_agreement == 3:
+    if hdw_best[1] == 3:
         pattern = "STRONG_CONSENSUS"
-        consensus_pred = predictions[0]
         all_agree = True
-    elif max_agreement == 2:
-        pattern = "PARTIAL_CONSENSUS"
-        consensus_pred = max(pred_counts, key=pred_counts.get)
-        all_agree = False
+    elif hdw_best[1] == 2:
+        # User Rule: ML Model MUST be part of the consensus
+        # If consensus is 2, and ML is NOT in it (meaning Poisson + MC agreed against ML), 
+        # then we treat it as DIVERGENT or at least not a valid consensus to follow blindly.
+        if hdw_best[0] == ml_pred_val:
+            pattern = "PARTIAL_CONSENSUS"
+            all_agree = False
+        else:
+            pattern = "DIVERGENT" # Poisson + MC matched, but ML disagreed
+            all_agree = False
     else:
         pattern = "DIVERGENT"
-        consensus_pred = ml_result.get('prediction', 'H')
         all_agree = False
+        
+    # 2. Both Teams to Score (BTTS)
+    btts_preds = []
+    # ML
+    if ml_result.get('btts', {}).get('confidence', 0) > 0.5:
+        btts_preds.append(ml_result['btts']['prediction'])
+    # Poisson (Threshold 55%)
+    if poisson_result['btts_probability'] >= 0.55: btts_preds.append("Yes")
+    elif poisson_result['btts_probability'] <= 0.45: btts_preds.append("No")
+    # Monte Carlo (Threshold 55%)
+    if mc_result['btts_probability'] >= 0.55: btts_preds.append("Yes")
+    elif mc_result['btts_probability'] <= 0.45: btts_preds.append("No")
+    
+    btts_consensus = Counter(btts_preds).most_common(1)[0] if btts_preds else ("Uncertain", 0)
+    
+    # 3. Over 2.5 Goals
+    o25_preds = []
+    # ML
+    if ml_result.get('over_25', {}).get('confidence', 0) > 0.5:
+        o25_preds.append(ml_result['over_25']['prediction'])
+    # Poisson
+    if poisson_result['over_25_probability'] >= 0.55: o25_preds.append("Over")
+    elif poisson_result['over_25_probability'] <= 0.45: o25_preds.append("Under")
+    # Monte Carlo
+    if mc_result['over_25_probability'] >= 0.55: o25_preds.append("Over")
+    elif mc_result['over_25_probability'] <= 0.45: o25_preds.append("Under")
+    
+    o25_consensus = Counter(o25_preds).most_common(1)[0] if o25_preds else ("Uncertain", 0)
     
     # Trap detection with REAL stats
     trap_result = trap_detector.detect({
         'home_stats': home_stats,
         'away_stats': away_stats,
-        'h2h': {'draw_rate': 0.25, 'under_2_rate': 0.3},
-        'odds': {'home': home_odds, 'draw': draw_odds, 'away': away_odds}
+        'h2h': {'draw_rate': h2h_stats.get('draw_rate', 0.25), 'under_2_rate': 0.3},
+        'odds': {'home': home_odds, 'draw': draw_odds, 'away': away_odds},
+        'is_derby': is_derby,
+        'congestion': congestion_features
     })
     
     # REAL team stats
@@ -173,6 +262,7 @@ def analyze_match(row) -> dict:
         },
         
         "team_stats": team_stats,
+        "ml_analysis": ml_result,
         
         "ml_predictions": {
             "hdw": {
@@ -216,10 +306,27 @@ def analyze_match(row) -> dict:
             "all_methods_agree": all_agree,
             "confidence_level": "HIGH" if all_agree else "MEDIUM",
             "expected_accuracy": 0.693 if all_agree else 0.499,
-            "reasoning": f"{'All prediction methods agree on ' + ml_hdw + ' - highest confidence level.' if all_agree else 'Methods show partial agreement - moderate confidence.'}"
+            "hdw_consensus": hdw_best[0],
+            "hdw_agreement": hdw_best[1],
+            "btts_consensus": btts_consensus[0],
+            "btts_agreement": btts_consensus[1],
+            "over25_consensus": o25_consensus[0],
+            "over25_agreement": o25_consensus[1],
+            "reasoning": f"Winner: {hdw_best[1]}/3 Agree. BTTS: {btts_consensus[0]} ({btts_consensus[1]} votes). Goals: {o25_consensus[0]} ({o25_consensus[1]} votes)."
         },
         
         "trap_detector": trap_result,
+        
+        "derby_info": {
+            "is_derby": is_derby,
+            "derby_name": derby_name
+        },
+        
+        "congestion_info": {
+            "home_index": congestion_features.get('home_congestion_index', 0),
+            "away_index": congestion_features.get('away_congestion_index', 0),
+            "rotation_risk": congestion_features.get('either_rotation_risk', 0)
+        },
         
         "chatgpt_analysis": f"{home_team} {'look strong favorites' if home_odds < 2.0 else 'face a competitive match'} against {away_team}. The odds suggest {'a dominant home performance' if home_odds < away_odds else 'an evenly matched contest'}. {'Pattern analysis shows STRONG_CONSENSUS across all prediction methods, indicating a high-confidence opportunity.' if all_agree else 'Prediction methods show mixed signals - proceed with caution.'}",
         
@@ -227,7 +334,9 @@ def analyze_match(row) -> dict:
             "bet": f"{'Home Win' if poisson_result['hdw'] == 'H' else 'Draw' if poisson_result['hdw'] == 'D' else 'Away Win'}",
             "confidence": "HIGH" if all_agree and poisson_result['hdw_confidence'] > 0.6 else "MEDIUM",
             "stake": "3-5%" if all_agree else "1-2%"
-        }
+        },
+        
+        "h2h_analysis": h2h_stats
     }
 
 

@@ -190,13 +190,45 @@ class MLPredictor:
                 prediction = self.encoder.inverse_transform([pred_idx])[0]
             else:
                 prediction = ['A', 'D', 'H'][pred_idx]
+                
+            # Predict Over/Under 2.5
+            over25_res = {"prediction": "Skip", "confidence": 0.0}
+            if self.over25_model:
+                o25_proba = self.over25_model.predict_proba(features)[0]
+                # Assuming class 1 is Over, 0 is Under
+                o25_pred = "Over" if o25_proba[1] > 0.5 else "Under"
+                over25_res = {
+                    "prediction": o25_pred,
+                    "confidence": float(max(o25_proba)),
+                    "prob_over": float(o25_proba[1]),
+                    "prob_under": float(o25_proba[0])
+                }
+
+            # Predict BTTS
+            btts_res = {"prediction": "Skip", "confidence": 0.0}
+            if self.btts_model:
+                btts_proba = self.btts_model.predict_proba(features)[0]
+                # Assuming class 1 is Yes, 0 is No
+                btts_pred = "Yes" if btts_proba[1] > 0.5 else "No"
+                btts_res = {
+                    "prediction": btts_pred,
+                    "confidence": float(max(btts_proba)),
+                    "prob_yes": float(btts_proba[1]),
+                    "prob_no": float(btts_proba[0])
+                }
             
             return {
                 'prediction': prediction,
                 'confidence': float(max(proba)),
-                'home_win': float(proba[2]) if len(proba) > 2 else 0.33,  # H is usually last
+                'home_win': float(proba[2]) if len(proba) > 2 else 0.33,
                 'draw': float(proba[1]) if len(proba) > 1 else 0.33,
-                'away_win': float(proba[0]) if len(proba) > 0 else 0.33
+                'away_win': float(proba[0]) if len(proba) > 0 else 0.33,
+                'hdw': {
+                    'prediction': prediction,
+                    'confidence': float(max(proba))
+                },
+                'over_25': over25_res,
+                'btts': btts_res
             }
         except Exception as e:
             print(f"⚠️ ML prediction error: {e}")

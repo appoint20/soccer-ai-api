@@ -171,8 +171,12 @@ async def get_backtest(
 ):
     """Get comprehensive backtesting results from REAL historical data"""
     
+    # Run blocking code in thread pool to avoid blocking event loop
+    import asyncio
+    loop = asyncio.get_event_loop()
+    
     # Load historical matches
-    matches_df = load_historical_matches(weeks, league)
+    matches_df = await loop.run_in_executor(None, load_historical_matches, weeks, league)
     
     if matches_df.empty:
         return {
@@ -182,8 +186,12 @@ async def get_backtest(
             "roi_calculation": {}
         }
     
-    # Run backtest
-    results, pattern_stats, league_stats, correct_count, total_count = run_backtest_analysis(matches_df)
+    # Run backtest in executor to avoid blocking event loop
+    results, pattern_stats, league_stats, correct_count, total_count = await loop.run_in_executor(
+        None,
+        run_backtest_analysis,
+        matches_df
+    )
     
     # Calculate accuracies
     overall_accuracy = correct_count / total_count if total_count > 0 else 0

@@ -15,6 +15,9 @@ class TrapDetector:
         'AWAY_STRONG': 'Away team stronger but odds favor home',
         'END_OF_SEASON': 'Match near season end with little at stake',
         'BOTH_FORM_BAD': 'Both teams on losing streaks',
+        'DERBY_MATCH': 'High volatility match due to local rivalry',
+        'FATIGUE_RISK': 'Team has high fixture congestion (European/Cup games)',
+        'ROTATION_RISK': 'Likely squad rotation due to upcoming/recent major games',
     }
     
     def detect(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -35,6 +38,20 @@ class TrapDetector:
         away_stats = match_data.get('away_stats', {})
         h2h = match_data.get('h2h', {})
         odds = match_data.get('odds', {})
+        is_derby = match_data.get('is_derby', False)
+        congestion = match_data.get('congestion', {})
+        
+        # Check Derby
+        if is_derby:
+            flags.append('DERBY_MATCH')
+            
+        # Check Congestion / Fatigue
+        # congestion dict expected keys: 'home_congestion_index', 'away_congestion_index', 'either_rotation_risk'
+        if congestion.get('home_congestion_index', 0) >= 3 or congestion.get('away_congestion_index', 0) >= 3:
+            flags.append('FATIGUE_RISK')
+            
+        if congestion.get('either_rotation_risk', 0) > 0:
+            flags.append('ROTATION_RISK')
         
         # Check defensive teams (low scoring)
         home_avg = home_stats.get('avg_goals_scored', 1.5)

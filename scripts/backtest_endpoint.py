@@ -48,7 +48,7 @@ async def backtest_analyze_endpoint(num_matches: int = 150):
             print(f"\n  → Calling /analyze for {date_str}...")
             try:
                 response = await client.post(
-                    f"{API_BASE}/analyze/matches/analyze",
+                    f"{API_BASE}/matches/analyze",
                     json={"date": date_str},
                     params={"limit": 50}
                 )
@@ -64,9 +64,13 @@ async def backtest_analyze_endpoint(num_matches: int = 150):
                             'home_team': match.get('home_team'),
                             'away_team': match.get('away_team'),
                             'league_id': match.get('league_id'),
-                            'ml_prediction': match.get('ml_predictions', {}).get('hdw', {}).get('prediction', ''),
-                            'consensus': match.get('pattern_analysis', {}).get('pattern', ''),
-                            'gemini_prediction': match.get('gemini_analysis', {}).get('prediction', '')
+                            'consensus_hdw': match.get('pattern_analysis', {}).get('hdw_consensus', ''),
+                            'consensus_btts': match.get('pattern_analysis', {}).get('btts_consensus', ''),
+                            'consensus_o25': match.get('pattern_analysis', {}).get('over25_consensus', ''),
+                            'is_trap': match.get('trap_detector', {}).get('is_trap', False),
+                            'trap_flags': match.get('trap_detector', {}).get('flags', []),
+                            'fthg': match.get('fthg', 0), # Ensure analyze endpoint returns this for testing context if possible, or we look it up later
+                            'ftag': match.get('ftag', 0)
                         })
                 else:
                     print(f"    ❌ Error: {response.status_code}")
@@ -79,12 +83,16 @@ async def backtest_analyze_endpoint(num_matches: int = 150):
     print(f"\n✅ Got {len(all_predictions)} predictions from API")
     
     # Match predictions to actual results
-    correct_ml = 0
-    correct_gemini = 0
-    total = 0
+    stats = {
+        'total': 0,
+        'hdw': {'correct': 0, 'total': 0},
+        'btts': {'correct': 0, 'total': 0},
+        'over25': {'correct': 0, 'total': 0},
+        'traps': {'detected': 0, 'avoided_loss': 0, 'false_positive': 0}
+    }
     
     for pred in all_predictions:
-        # Find actual result
+        # Find actual result from loaded history
         match = historical[
             (historical['HomeTeam'] == pred['home_team']) &
             (historical['AwayTeam'] == pred['away_team'])
@@ -93,21 +101,63 @@ async def backtest_analyze_endpoint(num_matches: int = 150):
         if match.empty:
             continue
         
-        actual = match.iloc[0]['FTR']
-        total += 1
+        row = match.iloc[0]
+        actual_ftr = row['FTR']
+        actual_fthg = row['FTHG']
+        actual_ftag = row['FTAG']
         
-        if pred['ml_prediction'] == actual:
-            correct_ml += 1
-        if pred['gemini_prediction'] == actual:
-            correct_gemini += 1
+        stats['total'] += 1
+        
+        # 1. HDW Accuracy
+        if pred['consensus_hdw']:
+            stats['hdw']['total'] += 1
+            if pred['consensus_hdw'] == actual_ftr:
+                stats['hdw']['correct'] += 1
+                
+        # 2. BTTS Accuracy
+        if pred['consensus_btts'] in ['Yes', 'No']:
+            stats['btts']['total'] += 1
+            actual_btts = 'Yes' if (actual_fthg > 0 and actual_ftag > 0) else 'No'
+            if pred['consensus_btts'] == actual_btts:
+                stats['btts']['correct'] += 1
+                
+        # 3. Over 2.5 Accuracy
+        if pred['consensus_o25'] in ['Over', 'Under']:
+            stats['over25']['total'] += 1
+            actual_o25 = 'Over' if (actual_fthg + actual_ftag) > 2.5 else 'Under'
+            if pred['consensus_o25'] == actual_o25:
+                stats['over25']['correct'] += 1
+        
+        # 4. Trap Detector
+        if pred['is_trap']:
+            stats['traps']['detected'] += 1
+            # If trap flagged and our prediction (HDW) was WRONG, it was a "good" trap detection
+            # If trap flagged but prediction was RIGHT, it was a "false positive"
+            if pred['consensus_hdw'] and pred['consensus_hdw'] != actual_ftr:
+                stats['traps']['avoided_loss'] += 1
+            elif pred['consensus_hdw'] == actual_ftr:
+                stats['traps']['false_positive'] += 1
     
     # Results
     print("\n" + "=" * 60)
     print("📊 ANALYSIS ENDPOINT BACKTEST RESULTS")
     print("=" * 60)
-    print(f"\nMatches tested: {total}")
-    print(f"\nML Model Accuracy:    {correct_ml}/{total} = {correct_ml/max(total,1)*100:.1f}%")
-    print(f"Gemini AI Accuracy:   {correct_gemini}/{total} = {correct_gemini/max(total,1)*100:.1f}%")
+    print(f"\nMatches tested: {stats['total']}")
+    
+    def print_acc(name, d):
+        acc = (d['correct'] / d['total'] * 100) if d['total'] > 0 else 0
+        print(f"{name:<15} {d['correct']}/{d['total']:<5} = {acc:.1f}%")
+
+    print("\n✅ Prediction Markets:")
+    print_acc("Winner (HDW):", stats['hdw'])
+    print_acc("BTTS:", stats['btts'])
+    print_acc("Over 2.5:", stats['over25'])
+    
+    print("\n🕵️ Trap Detector:")
+    print(f"Traps Detected: {stats['traps']['detected']}")
+    print(f"Losses Avoided: {stats['traps']['avoided_loss']}")
+    print(f"False Positives: {stats['traps']['false_positive']}")
+    
     print("=" * 60)
 
 
