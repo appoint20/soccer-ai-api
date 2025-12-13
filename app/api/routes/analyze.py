@@ -164,9 +164,24 @@ def analyze_match(row) -> dict:
         away_defense=away_defense
     )
     
-    # ML Model prediction with team stats + odds
+    # Monte Carlo prediction (for override logic)
+    mc_result = monte_carlo.simulate(
+        home_attack=home_stats.get('avg_goals_scored', 1.3),
+        away_attack=away_stats.get('avg_goals_scored', 1.1),
+        home_defense=home_stats.get('avg_goals_conceded', 1.1),
+        away_defense=away_stats.get('avg_goals_conceded', 1.3)
+    )
+    
+    # ML Model prediction with team stats + odds + H2H + Congestion + MC Override
     odds_dict = {'home': home_odds, 'draw': draw_odds, 'away': away_odds}
-    ml_result = ml_predictor.predict(home_stats, away_stats, odds_dict)
+    ml_result = ml_predictor.predict(
+        home_stats, 
+        away_stats, 
+        odds_dict, 
+        h2h={'matches': h2h_stats.get('matches', 0)},
+        congestion=congestion_features,
+        mc_override={'prediction': mc_result.get('hdw'), 'confidence': mc_result.get('hdw_confidence', 0)}
+    )
     
     # --- Multi-Market Consensus Analysis ---
     from collections import Counter

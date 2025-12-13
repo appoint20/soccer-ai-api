@@ -8,7 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mediator.Net" Version="4.9.0" />
+    <PackageReference Include="Mediator.Net.MicrosoftDependencyInjection" Version="4.9.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.11.6" />
   </ItemGroup>
 
   <ItemGroup>

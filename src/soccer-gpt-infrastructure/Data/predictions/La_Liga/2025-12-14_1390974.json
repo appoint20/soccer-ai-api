@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1390974,
+  "date": "2025-12-14",
+  "home_team": "Levante",
+  "away_team": "Villarreal",
+  "league": "La_Liga",
+  "api_prediction": {
+    "winner": {
+      "id": 533,
+      "name": "Villarreal",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-4.5"
+    },
+    "advice": "Winner : Villarreal",
+    "percent": {
+      "home": "0%",
+      "draw": "50%",
+      "away": "50%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "0%",
+      "away": "100%"
+    },
+    "att": {
+      "home": "13%",
+      "away": "87%"
+    },
+    "def": {
+      "home": "23%",
+      "away": "77%"
+    },
+    "poisson_distribution": {
+      "home": "19%",
+      "away": "81%"
+    },
+    "h2h": {
+      "home": "38%",
+      "away": "62%"
+    },
+    "goals": {
+      "home": "27%",
+      "away": "73%"
+    },
+    "total": {
+      "home": "24.0%",
+      "away": "76.0%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1041049,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2023-08-19T00:00:00+00:00",
+        "timestamp": 1692403200,
+        "periods": {
+          "first": null,
+          "second": null
+        },
+        "venue": {
+          "id": 1498,
+          "name": "Estadio de la Cer\u00e1mica",
+          "city": "Villarreal"
+        },
+        "status": {
+          "long": "Match Cancelled",
+          "short": "CANC",
+          "elapsed": null,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2023,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 533,
+          "name": "Villarreal",
+          "logo": "https://media.api-sports.io/football/teams/533.png",
+          "winner": null
+        },
+        "away": {
+          "id": 539,
+          "name": "Levante",
+          "logo": "https://media.api-sports.io/football/teams/539.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 959704,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2022-08-03T17:00:00+00:00",
+        "timestamp": 1659546000,
+        "periods": {
+          "first": 1659546000,
+          "second": 1659549600
+        },
+        "venue": {
+          "id": 6688,
+          "name": "Ciudad Deportiva del Villarreal",
+          "city": "Villarreal"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2022,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 533,
+          "name": "Villarreal",
+          "logo": "https://media.api-sports.io/football/teams/533.png",
+          "winner": true
+        },
+        "away": {
+          "id": 539,
+          "name": "Levante",
+          "logo": "https://media.api-sports.io/football/teams/539.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 721036,
+        "referee": "Adri\u00e1n Cordero",
+        "timezone": "UTC",
+        "date": "2022-04-02T14:15:00+00:00",
+        "timestamp": 1648908900,
+        "periods": {
+          "first": 1648908900,
+          "second": 1648912500
+        },
+        "venue": {
+          "id": 1482,
+          "name": "Estadio Ciudad de Valencia",
+          "city": "Valencia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 140,
+        "name": "La Liga",
+        "country": "Spain",
+        "logo": "https://media.api-sports.io/football/leagues/140.png",
+        "flag": "https://media.api-sports.io/flags/es.svg",
+        "season": 2021,
+        "round": "Regular Season - 30",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 539,
+          "name": "Levante",
+          "logo": "https://media.api-sports.io/football/teams/539.png",
+          "winner": true
+        },
+        "away": {
+          "id": 533,
+          "name": "Villarreal",
+          "logo": "https://media.api-sports.io/football/teams/533.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 720927,
+        "referee": "Alejandro Hern\u00e1ndez",
+        "timezone": "UTC",
+        "date": "2022-01-03T18:00:00+00:00",
+        "timestamp": 1641232800,
+        "periods": {
+          "first": 1641232800,
+          "second": 1641236400
+        },
+        "venue": {
+          "id": 1498,
+          "name": "Estadio de la Cer\u00e1mica",
+          "city": "Villarreal"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 140,
+        "name": "La Liga",
+        "country": "Spain",
+        "logo": "https://media.api-sports.io/football/leagues/140.png",
+        "flag": "https://media.api-sports.io/flags/es.svg",
+        "season": 2021,
+        "round": "Regular Season - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 533,
+          "name": "Villarreal",
+          "logo": "https://media.api-sports.io/football/teams/533.png",
+          "winner": true
+        },
+        "away": {
+          "id": 539,
+          "name": "Levante",
+          "logo": "https://media.api-sports.io/football/teams/539.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 5,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 5,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 748882,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2021-07-29T00:00:00+00:00",
+        "timestamp": 1627516800,
+        "periods": {
+          "first": 1627516800,
+          "second": 1627520400
+        },
+        "venue": {
+          "id": 6688,
+          "name": "Ciudad Deportiva del Villarreal",
+          "city": "Villarreal"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2021,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 533,
+          "name": "Villarreal",
+          "logo": "https://media.api-sports.io/football/teams/533.png",
+          "winner": null
+        },
+        "away": {
+          "id": 539,
+          "name": "Levante",
+          "logo": "https://media.api-sports.io/football/teams/539.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T23:01:34.090713"
+}

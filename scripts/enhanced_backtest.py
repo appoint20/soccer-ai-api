@@ -231,6 +231,30 @@ def get_h2h_features(home_team: str, away_team: str, h2h_cache: Dict) -> Dict:
     }
 
 
+def load_all_historical_data() -> pd.DataFrame:
+    """Load ALL historical data for stats calculation."""
+    print("📊 Loading complete historical dataset...")
+    historical_dir = DATA_DIR / "historical"
+    all_historical = []
+    
+    for excel_file in sorted(historical_dir.glob("*.xlsx")):
+        try:
+            xl = pd.ExcelFile(excel_file)
+            for sheet_name in xl.sheet_names:
+                if sheet_name in LEAGUE_NAMES:
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                    if 'FTR' in df.columns:
+                        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+                        df['League'] = sheet_name
+                        df = df[df['FTR'].notna()]
+                        all_historical.append(df)
+        except Exception:
+            continue
+    
+    combined = pd.concat(all_historical, ignore_index=True) if all_historical else pd.DataFrame()
+    print(f"   Loaded {len(combined)} total historical matches")
+    return combined
+
 async def run_enhanced_backtest(weeks: int = 10, use_gemini: bool = False):
     """Run comprehensive backtest with all features."""
     print("=" * 70)
@@ -246,25 +270,7 @@ async def run_enhanced_backtest(weeks: int = 10, use_gemini: bool = False):
         return
     
     # Load ALL historical data for stats calculation
-    print("📊 Loading complete historical dataset...")
-    historical_dir = DATA_DIR / "historical"
-    all_historical = []
-    for excel_file in sorted(historical_dir.glob("*.xlsx")):
-        try:
-            xl = pd.ExcelFile(excel_file)
-            for sheet_name in xl.sheet_names:
-                if sheet_name in LEAGUE_NAMES:
-                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
-                    if 'FTR' in df.columns:
-                        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-                        df['League'] = sheet_name
-                        df = df[df['FTR'].notna()]
-                        all_historical.append(df)
-        except Exception:
-            continue
-    
-    all_historical_df = pd.concat(all_historical, ignore_index=True) if all_historical else pd.DataFrame()
-    print(f"   Loaded {len(all_historical_df)} total historical matches")
+    all_historical_df = load_all_historical_data()
     
     # Build H2H cache
     print("📊 Building H2H cache...")
@@ -314,8 +320,26 @@ async def run_enhanced_backtest(weeks: int = 10, use_gemini: bool = False):
                 'away': row.get('B365A', row.get('PSA', 3.5)) or 3.5
             }
             
-            # ML prediction
-            ml_result = ml_predictor.predict(home_stats, away_stats, odds, h2h_features)
+            # Calculate congestion BEFORE predictions
+            home_congestion = calculate_fixture_congestion(home_team, league_id, match_date, all_historical_df)
+            away_congestion = calculate_fixture_congestion(away_team, league_id, match_date, all_historical_df)
+            
+            # Monte Carlo prediction
+            mc_result = mc.simulate(
+                home_attack=home_stats.get('avg_goals_scored', 1.3),
+                away_attack=away_stats.get('avg_goals_scored', 1.1),
+                home_defense=home_stats.get('avg_goals_conceded', 1.1),
+                away_defense=away_stats.get('avg_goals_conceded', 1.3)
+            )
+            
+            # ML prediction with MC override
+            ml_result = ml_predictor.predict(home_stats, away_stats, odds, h2h_features, congestion={
+                'home_congestion_index': home_congestion.get('congestion_index', 0),
+                'away_congestion_index': away_congestion.get('congestion_index', 0),
+            }, mc_override={
+                'prediction': mc_result.get('hdw'),
+                'confidence': mc_result.get('hdw_confidence', 0)
+            })
             
             # Trap detection
             trap_result = trap_detector.detect({

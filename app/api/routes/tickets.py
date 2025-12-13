@@ -52,6 +52,7 @@ async def generate_tickets(
         return {"offset": 0, "limit": limit, "total": 0, "items": [], "summary": {"total_stake": 0}}
     
     # Use Gemini AI to generate optimal tickets
+    
     gemini = get_gemini_service()
     tickets = await gemini.generate_tickets(all_matches, min_confidence)
     

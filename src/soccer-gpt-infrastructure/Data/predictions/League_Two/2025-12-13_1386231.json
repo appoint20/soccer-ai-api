@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386231,
+  "date": "2025-12-13",
+  "home_team": "Milton Keynes Dons",
+  "away_team": "Cambridge United",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1348,
+      "name": "Milton Keynes Dons",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-1.5"
+    },
+    "advice": "Double chance : Milton Keynes Dons or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "att": {
+      "home": "69%",
+      "away": "31%"
+    },
+    "def": {
+      "home": "30%",
+      "away": "70%"
+    },
+    "poisson_distribution": {
+      "home": "68%",
+      "away": "32%"
+    },
+    "h2h": {
+      "home": "71%",
+      "away": "29%"
+    },
+    "goals": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "total": {
+      "home": "59.2%",
+      "away": "40.8%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 875927,
+        "referee": "K. Stroud",
+        "timezone": "UTC",
+        "date": "2023-03-11T15:00:00+00:00",
+        "timestamp": 1678546800,
+        "periods": {
+          "first": 1678546800,
+          "second": 1678550400
+        },
+        "venue": {
+          "id": 560,
+          "name": "Stadium mk",
+          "city": "Milton Keynes, Buckinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 36",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1348,
+          "name": "Milton Keynes Dons",
+          "logo": "https://media.api-sports.io/football/teams/1348.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1370,
+          "name": "Cambridge United",
+          "logo": "https://media.api-sports.io/football/teams/1370.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 875502,
+        "referee": "J. Busby",
+        "timezone": "UTC",
+        "date": "2022-07-30T14:00:00+00:00",
+        "timestamp": 1659189600,
+        "periods": {
+          "first": 1659189600,
+          "second": 1659193200
+        },
+        "venue": {
+          "id": 515,
+          "name": "Abbey Stadium",
+          "city": "Cambridge, Cambridgeshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 1",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1370,
+          "name": "Cambridge United",
+          "logo": "https://media.api-sports.io/football/teams/1370.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1348,
+          "name": "Milton Keynes Dons",
+          "logo": "https://media.api-sports.io/football/teams/1348.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 715872,
+        "referee": "S. Barrott",
+        "timezone": "UTC",
+        "date": "2022-03-19T15:00:00+00:00",
+        "timestamp": 1647702000,
+        "periods": {
+          "first": 1647702000,
+          "second": 1647705600
+        },
+        "venue": {
+          "id": 515,
+          "name": "Abbey Stadium",
+          "city": "Cambridge, Cambridgeshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Regular Season - 39",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1370,
+          "name": "Cambridge United",
+          "logo": "https://media.api-sports.io/football/teams/1370.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1348,
+          "name": "Milton Keynes Dons",
+          "logo": "https://media.api-sports.io/football/teams/1348.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 715614,
+        "referee": "S. Stockbridge",
+        "timezone": "UTC",
+        "date": "2021-11-13T15:00:00+00:00",
+        "timestamp": 1636815600,
+        "periods": {
+          "first": 1636815600,
+          "second": 1636819200
+        },
+        "venue": {
+          "id": 560,
+          "name": "Stadium mk",
+          "city": "Milton Keynes, Buckinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Regular Season - 17",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1348,
+          "name": "Milton Keynes Dons",
+          "logo": "https://media.api-sports.io/football/teams/1348.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1370,
+          "name": "Cambridge United",
+          "logo": "https://media.api-sports.io/football/teams/1370.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 603996,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2020-08-15T12:30:00+00:00",
+        "timestamp": 1597494600,
+        "periods": {
+          "first": 1597494600,
+          "second": 1597498200
+        },
+        "venue": {
+          "id": 560,
+          "name": "Stadium mk",
+          "city": "Milton Keynes, Buckinghamshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2020,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1348,
+          "name": "Milton Keynes Dons",
+          "logo": "https://media.api-sports.io/football/teams/1348.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1370,
+          "name": "Cambridge United",
+          "logo": "https://media.api-sports.io/football/teams/1370.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:32.500893"
+}

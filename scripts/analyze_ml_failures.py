@@ -17,6 +17,8 @@ from scripts.enhanced_backtest import (
 )
 from app.core.ml_predictor import get_ml_predictor
 from app.core.fixture_congestion import calculate_fixture_congestion
+from app.core.poisson import PoissonPredictor
+from app.core.monte_carlo import MonteCarloSimulator
 
 DATA_DIR = PROJECT_ROOT / "data"
 REPORT_DIR = Path.home() / ".gemini" / "antigravity" / "brain" / "3d63d768-8366-4689-9f50-05ba8a1be4a6"
@@ -33,7 +35,10 @@ def analyze_ml_failures(weeks=10):
     matches_df = load_historical_matches(weeks)
     all_historical_df = load_all_historical_data()
     h2h_cache = build_h2h_cache(all_historical_df)
+    # Initialize predictors
     ml_predictor = get_ml_predictor()
+    monte_carlo = MonteCarloSimulator()
+    poisson = PoissonPredictor()
     
     print(f"\nAnalyzing {len(matches_df)} matches...")
     
@@ -66,14 +71,45 @@ def analyze_ml_failures(weeks=10):
             'away': row.get('B365A', 3.5) or 3.5
         }
         
-        # ML prediction
-        ml_result = ml_predictor.predict(home_stats, away_stats, odds, h2h_features)
-        predicted = ml_result['prediction']
-        confidence = ml_result['confidence']
-        
         # Get congestion
         home_congestion = calculate_fixture_congestion(home_team, league_id, match_date, all_historical_df)
         away_congestion = calculate_fixture_congestion(away_team, league_id, match_date, all_historical_df)
+
+        # Get ML prediction
+        ml_result = ml_predictor.predict(home_stats, away_stats, odds, h2h_features, congestion={
+             'home_congestion_index': home_congestion.get('congestion_index', 0),
+             'away_congestion_index': away_congestion.get('congestion_index', 0),
+        })
+        predicted = ml_result['prediction']
+        confidence = ml_result['confidence']
+        
+        # Get MC and Poisson predictions for comparison
+        mc_result = monte_carlo.simulate(
+            home_attack=home_stats.get('avg_goals_scored', 1.3),
+            home_defense=home_stats.get('avg_goals_conceded', 1.1),
+            away_attack=away_stats.get('avg_goals_scored', 1.1),
+            away_defense=away_stats.get('avg_goals_conceded', 1.3)
+        )
+        poisson_result = poisson.predict(
+            home_attack=home_stats.get('avg_goals_scored', 1.3),
+            home_defense=home_stats.get('avg_goals_conceded', 1.1),
+            away_attack=away_stats.get('avg_goals_scored', 1.1),
+            away_defense=away_stats.get('avg_goals_conceded', 1.3)
+        )
+        
+        # Convert MC/Poisson results to standard format
+        mc_prediction = mc_result.get('hdw', 'N/A')
+        mc_confidence = mc_result.get('hdw_confidence', 0)
+        
+        # Extract MC BTTS and O2.5 predictions
+        mc_btts_prob = mc_result.get('btts_probability', 0.5)
+        mc_btts_prediction = "Yes" if mc_btts_prob > 0.5 else "No"
+        
+        mc_over25_prob = mc_result.get('over_25_probability', 0.5)
+        mc_over25_prediction = "Over" if mc_over25_prob > 0.5 else "Under"
+        
+        poisson_prediction = poisson_result.get('prediction', 'N/A')
+        poisson_confidence = poisson_result.get('confidence', 0)
         
         if predicted != actual_result:
             # Categorize failure
@@ -89,6 +125,7 @@ def analyze_ml_failures(weeks=10):
             
             category = key_map.get(key, 'other')
             failures[category].append({
+                'match': f"{home_team} vs {away_team}",
                 'home_team': home_team,
                 'away_team': away_team,
                 'predicted': predicted,
@@ -97,11 +134,68 @@ def analyze_ml_failures(weeks=10):
                 'odds_home': odds['home'],
                 'odds_draw': odds['draw'],
                 'odds_away': odds['away'],
-                'home_form': home_stats.get('form', []),
-                'away_form': away_stats.get('form', []),
                 'home_congestion': home_congestion['congestion_index'],
                 'away_congestion': away_congestion['congestion_index'],
-                'h2h_matches': h2h_features.get('matches', 0)
+                'h2h_matches': h2h_features.get('matches', 0),
+                'date': match_date.strftime('%Y-%m-%d'),
+                # Add MC and Poisson predictions
+                'mc_prediction': mc_prediction,
+                'mc_confidence': mc_confidence,
+                'poisson_prediction': poisson_prediction,
+                'poisson_confidence': poisson_confidence,
+                'mc_agreed': mc_prediction == actual_result,
+                'poisson_agreed': poisson_prediction == actual_result
+            })
+            
+        # BTTS Check
+        actual_home_goals = row['FTHG']
+        actual_away_goals = row['FTAG']
+        actual_btts = "Yes" if (actual_home_goals > 0 and actual_away_goals > 0) else "No"
+        
+        btts_pred = ml_result.get('btts', {}).get('prediction', 'Skip')
+        if btts_pred != 'Skip' and btts_pred != actual_btts:
+            failures.setdefault('btts_failures', []).append({
+                'match': f"{home_team} vs {away_team}",
+                'home_team': home_team,
+                'away_team': away_team,
+                'date': match_date.strftime('%Y-%m-%d'),
+                'predicted': btts_pred,
+                'actual': actual_btts,
+                'confidence': ml_result['btts'].get('confidence', 0),
+                'score': f"{int(actual_home_goals)}-{int(actual_away_goals)}",
+                'home_congestion': home_congestion['congestion_index'],
+                'away_congestion': away_congestion['congestion_index'],
+                'h2h_matches': h2h_features.get('matches', 0),
+                'odds_home': odds['home'],
+                'odds_away': odds['away'],
+                # MC comparison
+                'mc_btts_prediction': mc_btts_prediction,
+                'mc_btts_agreed': mc_btts_prediction == actual_btts
+            })
+            
+        # Over 2.5 Check
+        total_goals = actual_home_goals + actual_away_goals
+        actual_o25 = "Over" if total_goals > 2.5 else "Under"
+        
+        o25_pred = ml_result.get('over_25', {}).get('prediction', 'Skip')
+        if o25_pred != 'Skip' and o25_pred != actual_o25:
+            failures.setdefault('over25_failures', []).append({
+                'match': f"{home_team} vs {away_team}",
+                'home_team': home_team,
+                'away_team': away_team,
+                'date': match_date.strftime('%Y-%m-%d'),
+                'predicted': o25_pred,
+                'actual': actual_o25,
+                'confidence': ml_result['over_25'].get('confidence', 0),
+                'score': f"{int(actual_home_goals)}-{int(actual_away_goals)}",
+                'home_congestion': home_congestion['congestion_index'],
+                'away_congestion': away_congestion['congestion_index'],
+                'h2h_matches': h2h_features.get('matches', 0),
+                'odds_home': odds['home'],
+                'odds_away': odds['away'],
+                # MC comparison
+                'mc_over25_prediction': mc_over25_prediction,
+                'mc_over25_agreed': mc_over25_prediction == actual_o25
             })
     
     # Analysis
@@ -177,45 +271,107 @@ def analyze_ml_failures(weeks=10):
     print(f"   - {draw_failures} failures missed draws")
     print(f"   - Action: Improve draw detection with balanced odds analysis (all odds 2.5-3.5)")
     
+    # Model Comparison Analysis
+    print(f"\n6. **Model Comparison (ML vs MC vs Poisson)**")
+    mc_correct = sum(1 for m in cat_matches if m.get('mc_agreed', False))
+    poisson_correct = sum(1 for m in cat_matches if m.get('poisson_agreed', False))
+    
+    print(f"   - When ML failed, MC was correct: {mc_correct}/{len(cat_matches)} ({mc_correct/len(cat_matches)*100:.1f}%)")
+    print(f"   - When ML failed, Poisson was correct: {poisson_correct}/{len(cat_matches)} ({poisson_correct/len(cat_matches)*100:.1f}%)")
+    
+    # Cases where MC/Poisson disagreed with ML's overconfident prediction
+    disagree_mc = [m for m in cat_matches if m.get('mc_prediction') != m['predicted'] and m['confidence'] > 0.7]
+    disagree_poisson = [m for m in cat_matches if m.get('poisson_prediction') != m['predicted'] and m['confidence'] > 0.7]
+    
+    print(f"   - High-confidence ML failures where MC disagreed: {len(disagree_mc)}")
+    print(f"   - High-confidence ML failures where Poisson disagreed: {len(disagree_poisson)}")
+    print(f"   - **Action**: If MC disagrees with overconfident ML (>70%), use MC prediction")
+    
+    # BTTS Comparison
+    if 'btts_failures' in failures:
+        btts_fails = failures['btts_failures']
+        mc_btts_correct = sum(1 for m in btts_fails if m.get('mc_btts_agreed', False))
+        print(f"\n7. **BTTS Failures - MC Comparison**")
+        print(f"   - When ML BTTS failed, MC was correct: {mc_btts_correct}/{len(btts_fails)} ({mc_btts_correct/len(btts_fails)*100:.1f}%)")
+    
+    # Over 2.5 Comparison
+    if 'over25_failures' in failures:
+        o25_fails = failures['over25_failures']
+        mc_o25_correct = sum(1 for m in o25_fails if m.get('mc_over25_agreed', False))
+        print(f"\n8. **Over 2.5 Failures - MC Comparison**")
+        print(f"   - When ML O2.5 failed, MC was correct: {mc_o25_correct}/{len(o25_fails)} ({mc_o25_correct/len(o25_fails)*100:.1f}%)")
+    
     # Generate detailed report
     report_path = REPORT_DIR / "ml_failure_analysis.md"
     
+    # Collect only HDW failures for the main list
+    all_hdw_failures = []
+    for cat, matches in failures.items():
+        if cat not in ['btts_failures', 'over25_failures']:
+            all_hdw_failures.extend(matches)
+            
     with open(report_path, 'w') as f:
-        f.write("# ML Model Failure Analysis\\n\\n")
-        f.write(f"**Period**: {weeks} weeks\\n")
-        f.write(f"**Total Matches**: {total_matches}\\n")
-        f.write(f"**Failures**: {total_failures} ({total_failures/total_matches*100:.1f}%)\\n\\n")
+        f.write("# ML Model Failure Analysis\n\n")
+        f.write(f"**Period**: {weeks} weeks\n")
+        f.write(f"**Total Matches**: {total_matches}\n")
+        f.write(f"**HDW Failures**: {len(all_hdw_failures)} ({(len(all_hdw_failures)/total_matches)*100:.1f}%)\n\n")
         
-        f.write("## Failure Categories\\n\\n")
-        f.write("| Category | Count | % of Failures | Avg Confidence |\\n")
-        f.write("|----------|-------|---------------|----------------|\\n")
+        f.write("## Failure Categories\n\n")
+        f.write("| Category | Count | % of Failures | Avg Confidence |\n")
+        f.write("|----------|-------|---------------|----------------|\n")
         
         for category, matches in sorted(failures.items(), key=lambda x: len(x[1]), reverse=True):
             if matches:
                 count = len(matches)
-                pct = count / total_failures * 100
                 avg_conf = np.mean([m['confidence'] for m in matches])
-                f.write(f"| {category.replace('_', ' ').title()} | {count} | {pct:.1f}% | {avg_conf:.1%} |\\n")
-        
-        f.write(f"\\n## Key Findings\\n\\n")
-        f.write(f"### 1. Fixture Congestion Impact\\n")
-        f.write(f"- **{len(congested_teams)}** failures ({len(congested_teams)/total_failures*100:.1f}%) involved teams with congestion_index >= 3\\n")
-        f.write(f"- Teams playing 2+ matches in 7 days are more unpredictable\\n\\n")
-        
-        f.write(f"### 2. H2H Data Quality\\n")
-        f.write(f"- **{len(poor_h2h)}** failures ({len(poor_h2h)/total_failures*100:.1f}%) had < 3 H2H matches\\n")
-        f.write(f"- Predictions less reliable without H2H context\\n\\n")
-        
         f.write(f"### 3. Overconfidence\\n")
-        f.write(f"- **{len(high_conf_failures)}** high-confidence failures (>70%)\\n")
-        f.write(f"- Model sometimes too confident in uncertain matchups\\n\\n")
-        
-        f.write(f"## 🎯 Actionable Improvements\\n\\n")
         f.write(f"1. **Congestion Penalty**: Reduce confidence by 10-15% when congestion >= 3\\n")
         f.write(f"2. **H2H Threshold**: Lower confidence by 5-10% when H2H < 3 matches\\n")
         f.write(f"3. **Confidence Cap**: Maximum 85% confidence (not 100%)\\n")
         f.write(f"4. **Odds Check**: If ML disagrees with bookmaker by >20%, reduce confidence\\n")
         f.write(f"5. **Draw Detection**: Better identify balanced matches (all odds 2.5-3.5)\\n")
+        
+        f.write(f"\n## Detailed List of Failures (HDW)\n\n")
+        f.write("| Date | Home | Away | ML Pred | Actual | ML Conf | MC Pred | Poisson Pred | Odds (H/D/A) |\n")
+        f.write("|------|------|------|---------|--------|---------|---------|--------------|--------------||\n")
+        
+        # Collect only HDW failures for the main list
+        all_failures = []
+        for cat, matches in failures.items():
+            if cat not in ['btts_failures', 'over25_failures']:
+                all_failures.extend(matches)
+        
+        # Sort by confidence (highest first)
+        all_failures.sort(key=lambda x: x['confidence'], reverse=True)
+            
+        for m in all_failures:
+            mc_symbol = "✓" if m.get('mc_agreed', False) else "✗"
+            poisson_symbol = "✓" if m.get('poisson_agreed', False) else "✗"
+            f.write(f"| {m['date']} | {m['home_team']} | {m['away_team']} | {m['predicted']} | {m['actual']} | {m['confidence']:.1%} | {m.get('mc_prediction', 'N/A')} {mc_symbol} | {m.get('poisson_prediction', 'N/A')} {poisson_symbol} | {m['odds_home']}/{m['odds_draw']}/{m['odds_away']} |\\n")
+
+        # BTTS Failures
+        f.write(f"\n## BTTS Failures\n\n")
+        f.write("| Date | Match | ML Pred | Actual | ML Conf | MC Pred | Score |\n")
+        f.write("|------|-------|---------|--------|---------|---------|-------|\\n")
+        
+        btts_fails = failures.get('btts_failures', [])
+        btts_fails.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        for m in btts_fails[:50]: # Top 50
+             mc_symbol = "✓" if m.get('mc_btts_agreed', False) else "✗"
+             f.write(f"| {m['date']} | {m['match']} | {m['predicted']} | {m['actual']} | {m['confidence']:.1%} | {m.get('mc_btts_prediction', 'N/A')} {mc_symbol} | {m['score']} |\n")
+             
+        # Over 2.5 Failures
+        f.write(f"\n## Over 2.5 Goals Failures\n\n")
+        f.write("| Date | Match | Pred | Actual | Conf | Score |\\n")
+        f.write("|------|-------|------|--------|------|-------|\\n")
+        
+        o25_fails = failures.get('over25_failures', [])
+        o25_fails.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        for m in o25_fails[:50]: # Top 50
+             f.write(f"| {m['date']} | {m['match']} | {m['predicted']} | {m['actual']} | {m['confidence']:.1%} | {m['score']} |\\n")
+
     
     print(f"\\n📄 Detailed report saved: {report_path}")
     print("\\n" + "=" * 70)

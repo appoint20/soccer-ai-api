@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1419745,
+  "date": "2025-12-13",
+  "home_team": "Reggiana",
+  "away_team": "Padova",
+  "league": "Serie_B",
+  "api_prediction": {
+    "winner": {
+      "id": 880,
+      "name": "Reggiana",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": "-3.5",
+    "goals": {
+      "home": "-1.5",
+      "away": "-1.5"
+    },
+    "advice": "Combo Double chance : Reggiana or draw and -3.5 goals",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "att": {
+      "home": "57%",
+      "away": "43%"
+    },
+    "def": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "poisson_distribution": {
+      "home": "59%",
+      "away": "41%"
+    },
+    "h2h": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "goals": {
+      "home": "60%",
+      "away": "40%"
+    },
+    "total": {
+      "home": "56.7%",
+      "away": "43.3%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 238327,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2020-04-26T13:00:00+00:00",
+        "timestamp": 1587906000,
+        "periods": {
+          "first": null,
+          "second": null
+        },
+        "venue": {
+          "id": 2764,
+          "name": "Stadio Comunale Euganeo",
+          "city": "Padova"
+        },
+        "status": {
+          "long": "Match Postponed",
+          "short": "PST",
+          "elapsed": null,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 942,
+        "name": "Serie C - Girone B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/942.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2019,
+        "round": "Girone B - 38",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 870,
+          "name": "Padova",
+          "logo": "https://media.api-sports.io/football/teams/870.png",
+          "winner": null
+        },
+        "away": {
+          "id": 880,
+          "name": "Reggiana",
+          "logo": "https://media.api-sports.io/football/teams/880.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 238159,
+        "referee": "F. Natilla",
+        "timezone": "UTC",
+        "date": "2019-12-16T20:00:00+00:00",
+        "timestamp": 1576526400,
+        "periods": {
+          "first": 1576526400,
+          "second": 1576530000
+        },
+        "venue": {
+          "id": 935,
+          "name": "MAPEI Stadium - Citt\u00e0 del Tricolore",
+          "city": "Reggio nell'Emilia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 942,
+        "name": "Serie C - Girone B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/942.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2019,
+        "round": "Girone B - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 880,
+          "name": "Reggiana",
+          "logo": "https://media.api-sports.io/football/teams/880.png",
+          "winner": true
+        },
+        "away": {
+          "id": 870,
+          "name": "Padova",
+          "logo": "https://media.api-sports.io/football/teams/870.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 352959,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2018-04-29T12:30:00+00:00",
+        "timestamp": 1525005000,
+        "periods": {
+          "first": 1525005000,
+          "second": 1525008600
+        },
+        "venue": {
+          "id": null,
+          "name": "MAPEI Stadium - Citt\u00e0 del Tricolore (Reggio nell'Emilia)",
+          "city": null
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 138,
+        "name": "Serie C",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/138.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2017,
+        "round": "Regular Season - 37",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 880,
+          "name": "Reggiana",
+          "logo": "https://media.api-sports.io/football/teams/880.png",
+          "winner": null
+        },
+        "away": {
+          "id": 870,
+          "name": "Padova",
+          "logo": "https://media.api-sports.io/football/teams/870.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 352791,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2017-12-09T19:30:00+00:00",
+        "timestamp": 1512847800,
+        "periods": {
+          "first": 1512847800,
+          "second": 1512851400
+        },
+        "venue": {
+          "id": null,
+          "name": "Stadio Comunale Euganeo (Padova)",
+          "city": null
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 138,
+        "name": "Serie C",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/138.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2017,
+        "round": "Regular Season - 18",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 870,
+          "name": "Padova",
+          "logo": "https://media.api-sports.io/football/teams/870.png",
+          "winner": null
+        },
+        "away": {
+          "id": 880,
+          "name": "Reggiana",
+          "logo": "https://media.api-sports.io/football/teams/880.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 351751,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2017-03-05T15:30:00+00:00",
+        "timestamp": 1488727800,
+        "periods": {
+          "first": 1488727800,
+          "second": 1488731400
+        },
+        "venue": {
+          "id": null,
+          "name": "MAPEI Stadium - Citt\u00e0 del Tricolore (Reggio nell'Emilia)",
+          "city": null
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 138,
+        "name": "Serie C",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/138.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2016,
+        "round": "Regular Season - 28",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 880,
+          "name": "Reggiana",
+          "logo": "https://media.api-sports.io/football/teams/880.png",
+          "winner": null
+        },
+        "away": {
+          "id": 870,
+          "name": "Padova",
+          "logo": "https://media.api-sports.io/football/teams/870.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:06:10.015280"
+}

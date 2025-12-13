@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1389268,
+  "date": "2025-12-12",
+  "home_team": "Laval",
+  "away_team": "Dunkerque",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 1304,
+      "name": "Dunkerque",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Dunkerque",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "35%",
+      "away": "65%"
+    },
+    "att": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "def": {
+      "home": "30%",
+      "away": "70%"
+    },
+    "poisson_distribution": {
+      "home": "22%",
+      "away": "78%"
+    },
+    "h2h": {
+      "home": "62%",
+      "away": "38%"
+    },
+    "goals": {
+      "home": "60%",
+      "away": "40%"
+    },
+    "total": {
+      "home": "40.3%",
+      "away": "59.7%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1212732,
+        "referee": "F. Benchabane",
+        "timezone": "UTC",
+        "date": "2025-05-02T18:00:00+00:00",
+        "timestamp": 1746208800,
+        "periods": {
+          "first": 1746208800,
+          "second": 1746212400
+        },
+        "venue": {
+          "id": 646,
+          "name": "Stade Marcel-Tribut",
+          "city": "Dunkerque"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 5
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2024,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1304,
+          "name": "Dunkerque",
+          "logo": "https://media.api-sports.io/football/teams/1304.png",
+          "winner": null
+        },
+        "away": {
+          "id": 433,
+          "name": "Laval",
+          "logo": "https://media.api-sports.io/football/teams/433.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1212515,
+        "referee": "T. Bouille",
+        "timezone": "UTC",
+        "date": "2024-10-18T18:00:00+00:00",
+        "timestamp": 1729274400,
+        "periods": {
+          "first": 1729274400,
+          "second": 1729278000
+        },
+        "venue": {
+          "id": 651,
+          "name": "Stade Francis Le Basser",
+          "city": "Laval"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2024,
+        "round": "Regular Season - 9",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 433,
+          "name": "Laval",
+          "logo": "https://media.api-sports.io/football/teams/433.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1304,
+          "name": "Dunkerque",
+          "logo": "https://media.api-sports.io/football/teams/1304.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1046165,
+        "referee": "M. Lesage",
+        "timezone": "UTC",
+        "date": "2024-03-16T18:00:00+00:00",
+        "timestamp": 1710612000,
+        "periods": {
+          "first": 1710612000,
+          "second": 1710615600
+        },
+        "venue": {
+          "id": 651,
+          "name": "Stade Francis Le Basser",
+          "city": "Laval"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 433,
+          "name": "Laval",
+          "logo": "https://media.api-sports.io/football/teams/433.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1304,
+          "name": "Dunkerque",
+          "logo": "https://media.api-sports.io/football/teams/1304.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1046026,
+        "referee": "A. Valnet",
+        "timezone": "UTC",
+        "date": "2023-11-25T18:00:00+00:00",
+        "timestamp": 1700935200,
+        "periods": {
+          "first": 1700935200,
+          "second": 1700938800
+        },
+        "venue": {
+          "id": 646,
+          "name": "Stade Marcel-Tribut",
+          "city": "Dunkerque"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1304,
+          "name": "Dunkerque",
+          "logo": "https://media.api-sports.io/football/teams/1304.png",
+          "winner": false
+        },
+        "away": {
+          "id": 433,
+          "name": "Laval",
+          "logo": "https://media.api-sports.io/football/teams/433.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 210883,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2020-03-13T00:00:00+00:00",
+        "timestamp": 1584057600,
+        "periods": {
+          "first": null,
+          "second": null
+        },
+        "venue": {
+          "id": null,
+          "name": "Stade Francis Le Basser (Laval)",
+          "city": null
+        },
+        "status": {
+          "long": "Match Cancelled",
+          "short": "CANC",
+          "elapsed": null,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 63,
+        "name": "National 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/63.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2019,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 433,
+          "name": "Laval",
+          "logo": "https://media.api-sports.io/football/teams/433.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1304,
+          "name": "Dunkerque",
+          "logo": "https://media.api-sports.io/football/teams/1304.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T23:00:10.296143"
+}

@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1389271,
+  "date": "2025-12-12",
+  "home_team": "PAU",
+  "away_team": "Amiens",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 87,
+      "name": "Amiens",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Amiens",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "100%",
+      "away": "0%"
+    },
+    "att": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "def": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "poisson_distribution": {
+      "home": "51%",
+      "away": "49%"
+    },
+    "h2h": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "goals": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "total": {
+      "home": "46.2%",
+      "away": "53.8%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1212728,
+        "referee": "G. Kubler",
+        "timezone": "UTC",
+        "date": "2025-05-02T18:00:00+00:00",
+        "timestamp": 1746208800,
+        "periods": {
+          "first": 1746208800,
+          "second": 1746212400
+        },
+        "venue": {
+          "id": 633,
+          "name": "Stade Cr\u00e9dit Agricole de la Licorne",
+          "city": "Amiens"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2024,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 87,
+          "name": "Amiens",
+          "logo": "https://media.api-sports.io/football/teams/87.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1297,
+          "name": "PAU",
+          "logo": "https://media.api-sports.io/football/teams/1297.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1212524,
+        "referee": "F. Benchabane",
+        "timezone": "UTC",
+        "date": "2024-10-25T18:00:00+00:00",
+        "timestamp": 1729879200,
+        "periods": {
+          "first": 1729879200,
+          "second": 1729882800
+        },
+        "venue": {
+          "id": 11898,
+          "name": "Stade Nouste Camp",
+          "city": "Bizanos"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 9
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2024,
+        "round": "Regular Season - 10",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1297,
+          "name": "PAU",
+          "logo": "https://media.api-sports.io/football/teams/1297.png",
+          "winner": false
+        },
+        "away": {
+          "id": 87,
+          "name": "Amiens",
+          "logo": "https://media.api-sports.io/football/teams/87.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1046170,
+        "referee": "A. Taleb",
+        "timezone": "UTC",
+        "date": "2024-03-30T18:00:00+00:00",
+        "timestamp": 1711821600,
+        "periods": {
+          "first": 1711821600,
+          "second": 1711825200
+        },
+        "venue": {
+          "id": 633,
+          "name": "Stade Cr\u00e9dit Agricole de la Licorne",
+          "city": "Amiens"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 30",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 87,
+          "name": "Amiens",
+          "logo": "https://media.api-sports.io/football/teams/87.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1297,
+          "name": "PAU",
+          "logo": "https://media.api-sports.io/football/teams/1297.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1045962,
+        "referee": "A. Valnet",
+        "timezone": "UTC",
+        "date": "2023-09-30T17:00:00+00:00",
+        "timestamp": 1696093200,
+        "periods": {
+          "first": 1696093200,
+          "second": 1696096800
+        },
+        "venue": {
+          "id": 11898,
+          "name": "Stade Nouste Camp",
+          "city": "Bizanos"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 9",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1297,
+          "name": "PAU",
+          "logo": "https://media.api-sports.io/football/teams/1297.png",
+          "winner": true
+        },
+        "away": {
+          "id": 87,
+          "name": "Amiens",
+          "logo": "https://media.api-sports.io/football/teams/87.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 872110,
+        "referee": "A. Kherradji",
+        "timezone": "UTC",
+        "date": "2023-03-04T18:00:00+00:00",
+        "timestamp": 1677952800,
+        "periods": {
+          "first": 1677952800,
+          "second": 1677956400
+        },
+        "venue": {
+          "id": 633,
+          "name": "Stade Cr\u00e9dit Agricole de la Licorne",
+          "city": "Amiens"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2022,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 87,
+          "name": "Amiens",
+          "logo": "https://media.api-sports.io/football/teams/87.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1297,
+          "name": "PAU",
+          "logo": "https://media.api-sports.io/football/teams/1297.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T23:00:11.975719"
+}

@@ -167,8 +167,12 @@ class MLPredictor:
             vector = list(features.values())
         return vector
     
-    def predict(self, home_stats: Dict, away_stats: Dict, odds: Dict = None, h2h: Dict = None) -> Dict:
-        """Make prediction using ML models."""
+    def predict(self, home_stats: Dict, away_stats: Dict, odds: Dict = None, h2h: Dict = None, congestion: Dict = None, mc_override: Dict = None) -> Dict:
+        """Make prediction using ML models.
+        
+        Args:
+            mc_override: Dict with 'prediction' and 'confidence' from Monte Carlo to override ML if needed
+        """
         if not self.hdw_model:
             return self._fallback_prediction(home_stats, away_stats)
         
@@ -185,11 +189,61 @@ class MLPredictor:
             # Predict HDW
             proba = self.hdw_model.predict_proba(features)[0]
             pred_idx = np.argmax(proba)
+            raw_confidence = float(max(proba))
             
             if self.encoder:
                 prediction = self.encoder.inverse_transform([pred_idx])[0]
             else:
                 prediction = ['A', 'D', 'H'][pred_idx]
+            
+            # --- CONFIDENCE CALIBRATION ---
+            confidence = raw_confidence
+            
+            # 1. Congestion Penalty
+            if congestion:
+                home_cong = congestion.get('home_congestion_index', 0)
+                away_cong = congestion.get('away_congestion_index', 0)
+                if home_cong >= 3 or away_cong >= 3:
+                    confidence -= 0.15 # Reduce by 15%
+            
+            # 2. H2H Threshold
+            if h2h and h2h.get('matches', 0) < 3:
+                confidence -= 0.10 # Reduce by 10%
+                
+            # 3. Odds Check (Disagreement with Bookmaker)
+            if odds:
+                # Calculate implied probabilities
+                imp_h = 1.0 / odds.get('home', 2.0)
+                imp_d = 1.0 / odds.get('draw', 3.3)
+                imp_a = 1.0 / odds.get('away', 3.5)
+                
+                bookie_max = max(imp_h, imp_d, imp_a)
+                bookie_pred = 'H' if imp_h == bookie_max else ('D' if imp_d == bookie_max else 'A')
+                
+                # If ML predicts H/A but Bookie odds > 2.5 (Implied < 40%)
+                # Or just general disagreement check
+                if prediction == 'H' and odds.get('home', 2.0) > 2.5:
+                    confidence -= 0.10
+                elif prediction == 'A' and odds.get('away', 3.5) > 2.5:
+                    confidence -= 0.10
+            
+            # 4. MC Override Logic (NEW!)
+            mc_overridden = False
+            if mc_override and raw_confidence > 0.85:  # Only override when ML is VERY confident
+                mc_prediction = mc_override.get('prediction')
+                mc_confidence = mc_override.get('confidence', 0)
+                
+                # If MC disagrees with ML and ML is overconfident, use MC instead
+                if mc_prediction and mc_prediction != prediction:
+                    prediction = mc_prediction
+                    confidence = mc_confidence
+                    mc_overridden = True
+            
+            # 5. Confidence Cap
+            confidence = min(confidence, 0.85)
+            
+            # Ensure confidence min
+            confidence = max(confidence, 0.34) # At least better than random
                 
             # Predict Over/Under 2.5
             over25_res = {"prediction": "Skip", "confidence": 0.0}
@@ -219,13 +273,15 @@ class MLPredictor:
             
             return {
                 'prediction': prediction,
-                'confidence': float(max(proba)),
+                'confidence': confidence,
+                'raw_confidence': raw_confidence,
+                'mc_overridden': mc_overridden,
                 'home_win': float(proba[2]) if len(proba) > 2 else 0.33,
                 'draw': float(proba[1]) if len(proba) > 1 else 0.33,
                 'away_win': float(proba[0]) if len(proba) > 0 else 0.33,
                 'hdw': {
                     'prediction': prediction,
-                    'confidence': float(max(proba))
+                    'confidence': confidence
                 },
                 'over_25': over25_res,
                 'btts': btts_res

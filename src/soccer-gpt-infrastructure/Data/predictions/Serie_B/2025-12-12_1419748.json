@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1419748,
+  "date": "2025-12-12",
+  "home_team": "Palermo",
+  "away_team": "Sampdoria",
+  "league": "Serie_B",
+  "api_prediction": {
+    "winner": {
+      "id": 522,
+      "name": "Palermo",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-1.5"
+    },
+    "advice": "Winner : Palermo",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "63%",
+      "away": "38%"
+    },
+    "att": {
+      "home": "74%",
+      "away": "26%"
+    },
+    "def": {
+      "home": "70%",
+      "away": "30%"
+    },
+    "poisson_distribution": {
+      "home": "85%",
+      "away": "15%"
+    },
+    "h2h": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "goals": {
+      "home": "55%",
+      "away": "45%"
+    },
+    "total": {
+      "home": "66.2%",
+      "away": "34.0%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1234917,
+        "referee": "D. Perenzoni",
+        "timezone": "UTC",
+        "date": "2025-03-08T16:15:00+00:00",
+        "timestamp": 1741450500,
+        "periods": {
+          "first": 1741450500,
+          "second": 1741454100
+        },
+        "venue": {
+          "id": 905,
+          "name": "Stadio Comunale Luigi Ferraris",
+          "city": "Genova"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 4
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2024,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 498,
+          "name": "Sampdoria",
+          "logo": "https://media.api-sports.io/football/teams/498.png",
+          "winner": null
+        },
+        "away": {
+          "id": 522,
+          "name": "Palermo",
+          "logo": "https://media.api-sports.io/football/teams/522.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1234767,
+        "referee": "D. Doveri",
+        "timezone": "UTC",
+        "date": "2024-11-24T16:15:00+00:00",
+        "timestamp": 1732464900,
+        "periods": {
+          "first": 1732464900,
+          "second": 1732468500
+        },
+        "venue": {
+          "id": 920,
+          "name": "Stadio Renzo Barbera",
+          "city": "Palermo"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 5
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2024,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 522,
+          "name": "Palermo",
+          "logo": "https://media.api-sports.io/football/teams/522.png",
+          "winner": null
+        },
+        "away": {
+          "id": 498,
+          "name": "Sampdoria",
+          "logo": "https://media.api-sports.io/football/teams/498.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1199924,
+        "referee": "A. Colombo",
+        "timezone": "UTC",
+        "date": "2024-05-17T18:30:00+00:00",
+        "timestamp": 1715970600,
+        "periods": {
+          "first": 1715970600,
+          "second": 1715974200
+        },
+        "venue": {
+          "id": 920,
+          "name": "Stadio Renzo Barbera",
+          "city": "Palermo"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Promotion Play-offs - Qualifying Round",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 522,
+          "name": "Palermo",
+          "logo": "https://media.api-sports.io/football/teams/522.png",
+          "winner": true
+        },
+        "away": {
+          "id": 498,
+          "name": "Sampdoria",
+          "logo": "https://media.api-sports.io/football/teams/498.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1063286,
+        "referee": "A. Giua",
+        "timezone": "UTC",
+        "date": "2024-04-06T14:15:00+00:00",
+        "timestamp": 1712412900,
+        "periods": {
+          "first": 1712412900,
+          "second": 1712416500
+        },
+        "venue": {
+          "id": 920,
+          "name": "Stadio Renzo Barbera",
+          "city": "Palermo"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 522,
+          "name": "Palermo",
+          "logo": "https://media.api-sports.io/football/teams/522.png",
+          "winner": null
+        },
+        "away": {
+          "id": 498,
+          "name": "Sampdoria",
+          "logo": "https://media.api-sports.io/football/teams/498.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1063109,
+        "referee": "D. Doveri",
+        "timezone": "UTC",
+        "date": "2023-11-04T15:15:00+00:00",
+        "timestamp": 1699110900,
+        "periods": {
+          "first": 1699110900,
+          "second": 1699114500
+        },
+        "venue": {
+          "id": 905,
+          "name": "Stadio Comunale Luigi Ferraris",
+          "city": "Genova"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Regular Season - 12",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 498,
+          "name": "Sampdoria",
+          "logo": "https://media.api-sports.io/football/teams/498.png",
+          "winner": true
+        },
+        "away": {
+          "id": 522,
+          "name": "Palermo",
+          "logo": "https://media.api-sports.io/football/teams/522.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:58:39.715180"
+}

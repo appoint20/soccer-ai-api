@@ -48,11 +48,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API v1 routes (exactly 4)
+# Import additional routes
+from app.api.routes import enhanced
+
+# API v1 routes
 app.include_router(leagues.router, prefix=f"/api/{API_VERSION}", tags=["Leagues"])
 app.include_router(analyze.router, prefix=f"/api/{API_VERSION}", tags=["Analyze"])
 app.include_router(tickets.router, prefix=f"/api/{API_VERSION}", tags=["Tickets"])
 app.include_router(backtest.router, prefix=f"/api/{API_VERSION}", tags=["Backtest"])
+app.include_router(enhanced.router, prefix=f"/api/{API_VERSION}", tags=["Enhanced Predictions"])
 
 
 @app.get("/")

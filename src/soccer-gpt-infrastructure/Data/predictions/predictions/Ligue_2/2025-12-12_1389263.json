@@ -1,0 +1,339 @@
+{
+  "fixture_id": 1389263,
+  "date": "2025-12-12",
+  "home_team": "Annecy",
+  "away_team": "Le Mans",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 1298,
+      "name": "Le Mans",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Le Mans",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "39%",
+      "away": "61%"
+    },
+    "att": {
+      "home": "55%",
+      "away": "45%"
+    },
+    "def": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "poisson_distribution": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "h2h": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "goals": {
+      "home": "47%",
+      "away": "53%"
+    },
+    "total": {
+      "home": "44.2%",
+      "away": "55.8%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 735157,
+        "referee": "R. Delpech",
+        "timezone": "UTC",
+        "date": "2022-04-08T17:00:00+00:00",
+        "timestamp": 1649437200,
+        "periods": {
+          "first": 1649437200,
+          "second": 1649440800
+        },
+        "venue": {
+          "id": 653,
+          "name": "MMArena",
+          "city": "Le Mans"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 63,
+        "name": "National 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/63.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2021,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1298,
+          "name": "Le Mans",
+          "logo": "https://media.api-sports.io/football/teams/1298.png",
+          "winner": null
+        },
+        "away": {
+          "id": 3012,
+          "name": "Annecy",
+          "logo": "https://media.api-sports.io/football/teams/3012.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 735006,
+        "referee": "R. Chapapria",
+        "timezone": "UTC",
+        "date": "2021-11-05T18:00:00+00:00",
+        "timestamp": 1636135200,
+        "periods": {
+          "first": 1636135200,
+          "second": 1636138800
+        },
+        "venue": {
+          "id": 1979,
+          "name": "Parc des Sports",
+          "city": "Annecy"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 63,
+        "name": "National 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/63.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2021,
+        "round": "Regular Season - 13",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 3012,
+          "name": "Annecy",
+          "logo": "https://media.api-sports.io/football/teams/3012.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1298,
+          "name": "Le Mans",
+          "logo": "https://media.api-sports.io/football/teams/1298.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 572257,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2021-05-15T16:00:00+00:00",
+        "timestamp": 1621094400,
+        "periods": {
+          "first": 1621094400,
+          "second": 1621098000
+        },
+        "venue": {
+          "id": 653,
+          "name": "MMArena",
+          "city": "Le Mans"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 63,
+        "name": "National 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/63.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2020,
+        "round": "Regular Season - 34",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1298,
+          "name": "Le Mans",
+          "logo": "https://media.api-sports.io/football/teams/1298.png",
+          "winner": true
+        },
+        "away": {
+          "id": 3012,
+          "name": "Annecy",
+          "logo": "https://media.api-sports.io/football/teams/3012.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 571959,
+        "referee": "L. Genest",
+        "timezone": "UTC",
+        "date": "2020-08-21T18:00:00+00:00",
+        "timestamp": 1598032800,
+        "periods": {
+          "first": 1598032800,
+          "second": 1598036400
+        },
+        "venue": {
+          "id": 12099,
+          "name": "Stade des Grangettes",
+          "city": "Rumilly"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 63,
+        "name": "National 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/63.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2020,
+        "round": "Regular Season - 1",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 3012,
+          "name": "Annecy",
+          "logo": "https://media.api-sports.io/football/teams/3012.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1298,
+          "name": "Le Mans",
+          "logo": "https://media.api-sports.io/football/teams/1298.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 3
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T23:00:15.368200"
+}

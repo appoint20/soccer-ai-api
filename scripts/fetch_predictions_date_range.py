@@ -169,23 +169,19 @@ class PredictionsFetcher:
                 prediction = self.fetch_predictions(fixture_id)
                 
                 if prediction:
-                    # Combine fixture info with prediction
+                    # Save the COMPLETE API-Football prediction response
+                    # This includes: predictions, league, teams (with detailed stats), 
+                    # comparison (poisson, h2h, etc.), and h2h matches
                     result = {
                         "fixture_id": fixture_id,
                         "date": date_str,
                         "home_team": home_team,
                         "away_team": away_team,
                         "league": folder_name,
-                        "api_prediction": {
-                            "winner": prediction.get('predictions', {}).get('winner', {}),
-                            "win_or_draw": prediction.get('predictions', {}).get('win_or_draw'),
-                            "under_over": prediction.get('predictions', {}).get('under_over'),
-                            "goals": prediction.get('predictions', {}).get('goals', {}),
-                            "advice": prediction.get('predictions', {}).get('advice'),
-                            "percent": prediction.get('predictions', {}).get('percent', {})
-                        },
-                        "teams_comparison": prediction.get('comparison', {}),
-                        "h2h": prediction.get('h2h', [])[:5],  # Last 5 H2H
+                        "api_prediction": prediction.get('predictions', {}),
+                        "teams": prediction.get('teams', {}),  # Full team stats
+                        "teams_comparison": prediction.get('comparison', {}),  # Poisson, H2H percentages
+                        "h2h": prediction.get('h2h', []),  # Head-to-head matches
                         "fetched_at": datetime.now().isoformat()
                     }
                     

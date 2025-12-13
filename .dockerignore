@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Tests and docs (not needed in container)
+tests/
+docs/
+
+# IMPORTANT: Force include data files (override .gitignore)
+# Even though they're gitignored, we NEED them in Docker
+!data/
+!data/upcoming/
+!data/upcoming/*.csv
+!data/predictions/
+!data/predictions/**/*.json
+!data/historical/
+!data/historical/*.xlsx

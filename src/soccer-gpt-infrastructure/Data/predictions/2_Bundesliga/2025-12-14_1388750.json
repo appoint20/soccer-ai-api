@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1388750,
+  "date": "2025-12-14",
+  "home_team": "SV Darmstadt 98",
+  "away_team": "Preu\u00dfen M\u00fcnster",
+  "league": "2_Bundesliga",
+  "api_prediction": {
+    "winner": {
+      "id": 181,
+      "name": "SV Darmstadt 98",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : SV Darmstadt 98 or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "att": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "def": {
+      "home": "38%",
+      "away": "62%"
+    },
+    "poisson_distribution": {
+      "home": "77%",
+      "away": "23%"
+    },
+    "h2h": {
+      "home": "75%",
+      "away": "25%"
+    },
+    "goals": {
+      "home": "88%",
+      "away": "13%"
+    },
+    "total": {
+      "home": "67.2%",
+      "away": "33.0%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1226442,
+        "referee": "L. Benen",
+        "timezone": "UTC",
+        "date": "2025-04-26T11:00:00+00:00",
+        "timestamp": 1745665200,
+        "periods": {
+          "first": 1745665200,
+          "second": 1745668800
+        },
+        "venue": {
+          "id": 737,
+          "name": "Preu\u00dfen-Stadion",
+          "city": "M\u00fcnster"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 9
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 31",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1313,
+          "name": "Preu\u00dfen M\u00fcnster",
+          "logo": "https://media.api-sports.io/football/teams/1313.png",
+          "winner": null
+        },
+        "away": {
+          "id": 181,
+          "name": "SV Darmstadt 98",
+          "logo": "https://media.api-sports.io/football/teams/181.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1226283,
+        "referee": "T. Welz",
+        "timezone": "UTC",
+        "date": "2024-11-30T19:30:00+00:00",
+        "timestamp": 1732995000,
+        "periods": {
+          "first": 1732995000,
+          "second": 1732998600
+        },
+        "venue": {
+          "id": 705,
+          "name": "Merck-Stadion am B\u00f6llenfalltor",
+          "city": "Darmstadt"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 181,
+          "name": "SV Darmstadt 98",
+          "logo": "https://media.api-sports.io/football/teams/181.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1313,
+          "name": "Preu\u00dfen M\u00fcnster",
+          "logo": "https://media.api-sports.io/football/teams/1313.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1203412,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2024-07-06T11:00:00+00:00",
+        "timestamp": 1720263600,
+        "periods": {
+          "first": null,
+          "second": null
+        },
+        "venue": {
+          "id": null,
+          "name": "TBC",
+          "city": "TBC"
+        },
+        "status": {
+          "long": "Match Cancelled",
+          "short": "Canc",
+          "elapsed": null,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2024,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1313,
+          "name": "Preu\u00dfen M\u00fcnster",
+          "logo": "https://media.api-sports.io/football/teams/1313.png",
+          "winner": null
+        },
+        "away": {
+          "id": 181,
+          "name": "SV Darmstadt 98",
+          "logo": "https://media.api-sports.io/football/teams/181.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 558926,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2014-04-05T12:00:00+00:00",
+        "timestamp": 1396699200,
+        "periods": {
+          "first": 1396699200,
+          "second": 1396702800
+        },
+        "venue": {
+          "id": 737,
+          "name": "Preu\u00dfen-Stadion",
+          "city": "M\u00fcnster"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 80,
+        "name": "3. Liga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/80.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2013,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1313,
+          "name": "Preussen Munster",
+          "logo": "https://media.api-sports.io/football/teams/1313.png",
+          "winner": false
+        },
+        "away": {
+          "id": 181,
+          "name": "SV Darmstadt 98",
+          "logo": "https://media.api-sports.io/football/teams/181.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 558736,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2013-10-26T12:00:00+00:00",
+        "timestamp": 1382788800,
+        "periods": {
+          "first": 1382788800,
+          "second": 1382792400
+        },
+        "venue": {
+          "id": null,
+          "name": "Stadion am B\u00f6llenfalltor",
+          "city": "Darmstadt"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 80,
+        "name": "3. Liga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/80.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2013,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 181,
+          "name": "SV Darmstadt 98",
+          "logo": "https://media.api-sports.io/football/teams/181.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1313,
+          "name": "Preussen Munster",
+          "logo": "https://media.api-sports.io/football/teams/1313.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:57:14.386984"
+}

@@ -1,0 +1,199 @@
+{
+  "fixture_id": 1387342,
+  "date": "2025-12-13",
+  "home_team": "Cardiff",
+  "away_team": "Doncaster",
+  "league": "League_One",
+  "api_prediction": {
+    "winner": {
+      "id": 43,
+      "name": "Cardiff",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-1.5"
+    },
+    "advice": "Winner : Cardiff",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "att": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "def": {
+      "home": "46%",
+      "away": "54%"
+    },
+    "poisson_distribution": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "h2h": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "goals": {
+      "home": "100%",
+      "away": "0%"
+    },
+    "total": {
+      "home": "67.4%",
+      "away": "32.6%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 447406,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2012-01-14T15:00:00+00:00",
+        "timestamp": 1326553200,
+        "periods": {
+          "first": 1326553200,
+          "second": 1326556800
+        },
+        "venue": {
+          "id": null,
+          "name": "Keepmoat Stadium",
+          "city": null
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2011,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1354,
+          "name": "Doncaster",
+          "logo": "https://media.api-sports.io/football/teams/1354.png",
+          "winner": null
+        },
+        "away": {
+          "id": 43,
+          "name": "Cardiff",
+          "logo": "https://media.api-sports.io/football/teams/43.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 447166,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2011-09-10T14:00:00+00:00",
+        "timestamp": 1315663200,
+        "periods": {
+          "first": 1315663200,
+          "second": 1315666800
+        },
+        "venue": {
+          "id": null,
+          "name": "Cardiff City Stadium",
+          "city": null
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2011,
+        "round": "Regular Season - 6",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 43,
+          "name": "Cardiff",
+          "logo": "https://media.api-sports.io/football/teams/43.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1354,
+          "name": "Doncaster",
+          "logo": "https://media.api-sports.io/football/teams/1354.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:03:03.437180"
+}

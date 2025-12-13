@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1419742,
+  "date": "2025-12-14",
+  "home_team": "Pescara",
+  "away_team": "Frosinone",
+  "league": "Serie_B",
+  "api_prediction": {
+    "winner": {
+      "id": 512,
+      "name": "Frosinone",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-3.5"
+    },
+    "advice": "Winner : Frosinone",
+    "percent": {
+      "home": "0%",
+      "draw": "50%",
+      "away": "50%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "13%",
+      "away": "87%"
+    },
+    "att": {
+      "home": "27%",
+      "away": "73%"
+    },
+    "def": {
+      "home": "25%",
+      "away": "75%"
+    },
+    "poisson_distribution": {
+      "home": "26%",
+      "away": "74%"
+    },
+    "h2h": {
+      "home": "15%",
+      "away": "85%"
+    },
+    "goals": {
+      "home": "11%",
+      "away": "89%"
+    },
+    "total": {
+      "home": "19.5%",
+      "away": "80.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 628214,
+        "referee": "F. Meraviglia",
+        "timezone": "UTC",
+        "date": "2021-02-19T20:00:00+00:00",
+        "timestamp": 1613764800,
+        "periods": {
+          "first": 1613764800,
+          "second": 1613768400
+        },
+        "venue": {
+          "id": 904,
+          "name": "Stadio Benito Stirpe",
+          "city": "Frosinone"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2020,
+        "round": "Regular Season - 24",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 512,
+          "name": "Frosinone",
+          "logo": "https://media.api-sports.io/football/teams/512.png",
+          "winner": null
+        },
+        "away": {
+          "id": 525,
+          "name": "Pescara",
+          "logo": "https://media.api-sports.io/football/teams/525.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 628024,
+        "referee": "M. Gariglio",
+        "timezone": "UTC",
+        "date": "2020-10-24T14:00:00+00:00",
+        "timestamp": 1603548000,
+        "periods": {
+          "first": 1603548000,
+          "second": 1603551600
+        },
+        "venue": {
+          "id": 923,
+          "name": "Stadio Adriatico-Giovanni Cornacchia",
+          "city": "Pescara"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2020,
+        "round": "Regular Season - 5",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 525,
+          "name": "Pescara",
+          "logo": "https://media.api-sports.io/football/teams/525.png",
+          "winner": false
+        },
+        "away": {
+          "id": 512,
+          "name": "Frosinone",
+          "logo": "https://media.api-sports.io/football/teams/512.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 235484,
+        "referee": "F. Dionisi",
+        "timezone": "UTC",
+        "date": "2020-07-17T16:45:00+00:00",
+        "timestamp": 1595004300,
+        "periods": {
+          "first": 1595004300,
+          "second": 1595007900
+        },
+        "venue": {
+          "id": 923,
+          "name": "Stadio Adriatico-Giovanni Cornacchia",
+          "city": "Pescara"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2019,
+        "round": "Regular Season - 35",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 525,
+          "name": "Pescara",
+          "logo": "https://media.api-sports.io/football/teams/525.png",
+          "winner": null
+        },
+        "away": {
+          "id": 512,
+          "name": "Frosinone",
+          "logo": "https://media.api-sports.io/football/teams/512.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 235294,
+        "referee": "M. Serra",
+        "timezone": "UTC",
+        "date": "2019-12-14T14:00:00+00:00",
+        "timestamp": 1576332000,
+        "periods": {
+          "first": 1576332000,
+          "second": 1576335600
+        },
+        "venue": {
+          "id": 904,
+          "name": "Stadio Benito Stirpe",
+          "city": "Frosinone"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2019,
+        "round": "Regular Season - 16",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 512,
+          "name": "Frosinone",
+          "logo": "https://media.api-sports.io/football/teams/512.png",
+          "winner": true
+        },
+        "away": {
+          "id": 525,
+          "name": "Pescara",
+          "logo": "https://media.api-sports.io/football/teams/525.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 9249,
+        "referee": "Riccardo Ros, Italy",
+        "timezone": "UTC",
+        "date": "2018-02-03T14:00:00+00:00",
+        "timestamp": 1517666400,
+        "periods": {
+          "first": 1517666400,
+          "second": 1517670000
+        },
+        "venue": {
+          "id": 904,
+          "name": "Stadio Benito Stirpe",
+          "city": "Frosinone"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2017,
+        "round": "Regular Season - 24",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 512,
+          "name": "Frosinone",
+          "logo": "https://media.api-sports.io/football/teams/512.png",
+          "winner": true
+        },
+        "away": {
+          "id": 525,
+          "name": "Pescara",
+          "logo": "https://media.api-sports.io/football/teams/525.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:58:46.445927"
+}

@@ -1,0 +1,339 @@
+{
+  "fixture_id": 1378008,
+  "date": "2025-12-12",
+  "home_team": "Lecce",
+  "away_team": "Pisa",
+  "league": "Serie_A",
+  "api_prediction": {
+    "winner": {
+      "id": 801,
+      "name": "Pisa",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Pisa",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "att": {
+      "home": "38%",
+      "away": "63%"
+    },
+    "def": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "poisson_distribution": {
+      "home": "45%",
+      "away": "55%"
+    },
+    "h2h": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "goals": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "total": {
+      "home": "48.7%",
+      "away": "51.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 747378,
+        "referee": "L. Pairetto",
+        "timezone": "UTC",
+        "date": "2022-04-25T13:00:00+00:00",
+        "timestamp": 1650891600,
+        "periods": {
+          "first": 1650891600,
+          "second": 1650895200
+        },
+        "venue": {
+          "id": 911,
+          "name": "Stadio Comunale Via del Mare",
+          "city": "Lecce"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2021,
+        "round": "Regular Season - 36",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 867,
+          "name": "Lecce",
+          "logo": "https://media.api-sports.io/football/teams/867.png",
+          "winner": true
+        },
+        "away": {
+          "id": 801,
+          "name": "Pisa",
+          "logo": "https://media.api-sports.io/football/teams/801.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 747207,
+        "referee": "D. Orsato",
+        "timezone": "UTC",
+        "date": "2021-12-11T15:15:00+00:00",
+        "timestamp": 1639235700,
+        "periods": {
+          "first": 1639235700,
+          "second": 1639239300
+        },
+        "venue": {
+          "id": 925,
+          "name": "Arena Garibaldi - Stadio Romeo Anconetani",
+          "city": "Pisa"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2021,
+        "round": "Regular Season - 17",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 801,
+          "name": "Pisa",
+          "logo": "https://media.api-sports.io/football/teams/801.png",
+          "winner": true
+        },
+        "away": {
+          "id": 867,
+          "name": "Lecce",
+          "logo": "https://media.api-sports.io/football/teams/867.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 628295,
+        "referee": "L. Marinelli",
+        "timezone": "UTC",
+        "date": "2021-04-05T13:00:00+00:00",
+        "timestamp": 1617627600,
+        "periods": {
+          "first": 1617627600,
+          "second": 1617631200
+        },
+        "venue": {
+          "id": 925,
+          "name": "Arena Garibaldi - Stadio Romeo Anconetani",
+          "city": "Pisa"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2020,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 801,
+          "name": "Pisa",
+          "logo": "https://media.api-sports.io/football/teams/801.png",
+          "winner": false
+        },
+        "away": {
+          "id": 867,
+          "name": "Lecce",
+          "logo": "https://media.api-sports.io/football/teams/867.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 628105,
+        "referee": "J. Sacchi",
+        "timezone": "UTC",
+        "date": "2020-12-19T13:00:00+00:00",
+        "timestamp": 1608382800,
+        "periods": {
+          "first": 1608382800,
+          "second": 1608386400
+        },
+        "venue": {
+          "id": 911,
+          "name": "Stadio Comunale Via del Mare",
+          "city": "Lecce"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 136,
+        "name": "Serie B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/136.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2020,
+        "round": "Regular Season - 13",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 867,
+          "name": "Lecce",
+          "logo": "https://media.api-sports.io/football/teams/867.png",
+          "winner": false
+        },
+        "away": {
+          "id": 801,
+          "name": "Pisa",
+          "logo": "https://media.api-sports.io/football/teams/801.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:58:21.154992"
+}
