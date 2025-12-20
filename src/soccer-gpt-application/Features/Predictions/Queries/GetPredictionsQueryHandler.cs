@@ -45,7 +45,6 @@ public class GetPredictionsQueryHandler(
 
     private LlmMatchDataset MapToDataset(UpcomingMatchDto match, ApiFootballPrediction pred)
     {
-        // Parse basic 1x2 percentages
         var homeWinProb = ParsePercent(pred.ApiPrediction.Percent.Home);
         var drawProb = ParsePercent(pred.ApiPrediction.Percent.Draw);
         var awayWinProb = ParsePercent(pred.ApiPrediction.Percent.Away);
@@ -163,14 +162,13 @@ public class GetPredictionsQueryHandler(
         };
     }
 
-    private double ParsePercent(string p)
+    private static double ParsePercent(string p)
     {
         if (string.IsNullOrEmpty(p)) return 0;
         p = p.Replace("%", "").Trim();
         if (double.TryParse(p, CultureInfo.InvariantCulture, out var val))
-        {
             return val / 100.0;
-        }
+
         return 0;
     }
 }

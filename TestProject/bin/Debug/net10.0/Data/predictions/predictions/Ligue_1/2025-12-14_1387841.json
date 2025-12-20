@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1387841,
+  "date": "2025-12-14",
+  "home_team": "Strasbourg",
+  "away_team": "Lorient",
+  "league": "Ligue_1",
+  "api_prediction": {
+    "winner": {
+      "id": 97,
+      "name": "Lorient",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-1.5"
+    },
+    "advice": "Double chance : draw or Lorient",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "27%",
+      "away": "73%"
+    },
+    "att": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "def": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "poisson_distribution": {
+      "home": "94%",
+      "away": "6%"
+    },
+    "h2h": {
+      "home": "38%",
+      "away": "62%"
+    },
+    "goals": {
+      "home": "42%",
+      "away": "58%"
+    },
+    "total": {
+      "home": "47.3%",
+      "away": "52.7%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1045070,
+        "referee": "T. L\u00e9onard",
+        "timezone": "UTC",
+        "date": "2024-02-18T12:00:00+00:00",
+        "timestamp": 1708257600,
+        "periods": {
+          "first": 1708257600,
+          "second": 1708261200
+        },
+        "venue": {
+          "id": 681,
+          "name": "Stade de la Meinau",
+          "city": "Strasbourg"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 22",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 95,
+          "name": "Strasbourg",
+          "logo": "https://media.api-sports.io/football/teams/95.png",
+          "winner": false
+        },
+        "away": {
+          "id": 97,
+          "name": "Lorient",
+          "logo": "https://media.api-sports.io/football/teams/97.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1045018,
+        "referee": "B. Dechepy",
+        "timezone": "UTC",
+        "date": "2023-12-17T14:00:00+00:00",
+        "timestamp": 1702821600,
+        "periods": {
+          "first": 1702821600,
+          "second": 1702825200
+        },
+        "venue": {
+          "id": 656,
+          "name": "Stade du Moustoir - Yves Allainmat",
+          "city": "Lorient"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 16",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 97,
+          "name": "Lorient",
+          "logo": "https://media.api-sports.io/football/teams/97.png",
+          "winner": false
+        },
+        "away": {
+          "id": 95,
+          "name": "Strasbourg",
+          "logo": "https://media.api-sports.io/football/teams/95.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 871843,
+        "referee": "B. Dechepy",
+        "timezone": "UTC",
+        "date": "2023-06-03T19:00:00+00:00",
+        "timestamp": 1685818800,
+        "periods": {
+          "first": 1685818800,
+          "second": 1685822400
+        },
+        "venue": {
+          "id": 656,
+          "name": "Stade Yves Allainmat - Le Moustoir",
+          "city": "Lorient"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2022,
+        "round": "Regular Season - 38",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 97,
+          "name": "Lorient",
+          "logo": "https://media.api-sports.io/football/teams/97.png",
+          "winner": true
+        },
+        "away": {
+          "id": 95,
+          "name": "Strasbourg",
+          "logo": "https://media.api-sports.io/football/teams/95.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 871617,
+        "referee": "P. Gaillouste",
+        "timezone": "UTC",
+        "date": "2022-11-13T16:05:00+00:00",
+        "timestamp": 1668355500,
+        "periods": {
+          "first": 1668355500,
+          "second": 1668359100
+        },
+        "venue": {
+          "id": 681,
+          "name": "Stade de la Meinau",
+          "city": "Strasbourg"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2022,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 95,
+          "name": "Strasbourg",
+          "logo": "https://media.api-sports.io/football/teams/95.png",
+          "winner": null
+        },
+        "away": {
+          "id": 97,
+          "name": "Lorient",
+          "logo": "https://media.api-sports.io/football/teams/97.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 718634,
+        "referee": "B. Millot",
+        "timezone": "UTC",
+        "date": "2022-03-20T14:00:00+00:00",
+        "timestamp": 1647784800,
+        "periods": {
+          "first": 1647784800,
+          "second": 1647788400
+        },
+        "venue": {
+          "id": 656,
+          "name": "Stade Yves Allainmat - Le Moustoir",
+          "city": "Lorient"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2021,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 97,
+          "name": "Lorient",
+          "logo": "https://media.api-sports.io/football/teams/97.png",
+          "winner": null
+        },
+        "away": {
+          "id": 95,
+          "name": "Strasbourg",
+          "logo": "https://media.api-sports.io/football/teams/95.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:59:58.241015"
+}

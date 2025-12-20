@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1389270,
+  "date": "2025-12-12",
+  "home_team": "Nancy",
+  "away_team": "Clermont Foot",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 99,
+      "name": "Clermont Foot",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": "-3.5",
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Combo Double chance : draw or Clermont Foot and -3.5 goals",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "att": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "def": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "poisson_distribution": {
+      "home": "49%",
+      "away": "51%"
+    },
+    "h2h": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "goals": {
+      "home": "47%",
+      "away": "53%"
+    },
+    "total": {
+      "home": "43.7%",
+      "away": "56.3%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 568378,
+        "referee": "Abdelatif Kherradji, France",
+        "timezone": "UTC",
+        "date": "2021-03-20T19:00:00+00:00",
+        "timestamp": 1616266800,
+        "periods": {
+          "first": 1616266800,
+          "second": 1616270400
+        },
+        "venue": {
+          "id": 661,
+          "name": "Stade Marcel-Picot",
+          "city": "Tomblaine"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2020,
+        "round": "Regular Season - 30",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 102,
+          "name": "Nancy",
+          "logo": "https://media.api-sports.io/football/teams/102.png",
+          "winner": true
+        },
+        "away": {
+          "id": 99,
+          "name": "Clermont Foot",
+          "logo": "https://media.api-sports.io/football/teams/99.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 568193,
+        "referee": "Sylvain Palhies, France",
+        "timezone": "UTC",
+        "date": "2020-11-28T18:00:00+00:00",
+        "timestamp": 1606586400,
+        "periods": {
+          "first": 1606586400,
+          "second": 1606590000
+        },
+        "venue": {
+          "id": 644,
+          "name": "Stade Gabriel Montpied",
+          "city": "Clermont-Ferrand"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2020,
+        "round": "Regular Season - 12",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 99,
+          "name": "Clermont Foot",
+          "logo": "https://media.api-sports.io/football/teams/99.png",
+          "winner": true
+        },
+        "away": {
+          "id": 102,
+          "name": "Nancy",
+          "logo": "https://media.api-sports.io/football/teams/102.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 158059,
+        "referee": "Nicolas Rainville, France",
+        "timezone": "UTC",
+        "date": "2020-02-28T19:00:00+00:00",
+        "timestamp": 1582916400,
+        "periods": {
+          "first": 1582916400,
+          "second": 1582920000
+        },
+        "venue": {
+          "id": 661,
+          "name": "Stade Marcel-Picot (Tomblaine)",
+          "city": "Tomblaine"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2019,
+        "round": "Regular Season - 27",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 102,
+          "name": "Nancy",
+          "logo": "https://media.api-sports.io/football/teams/102.png",
+          "winner": false
+        },
+        "away": {
+          "id": 99,
+          "name": "Clermont Foot",
+          "logo": "https://media.api-sports.io/football/teams/99.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 157880,
+        "referee": "Arnaud Baert, France",
+        "timezone": "UTC",
+        "date": "2019-09-27T18:00:00+00:00",
+        "timestamp": 1569607200,
+        "periods": {
+          "first": 1569607200,
+          "second": 1569610800
+        },
+        "venue": {
+          "id": 644,
+          "name": "Stade Gabriel Montpied (Clermont-Ferrand)",
+          "city": "Clermont-Ferrand"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2019,
+        "round": "Regular Season - 9",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 99,
+          "name": "Clermont Foot",
+          "logo": "https://media.api-sports.io/football/teams/99.png",
+          "winner": null
+        },
+        "away": {
+          "id": 102,
+          "name": "Nancy",
+          "logo": "https://media.api-sports.io/football/teams/102.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1659,
+        "referee": "Pierre Gaillouste, France",
+        "timezone": "UTC",
+        "date": "2019-04-05T18:00:00+00:00",
+        "timestamp": 1554487200,
+        "periods": {
+          "first": 1554487200,
+          "second": 1554490800
+        },
+        "venue": {
+          "id": 644,
+          "name": "Stade Gabriel Montpied",
+          "city": "Clermont-Ferrand"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2018,
+        "round": "Regular Season - 31",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 99,
+          "name": "Clermont Foot",
+          "logo": "https://media.api-sports.io/football/teams/99.png",
+          "winner": false
+        },
+        "away": {
+          "id": 102,
+          "name": "Nancy",
+          "logo": "https://media.api-sports.io/football/teams/102.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T23:00:08.632110"
+}

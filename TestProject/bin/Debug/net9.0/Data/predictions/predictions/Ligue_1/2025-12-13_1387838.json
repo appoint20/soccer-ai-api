@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1387838,
+  "date": "2025-12-13",
+  "home_team": "Metz",
+  "away_team": "Paris Saint Germain",
+  "league": "Ligue_1",
+  "api_prediction": {
+    "winner": {
+      "id": 85,
+      "name": "Paris Saint Germain",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-3.5"
+    },
+    "advice": "Winner : Paris Saint Germain",
+    "percent": {
+      "home": "0%",
+      "draw": "50%",
+      "away": "50%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "att": {
+      "home": "37%",
+      "away": "63%"
+    },
+    "def": {
+      "home": "27%",
+      "away": "73%"
+    },
+    "poisson_distribution": {
+      "home": "22%",
+      "away": "78%"
+    },
+    "h2h": {
+      "home": "0%",
+      "away": "100%"
+    },
+    "goals": {
+      "home": "17%",
+      "away": "83%"
+    },
+    "total": {
+      "home": "27.2%",
+      "away": "72.8%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1045186,
+        "referee": "G. Angoula",
+        "timezone": "UTC",
+        "date": "2024-05-19T19:00:00+00:00",
+        "timestamp": 1716145200,
+        "periods": {
+          "first": 1716145200,
+          "second": 1716148800
+        },
+        "venue": {
+          "id": 658,
+          "name": "Stade Saint-Symphorien",
+          "city": "Longeville-l\u00e8s-Metz"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 34",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 112,
+          "name": "Metz",
+          "logo": "https://media.api-sports.io/football/teams/112.png",
+          "winner": false
+        },
+        "away": {
+          "id": 85,
+          "name": "Paris Saint Germain",
+          "logo": "https://media.api-sports.io/football/teams/85.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1045025,
+        "referee": "R. Buquet",
+        "timezone": "UTC",
+        "date": "2023-12-20T20:00:00+00:00",
+        "timestamp": 1703102400,
+        "periods": {
+          "first": 1703102400,
+          "second": 1703106000
+        },
+        "venue": {
+          "id": 671,
+          "name": "Parc des Princes",
+          "city": "Paris"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 17",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 85,
+          "name": "Paris Saint Germain",
+          "logo": "https://media.api-sports.io/football/teams/85.png",
+          "winner": true
+        },
+        "away": {
+          "id": 112,
+          "name": "Metz",
+          "logo": "https://media.api-sports.io/football/teams/112.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 718729,
+        "referee": "A. Gautier",
+        "timezone": "UTC",
+        "date": "2022-05-21T19:00:00+00:00",
+        "timestamp": 1653159600,
+        "periods": {
+          "first": 1653159600,
+          "second": 1653163200
+        },
+        "venue": {
+          "id": 671,
+          "name": "Parc des Princes",
+          "city": "Paris"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2021,
+        "round": "Regular Season - 38",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 85,
+          "name": "Paris Saint Germain",
+          "logo": "https://media.api-sports.io/football/teams/85.png",
+          "winner": true
+        },
+        "away": {
+          "id": 112,
+          "name": "Metz",
+          "logo": "https://media.api-sports.io/football/teams/112.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 5,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 5,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 718416,
+        "referee": "J. Pignard",
+        "timezone": "UTC",
+        "date": "2021-09-22T19:00:00+00:00",
+        "timestamp": 1632337200,
+        "periods": {
+          "first": 1632337200,
+          "second": 1632340800
+        },
+        "venue": {
+          "id": 658,
+          "name": "Stade Saint-Symphorien",
+          "city": "Longeville-l\u00e8s-Metz"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2021,
+        "round": "Regular Season - 7",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 112,
+          "name": "Metz",
+          "logo": "https://media.api-sports.io/football/teams/112.png",
+          "winner": false
+        },
+        "away": {
+          "id": 85,
+          "name": "Paris Saint Germain",
+          "logo": "https://media.api-sports.io/football/teams/85.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 571806,
+        "referee": "W. Delajod",
+        "timezone": "UTC",
+        "date": "2021-04-24T15:00:00+00:00",
+        "timestamp": 1619276400,
+        "periods": {
+          "first": 1619276400,
+          "second": 1619280000
+        },
+        "venue": {
+          "id": 658,
+          "name": "Stade Saint-Symphorien",
+          "city": "Longeville-l\u00e8s-Metz"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2020,
+        "round": "Regular Season - 34",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 112,
+          "name": "Metz",
+          "logo": "https://media.api-sports.io/football/teams/112.png",
+          "winner": false
+        },
+        "away": {
+          "id": 85,
+          "name": "Paris Saint Germain",
+          "logo": "https://media.api-sports.io/football/teams/85.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:07:21.064337"
+}

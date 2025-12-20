@@ -1,5 +1,6 @@
 
 using System.Text.Json.Serialization;
+using soccer_gpt_application.Interfaces;
 
 namespace soccer_gpt_application.Models;
 
@@ -20,6 +21,9 @@ public record UpcomingMatchDto
     [JsonPropertyName("league")]
     public string League { get; init; } = string.Empty;
     
+    [JsonPropertyName("league_name")]
+    public string LeagueName { get; init; } = string.Empty;
+    
     [JsonPropertyName("odds")]
     public MatchOdds? Odds { get; init; }
 
@@ -27,10 +31,43 @@ public record UpcomingMatchDto
     public H2HAnalysis? H2HAnalysis { get; init; }
     
     [JsonPropertyName("home_team_stats")]
-    public TeamStatsSummary? HomeTeamStats { get; init; }
+    public RichTeamStatsDto? HomeTeamStats { get; init; }
     
     [JsonPropertyName("away_team_stats")]
-    public TeamStatsSummary? AwayTeamStats { get; init; }
+    public RichTeamStatsDto? AwayTeamStats { get; init; }
+
+    [JsonPropertyName("advanced_analytics")]
+    public AdvancedAnalyticsDto? AdvancedAnalytics { get; init; }
+
+    [JsonPropertyName("traps")]
+    public List<string> Traps { get; init; } = new();
+
+    [JsonPropertyName("ml_prediction")]
+    public soccer_gpt_application.Models.ML.MatchPredictionOutput? MlPrediction { get; init; }
+
+    [JsonPropertyName("gemini")]
+    public GeminiAnalysisDto? Gemini { get; init; }
+}
+
+public record TeamScheduleDto
+{
+    [JsonPropertyName("last_matches")]
+    public List<SimpleMatchDto> LastMatches { get; init; } = new();
+    
+    [JsonPropertyName("next_matches")]
+    public List<SimpleMatchDto> NextMatches { get; init; } = new();
+}
+
+public record SimpleMatchDto
+{
+    [JsonPropertyName("date")]
+    public string Date { get; init; } = string.Empty;
+    [JsonPropertyName("opponent")]
+    public string Opponent { get; init; } = string.Empty;
+    [JsonPropertyName("competition")]
+    public string Competition { get; init; } = string.Empty;
+    [JsonPropertyName("score")]
+    public string Score { get; init; } = string.Empty; // "2-1" or "-"
 }
 
 public record MatchOdds
@@ -41,6 +78,15 @@ public record MatchOdds
     public decimal Draw { get; init; }
     [JsonPropertyName("away_win")]
     public decimal AwayWin { get; init; }
+
+    [JsonPropertyName("over_2_5")]
+    public decimal Over25 { get; init; }
+
+    [JsonPropertyName("under_2_5")]
+    public decimal Under25 { get; init; }
+
+    [JsonPropertyName("btts_yes")]
+    public decimal BttsYes { get; init; }
 }
 
 public record H2HAnalysis
@@ -77,4 +123,19 @@ public record TeamStatsSummary
     
     [JsonPropertyName("goals_conceded_avg")]
     public double GoalsConcededAvg { get; init; }
+}
+
+public record GeminiAnalysisDto
+{
+    [JsonPropertyName("analysis")]
+    public string Analysis { get; init; } = string.Empty;
+    
+    [JsonPropertyName("prediction")]
+    public string Prediction { get; init; } = string.Empty;
+    
+    [JsonPropertyName("confidence_level")]
+    public double ConfidenceLevel { get; init; }
+    
+    [JsonPropertyName("reason")]
+    public string Reason { get; init; } = string.Empty;
 }

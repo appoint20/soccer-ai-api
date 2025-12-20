@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386800,
+  "date": "2025-12-13",
+  "home_team": "Middlesbrough",
+  "away_team": "QPR",
+  "league": "Championship",
+  "api_prediction": {
+    "winner": {
+      "id": 70,
+      "name": "Middlesbrough",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Middlesbrough or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "att": {
+      "home": "58%",
+      "away": "42%"
+    },
+    "def": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "poisson_distribution": {
+      "home": "65%",
+      "away": "35%"
+    },
+    "h2h": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "goals": {
+      "home": "69%",
+      "away": "31%"
+    },
+    "total": {
+      "home": "60.8%",
+      "away": "39.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216278,
+        "referee": "D. Webb",
+        "timezone": "UTC",
+        "date": "2025-03-11T19:45:00+00:00",
+        "timestamp": 1741722300,
+        "periods": {
+          "first": 1741722300,
+          "second": 1741725900
+        },
+        "venue": {
+          "id": 558,
+          "name": "Riverside Stadium",
+          "city": "Middlesbrough"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 8
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 37",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 70,
+          "name": "Middlesbrough",
+          "logo": "https://media.api-sports.io/football/teams/70.png",
+          "winner": true
+        },
+        "away": {
+          "id": 72,
+          "name": "QPR",
+          "logo": "https://media.api-sports.io/football/teams/72.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216003,
+        "referee": "O. Langford",
+        "timezone": "UTC",
+        "date": "2024-11-05T19:45:00+00:00",
+        "timestamp": 1730835900,
+        "periods": {
+          "first": 1730835900,
+          "second": 1730839500
+        },
+        "venue": {
+          "id": 20414,
+          "name": "MATRADE Loftus Road",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 72,
+          "name": "QPR",
+          "logo": "https://media.api-sports.io/football/teams/72.png",
+          "winner": false
+        },
+        "away": {
+          "id": 70,
+          "name": "Middlesbrough",
+          "logo": "https://media.api-sports.io/football/teams/70.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 4
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 4
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1047870,
+        "referee": "L. Doughty",
+        "timezone": "UTC",
+        "date": "2024-03-09T15:00:00+00:00",
+        "timestamp": 1709996400,
+        "periods": {
+          "first": 1709996400,
+          "second": 1710000000
+        },
+        "venue": {
+          "id": 20414,
+          "name": "MATRADE Loftus Road",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 37",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 72,
+          "name": "QPR",
+          "logo": "https://media.api-sports.io/football/teams/72.png",
+          "winner": false
+        },
+        "away": {
+          "id": 70,
+          "name": "Middlesbrough",
+          "logo": "https://media.api-sports.io/football/teams/70.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1047487,
+        "referee": "T. Bramall",
+        "timezone": "UTC",
+        "date": "2023-09-02T14:00:00+00:00",
+        "timestamp": 1693663200,
+        "periods": {
+          "first": 1693663200,
+          "second": 1693666800
+        },
+        "venue": {
+          "id": 558,
+          "name": "Riverside Stadium",
+          "city": "Middlesbrough"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 5",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 70,
+          "name": "Middlesbrough",
+          "logo": "https://media.api-sports.io/football/teams/70.png",
+          "winner": false
+        },
+        "away": {
+          "id": 72,
+          "name": "QPR",
+          "logo": "https://media.api-sports.io/football/teams/72.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 881109,
+        "referee": "D. Webb",
+        "timezone": "UTC",
+        "date": "2023-02-18T15:00:00+00:00",
+        "timestamp": 1676732400,
+        "periods": {
+          "first": 1676732400,
+          "second": 1676736000
+        },
+        "venue": {
+          "id": 558,
+          "name": "Riverside Stadium",
+          "city": "Middlesbrough"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 70,
+          "name": "Middlesbrough",
+          "logo": "https://media.api-sports.io/football/teams/70.png",
+          "winner": true
+        },
+        "away": {
+          "id": 72,
+          "name": "QPR",
+          "logo": "https://media.api-sports.io/football/teams/72.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:02:50.729708"
+}

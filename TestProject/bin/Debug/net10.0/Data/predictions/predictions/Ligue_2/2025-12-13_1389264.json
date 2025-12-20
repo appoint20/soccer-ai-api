@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1389264,
+  "date": "2025-12-13",
+  "home_team": "Saint Etienne",
+  "away_team": "Bastia",
+  "league": "Ligue_2",
+  "api_prediction": {
+    "winner": {
+      "id": 1063,
+      "name": "Saint Etienne",
+      "comment": null
+    },
+    "win_or_draw": false,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-1.5"
+    },
+    "advice": "Winner : Saint Etienne",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "75%",
+      "away": "25%"
+    },
+    "att": {
+      "home": "86%",
+      "away": "14%"
+    },
+    "def": {
+      "home": "57%",
+      "away": "43%"
+    },
+    "poisson_distribution": {
+      "home": "100%",
+      "away": "0%"
+    },
+    "h2h": {
+      "home": "71%",
+      "away": "29%"
+    },
+    "goals": {
+      "home": "75%",
+      "away": "25%"
+    },
+    "total": {
+      "home": "72.8%",
+      "away": "27.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1046163,
+        "referee": "P. Gaillouste",
+        "timezone": "UTC",
+        "date": "2024-03-16T18:00:00+00:00",
+        "timestamp": 1710612000,
+        "periods": {
+          "first": 1710612000,
+          "second": 1710615600
+        },
+        "venue": {
+          "id": 1977,
+          "name": "Stade Armand-C\u00e9sari",
+          "city": "Furiani"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1305,
+          "name": "Bastia",
+          "logo": "https://media.api-sports.io/football/teams/1305.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1063,
+          "name": "Saint Etienne",
+          "logo": "https://media.api-sports.io/football/teams/1063.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 4
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 4
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1046065,
+        "referee": "A. Kherradji",
+        "timezone": "UTC",
+        "date": "2023-12-19T19:45:00+00:00",
+        "timestamp": 1703015100,
+        "periods": {
+          "first": 1703015100,
+          "second": 1703018700
+        },
+        "venue": {
+          "id": 676,
+          "name": "Stade Geoffroy-Guichard",
+          "city": "Saint-\u00c8tienne"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2023,
+        "round": "Regular Season - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1063,
+          "name": "Saint Etienne",
+          "logo": "https://media.api-sports.io/football/teams/1063.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1305,
+          "name": "Bastia",
+          "logo": "https://media.api-sports.io/football/teams/1305.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 872069,
+        "referee": "A. Kherradji",
+        "timezone": "UTC",
+        "date": "2023-01-31T19:45:00+00:00",
+        "timestamp": 1675194300,
+        "periods": {
+          "first": 1675194300,
+          "second": 1675197900
+        },
+        "venue": {
+          "id": 1977,
+          "name": "Stade Armand-C\u00e9sari",
+          "city": "Furiani"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2022,
+        "round": "Regular Season - 21",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1305,
+          "name": "Bastia",
+          "logo": "https://media.api-sports.io/football/teams/1305.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1063,
+          "name": "Saint Etienne",
+          "logo": "https://media.api-sports.io/football/teams/1063.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 871927,
+        "referee": "M. Lesage",
+        "timezone": "UTC",
+        "date": "2022-08-30T18:45:00+00:00",
+        "timestamp": 1661885100,
+        "periods": {
+          "first": 1661885100,
+          "second": 1661888700
+        },
+        "venue": {
+          "id": 676,
+          "name": "Stade Geoffroy-Guichard",
+          "city": "Saint-\u00c8tienne"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 62,
+        "name": "Ligue 2",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/62.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2022,
+        "round": "Regular Season - 6",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1063,
+          "name": "Saint Etienne",
+          "logo": "https://media.api-sports.io/football/teams/1063.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1305,
+          "name": "Bastia",
+          "logo": "https://media.api-sports.io/football/teams/1305.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 5,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 4,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 5,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 93253,
+        "referee": "Nicolas Rainville, France",
+        "timezone": "UTC",
+        "date": "2017-03-04T19:00:00+00:00",
+        "timestamp": 1488654000,
+        "periods": {
+          "first": 1488654000,
+          "second": 1488657600
+        },
+        "venue": {
+          "id": null,
+          "name": "Stade Armand Cesari",
+          "city": "Bastia"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 61,
+        "name": "Ligue 1",
+        "country": "France",
+        "logo": "https://media.api-sports.io/football/leagues/61.png",
+        "flag": "https://media.api-sports.io/flags/fr.svg",
+        "season": 2016,
+        "round": "Regular Season - 28",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1305,
+          "name": "SC Bastia",
+          "logo": "https://media.api-sports.io/football/teams/1305.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1063,
+          "name": "Saint Etienne",
+          "logo": "https://media.api-sports.io/football/teams/1063.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:07:30.411988"
+}

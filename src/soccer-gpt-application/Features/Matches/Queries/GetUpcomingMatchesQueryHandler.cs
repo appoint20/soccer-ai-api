@@ -19,8 +19,13 @@ public class GetUpcomingMatchesResponse : IResponse
 
 public class GetUpcomingMatchesQueryHandler(
     IFixtureRepository fixtureRepository,
-    ILocalTeamStatsRepository statsRepository,
-    IHistoricalDataRepository historicalRepository)
+    ITeamStatsService teamStatsService,
+    IAdvancedStatsService advancedStatsService,
+    IHistoricalDataRepository historicalRepository,
+    ILeaguesRepository leaguesRepository,
+    ITrapDetectionService trapDetectionService,
+    IMlPredictionService mlPredictionService,
+    IGeminiAnalysisService geminiAnalysisService)
     : IRequestHandler<GetUpcomingMatchesQuery, GetUpcomingMatchesResponse>
 {
     public async Task<GetUpcomingMatchesResponse> Handle(
@@ -30,28 +35,81 @@ public class GetUpcomingMatchesQueryHandler(
         var fixtures = await fixtureRepository.GetFixturesAsync(query.Offset, query.Limit, cancellationToken);
         var total = await fixtureRepository.GetTotalCountAsync(cancellationToken);
 
-        // Processing loop to create enriched DTOs
+        var allHistory = await historicalRepository.GetAllMatchesAsync();
+        
+        // Load Leagues for Name Mapping
+        var leagues = await leaguesRepository.GetLeaguesAsync(cancellationToken);
+        var leagueMap = leagues.ToDictionary(l => l.Id, l => l.Name, StringComparer.OrdinalIgnoreCase);
+
+        // First pass: Calculate stats for all matches
         var enrichedMatches = new List<UpcomingMatchDto>();
         foreach (var match in fixtures)
         {
-            // Stats (still form based for stats)
-            // Need to map league only for looking up files
-            // Service might handle this?? But keeping map here for now as requested mapping was for fixture CSV reading
-            var leagueFolder = MapDivToFolder(match.League); 
-            var homeStats = await statsRepository.GetTeamStatsByNameAsync(leagueFolder, match.HomeTeam, cancellationToken);
-            var awayStats = await statsRepository.GetTeamStatsByNameAsync(leagueFolder, match.AwayTeam, cancellationToken);
+            // Calculate Rich Stats
+            var homeStats = await teamStatsService.CalculateStatsAsync(match.HomeTeam, allHistory);
+            var awayStats = await teamStatsService.CalculateStatsAsync(match.AwayTeam, allHistory);
+            
+            // Calculate Advanced Analytics
+            var advancedAnalytics = await advancedStatsService.CalculateAnalyticsAsync(match.HomeTeam, match.AwayTeam, allHistory);
 
-            // True H2H from Historical
+            // Calculate Traps
+            var leagueName = leagueMap.TryGetValue(match.League, out var name) ? name : match.League;
+            var matchWithLeague = match with { LeagueName = leagueName };
+            var traps = trapDetectionService.AnalyzeTraps(matchWithLeague, advancedAnalytics);
+
+            // ML Prediction
+            var mlPred = await mlPredictionService.PredictMatchAsync(matchWithLeague, allHistory);
+
+            // True H2H
             var h2hMatches = await historicalRepository.GetMatchesBetweenTeamsAsync(match.HomeTeam, match.AwayTeam);
             var h2hAnalysis = CalculateHistoricalH2H(h2hMatches, match.HomeTeam, match.AwayTeam);
-            
-            enrichedMatches.Add(match with 
+
+            // Add to enriched list (without Gemini yet)
+            enrichedMatches.Add(matchWithLeague with 
             { 
-                HomeTeamStats = MapStats(homeStats),
-                AwayTeamStats = MapStats(awayStats),
-                H2HAnalysis = h2hAnalysis
+                HomeTeamStats = homeStats,
+                AwayTeamStats = awayStats,
+                AdvancedAnalytics = advancedAnalytics,
+                H2HAnalysis = h2hAnalysis,
+                Traps = traps,
+                MlPrediction = mlPred
             });
         }
+        
+        // Second pass: Batch Gemini calls per league
+        var geminiAnalyses = new Dictionary<string, GeminiMatchAnalysis>();
+        var leagueGroups = enrichedMatches.GroupBy(m => m.LeagueName);
+        
+        foreach (var leagueGroup in leagueGroups)
+        {
+            var leagueAnalyses = await geminiAnalysisService.AnalyzeMatchBatchAsync(
+                leagueGroup.Key, 
+                leagueGroup.ToList(), 
+                cancellationToken);
+            
+            foreach (var (key, analysis) in leagueAnalyses)
+            {
+                geminiAnalyses[key] = analysis;
+            }
+        }
+        
+        // Third pass: Add Gemini analysis to matches
+        var finalMatches = enrichedMatches.Select(match =>
+        {
+            var key = $"{match.HomeTeam}-{match.AwayTeam}";
+            var geminiAnalysis = geminiAnalyses.GetValueOrDefault(key);
+            
+            return match with
+            {
+                Gemini = geminiAnalysis != null ? new GeminiAnalysisDto
+                {
+                    Analysis = geminiAnalysis.Analysis,
+                    Prediction = geminiAnalysis.Prediction,
+                    ConfidenceLevel = geminiAnalysis.ConfidenceLevel,
+                    Reason = geminiAnalysis.Reason
+                } : null
+            };
+        }).ToList();
 
         return new GetUpcomingMatchesResponse
         {
@@ -60,50 +118,28 @@ public class GetUpcomingMatchesQueryHandler(
                 Offset = query.Offset,
                 Limit = query.Limit,
                 Total = total,
-                Items = enrichedMatches,
+                Items = finalMatches,
                 Summary = new ResponseSummary { TotalStake = 0 } // Placeholder
             }
         };
     }
 
-    private string MapDivToFolder(string div)
-    {
-        // Simple mapping based on leagues.json viewing
-        return div switch
-        {
-            "E0" => "Premier_League",
-            "E1" => "Championship",
-            "D1" => "Bundesliga",
-            "I1" => "Serie_A",
-            "SP1" => "La_Liga",
-            "F1" => "Ligue_1",
-            _ => "Premier_League" // Default fallback
-        };
-    }
 
-    private TeamStatsSummary? MapStats(TeamStatsData? data)
-    {
-        if (data == null) return null;
-        
-        double.TryParse(data.Goals?.For?.Average?.Total, out var gf);
-        double.TryParse(data.Goals?.Against?.Average?.Total, out var ga);
-
-        return new TeamStatsSummary
-        {
-            Form = data.Form ?? "",
-            GoalsScoredAvg = gf,
-            GoalsConcededAvg = ga
-        };
-    }
 
     private H2HAnalysis CalculateHistoricalH2H(List<HistoricalMatchDto> matches, string homeTeam, string awayTeam)
     {
-        // Calculate based on the direct historical matches
+        // 1. Sort by Date Descending (Newest first) and Take 5
+        var recentMatches = matches
+            .OrderByDescending(m => m.Date)
+            .Take(5)
+            .ToList();
+
+        // Calculate based on the "Last 5" subset
         int hWins = 0;
         int aWins = 0;
         int draws = 0;
 
-        foreach (var m in matches)
+        foreach (var m in recentMatches)
         {
             if (m.FTR == "D")
             {
@@ -131,10 +167,10 @@ public class GetUpcomingMatchesQueryHandler(
             AwayWinsLast5 = aWins,
             DrawsLast5 = draws,
             Status = DetermineStatus(hWins, aWins),
-            AvgGoalsHome = matches.Any() ? (double)matches.Sum(m => IsMatch(m.HomeTeam, homeTeam) ? m.FTHG : m.FTAG) / matches.Count : 0,
-            AvgGoalsAway = matches.Any() ? (double)matches.Sum(m => IsMatch(m.AwayTeam, awayTeam) ? m.FTAG : m.FTHG) / matches.Count : 0,
-            FormHomeLast5 = GetH2HForm(matches, homeTeam),
-            FormAwayLast5 = GetH2HForm(matches, awayTeam)
+            AvgGoalsHome = recentMatches.Any() ? (double)recentMatches.Sum(m => IsMatch(m.HomeTeam, homeTeam) ? m.FTHG : m.FTAG) / recentMatches.Count : 0,
+            AvgGoalsAway = recentMatches.Any() ? (double)recentMatches.Sum(m => IsMatch(m.AwayTeam, awayTeam) ? m.FTAG : m.FTHG) / recentMatches.Count : 0,
+            FormHomeLast5 = GetH2HForm(recentMatches, homeTeam),
+            FormAwayLast5 = GetH2HForm(recentMatches, awayTeam)
         };
     }
 

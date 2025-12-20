@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1388431,
+  "date": "2025-12-13",
+  "home_team": "FC St. Pauli",
+  "away_team": "1. FC Heidenheim",
+  "league": "Bundesliga",
+  "api_prediction": {
+    "winner": {
+      "id": 186,
+      "name": "FC St. Pauli",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : FC St. Pauli or draw",
+    "percent": {
+      "home": "35%",
+      "draw": "35%",
+      "away": "30%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "13%",
+      "away": "88%"
+    },
+    "att": {
+      "home": "38%",
+      "away": "63%"
+    },
+    "def": {
+      "home": "52%",
+      "away": "48%"
+    },
+    "poisson_distribution": {
+      "home": "57%",
+      "away": "43%"
+    },
+    "h2h": {
+      "home": "71%",
+      "away": "29%"
+    },
+    "goals": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "total": {
+      "home": "49.7%",
+      "away": "50.7%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1224132,
+        "referee": "B. Dankert",
+        "timezone": "UTC",
+        "date": "2025-01-18T14:30:00+00:00",
+        "timestamp": 1737210600,
+        "periods": {
+          "first": 1737210600,
+          "second": 1737214200
+        },
+        "venue": {
+          "id": 723,
+          "name": "Voith-Arena",
+          "city": "Heidenheim an der Brenz"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 78,
+        "name": "Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/78.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 18",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 180,
+          "name": "1. FC Heidenheim",
+          "logo": "https://media.api-sports.io/football/teams/180.png",
+          "winner": false
+        },
+        "away": {
+          "id": 186,
+          "name": "FC St. Pauli",
+          "logo": "https://media.api-sports.io/football/teams/186.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1223983,
+        "referee": "S. Jablonski",
+        "timezone": "UTC",
+        "date": "2024-08-25T15:30:00+00:00",
+        "timestamp": 1724599800,
+        "periods": {
+          "first": 1724599800,
+          "second": 1724603400
+        },
+        "venue": {
+          "id": 745,
+          "name": "Millerntor-Stadion",
+          "city": "Hamburg"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 78,
+        "name": "Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/78.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 1",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 186,
+          "name": "FC St. Pauli",
+          "logo": "https://media.api-sports.io/football/teams/186.png",
+          "winner": false
+        },
+        "away": {
+          "id": 180,
+          "name": "1. FC Heidenheim",
+          "logo": "https://media.api-sports.io/football/teams/180.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 873099,
+        "referee": "C. Dingert",
+        "timezone": "UTC",
+        "date": "2023-04-08T18:30:00+00:00",
+        "timestamp": 1680978600,
+        "periods": {
+          "first": 1680978600,
+          "second": 1680982200
+        },
+        "venue": {
+          "id": 723,
+          "name": "Voith-Arena",
+          "city": "Heidenheim an der Brenz"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2022,
+        "round": "Regular Season - 27",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 180,
+          "name": "FC Heidenheim",
+          "logo": "https://media.api-sports.io/football/teams/180.png",
+          "winner": false
+        },
+        "away": {
+          "id": 186,
+          "name": "FC St. Pauli",
+          "logo": "https://media.api-sports.io/football/teams/186.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 872944,
+        "referee": "S. Waschitzki",
+        "timezone": "UTC",
+        "date": "2022-10-01T18:30:00+00:00",
+        "timestamp": 1664649000,
+        "periods": {
+          "first": 1664649000,
+          "second": 1664652600
+        },
+        "venue": {
+          "id": 745,
+          "name": "Millerntor-Stadion",
+          "city": "Hamburg"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2022,
+        "round": "Regular Season - 10",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 186,
+          "name": "FC St. Pauli",
+          "logo": "https://media.api-sports.io/football/teams/186.png",
+          "winner": null
+        },
+        "away": {
+          "id": 180,
+          "name": "FC Heidenheim",
+          "logo": "https://media.api-sports.io/football/teams/180.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 719281,
+        "referee": "B. Dankert",
+        "timezone": "UTC",
+        "date": "2022-03-18T17:30:00+00:00",
+        "timestamp": 1647624600,
+        "periods": {
+          "first": 1647624600,
+          "second": 1647628200
+        },
+        "venue": {
+          "id": 745,
+          "name": "Millerntor-Stadion",
+          "city": "Hamburg"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2021,
+        "round": "Regular Season - 27",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 186,
+          "name": "FC St. Pauli",
+          "logo": "https://media.api-sports.io/football/teams/186.png",
+          "winner": true
+        },
+        "away": {
+          "id": 180,
+          "name": "FC Heidenheim",
+          "logo": "https://media.api-sports.io/football/teams/180.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:00:37.903716"
+}

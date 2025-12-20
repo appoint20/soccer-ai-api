@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1388752,
+  "date": "2025-12-12",
+  "home_team": "SpVgg Greuther F\u00fcrth",
+  "away_team": "Hertha BSC",
+  "league": "2_Bundesliga",
+  "api_prediction": {
+    "winner": {
+      "id": 159,
+      "name": "Hertha BSC",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Hertha BSC",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "25%",
+      "away": "75%"
+    },
+    "att": {
+      "home": "55%",
+      "away": "45%"
+    },
+    "def": {
+      "home": "15%",
+      "away": "85%"
+    },
+    "poisson_distribution": {
+      "home": "15%",
+      "away": "85%"
+    },
+    "h2h": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "goals": {
+      "home": "33%",
+      "away": "67%"
+    },
+    "total": {
+      "home": "30.5%",
+      "away": "69.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1226447,
+        "referee": "R. Kampka",
+        "timezone": "UTC",
+        "date": "2025-05-04T11:30:00+00:00",
+        "timestamp": 1746358200,
+        "periods": {
+          "first": 1746358200,
+          "second": 1746361800
+        },
+        "venue": {
+          "id": 694,
+          "name": "Olympiastadion Berlin",
+          "city": "Berlin"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 5
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 159,
+          "name": "Hertha BSC",
+          "logo": "https://media.api-sports.io/football/teams/159.png",
+          "winner": true
+        },
+        "away": {
+          "id": 178,
+          "name": "SpVgg Greuther F\u00fcrth",
+          "logo": "https://media.api-sports.io/football/teams/178.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1226295,
+        "referee": "W. Haslberger",
+        "timezone": "UTC",
+        "date": "2024-12-07T12:00:00+00:00",
+        "timestamp": 1733572800,
+        "periods": {
+          "first": 1733572800,
+          "second": 1733576400
+        },
+        "venue": {
+          "id": 718,
+          "name": "Sportpark Ronhof Thomas Sommer",
+          "city": "F\u00fcrth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2024,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 178,
+          "name": "SpVgg Greuther F\u00fcrth",
+          "logo": "https://media.api-sports.io/football/teams/178.png",
+          "winner": true
+        },
+        "away": {
+          "id": 159,
+          "name": "Hertha BSC",
+          "logo": "https://media.api-sports.io/football/teams/159.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1048760,
+        "referee": "M. Fritz",
+        "timezone": "UTC",
+        "date": "2024-02-11T12:30:00+00:00",
+        "timestamp": 1707654600,
+        "periods": {
+          "first": 1707654600,
+          "second": 1707658200
+        },
+        "venue": {
+          "id": 718,
+          "name": "Sportpark Ronhof Thomas Sommer",
+          "city": "F\u00fcrth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2023,
+        "round": "Regular Season - 21",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 178,
+          "name": "SpVgg Greuther Furth",
+          "logo": "https://media.api-sports.io/football/teams/178.png",
+          "winner": false
+        },
+        "away": {
+          "id": 159,
+          "name": "Hertha Berlin",
+          "logo": "https://media.api-sports.io/football/teams/159.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1048603,
+        "referee": "T. Stieler",
+        "timezone": "UTC",
+        "date": "2023-08-26T11:00:00+00:00",
+        "timestamp": 1693047600,
+        "periods": {
+          "first": 1693047600,
+          "second": 1693051200
+        },
+        "venue": {
+          "id": 694,
+          "name": "Olympiastadion Berlin",
+          "city": "Berlin"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2023,
+        "round": "Regular Season - 4",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 159,
+          "name": "Hertha Berlin",
+          "logo": "https://media.api-sports.io/football/teams/159.png",
+          "winner": true
+        },
+        "away": {
+          "id": 178,
+          "name": "SpVgg Greuther Furth",
+          "logo": "https://media.api-sports.io/football/teams/178.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 5,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 5,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 719546,
+        "referee": "D. Schlager",
+        "timezone": "UTC",
+        "date": "2022-02-12T14:30:00+00:00",
+        "timestamp": 1644676200,
+        "periods": {
+          "first": 1644676200,
+          "second": 1644679800
+        },
+        "venue": {
+          "id": 718,
+          "name": "Sportpark Ronhof Thomas Sommer",
+          "city": "F\u00fcrth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 78,
+        "name": "Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/78.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2021,
+        "round": "Regular Season - 22",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 178,
+          "name": "SpVgg Greuther Furth",
+          "logo": "https://media.api-sports.io/football/teams/178.png",
+          "winner": true
+        },
+        "away": {
+          "id": 159,
+          "name": "Hertha Berlin",
+          "logo": "https://media.api-sports.io/football/teams/159.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:57:06.008128"
+}

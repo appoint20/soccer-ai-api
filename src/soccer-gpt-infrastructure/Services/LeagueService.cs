@@ -22,6 +22,6 @@ public class LeagueService : ILeagueService
 
     public bool IsLeagueSupported(string code)
     {
-        return LeagueMappings.ContainsKey(code);
+        return LeagueMappings.ContainsKey(code) || LeagueMappings.ContainsValue(code);
     }
 }

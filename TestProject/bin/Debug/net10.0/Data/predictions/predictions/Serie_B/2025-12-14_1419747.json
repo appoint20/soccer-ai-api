@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1419747,
+  "date": "2025-12-14",
+  "home_team": "Carrarese",
+  "away_team": "Virtus Entella",
+  "league": "Serie_B",
+  "api_prediction": {
+    "winner": {
+      "id": 1581,
+      "name": "Carrarese",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-1.5"
+    },
+    "advice": "Double chance : Carrarese or draw",
+    "percent": {
+      "home": "35%",
+      "draw": "35%",
+      "away": "30%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "29%",
+      "away": "71%"
+    },
+    "att": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "def": {
+      "home": "31%",
+      "away": "69%"
+    },
+    "poisson_distribution": {
+      "home": "74%",
+      "away": "26%"
+    },
+    "h2h": {
+      "home": "62%",
+      "away": "38%"
+    },
+    "goals": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "total": {
+      "home": "48.2%",
+      "away": "51.8%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1261854,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2024-07-28T16:00:00+00:00",
+        "timestamp": 1722182400,
+        "periods": {
+          "first": 1722182400,
+          "second": 1722186000
+        },
+        "venue": {
+          "id": null,
+          "name": "Centro Sportivo Tavarone",
+          "city": "Maissana"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2024,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 527,
+          "name": "Virtus Entella",
+          "logo": "https://media.api-sports.io/football/teams/527.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1581,
+          "name": "Carrarese",
+          "logo": "https://media.api-sports.io/football/teams/1581.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1114781,
+        "referee": "A. Costanza",
+        "timezone": "UTC",
+        "date": "2024-02-10T19:45:00+00:00",
+        "timestamp": 1707594300,
+        "periods": {
+          "first": 1707594300,
+          "second": 1707597900
+        },
+        "venue": {
+          "id": 872,
+          "name": "Stadio Comunale Chiavari",
+          "city": "Chiavari"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 942,
+        "name": "Serie C - Girone B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/942.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Girone B - 25",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 527,
+          "name": "Virtus Entella",
+          "logo": "https://media.api-sports.io/football/teams/527.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1581,
+          "name": "Carrarese",
+          "logo": "https://media.api-sports.io/football/teams/1581.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1114591,
+        "referee": "R. Lovison",
+        "timezone": "UTC",
+        "date": "2023-09-30T16:30:00+00:00",
+        "timestamp": 1696091400,
+        "periods": {
+          "first": 1696091400,
+          "second": 1696095000
+        },
+        "venue": {
+          "id": 885,
+          "name": "Stadio dei Marmi",
+          "city": "Carrara"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 942,
+        "name": "Serie C - Girone B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/942.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2023,
+        "round": "Girone B - 6",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1581,
+          "name": "Carrarese",
+          "logo": "https://media.api-sports.io/football/teams/1581.png",
+          "winner": true
+        },
+        "away": {
+          "id": 527,
+          "name": "Virtus Entella",
+          "logo": "https://media.api-sports.io/football/teams/527.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 952633,
+        "referee": "S. Kumara",
+        "timezone": "UTC",
+        "date": "2023-01-22T16:30:00+00:00",
+        "timestamp": 1674405000,
+        "periods": {
+          "first": 1674405000,
+          "second": 1674408600
+        },
+        "venue": {
+          "id": 872,
+          "name": "Stadio Comunale Chiavari",
+          "city": "Chiavari"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 942,
+        "name": "Serie C - Girone B",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/942.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2022,
+        "round": "Girone B - 23",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 527,
+          "name": "Virtus Entella",
+          "logo": "https://media.api-sports.io/football/teams/527.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1581,
+          "name": "Carrarese",
+          "logo": "https://media.api-sports.io/football/teams/1581.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 961208,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2022-10-05T16:00:00+00:00",
+        "timestamp": 1664985600,
+        "periods": {
+          "first": 1664985600,
+          "second": 1664989200
+        },
+        "venue": {
+          "id": 872,
+          "name": "Stadio Comunale Chiavari",
+          "city": "Chiavari"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "AET",
+          "elapsed": 120,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 891,
+        "name": "Coppa Italia Serie C",
+        "country": "Italy",
+        "logo": "https://media.api-sports.io/football/leagues/891.png",
+        "flag": "https://media.api-sports.io/flags/it.svg",
+        "season": 2022,
+        "round": "1st Round",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 527,
+          "name": "Virtus Entella",
+          "logo": "https://media.api-sports.io/football/teams/527.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1581,
+          "name": "Carrarese",
+          "logo": "https://media.api-sports.io/football/teams/1581.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": 0,
+          "away": 0
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-12T22:58:44.776285"
+}

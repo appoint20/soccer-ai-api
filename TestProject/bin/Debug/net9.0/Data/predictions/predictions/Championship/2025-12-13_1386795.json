@@ -1,0 +1,199 @@
+{
+  "fixture_id": 1386795,
+  "date": "2025-12-13",
+  "home_team": "Oxford United",
+  "away_team": "Preston",
+  "league": "Championship",
+  "api_prediction": {
+    "winner": {
+      "id": 1338,
+      "name": "Oxford United",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Oxford United or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "att": {
+      "home": "42%",
+      "away": "58%"
+    },
+    "def": {
+      "home": "54%",
+      "away": "46%"
+    },
+    "poisson_distribution": {
+      "home": "36%",
+      "away": "64%"
+    },
+    "h2h": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "goals": {
+      "home": "67%",
+      "away": "33%"
+    },
+    "total": {
+      "home": "54.8%",
+      "away": "45.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216148,
+        "referee": "B. Toner",
+        "timezone": "UTC",
+        "date": "2025-01-04T15:00:00+00:00",
+        "timestamp": 1736002800,
+        "periods": {
+          "first": 1736002800,
+          "second": 1736006400
+        },
+        "venue": {
+          "id": 574,
+          "name": "Deepdale",
+          "city": "Preston"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 59,
+          "name": "Preston",
+          "logo": "https://media.api-sports.io/football/teams/59.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1338,
+          "name": "Oxford United",
+          "logo": "https://media.api-sports.io/football/teams/1338.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1215886,
+        "referee": "K. Stroud",
+        "timezone": "UTC",
+        "date": "2024-08-31T14:00:00+00:00",
+        "timestamp": 1725112800,
+        "periods": {
+          "first": 1725112800,
+          "second": 1725116400
+        },
+        "venue": {
+          "id": 569,
+          "name": "The Kassam Stadium",
+          "city": "Oxford, Oxfordshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 4",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1338,
+          "name": "Oxford United",
+          "logo": "https://media.api-sports.io/football/teams/1338.png",
+          "winner": true
+        },
+        "away": {
+          "id": 59,
+          "name": "Preston",
+          "logo": "https://media.api-sports.io/football/teams/59.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:02:43.441435"
+}

@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386234,
+  "date": "2025-12-13",
+  "home_team": "Walsall",
+  "away_team": "Shrewsbury",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1342,
+      "name": "Walsall",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-3.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Walsall or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "att": {
+      "home": "53%",
+      "away": "47%"
+    },
+    "def": {
+      "home": "65%",
+      "away": "35%"
+    },
+    "poisson_distribution": {
+      "home": "73%",
+      "away": "27%"
+    },
+    "h2h": {
+      "home": "71%",
+      "away": "29%"
+    },
+    "goals": {
+      "home": "69%",
+      "away": "31%"
+    },
+    "total": {
+      "home": "65.8%",
+      "away": "34.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1444573,
+        "referee": "Declan Bourne",
+        "timezone": "UTC",
+        "date": "2025-09-02T18:00:00+00:00",
+        "timestamp": 1756836000,
+        "periods": {
+          "first": 1756836000,
+          "second": 1756839600
+        },
+        "venue": {
+          "id": null,
+          "name": "The Croud Meadow",
+          "city": "Shrewsbury"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 8
+        }
+      },
+      "league": {
+        "id": 46,
+        "name": "EFL Trophy",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/46.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2025,
+        "round": "Southern - 1",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1352,
+          "name": "Shrewsbury",
+          "logo": "https://media.api-sports.io/football/teams/1352.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1342,
+          "name": "Walsall",
+          "logo": "https://media.api-sports.io/football/teams/1342.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1218989,
+        "referee": "Z. Kennard-Kettle",
+        "timezone": "UTC",
+        "date": "2024-11-12T19:00:00+00:00",
+        "timestamp": 1731438000,
+        "periods": {
+          "first": 1731438000,
+          "second": 1731441600
+        },
+        "venue": {
+          "id": 18620,
+          "name": "Poundland Bescot Stadium",
+          "city": "Walsall, West Midlands"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 5
+        }
+      },
+      "league": {
+        "id": 46,
+        "name": "EFL Trophy",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/46.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Group Stage - 9",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1342,
+          "name": "Walsall",
+          "logo": "https://media.api-sports.io/football/teams/1342.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1352,
+          "name": "Shrewsbury",
+          "logo": "https://media.api-sports.io/football/teams/1352.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1098485,
+        "referee": "R. Ricardo",
+        "timezone": "UTC",
+        "date": "2023-11-14T19:00:00+00:00",
+        "timestamp": 1699988400,
+        "periods": {
+          "first": 1699988400,
+          "second": 1699992000
+        },
+        "venue": {
+          "id": 19925,
+          "name": "The Croud Meadow",
+          "city": "Shrewsbury, Shropshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 46,
+        "name": "EFL Trophy",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/46.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Group Stage - 9",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1352,
+          "name": "Shrewsbury",
+          "logo": "https://media.api-sports.io/football/teams/1352.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1342,
+          "name": "Walsall",
+          "logo": "https://media.api-sports.io/football/teams/1342.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 604102,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2020-08-21T11:00:00+00:00",
+        "timestamp": 1598007600,
+        "periods": {
+          "first": 1598007600,
+          "second": 1598011200
+        },
+        "venue": {
+          "id": 3537,
+          "name": "New Bucks Head Ground",
+          "city": "Telford, Shropshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 667,
+        "name": "Friendlies Clubs",
+        "country": "World",
+        "logo": "https://media.api-sports.io/football/leagues/667.png",
+        "flag": null,
+        "season": 2020,
+        "round": "Club Friendlies 3",
+        "standings": false
+      },
+      "teams": {
+        "home": {
+          "id": 1352,
+          "name": "Shrewsbury",
+          "logo": "https://media.api-sports.io/football/teams/1352.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1342,
+          "name": "Walsall",
+          "logo": "https://media.api-sports.io/football/teams/1342.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 48676,
+        "referee": "Sebastian Stockbridge, England",
+        "timezone": "UTC",
+        "date": "2019-05-04T16:30:00+00:00",
+        "timestamp": 1556987400,
+        "periods": {
+          "first": 1556987400,
+          "second": 1556991000
+        },
+        "venue": {
+          "id": null,
+          "name": "New Meadow",
+          "city": "Shrewsbury"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2018,
+        "round": "Regular Season - 46",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1352,
+          "name": "Shrewsbury",
+          "logo": "https://media.api-sports.io/football/teams/1352.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1342,
+          "name": "Walsall",
+          "logo": "https://media.api-sports.io/football/teams/1342.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:26.981975"
+}

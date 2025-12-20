@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1387332,
+  "date": "2025-12-13",
+  "home_team": "Barnsley",
+  "away_team": "Leyton Orient",
+  "league": "League_One",
+  "api_prediction": {
+    "winner": {
+      "id": 1373,
+      "name": "Leyton Orient",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": "+1.5",
+    "goals": {
+      "home": "-3.5",
+      "away": "-2.5"
+    },
+    "advice": "Combo Double chance : draw or Leyton Orient and +1.5 goals",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "44%",
+      "away": "56%"
+    },
+    "att": {
+      "home": "53%",
+      "away": "47%"
+    },
+    "def": {
+      "home": "55%",
+      "away": "45%"
+    },
+    "poisson_distribution": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "h2h": {
+      "home": "38%",
+      "away": "62%"
+    },
+    "goals": {
+      "home": "38%",
+      "away": "63%"
+    },
+    "total": {
+      "home": "48.7%",
+      "away": "51.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216904,
+        "referee": "L. Doughty",
+        "timezone": "UTC",
+        "date": "2025-04-18T14:00:00+00:00",
+        "timestamp": 1744984800,
+        "periods": {
+          "first": 1744984800,
+          "second": 1744988400
+        },
+        "venue": {
+          "id": 18618,
+          "name": "Brisbane Road",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 7
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 43",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1373,
+          "name": "Leyton Orient",
+          "logo": "https://media.api-sports.io/football/teams/1373.png",
+          "winner": true
+        },
+        "away": {
+          "id": 747,
+          "name": "Barnsley",
+          "logo": "https://media.api-sports.io/football/teams/747.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216635,
+        "referee": "D. Baines",
+        "timezone": "UTC",
+        "date": "2024-12-21T15:00:00+00:00",
+        "timestamp": 1734793200,
+        "periods": {
+          "first": 1734793200,
+          "second": 1734796800
+        },
+        "venue": {
+          "id": 497,
+          "name": "Oakwell",
+          "city": "Barnsley, South Yorkshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 21",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 747,
+          "name": "Barnsley",
+          "logo": "https://media.api-sports.io/football/teams/747.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1373,
+          "name": "Leyton Orient",
+          "logo": "https://media.api-sports.io/football/teams/1373.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 4
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 2
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 4
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1039643,
+        "referee": "R. Joyce",
+        "timezone": "UTC",
+        "date": "2024-02-10T15:00:00+00:00",
+        "timestamp": 1707577200,
+        "periods": {
+          "first": 1707577200,
+          "second": 1707580800
+        },
+        "venue": {
+          "id": 497,
+          "name": "Oakwell",
+          "city": "Barnsley, South Yorkshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 747,
+          "name": "Barnsley",
+          "logo": "https://media.api-sports.io/football/teams/747.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1373,
+          "name": "Leyton Orient",
+          "logo": "https://media.api-sports.io/football/teams/1373.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1039444,
+        "referee": "P. Wright",
+        "timezone": "UTC",
+        "date": "2023-10-21T14:00:00+00:00",
+        "timestamp": 1697896800,
+        "periods": {
+          "first": 1697896800,
+          "second": 1697900400
+        },
+        "venue": {
+          "id": 18618,
+          "name": "Brisbane Road",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1373,
+          "name": "Leyton Orient",
+          "logo": "https://media.api-sports.io/football/teams/1373.png",
+          "winner": null
+        },
+        "away": {
+          "id": 747,
+          "name": "Barnsley",
+          "logo": "https://media.api-sports.io/football/teams/747.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 459452,
+        "referee": null,
+        "timezone": "UTC",
+        "date": "2015-03-17T19:45:00+00:00",
+        "timestamp": 1426621500,
+        "periods": {
+          "first": 1426621500,
+          "second": 1426625100
+        },
+        "venue": {
+          "id": null,
+          "name": "Matchroom Stadium",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2014,
+        "round": "Regular Season - 37",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1373,
+          "name": "Leyton Orient",
+          "logo": "https://media.api-sports.io/football/teams/1373.png",
+          "winner": null
+        },
+        "away": {
+          "id": 747,
+          "name": "Barnsley",
+          "logo": "https://media.api-sports.io/football/teams/747.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:07.042204"
+}

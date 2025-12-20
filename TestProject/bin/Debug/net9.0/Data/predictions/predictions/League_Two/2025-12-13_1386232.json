@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386232,
+  "date": "2025-12-13",
+  "home_team": "Salford City",
+  "away_team": "Colchester",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1361,
+      "name": "Colchester",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : draw or Colchester",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "41%",
+      "away": "59%"
+    },
+    "att": {
+      "home": "46%",
+      "away": "54%"
+    },
+    "def": {
+      "home": "27%",
+      "away": "73%"
+    },
+    "poisson_distribution": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "h2h": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "goals": {
+      "home": "57%",
+      "away": "43%"
+    },
+    "total": {
+      "home": "43.5%",
+      "away": "56.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1217484,
+        "referee": "S. Stockbridge",
+        "timezone": "UTC",
+        "date": "2025-04-26T14:00:00+00:00",
+        "timestamp": 1745676000,
+        "periods": {
+          "first": 1745676000,
+          "second": 1745679600
+        },
+        "venue": {
+          "id": 579,
+          "name": "The Peninsula Stadium",
+          "city": "Salford, Greater Manchester"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 45",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1844,
+          "name": "Salford City",
+          "logo": "https://media.api-sports.io/football/teams/1844.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1361,
+          "name": "Colchester",
+          "logo": "https://media.api-sports.io/football/teams/1361.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 3,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1217107,
+        "referee": "A. Chilowicz",
+        "timezone": "UTC",
+        "date": "2024-10-26T11:30:00+00:00",
+        "timestamp": 1729942200,
+        "periods": {
+          "first": 1729942200,
+          "second": 1729945800
+        },
+        "venue": {
+          "id": 522,
+          "name": "JobServe Community Stadium",
+          "city": "Colchester, Essex"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 3
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 14",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1361,
+          "name": "Colchester",
+          "logo": "https://media.api-sports.io/football/teams/1361.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1844,
+          "name": "Salford City",
+          "logo": "https://media.api-sports.io/football/teams/1844.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1040159,
+        "referee": "K. Dowle",
+        "timezone": "UTC",
+        "date": "2024-02-27T19:45:00+00:00",
+        "timestamp": 1709063100,
+        "periods": {
+          "first": 1709063100,
+          "second": 1709066700
+        },
+        "venue": {
+          "id": 579,
+          "name": "The Peninsula Stadium",
+          "city": "Salford, Greater Manchester"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1844,
+          "name": "Salford City",
+          "logo": "https://media.api-sports.io/football/teams/1844.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1361,
+          "name": "Colchester",
+          "logo": "https://media.api-sports.io/football/teams/1361.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1040079,
+        "referee": "W. Finnie",
+        "timezone": "UTC",
+        "date": "2023-12-22T19:45:00+00:00",
+        "timestamp": 1703274300,
+        "periods": {
+          "first": 1703274300,
+          "second": 1703277900
+        },
+        "venue": {
+          "id": 522,
+          "name": "JobServe Community Stadium",
+          "city": "Colchester, Essex"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 23",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1361,
+          "name": "Colchester",
+          "logo": "https://media.api-sports.io/football/teams/1361.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1844,
+          "name": "Salford City",
+          "logo": "https://media.api-sports.io/football/teams/1844.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 876552,
+        "referee": "A. Haines",
+        "timezone": "UTC",
+        "date": "2023-04-15T14:00:00+00:00",
+        "timestamp": 1681567200,
+        "periods": {
+          "first": 1681567200,
+          "second": 1681570800
+        },
+        "venue": {
+          "id": 579,
+          "name": "The Peninsula Stadium",
+          "city": "Salford, Greater Manchester"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 42",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1844,
+          "name": "Salford City",
+          "logo": "https://media.api-sports.io/football/teams/1844.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1361,
+          "name": "Colchester",
+          "logo": "https://media.api-sports.io/football/teams/1361.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:25.174257"
+}
