@@ -26,7 +26,11 @@ public class MlPredictionService(
                     logger.LogInformation("ML Models missing. Triggering Training with {Count} historical matches...", allHistory.Count);
                     if (allHistory.Count > 100)
                     {
-                        var trainingData = await featureService.CreateTrainingDatasetAsync(allHistory);
+                        // Optimization: Limit to last 5000 matches to prevent OOM/Crash on local machine during training
+                        var trainingSet = allHistory.OrderBy(m => m.Date).TakeLast(5000).ToList();
+                        logger.LogInformation("Optimized Training: Using last {Count} matches.", trainingSet.Count);
+                        
+                        var trainingData = await featureService.CreateTrainingDatasetAsync(trainingSet);
                         model.TrainAndSave(trainingData);
                         _hasTrained = true;
                         logger.LogInformation("Training Completed.");
@@ -52,7 +56,7 @@ public class MlPredictionService(
         // 2. Prepare Input Features
         try
         {
-            // Convert upcoming match to "target" historical match format
+             // Convert upcoming match to "target" historical match format
              if (!DateTime.TryParse($"{match.Date} {match.Time}", out var matchDate))
              {
                  matchDate = DateTime.UtcNow; // Fallback
@@ -78,6 +82,43 @@ public class MlPredictionService(
              
              // 3. Predict
              var prediction = model.Predict(features);
+             
+             // Value Bet Pattern: Downgrade 1X2 Confidence if Odds < 2.0
+             
+             if (match.Odds != null)
+             {
+                 try 
+                 {
+                     // Debug Log
+                     // logger.LogInformation("Checking Value Bet for {Home} vs {Away}...", match.HomeTeam, match.AwayTeam);
+                     
+                     // Home Win Check
+                     if (prediction.HomeWinProbability > 0.60f && match.Odds.HomeWin < 2.0m)
+                     {
+                         prediction.Reasons.Add($"Value Check: Home Win Odds ({match.Odds.HomeWin:F2}) < 2.00. Downgrading to prioritize Goals.");
+                         prediction.HomeWinProbability = 0.55f; 
+                     }
+                     
+                     // Away Win Check
+                     if (prediction.AwayWinProbability > 0.60f && match.Odds.AwayWin < 2.0m)
+                     {
+                         prediction.Reasons.Add($"Value Check: Away Win Odds ({match.Odds.AwayWin:F2}) < 2.00. Downgrading to prioritize Goals.");
+                         prediction.AwayWinProbability = 0.55f;
+                     }
+                     
+                     // Draw Check
+                     if (prediction.DrawProbability > 0.60f && match.Odds.Draw < 2.0m)
+                     {
+                          prediction.Reasons.Add($"Value Check: Draw Odds ({match.Odds.Draw:F2}) < 2.00. Downgrading to prioritize Goals.");
+                          prediction.DrawProbability = 0.55f;
+                     }
+                 }
+                 catch (Exception ex)
+                 {
+                     logger.LogError(ex, "Error in Value Bet Logic");
+                 }
+             }
+             
              return prediction;
         }
         catch (Exception ex)

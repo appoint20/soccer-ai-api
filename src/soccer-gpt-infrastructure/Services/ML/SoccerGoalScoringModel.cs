@@ -95,15 +95,13 @@ public class SoccerGoalScoringModel
             .Append(_mlContext.Transforms.ReplaceMissingValues("Features"))
             .Append(_mlContext.Transforms.NormalizeMinMax("Features"));
 
+        // Reverting to FastTree (GBDT) for higher accuracy, relying on Data Limit to prevent crash
         var regressionPipeline = pipeline.Append(_mlContext.Regression.Trainers.FastTree(labelColumnName: "LabelTotalGoals", featureColumnName: "Features"));
 
         _regressionModel = regressionPipeline.Fit(dataView);
         _mlContext.Model.Save(_regressionModel, dataView.Schema, Path.Combine(_modelsPath, "TotalGoalsModel.zip"));
 
         // 2. Classification Over 1.5
-        // Re-use pipeline definition logic or just use same 'pipeline' variable?
-        // Note: pipeline.Append returns a NEW estimator chain. So 'pipeline' base is reusable.
-        
         var trainerOver15 = pipeline.Append(_mlContext.BinaryClassification.Trainers.FastTree(labelColumnName: "LabelIsOver15"));
         _classificationOver15 = trainerOver15.Fit(dataView);
         _mlContext.Model.Save(_classificationOver15, dataView.Schema, Path.Combine(_modelsPath, "Over15Model.zip"));
@@ -118,8 +116,8 @@ public class SoccerGoalScoringModel
         _classificationBTTS = trainerBTTS.Fit(dataView);
         _mlContext.Model.Save(_classificationBTTS, dataView.Schema, Path.Combine(_modelsPath, "BTTSModel.zip"));
 
-        // 4. Trap Detection
-        var trainerTrap = pipeline.Append(_mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(labelColumnName: "LabelIsLowGoalTrap"));
+        // 4. Trap Detection (Use SDCA or FastTree? FastTree for consistency)
+        var trainerTrap = pipeline.Append(_mlContext.BinaryClassification.Trainers.FastTree(labelColumnName: "LabelIsLowGoalTrap"));
         _classificationTrap = trainerTrap.Fit(dataView);
         _mlContext.Model.Save(_classificationTrap, dataView.Schema, Path.Combine(_modelsPath, "TrapModel.zip")); 
         

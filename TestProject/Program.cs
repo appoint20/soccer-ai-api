@@ -11,8 +11,14 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("=== Backtesting Runner Starting ===");
+        if (args.Contains("--verify-model"))
+        {
+            PoissonVerifier.Run();
+            return;
+        }
 
+        Console.WriteLine("=== Backtesting Runner Starting ===");
+        
         // 1. Setup Dependency Injection
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning)); // Reduce log noise

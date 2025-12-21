@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<IHistoricalDataRepository, ExcelHistoricalDataService>(); // Singleton to cache data check
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IAdvancedStatsService, AdvancedStatsService>();
+        services.AddScoped<IPoissonGoalModelService, PoissonGoalModelService>();
         
         
         // European Fixtures Service

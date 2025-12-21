@@ -1,0 +1,124 @@
+Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,B365>2.5
+E3,02/09/2024,20:00,Salford,Milton Keynes Dons,1,0,1.7
+SP2,02/09/2024,18:00,Eibar,Levante,2,2,2
+SP2,02/09/2024,20:30,Elche,Cordoba,3,1,2.35
+E0,01/09/2024,13:30,Chelsea,Crystal Palace,1,1,1.5
+E0,01/09/2024,13:30,Newcastle,Tottenham,2,1,1.36
+E0,01/09/2024,16:00,Man United,Liverpool,0,3,1.44
+E1,01/09/2024,15:00,Sheffield United,Watford,1,0,1.83
+I2,01/09/2024,19:30,Catanzaro,Carrarese,3,1,2.15
+I2,01/09/2024,19:30,Frosinone,Juve Stabia,0,0,2.15
+I2,01/09/2024,19:30,Mantova,Salernitana,1,0,1.85
+I2,01/09/2024,19:30,Palermo,Cosenza,1,1,2.1
+I2,01/09/2024,19:30,Spezia,Cesena,2,1,2.1
+I1,01/09/2024,17:30,Fiorentina,Monza,2,2,2.04
+I1,01/09/2024,17:30,Genoa,Verona,0,2,2.3
+I1,01/09/2024,19:45,Juventus,Roma,0,0,2
+I1,01/09/2024,19:45,Udinese,Como,1,0,2.1
+D2,01/09/2024,12:30,Braunschweig,Karlsruhe,1,2,1.5
+D2,01/09/2024,12:30,Paderborn,Ulm,0,0,1.67
+D2,01/09/2024,12:30,Schalke 04,FC Koln,1,3,1.5
+SP1,01/09/2024,16:00,Alaves,Las Palmas,2,0,2.3
+SP1,01/09/2024,16:00,Osasuna,Celta,3,2,2.1
+SP1,01/09/2024,18:00,Sevilla,Girona,0,2,1.67
+SP1,01/09/2024,18:15,Getafe,Sociedad,0,0,3
+SP1,01/09/2024,20:30,Real Madrid,Betis,2,0,1.53
+D1,01/09/2024,14:30,Heidenheim,Augsburg,4,0,1.73
+D1,01/09/2024,16:30,Bayern Munich,Freiburg,2,0,1.25
+SP2,01/09/2024,16:00,Burgos,Castellon,0,2,2.15
+SP2,01/09/2024,16:00,La Coruna,Ferrol,1,0,2.35
+SP2,01/09/2024,18:00,Eldense,Cartagena,1,2,2.4
+SP2,01/09/2024,18:00,Mirandes,Zaragoza,0,0,2.6
+F1,01/09/2024,14:00,Monaco,Lens,1,1,1.57
+F1,01/09/2024,16:00,Angers,Nice,1,4,2.3
+F1,01/09/2024,16:00,Le Havre,Auxerre,3,1,2.1
+F1,01/09/2024,16:00,Reims,Rennes,2,1,1.83
+F1,01/09/2024,19:45,Lille,Paris SG,1,3,1.73
+E0,31/08/2024,12:30,Arsenal,Brighton,1,1,1.53
+E0,31/08/2024,15:00,Brentford,Southampton,3,1,1.73
+E0,31/08/2024,15:00,Everton,Bournemouth,2,3,1.92
+E0,31/08/2024,15:00,Ipswich,Fulham,1,1,1.84
+E0,31/08/2024,15:00,Leicester,Aston Villa,1,2,1.67
+E0,31/08/2024,15:00,Nott'm Forest,Wolves,1,1,1.85
+E0,31/08/2024,17:30,West Ham,Man City,1,3,1.44
+E1,31/08/2024,12:30,Burnley,Blackburn,1,1,1.8
+E1,31/08/2024,12:30,Cardiff,Middlesbrough,0,2,1.9
+E1,31/08/2024,12:30,Coventry,Norwich,0,1,1.67
+E1,31/08/2024,15:00,Derby,Bristol City,3,0,2.05
+E1,31/08/2024,15:00,Leeds,Hull,2,0,1.6
+E1,31/08/2024,15:00,Millwall,Sheffield Weds,3,0,2.08
+E1,31/08/2024,15:00,Oxford,Preston,3,1,2.03
+E1,31/08/2024,15:00,Plymouth,Stoke,0,1,1.7
+E1,31/08/2024,15:00,Portsmouth,Sunderland,1,3,2
+E1,31/08/2024,15:00,West Brom,Swansea,1,0,1.98
+I2,31/08/2024,17:00,Sampdoria,Bari,0,0,2.2
+I2,31/08/2024,19:30,Modena,Cittadella,0,1,2.25
+I2,31/08/2024,19:30,Pisa,Reggiana,2,1,2.1
+I2,31/08/2024,19:30,Sassuolo,Cremonese,1,4,2.05
+I2,31/08/2024,19:30,Sudtirol,Brescia,1,2,2.7
+E3,31/08/2024,12:30,Gillingham,Chesterfield,1,0,1.9
+E3,31/08/2024,12:30,Port Vale,Doncaster,2,3,2.03
+E3,31/08/2024,15:00,Accrington,Colchester,1,1,1.8
+E3,31/08/2024,15:00,AFC Wimbledon,Fleetwood Town,1,0,1.9
+E3,31/08/2024,15:00,Bromley,Crewe,1,2,1.93
+E3,31/08/2024,15:00,Carlisle,Tranmere,1,2,2
+E3,31/08/2024,15:00,Grimsby,Bradford,2,1,1.98
+E3,31/08/2024,15:00,Harrogate,Barrow,0,1,1.98
+E3,31/08/2024,15:00,Morecambe,Newport County,0,1,1.88
+E3,31/08/2024,15:00,Swindon,Notts County,1,2,1.53
+E3,31/08/2024,15:00,Walsall,Cheltenham,2,1,1.8
+E2,31/08/2024,12:30,Blackpool,Wycombe,2,2,1.95
+E2,31/08/2024,12:30,Rotherham,Huddersfield,2,1,2.05
+E2,31/08/2024,15:00,Birmingham,Wigan,2,1,1.65
+E2,31/08/2024,15:00,Bolton,Exeter,0,2,1.8
+E2,31/08/2024,15:00,Bristol Rvs,Cambridge,2,0,2.05
+E2,31/08/2024,15:00,Crawley Town,Barnsley,0,3,1.65
+E2,31/08/2024,15:00,Mansfield,Stockport,1,1,1.67
+E2,31/08/2024,15:00,Northampton,Burton,0,0,1.93
+E2,31/08/2024,15:00,Peterboro,Wrexham,0,2,1.57
+E2,31/08/2024,15:00,Reading,Charlton,2,0,1.88
+E2,31/08/2024,15:00,Shrewsbury,Leyton Orient,3,0,2.15
+E2,31/08/2024,15:00,Stevenage,Lincoln,0,1,2.25
+I1,31/08/2024,17:30,Bologna,Empoli,1,1,2.1
+I1,31/08/2024,17:30,Lecce,Cagliari,1,0,2.3
+I1,31/08/2024,19:45,Lazio,Milan,2,2,1.9
+I1,31/08/2024,19:45,Napoli,Parma,2,1,1.73
+D2,31/08/2024,12:00,Elversberg,Darmstadt,4,0,1.53
+D2,31/08/2024,12:00,Hamburg,Preußen Münster,4,1,1.44
+D2,31/08/2024,12:00,Nurnberg,Magdeburg,0,4,1.6
+D2,31/08/2024,19:30,Kaiserslautern,Hertha,3,4,1.6
+SP1,31/08/2024,16:00,Barcelona,Valladolid,7,0,1.44
+SP1,31/08/2024,18:00,Ath Bilbao,Ath Madrid,0,1,2
+SP1,31/08/2024,18:15,Espanol,Vallecano,2,1,2.63
+SP1,31/08/2024,20:30,Leganes,Mallorca,0,1,2.75
+SP1,31/08/2024,20:30,Valencia,Villarreal,1,1,1.84
+D1,31/08/2024,14:30,Bochum,M'gladbach,0,2,1.57
+D1,31/08/2024,14:30,Ein Frankfurt,Hoffenheim,3,1,1.44
+D1,31/08/2024,14:30,Holstein Kiel,Wolfsburg,0,2,1.73
+D1,31/08/2024,14:30,Stuttgart,Mainz,3,3,1.62
+D1,31/08/2024,14:30,Werder Bremen,Dortmund,0,0,1.44
+D1,31/08/2024,17:30,Leverkusen,RB Leipzig,2,3,1.5
+SP2,31/08/2024,18:00,Cadiz,Tenerife,2,2,2.5
+SP2,31/08/2024,20:30,Almeria,Sp Gijon,1,1,2.08
+SP2,31/08/2024,20:30,Malaga,Albacete,2,1,2.35
+F2,31/08/2024,13:30,Amiens,Lorient,1,0,2.15
+F2,31/08/2024,13:30,Metz,Laval,1,1,2.1
+F1,31/08/2024,16:00,Brest,St Etienne,4,0,2.07
+F1,31/08/2024,18:00,Montpellier,Nantes,1,3,2.04
+F1,31/08/2024,20:00,Toulouse,Marseille,1,3,1.8
+E1,30/08/2024,20:00,Luton,QPR,1,2,1.75
+I1,30/08/2024,17:30,Venezia,Torino,0,1,2.15
+I1,30/08/2024,19:45,Inter,Atalanta,4,0,1.62
+D2,30/08/2024,17:30,Fortuna Dusseldorf,Hannover,1,0,1.8
+D2,30/08/2024,17:30,Regensburg,Greuther Furth,0,4,1.75
+D1,30/08/2024,19:30,Union Berlin,St Pauli,1,0,2.03
+SP2,30/08/2024,18:00,Granada,Huesca,1,3,2.25
+SP2,30/08/2024,20:30,Oviedo,Santander,1,3,2.05
+F2,30/08/2024,19:00,Ajaccio,Troyes,2,1,2.7
+F2,30/08/2024,19:00,Caen,Annecy,1,1,2.1
+F2,30/08/2024,19:00,Clermont,Paris FC,0,1,2.05
+F2,30/08/2024,19:00,Dunkerque,Rodez,1,0,2
+F2,30/08/2024,19:00,Grenoble,Pau FC,1,1,1.93
+F2,30/08/2024,19:00,Guingamp,Red Star,3,4,2.25
+F2,30/08/2024,19:00,Martigues,Bastia,0,1,2.35
+F1,30/08/2024,19:45,Lyon,Strasbourg,4,3,1.73
