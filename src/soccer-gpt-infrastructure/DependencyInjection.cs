@@ -53,6 +53,10 @@ public static class DependencyInjection
         services.AddScoped<ITrapDetector, EuropeanFatigueDetector>();
         services.AddScoped<ITrapDetector, DerbyDetector>();
         
+        // Filter Services
+        services.AddScoped<IH2HFilterService, soccer_gpt_infrastructure.Services.Filters.H2HFilterService>();
+        services.AddScoped<IDecisionService, soccer_gpt_infrastructure.Services.Decision.DecisionService>();
+        
         // Automation / Sync Services
         services.AddScoped<ITeamStatsSyncService, TeamStatsSyncService>();
         services.AddScoped<ITeamMappingService, TeamMappingService>();

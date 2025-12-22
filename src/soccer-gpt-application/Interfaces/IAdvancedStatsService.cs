@@ -14,6 +14,12 @@ public class AdvancedAnalyticsDto
 
     [JsonPropertyName("streak_analysis")]
     public StreakAnalysisDto StreakAnalysis { get; set; } = new();
+    
+    [JsonPropertyName("h2h_analysis")]
+    public H2HAnalysisDto H2HAnalysis { get; set; } = new();
+    
+    [JsonPropertyName("decision")]
+    public BettingDecisionDto Decision { get; set; } = new();
 }
 
 public class MatchProbabilitiesDto
@@ -35,6 +41,15 @@ public class MatchProbabilitiesDto
     
     [JsonPropertyName("btts")]
     public double BTTS { get; set; }
+    
+    [JsonPropertyName("expected_goals_home")]
+    public double ExpectedGoalsHome { get; set; }
+    
+    [JsonPropertyName("expected_goals_away")]
+    public double ExpectedGoalsAway { get; set; }
+    
+    [JsonPropertyName("prob_2to3_goals")]
+    public double Prob2to3Goals { get; set; }
 }
 
 public class StreakAnalysisDto

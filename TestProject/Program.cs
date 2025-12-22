@@ -21,7 +21,19 @@ class Program
         
         // 1. Setup Dependency Injection
         var services = new ServiceCollection();
-        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning)); // Reduce log noise
+        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
+        
+        // Simple mock configuration
+        services.AddSingleton<Microsoft.Extensions.Configuration.IConfiguration>(sp => 
+        {
+            var dict = new Dictionary<string, string>
+            {
+                ["EuropeanFixtures:ApiHost"] = "dummy",
+                ["EuropeanFixtures:ApiKey"] = "dummy"
+            };
+            return new MockConfiguration(dict);
+        });
+        
         services.AddInfrastructure(); 
 
         var provider = services.BuildServiceProvider();
@@ -63,6 +75,23 @@ class Program
         // Trap Tracking
         int boreDrawSignals = 0; int boreDrawSuccess = 0;
         int oddsTrapSignals = 0; int oddsTrapSuccess = 0;
+        
+        // H2H Filter Tracking
+        int derbyMatches = 0;
+        int bttsH2HCandidates = 0;
+        int over25H2HCandidates = 0;
+        int twoToThreeH2HCandidates = 0;
+        int homeWinH2HCandidates = 0;
+        int awayWinH2HCandidates = 0;
+        int drawH2HCandidates = 0;
+        
+        // Decision Layer Tracking
+        int highConfidenceBets = 0;
+        int highConfidenceWins = 0;
+        double totalStake = 0;
+        double totalReturns = 0;
+        var marketBets = new Dictionary<string, int>();
+        var marketWins = new Dictionary<string, int>();
 
         foreach (var match in testSet)
         {
@@ -75,6 +104,44 @@ class Program
             {
                 var result = await advancedStatsService.CalculateAnalyticsAsync(match.HomeTeam, match.AwayTeam, pastHistory);
                 var probs = result.Probabilities;
+                var h2h = result.H2HAnalysis;
+                var decision = result.Decision;
+                
+                // Track H2H Filter Statistics
+                if (h2h.IsDerby) derbyMatches++;
+                if (h2h.IsBTTSCandidate) bttsH2HCandidates++;
+                if (h2h.IsOver25Candidate) over25H2HCandidates++;
+                if (h2h.Is2to3GoalsCandidate) twoToThreeH2HCandidates++;
+                if (h2h.IsHomeWinCandidate) homeWinH2HCandidates++;
+                if (h2h.IsAwayWinCandidate) awayWinH2HCandidates++;
+                if (h2h.IsDrawCandidate) drawH2HCandidates++;
+                
+                // Track Decision Layer Performance
+                if (decision.IsHighConfidence)
+                {
+                    highConfidenceBets++;
+                    double stake = 10.0; // $10 per bet
+                    totalStake += stake;
+                    
+                    if (!marketBets.ContainsKey(decision.SelectedMarket))
+                    {
+                        marketBets[decision.SelectedMarket] = 0;
+                        marketWins[decision.SelectedMarket] = 0;
+                    }
+                    marketBets[decision.SelectedMarket]++;
+                    
+                    // Check if bet won
+                    bool won = CheckBetOutcome(decision.SelectedMarket, match);
+                    if (won)
+                    {
+                        highConfidenceWins++;
+                        marketWins[decision.SelectedMarket]++;
+                        
+                        // Calculate returns (odds default to 2.0 for simplicity)
+                        double odds = 2.0;
+                        totalReturns += stake * odds;
+                    }
+                }
                 
                 // --- Trap Detection Integration ---
                 var upcomingDto = new soccer_gpt_application.Models.UpcomingMatchDto
@@ -151,5 +218,107 @@ class Program
         Console.WriteLine($"\n--- Trap Detector Efficiency ---");
         Console.WriteLine($"Bore Draw Traps: {boreDrawSignals} | Correct (Under 2.5): {(boreDrawSignals > 0 ? (double)boreDrawSuccess/boreDrawSignals : 0):P2}");
         Console.WriteLine($"Odds Traps:      {oddsTrapSignals}  | Correct (Fav Failed): {(oddsTrapSignals > 0 ? (double)oddsTrapSuccess/oddsTrapSignals : 0):P2}");
+        
+        Console.WriteLine($"\n--- H2H Filter Statistics ---");
+        Console.WriteLine($"Derby Matches: {derbyMatches} ({(double)derbyMatches/total:P1})");
+        Console.WriteLine($"BTTS Candidates (4+/5 H2H): {bttsH2HCandidates} ({(double)bttsH2HCandidates/total:P1})");
+        Console.WriteLine($"Over 2.5 Candidates (4+/5 H2H): {over25H2HCandidates} ({(double)over25H2HCandidates/total:P1})");
+        Console.WriteLine($"2-3 Goals Candidates (3+/5 H2H): {twoToThreeH2HCandidates} ({(double)twoToThreeH2HCandidates/total:P1})");
+        Console.WriteLine($"Home Win Candidates (3+/5 H2H): {homeWinH2HCandidates} ({(double)homeWinH2HCandidates/total:P1})");
+        Console.WriteLine($"Away Win Candidates (3+/5 H2H): {awayWinH2HCandidates} ({(double)awayWinH2HCandidates/total:P1})");
+        Console.WriteLine($"Draw Candidates (3+/5 H2H): {drawH2HCandidates} ({(double)drawH2HCandidates/total:P1})");
+        
+        Console.WriteLine($"\n--- Decision Layer Performance ---");
+        Console.WriteLine($"High Confidence Bets: {highConfidenceBets} ({(double)highConfidenceBets/total:P1})");
+        if (highConfidenceBets > 0)
+        {
+            double winRate = (double)highConfidenceWins/highConfidenceBets;
+            double roi = ((totalReturns - totalStake) / totalStake) * 100;
+            Console.WriteLine($"Win Rate: {winRate:P1} ({highConfidenceWins}/{highConfidenceBets})");
+            Console.WriteLine($"Total Stake: ${totalStake:F0}");
+            Console.WriteLine($"Total Returns: ${totalReturns:F0}");
+            Console.WriteLine($"ROI: {(roi >= 0 ? "+" : "")}{roi:F1}%");
+            
+            Console.WriteLine($"\nMarket Breakdown:");
+            foreach (var market in marketBets.Keys.OrderByDescending(k => marketBets[k]))
+            {
+                int bets = marketBets[market];
+                int wins = marketWins[market];
+                double marketWinRate = (double)wins/bets;
+                Console.WriteLine($"  {market}: {bets} bets, Win Rate: {marketWinRate:P1} ({wins}/{bets})");
+            }
+        }
     }
+    
+    private static bool CheckBetOutcome(string market, HistoricalMatchDto match)
+    {
+        int totalGoals = match.FTHG + match.FTAG;
+        bool btts = match.FTHG > 0 && match.FTAG > 0;
+        
+        return market switch
+        {
+            "Over 2.5 Goals" => totalGoals > 2.5,
+            "BTTS Yes" => btts,
+            "Home Win" => match.FTR == "H",
+            "Away Win" => match.FTR == "A",
+            "2-3 Goals" => totalGoals == 2 || totalGoals == 3,
+            _ => false
+        };
+    }
+}
+
+class MockConfiguration : Microsoft.Extensions.Configuration.IConfiguration
+{
+    private readonly Dictionary<string, string> _data;
+    
+    public MockConfiguration(Dictionary<string, string> data) => _data = data;
+    
+    public string? this[string key] 
+    { 
+        get => _data.TryGetValue(key, out var v) ? v : null;
+        set => _data[key] = value!;
+    }
+    
+    public IEnumerable<Microsoft.Extensions.Configuration.IConfigurationSection> GetChildren() => 
+        Enumerable.Empty<Microsoft.Extensions.Configuration.IConfigurationSection>();
+    
+    public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => 
+        new Microsoft.Extensions.Primitives.CancellationChangeToken(CancellationToken.None);
+    
+    public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key) => 
+        new MockConfigSection(this, key);
+}
+
+class MockConfigSection : Microsoft.Extensions.Configuration.IConfigurationSection
+{
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _root;
+    private readonly string _key;
+    
+    public MockConfigSection(Microsoft.Extensions.Configuration.IConfiguration root, string key)
+    {
+        _root = root;
+        _key = key;
+    }
+    
+    public string this[string key]
+    {
+        get => _root[$"{Path}:{key}"]!;
+        set => _root[$"{Path}:{key}"] = value;
+    }
+    
+    public string Key => _key;
+    public string Path => _key;
+    public string? Value 
+    { 
+        get => _root[_key];
+        set => _root[_key] = value;
+    }
+    
+    public IEnumerable<Microsoft.Extensions.Configuration.IConfigurationSection> GetChildren() => 
+        Enumerable.Empty<Microsoft.Extensions.Configuration.IConfigurationSection>();
+    
+    public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => _root.GetReloadToken();
+    
+    public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key) => 
+        _root.GetSection($"{Path}:{key}");
 }

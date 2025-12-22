@@ -564,3 +564,7 @@
 /Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Data/upcoming/fixtures-22-11-25.csv
 /Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Data/upcoming/fixtures-25-11-25.csv
 /Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Data/upcoming/fixtures.csv
+/Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+/Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Json.dll
+/Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Physical.dll
+/Users/shivm/Workspace/soccer-gpt-api/TestProject/bin/Debug/net9.0/Microsoft.Extensions.FileSystemGlobbing.dll

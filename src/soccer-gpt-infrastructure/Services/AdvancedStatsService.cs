@@ -6,12 +6,19 @@ namespace soccer_gpt_infrastructure.Services;
 public class AdvancedStatsService : IAdvancedStatsService
 {
     private readonly ILogger<AdvancedStatsService> _logger;
+    private readonly IH2HFilterService _h2hFilterService;
+    private readonly IDecisionService _decisionService;
     private const int SimulationRuns = 5000;
     private const double Rho = -0.13; 
 
-    public AdvancedStatsService(ILogger<AdvancedStatsService> logger)
+    public AdvancedStatsService(
+        ILogger<AdvancedStatsService> logger, 
+        IH2HFilterService h2hFilterService,
+        IDecisionService decisionService)
     {
         _logger = logger;
+        _h2hFilterService = h2hFilterService;
+        _decisionService = decisionService;
     }
 
     private const double DecayFactor = 0.005; // xi value for Time Decay (approx half-life 140 days)
@@ -52,10 +59,18 @@ public class AdvancedStatsService : IAdvancedStatsService
         // 4. Monte Carlo
         var streakAnalysis = PerformMonteCarloSimulation(homeExp, awayExp, homeTeam, awayTeam, allHistory);
 
+        // 5. H2H Filter Analysis
+        var h2hAnalysis = _h2hFilterService.AnalyzeH2H(homeTeam, awayTeam, allHistory);
+
+        // 6. Decision Layer
+        var decision = _decisionService.MakeDecision(probs, h2hAnalysis);
+
         return Task.FromResult(new AdvancedAnalyticsDto
         {
             Probabilities = probs,
-            StreakAnalysis = streakAnalysis
+            StreakAnalysis = streakAnalysis,
+            H2HAnalysis = h2hAnalysis,
+            Decision = decision
         });
     }
 
@@ -132,7 +147,7 @@ public class AdvancedStatsService : IAdvancedStatsService
     private MatchProbabilitiesDto CalculateProbabilities(double homeExp, double awayExp)
     {
         double pHome = 0, pDraw = 0, pAway = 0;
-        double pOver15 = 0, pOver25 = 0, pBTTS = 0;
+        double pOver15 = 0, pOver25 = 0, pBTTS = 0, p2to3 = 0;
 
         for (int i = 0; i <= 9; i++) 
         {
@@ -145,9 +160,11 @@ public class AdvancedStatsService : IAdvancedStatsService
                 else if (i == j) pDraw += prob;
                 else pAway += prob;
 
-                if ((i + j) > 1.5) pOver15 += prob;
-                if ((i + j) > 2.5) pOver25 += prob;
+                int total = i + j;
+                if (total > 1.5) pOver15 += prob;
+                if (total > 2.5) pOver25 += prob;
                 if (i > 0 && j > 0) pBTTS += prob;
+                if (total == 2 || total == 3) p2to3 += prob;
             }
         }
 
@@ -158,7 +175,10 @@ public class AdvancedStatsService : IAdvancedStatsService
             AwayWin = Math.Round(pAway, 4),
             Over15 = Math.Round(pOver15, 4),
             Over25 = Math.Round(pOver25, 4),
-            BTTS = Math.Round(pBTTS, 4)
+            BTTS = Math.Round(pBTTS, 4),
+            ExpectedGoalsHome = Math.Round(homeExp, 2),
+            ExpectedGoalsAway = Math.Round(awayExp, 2),
+            Prob2to3Goals = Math.Round(p2to3, 4)
         };
     }
 
