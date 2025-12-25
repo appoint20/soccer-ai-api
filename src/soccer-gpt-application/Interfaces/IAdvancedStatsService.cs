@@ -1,10 +1,16 @@
 using System.Text.Json.Serialization;
+using soccer_gpt_application.Models.ML;
 
 namespace soccer_gpt_application.Interfaces;
 
 public interface IAdvancedStatsService
 {
-    Task<AdvancedAnalyticsDto> CalculateAnalyticsAsync(string homeTeam, string awayTeam, List<soccer_gpt_application.Interfaces.HistoricalMatchDto> allHistory);
+    Task<AdvancedAnalyticsDto> CalculateAnalyticsAsync(
+        string homeTeam, 
+        string awayTeam, 
+        List<soccer_gpt_application.Interfaces.HistoricalMatchDto> allHistory,
+        string? league = null,
+        MatchPredictionOutput? mlPrediction = null);
 }
 
 public class AdvancedAnalyticsDto

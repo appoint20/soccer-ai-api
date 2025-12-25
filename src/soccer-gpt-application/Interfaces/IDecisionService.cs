@@ -1,12 +1,16 @@
 using System.Text.Json.Serialization;
+using soccer_gpt_application.Models.ML;
 
 namespace soccer_gpt_application.Interfaces;
 
 public interface IDecisionService
 {
     BettingDecisionDto MakeDecision(
+        string homeTeam,
+        string awayTeam,
         MatchProbabilitiesDto probabilities, 
-        H2HAnalysisDto h2hAnalysis,
+        List<HistoricalMatchDto> history,
+        string? league = null,
         MatchOddsDto? odds = null);
 }
 

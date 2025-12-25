@@ -55,6 +55,10 @@ public static class DependencyInjection
         
         // Filter Services
         services.AddScoped<IH2HFilterService, soccer_gpt_infrastructure.Services.Filters.H2HFilterService>();
+        services.AddScoped<IH2HReliabilityService, soccer_gpt_infrastructure.Services.H2H.H2HReliabilityService>();
+        services.AddScoped<IEuropeanFatigueService, EuropeanFatigueService>();
+        services.AddScoped<IRecentFormService, RecentFormService>();
+        services.AddScoped<IPoissonFailureFilters, soccer_gpt_infrastructure.Services.Filters.PoissonFailureFilters>();
         services.AddScoped<IDecisionService, soccer_gpt_infrastructure.Services.Decision.DecisionService>();
         
         // Automation / Sync Services

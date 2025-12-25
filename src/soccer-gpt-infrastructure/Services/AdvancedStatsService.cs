@@ -1,4 +1,5 @@
 using soccer_gpt_application.Interfaces;
+using soccer_gpt_application.Models.ML;
 using Microsoft.Extensions.Logging;
 
 namespace soccer_gpt_infrastructure.Services;
@@ -23,7 +24,12 @@ public class AdvancedStatsService : IAdvancedStatsService
 
     private const double DecayFactor = 0.005; // xi value for Time Decay (approx half-life 140 days)
 
-    public Task<AdvancedAnalyticsDto> CalculateAnalyticsAsync(string homeTeam, string awayTeam, List<HistoricalMatchDto> allHistory)
+    public Task<AdvancedAnalyticsDto> CalculateAnalyticsAsync(
+        string homeTeam, 
+        string awayTeam, 
+        List<HistoricalMatchDto> allHistory,
+        string? league = null,
+        MatchPredictionOutput? mlPrediction = null)
     {
         // 1. Get League Context (last 1000 matches for robust averages)
         // We use weighted averages even for league to prioritize recent context
@@ -62,8 +68,9 @@ public class AdvancedStatsService : IAdvancedStatsService
         // 5. H2H Filter Analysis
         var h2hAnalysis = _h2hFilterService.AnalyzeH2H(homeTeam, awayTeam, allHistory);
 
-        // 6. Decision Layer
-        var decision = _decisionService.MakeDecision(probs, h2hAnalysis);
+        // 6. Decision Layer (with H2H Reliability dampening and league filtering)
+        var decision = _decisionService.MakeDecision(homeTeam, awayTeam, probs, allHistory, league);
+
 
         return Task.FromResult(new AdvancedAnalyticsDto
         {

@@ -16,6 +16,34 @@ class Program
             PoissonVerifier.Run();
             return;
         }
+        
+        if (args.Contains("--h2h-filter"))
+        {
+            await H2HFilterAnalysis.Run();
+            return;
+        }
+        
+        if (args.Contains("--detailed"))
+        {
+            await DetailedBacktest.Run();
+            return;
+        }
+        
+        else if (args.Contains("--comprehensive"))
+        {
+            await ComprehensiveBacktest.Run();
+            return;
+        }
+        else if (args.Contains("--optimize-thresholds"))
+        {
+            await RunThresholdOptimization();
+            return;
+        }
+        else if (args.Contains("--unfiltered"))
+        {
+            await UnfilteredBacktest.Run();
+            return;
+        }
 
         Console.WriteLine("=== Backtesting Runner Starting ===");
         
@@ -264,6 +292,41 @@ class Program
             "2-3 Goals" => totalGoals == 2 || totalGoals == 3,
             _ => false
         };
+    }
+
+    static async Task RunThresholdOptimization()
+    {
+        Console.WriteLine("=== League Threshold Optimization ===\n");
+        
+        // Setup DI
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        
+        services.AddSingleton<Microsoft.Extensions.Configuration.IConfiguration>(sp => 
+        {
+            var dict = new Dictionary<string, string>
+            {
+                ["EuropeanFixtures:ApiHost"] = "dummy",
+                ["EuropeanFixtures:ApiKey"] = "dummy"
+            };
+            return new MockConfiguration(dict);
+        });
+        
+        services.AddInfrastructure();
+        var provider = services.BuildServiceProvider();
+        
+        // Create optimizer
+        var optimizer = new ThresholdOptimizer(
+            provider.GetRequiredService<IHistoricalDataRepository>(),
+            provider.GetRequiredService<IAdvancedStatsService>(),
+            provider.GetRequiredService<IMlPredictionService>(),
+            provider.GetRequiredService<IH2HReliabilityService>(),
+            provider.GetRequiredService<ITrapDetectionService>(),
+            provider.GetRequiredService<ILogger<ThresholdOptimizer>>()
+        );
+        
+        // Run optimization
+        await optimizer.OptimizeAllLeagues();
     }
 }
 
