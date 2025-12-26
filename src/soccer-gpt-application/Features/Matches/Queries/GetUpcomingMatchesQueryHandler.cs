@@ -8,13 +8,13 @@ namespace soccer_gpt_application.Features.Matches.Queries;
 
 public class GetUpcomingMatchesQuery : IRequest
 {
-    public int Offset { get; set; } = 0;
-    public int Limit { get; set; } = 10;
+    public int Offset { get; init; } = 0;
+    public int Limit { get; init; } = 10;
 }
 
 public class GetUpcomingMatchesResponse : IResponse
 {
-    public PagedResponse<UpcomingMatchDto> Data { get; set; } = new();
+    public PagedResponse<UpcomingMatchDto> Data { get; init; } = new();
 }
 
 public class GetUpcomingMatchesQueryHandler(
@@ -24,7 +24,6 @@ public class GetUpcomingMatchesQueryHandler(
     IHistoricalDataRepository historicalRepository,
     ILeaguesRepository leaguesRepository,
     ITrapDetectionService trapDetectionService,
-    IMlPredictionService mlPredictionService,
     IGeminiAnalysisService geminiAnalysisService)
     : IRequestHandler<GetUpcomingMatchesQuery, GetUpcomingMatchesResponse>
 {
@@ -57,9 +56,6 @@ public class GetUpcomingMatchesQueryHandler(
             var matchWithLeague = match with { LeagueName = leagueName };
             var traps = trapDetectionService.AnalyzeTraps(matchWithLeague, advancedAnalytics);
 
-            // ML Prediction
-            var mlPred = await mlPredictionService.PredictMatchAsync(matchWithLeague, allHistory);
-
             // True H2H
             var h2hMatches = await historicalRepository.GetMatchesBetweenTeamsAsync(match.HomeTeam, match.AwayTeam);
             var h2hAnalysis = CalculateHistoricalH2H(h2hMatches, match.HomeTeam, match.AwayTeam);
@@ -72,7 +68,7 @@ public class GetUpcomingMatchesQueryHandler(
                 AdvancedAnalytics = advancedAnalytics,
                 H2HAnalysis = h2hAnalysis,
                 Traps = traps,
-                MlPrediction = mlPred
+                MlPrediction = null // ML removed
             });
         }
         

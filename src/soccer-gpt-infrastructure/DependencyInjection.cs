@@ -59,7 +59,9 @@ public static class DependencyInjection
         services.AddScoped<IEuropeanFatigueService, EuropeanFatigueService>();
         services.AddScoped<IRecentFormService, RecentFormService>();
         services.AddScoped<IPoissonFailureFilters, soccer_gpt_infrastructure.Services.Filters.PoissonFailureFilters>();
+        services.AddScoped<IOver25DecisionMatrix, soccer_gpt_infrastructure.Services.Decision.Over25DecisionMatrix>();
         services.AddScoped<IDecisionService, soccer_gpt_infrastructure.Services.Decision.DecisionService>();
+        services.AddScoped<IAnalyseService, soccer_gpt_infrastructure.Services.Analysis.AnalyseService>();
         
         // Automation / Sync Services
         services.AddScoped<ITeamStatsSyncService, TeamStatsSyncService>();
@@ -70,21 +72,6 @@ public static class DependencyInjection
         services.AddHostedService<NightlySyncWorker>();
         services.AddHostedService<EuropeanFixturesUpdateService>();
         
-        // ML Services
-        services.AddScoped<soccer_gpt_infrastructure.Services.ML.FeatureEngineeringService>();
-        services.AddSingleton<soccer_gpt_infrastructure.Services.ML.SoccerGoalScoringModel>();
-        services.AddScoped<IMlPredictionService, soccer_gpt_infrastructure.Services.ML.MlPredictionService>();
-        services.AddScoped<soccer_gpt_infrastructure.Services.Analysis.MlBacktestService>();
-        services.AddScoped<soccer_gpt_infrastructure.Services.Analysis.GeminiBacktestService>();
-        
-        // Background Services
-        services.AddHostedService<DataPreloaderService>();
-        
-        // Gemini Pipeline
-        services.AddHttpClient<IGeminiService, GeminiService>(); // Use Typed Client
-        services.AddScoped<EnhancedAnalysisService>();
-        
-        // Gemini Batch Analysis Service (inline batch calls)
         services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
         
         // Advanced Feature Services

@@ -29,10 +29,8 @@ public class FixtureService(ILogger<FixtureService> logger, ILeagueService leagu
             
             var headers = headerLine.Split(',');
             var colMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            for (int i = 0; i < headers.Length; i++)
-            {
+            for (var i = 0; i < headers.Length; i++)
                 colMap[headers[i].Trim()] = i;
-            }
 
             // Helper to get value
             string? GetVal(string[] row, string colName, params string[] alts)
@@ -59,6 +57,7 @@ public class FixtureService(ILogger<FixtureService> logger, ILeagueService leagu
                 var time = GetVal(parts, "Time") ?? "";
                 var home = GetVal(parts, "HomeTeam") ?? "";
                 var away = GetVal(parts, "AwayTeam") ?? "";
+                
                 
                 // Parse Odds
                 MatchOdds? odds = null;

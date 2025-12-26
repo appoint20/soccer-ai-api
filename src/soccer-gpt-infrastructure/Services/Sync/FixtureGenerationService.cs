@@ -16,18 +16,15 @@ public class FixtureGenerationService : IFixtureGenerationService
     private readonly string _backupDir;
     private readonly string _cacheDir;
     private readonly IFixtureRepository _fixtureRepository;
-    private readonly EnhancedAnalysisService _analysisService;
 
     public FixtureGenerationService(
         IFootballApiService apiService, 
         ILogger<FixtureGenerationService> logger,
-        IFixtureRepository fixtureRepository,
-        EnhancedAnalysisService analysisService)
+        IFixtureRepository fixtureRepository)
     {
         _apiService = apiService;
         _logger = logger;
         _fixtureRepository = fixtureRepository;
-        _analysisService = analysisService;
         
         var baseDir = AppDomain.CurrentDomain.BaseDirectory;
         _mappingFile = Path.Combine(baseDir, "Data", "team_mapping.json");
@@ -128,9 +125,7 @@ public class FixtureGenerationService : IFixtureGenerationService
             
             if (freshFixtures != null && freshFixtures.Count > 0)
             {
-                _logger.LogInformation("Found {Count} fixtures to analyze.", freshFixtures.Count);
-                await _analysisService.RunAnalysisPipelineAsync(freshFixtures);
-                _logger.LogInformation("Automatic Analysis Complete.");
+                _logger.LogInformation("ML analysis removed - using pure statistical approach");
             }
             else
             {

@@ -31,6 +31,15 @@ public class BettingDecisionDto
     [JsonPropertyName("has_h2h_support")]
     public bool HasH2HSupport { get; set; }
     
+    [JsonPropertyName("allow_in_ticket")]
+    public bool AllowInTicket { get; set; }
+    
+    [JsonPropertyName("allow_in_upcoming_games")]
+    public bool AllowInUpcomingGames { get; set; }
+    
+    [JsonPropertyName("ticket_exclusion_reason")]
+    public string? TicketExclusionReason { get; set; }
+    
     [JsonPropertyName("reasons")]
     public List<string> Reasons { get; set; } = new();
 }
