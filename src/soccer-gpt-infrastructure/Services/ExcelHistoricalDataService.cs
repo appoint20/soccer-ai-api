@@ -12,7 +12,6 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
 {
     private readonly ILogger<ExcelHistoricalDataService> _logger;
     private readonly string _historicalPath;
-    // Cache: TeamName -> List of Matches involved
     private List<HistoricalMatchDto>? _cachedMatches;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
@@ -205,7 +204,7 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
         return null;
     }
 
-    public async Task<List<HistoricalMatchDto>> GetMatchesBetweenTeamsAsync(string teamA, string teamB, int lastN = 20)
+    public async Task<List<HistoricalMatchDto>> GetMatchesBetweenTeamsAsync(string teamA, string teamB, int lastN = 10)
     {
         await LoadDataAsync();
         
@@ -222,7 +221,7 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
     public async Task<List<HistoricalMatchDto>> GetAllMatchesAsync()
     {
         await LoadDataAsync();
-        return _cachedMatches ?? new List<HistoricalMatchDto>();
+        return _cachedMatches ?? [];
     }
     
     private bool IsMatch(string s1, string s2)
@@ -292,42 +291,40 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
         return false;
     }
 
-    private string Normalize(string s)
+    private static string Normalize(string s)
     {
         var sb = new StringBuilder();
-        foreach (char c in s)
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                sb.Append(char.ToLowerInvariant(c));
-            }
-        }
+        foreach (var c in s.Where(char.IsLetterOrDigit))
+            sb.Append(char.ToLowerInvariant(c));
+        
         return sb.ToString();
     }
 
-    private bool AreAliases(string actualA, string actualB, string alias1, string alias2)
+    private static bool AreAliases(string actualA, string actualB, string alias1, string alias2)
     {
-        return (string.Equals(actualA, alias1, StringComparison.OrdinalIgnoreCase) && string.Equals(actualB, alias2, StringComparison.OrdinalIgnoreCase)) ||
-               (string.Equals(actualA, alias2, StringComparison.OrdinalIgnoreCase) && string.Equals(actualB, alias1, StringComparison.OrdinalIgnoreCase));
+        return (string.Equals(actualA, alias1, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(actualB, alias2, StringComparison.OrdinalIgnoreCase)) ||
+               (string.Equals(actualA, alias2, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(actualB, alias1, StringComparison.OrdinalIgnoreCase));
     }
 
-    private int ComputeLevenshteinDistance(string s, string t)
+    private static int ComputeLevenshteinDistance(string s, string t)
     {
-        int n = s.Length;
-        int m = t.Length;
-        int[,] d = new int[n + 1, m + 1];
+        var n = s.Length;
+        var m = t.Length;
+        var d = new int[n + 1, m + 1];
 
         if (n == 0) return m;
         if (m == 0) return n;
 
-        for (int i = 0; i <= n; d[i, 0] = i++) { }
-        for (int j = 0; j <= m; d[0, j] = j++) { }
+        for (var i = 0; i <= n; d[i, 0] = i++) { }
+        for (var j = 0; j <= m; d[0, j] = j++) { }
 
-        for (int i = 1; i <= n; i++)
+        for (var i = 1; i <= n; i++)
         {
-            for (int j = 1; j <= m; j++)
+            for (var j = 1; j <= m; j++)
             {
-                int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                var cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
                 d[i, j] = Math.Min(
                     Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
                     d[i - 1, j - 1] + cost);
@@ -344,7 +341,7 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
             if (!File.Exists(leaguesPath))
             {
                 _logger.LogWarning("Leagues configuration not found at {Path}", leaguesPath);
-                return new HashSet<string>();
+                return [];
             }
 
             var json = File.ReadAllText(leaguesPath);
@@ -353,13 +350,11 @@ public class ExcelHistoricalDataService : IHistoricalDataRepository
 
             foreach (var element in doc.RootElement.EnumerateArray())
             {
-                if (element.TryGetProperty("id", out var idProp))
+                if (!element.TryGetProperty("id", out var idProp)) continue;
+                var id = idProp.GetString();
+                if (!string.IsNullOrEmpty(id))
                 {
-                    var id = idProp.GetString();
-                    if (!string.IsNullOrEmpty(id))
-                    {
-                        set.Add(id);
-                    }
+                    set.Add(id);
                 }
             }
             return set;

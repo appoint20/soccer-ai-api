@@ -41,9 +41,9 @@ public class H2HFilterService : IH2HFilterService
         foreach (var match in h2hMatches)
         {
             int totalGoals = match.FTHG + match.FTAG;
-            bool btts = match.FTHG > 0 && match.FTAG > 0;
+            bool btts = match is { FTHG: > 0, FTAG: > 0 };
             bool over25 = totalGoals > 2.5;
-            bool is2to3 = totalGoals == 2 || totalGoals == 3;
+            bool is2to3 = totalGoals is 2 or 3;
 
             if (btts) result.BTTSCount++;
             if (over25) result.Over25Count++;
@@ -72,12 +72,12 @@ public class H2HFilterService : IH2HFilterService
         // Adjusted to be less aggressive - looking for strong patterns, not perfection
         int count = h2hMatches.Count;
         
-        result.IsBTTSCandidate = result.BTTSCount >= 4; // 4+ of 5 (80%)
-        result.IsOver25Candidate = result.Over25Count >= 4; // 4+ of 5 (80%)
+        result.IsBTTSCandidate = result.BTTSCount >= 3; // 4+ of 5 (80%)
+        result.IsOver25Candidate = result.Over25Count >= 3; // 4+ of 5 (80%)
         result.Is2to3GoalsCandidate = result.TwoToThreeGoalsCount >= 3; // 3+ of 5 (60%)
         result.IsHomeWinCandidate = result.HomeWins >= 3; // 3+ home wins (60%)
         result.IsAwayWinCandidate = result.AwayWins >= 3; // 3+ away wins (60%)
-        result.IsDrawCandidate = result.Draws >= 3; // 3+ draws (60%)
+        result.IsDrawCandidate = result.Draws >= 4; // 3+ draws (60%)
 
         // 5. Add tags
         if (result.IsBTTSCandidate) result.Tags.Add($"BTTS Pattern ({result.BTTSCount}/{count})");

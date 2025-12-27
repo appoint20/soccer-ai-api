@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using soccer_gpt_application.Interfaces;
 using soccer_gpt_infrastructure.Services;
-using soccer_gpt_infrastructure.Services.Traps;
 using soccer_gpt_infrastructure.Repositories;
 using soccer_gpt_infrastructure.Services.Sync;
 using soccer_gpt_infrastructure.BackgroundServices;
@@ -19,17 +18,13 @@ public static class DependencyInjection
         services.AddScoped<IFixtureRepository, FixtureService>();
         services.AddScoped<ILocalTeamStatsRepository, JsonFileLocalTeamStatsRepository>();
         services.AddScoped<IPredictionRepository, JsonFilePredictionRepository>();
-        services.AddSingleton<IHistoricalDataRepository, ExcelHistoricalDataService>(); // Singleton to cache data check
+        services.AddSingleton<IHistoricalDataRepository, ExcelHistoricalDataService>();
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IAdvancedStatsService, AdvancedStatsService>();
         services.AddScoped<IPoissonGoalModelService, PoissonGoalModelService>();
+        services.AddScoped<Services.Statistics.DixonColesCalculator>();
+        services.AddScoped<Services.Statistics.ValueBettingService>();
         
-        
-        // European Fixtures Service
-        services.Configure<EuropeanFixturesOptions>(options =>
-        {
-            // Options will be populated from configuration
-        });
         
         services.AddHttpClient("EuropeanFixturesApi", (sp, client) =>
         {
@@ -44,24 +39,12 @@ public static class DependencyInjection
         
         services.AddScoped<IEuropeanFixturesService, EuropeanFixturesService>();
         
-        
-        // Trap Detection (Register Service + Strategies)
-        services.AddScoped<ITrapDetectionService, TrapDetectionService>();
-        services.AddScoped<ITrapDetector, BoreDrawDetector>();
-        services.AddScoped<ITrapDetector, OddsTrapDetector>();
-        services.AddScoped<ITrapDetector, GoalMarketTrapDetector>();
-        services.AddScoped<ITrapDetector, EuropeanFatigueDetector>();
-        services.AddScoped<ITrapDetector, DerbyDetector>();
-        
         // Filter Services
-        services.AddScoped<IH2HFilterService, soccer_gpt_infrastructure.Services.Filters.H2HFilterService>();
-        services.AddScoped<IH2HReliabilityService, soccer_gpt_infrastructure.Services.H2H.H2HReliabilityService>();
+        services.AddScoped<IH2HFilterService, Services.Filters.H2HFilterService>();
+        services.AddScoped<IH2HReliabilityService, Services.H2H.H2HReliabilityService>();
         services.AddScoped<IEuropeanFatigueService, EuropeanFatigueService>();
         services.AddScoped<IRecentFormService, RecentFormService>();
-        services.AddScoped<IPoissonFailureFilters, soccer_gpt_infrastructure.Services.Filters.PoissonFailureFilters>();
-        services.AddScoped<IOver25DecisionMatrix, soccer_gpt_infrastructure.Services.Decision.Over25DecisionMatrix>();
-        services.AddScoped<IDecisionService, soccer_gpt_infrastructure.Services.Decision.DecisionService>();
-        services.AddScoped<IAnalyseService, soccer_gpt_infrastructure.Services.Analysis.AnalyseService>();
+        services.AddScoped<IPoissonFailureFilters, Services.Filters.PoissonFailureFilters>();
         
         // Automation / Sync Services
         services.AddScoped<ITeamStatsSyncService, TeamStatsSyncService>();
@@ -75,8 +58,8 @@ public static class DependencyInjection
         services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
         
         // Advanced Feature Services
-        services.AddScoped<soccer_gpt_infrastructure.Services.Analysis.RefereeAnalysisService>();
-        services.AddScoped<soccer_gpt_infrastructure.Services.Analysis.CongestionAnalysisService>();
+        services.AddScoped<Services.Analysis.RefereeAnalysisService>();
+        services.AddScoped<Services.Analysis.CongestionAnalysisService>();
 
         return services;
     }

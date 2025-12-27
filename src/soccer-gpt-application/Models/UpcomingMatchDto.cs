@@ -1,6 +1,4 @@
-
 using System.Text.Json.Serialization;
-using soccer_gpt_application.Interfaces;
 
 namespace soccer_gpt_application.Models;
 
@@ -37,13 +35,10 @@ public record UpcomingMatchDto
     public RichTeamStatsDto? AwayTeamStats { get; init; }
 
     [JsonPropertyName("advanced_analytics")]
-    public AdvancedAnalyticsDto? AdvancedAnalytics { get; init; }
+    public PoissonProbabilitiesDto? AdvancedAnalytics { get; init; }
 
     [JsonPropertyName("traps")]
     public List<string> Traps { get; init; } = new();
-
-    [JsonPropertyName("ml_prediction")]
-    public soccer_gpt_application.Models.ML.MatchPredictionOutput? MlPrediction { get; init; }
 
     [JsonPropertyName("gemini")]
     public GeminiAnalysisDto? Gemini { get; init; }

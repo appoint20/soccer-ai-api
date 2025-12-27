@@ -1,5 +1,4 @@
 using Mediator.Net.Contracts;
-using soccer_gpt_application.Models.ML;
 
 namespace soccer_gpt_application.Features.Tickets.Queries;
 

@@ -27,9 +27,6 @@ public class TeamStatsService : ITeamStatsService
 
         double totalGF = 0;
         double totalGA = 0;
-        double totalShots = 0;
-        double totalSOT = 0;
-        double totalCorners = 0;
         int bttsCount = 0;
         int over25Count = 0;
         int cleanSheets = 0;
@@ -41,16 +38,10 @@ public class TeamStatsService : ITeamStatsService
             bool isHome = IsMatch(m.HomeTeam, teamName);
             int gf = isHome ? m.FTHG : m.FTAG;
             int ga = isHome ? m.FTAG : m.FTHG;
-            int shots = isHome ? m.HS : m.AS;
-            int sot = isHome ? m.HST : m.AST;
-            int corners = isHome ? m.HC : m.AC;
             
             // Accumulate
             totalGF += gf;
             totalGA += ga;
-            totalShots += shots;
-            totalSOT += sot;
-            totalCorners += corners;
             
             if (gf > 0 && ga > 0) bttsCount++;
             if ((gf + ga) > 2.5) over25Count++;
@@ -69,10 +60,6 @@ public class TeamStatsService : ITeamStatsService
             TeamName = teamName,
             AvgGoalsFor = totalGF / count,
             AvgGoalsAgainst = totalGA / count,
-            AvgShots = totalShots / count,
-            AvgShotsOnTarget = totalSOT / count,
-            AvgCorners = totalCorners / count,
-            ShotConversionRate = totalSOT > 0 ? (totalGF / totalSOT) : 0, // Efficiency: Goals per Shot on Target
             
             WinRateLast10 = (double)wins / count,
             BTTSPercentage = (double)bttsCount / count,

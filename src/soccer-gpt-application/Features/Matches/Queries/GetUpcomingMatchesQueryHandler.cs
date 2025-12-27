@@ -22,9 +22,7 @@ public class GetUpcomingMatchesQueryHandler(
     ITeamStatsService teamStatsService,
     IAdvancedStatsService advancedStatsService,
     IHistoricalDataRepository historicalRepository,
-    ILeaguesRepository leaguesRepository,
-    ITrapDetectionService trapDetectionService,
-    IGeminiAnalysisService geminiAnalysisService)
+    ILeaguesRepository leaguesRepository)
     : IRequestHandler<GetUpcomingMatchesQuery, GetUpcomingMatchesResponse>
 {
     public async Task<GetUpcomingMatchesResponse> Handle(
@@ -54,7 +52,6 @@ public class GetUpcomingMatchesQueryHandler(
             // Calculate Traps
             var leagueName = leagueMap.TryGetValue(match.League, out var name) ? name : match.League;
             var matchWithLeague = match with { LeagueName = leagueName };
-            var traps = trapDetectionService.AnalyzeTraps(matchWithLeague, advancedAnalytics);
 
             // True H2H
             var h2hMatches = await historicalRepository.GetMatchesBetweenTeamsAsync(match.HomeTeam, match.AwayTeam);
@@ -67,46 +64,9 @@ public class GetUpcomingMatchesQueryHandler(
                 AwayTeamStats = awayStats,
                 AdvancedAnalytics = advancedAnalytics,
                 H2HAnalysis = h2hAnalysis,
-                Traps = traps,
-                MlPrediction = null // ML removed
             });
         }
         
-        // Second pass: Batch Gemini calls per league
-        var geminiAnalyses = new Dictionary<string, GeminiMatchAnalysis>();
-        var leagueGroups = enrichedMatches.GroupBy(m => m.LeagueName);
-        
-        foreach (var leagueGroup in leagueGroups)
-        {
-            var leagueAnalyses = await geminiAnalysisService.AnalyzeMatchBatchAsync(
-                leagueGroup.Key, 
-                leagueGroup.ToList(), 
-                cancellationToken);
-            
-            foreach (var (key, analysis) in leagueAnalyses)
-            {
-                geminiAnalyses[key] = analysis;
-            }
-        }
-        
-        // Third pass: Add Gemini analysis to matches
-        var finalMatches = enrichedMatches.Select(match =>
-        {
-            var key = $"{match.HomeTeam}-{match.AwayTeam}";
-            var geminiAnalysis = geminiAnalyses.GetValueOrDefault(key);
-            
-            return match with
-            {
-                Gemini = geminiAnalysis != null ? new GeminiAnalysisDto
-                {
-                    Analysis = geminiAnalysis.Analysis,
-                    Prediction = geminiAnalysis.Prediction,
-                    ConfidenceLevel = geminiAnalysis.ConfidenceLevel,
-                    Reason = geminiAnalysis.Reason
-                } : null
-            };
-        }).ToList();
-
         return new GetUpcomingMatchesResponse
         {
             Data = new PagedResponse<UpcomingMatchDto>
@@ -114,8 +74,8 @@ public class GetUpcomingMatchesQueryHandler(
                 Offset = query.Offset,
                 Limit = query.Limit,
                 Total = total,
-                Items = finalMatches,
-                Summary = new ResponseSummary { TotalStake = 0 } // Placeholder
+                Items = enrichedMatches,
+                Summary = new ResponseSummary { TotalStake = 0 }
             }
         };
     }
@@ -162,7 +122,7 @@ public class GetUpcomingMatchesQueryHandler(
             HomeWinsLast5 = hWins,
             AwayWinsLast5 = aWins,
             DrawsLast5 = draws,
-            Status = DetermineStatus(hWins, aWins),
+            Status = DetermineStatus(hWins, aWins, draws),
             AvgGoalsHome = recentMatches.Any() ? (double)recentMatches.Sum(m => IsMatch(m.HomeTeam, homeTeam) ? m.FTHG : m.FTAG) / recentMatches.Count : 0,
             AvgGoalsAway = recentMatches.Any() ? (double)recentMatches.Sum(m => IsMatch(m.AwayTeam, awayTeam) ? m.FTAG : m.FTHG) / recentMatches.Count : 0,
             FormHomeLast5 = GetH2HForm(recentMatches, homeTeam),
@@ -188,7 +148,7 @@ public class GetUpcomingMatchesQueryHandler(
                 continue;
             }
             
-            bool isHome = IsMatch(m.HomeTeam, teamName);
+            var isHome = IsMatch(m.HomeTeam, teamName);
             if (isHome) form += (m.FTR == "H") ? "W" : "L";
             else form += (m.FTR == "A") ? "W" : "L";
         }
@@ -228,10 +188,39 @@ public class GetUpcomingMatchesQueryHandler(
                (string.Equals(actualA, alias2, StringComparison.OrdinalIgnoreCase) && string.Equals(actualB, alias1, StringComparison.OrdinalIgnoreCase));
     }
 
-    private string DetermineStatus(int homeWins, int awayWins)
+    private string DetermineStatus(int homeWins, int awayWins, int draws)
     {
-        if (homeWins > awayWins) return "Home Advantage";
-        if (awayWins > homeWins) return "Away Advantage";
-        return "Balanced";
+        // Require minimum 3 H2H matches to make determination
+        int totalMatches = homeWins + awayWins + draws;
+        if (totalMatches < 3) return "Insufficient Data";
+        
+        // Calculate win percentages
+        double homeWinPct = (double)homeWins / totalMatches;
+        double awayWinPct = (double)awayWins / totalMatches;
+        double drawPct = (double)draws / totalMatches;
+        
+        // Thresholds for clear dominance
+        const double DOMINANCE_THRESHOLD = 0.60; // 60%+ wins shows dominance
+        const double MIN_WIN_DIFF = 2; // At least 2 more wins than opponent
+        
+        // Check for clear dominance patterns
+        bool homeDominant = homeWinPct >= DOMINANCE_THRESHOLD && homeWins >= awayWins + MIN_WIN_DIFF;
+        bool awayDominant = awayWinPct >= DOMINANCE_THRESHOLD && awayWins >= homeWins + MIN_WIN_DIFF;
+        
+        // Check for balanced/neutral patterns
+        bool highDrawRate = drawPct >= 0.40; // 40%+ draws = unpredictable
+        bool tooClose = Math.Abs(homeWins - awayWins) <= 1; // Within 1 win = balanced
+        
+        // Decision logic
+        if (highDrawRate) return "Neutral (Draw-Heavy)";
+        if (homeDominant) return "Home Advantage";
+        if (awayDominant) return "Away Advantage";
+        if (tooClose) return "Neutral (Balanced)";
+        
+        // Slight edge but not dominant - still neutral
+        if (homeWins > awayWins) return "Neutral (Slight Home Edge)";
+        if (awayWins > homeWins) return "Neutral (Slight Away Edge)";
+        
+        return "Neutral";
     }
 }

@@ -4,5 +4,5 @@ namespace soccer_gpt_application.Interfaces;
 
 public interface ITrapDetectionService
 {
-    List<string> AnalyzeTraps(UpcomingMatchDto match, AdvancedAnalyticsDto analytics);
+    List<string> AnalyzeTraps(UpcomingMatchDto match, PoissonProbabilitiesDto analytics);
 }

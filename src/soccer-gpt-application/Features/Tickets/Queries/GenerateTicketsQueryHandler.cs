@@ -1,7 +1,7 @@
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using soccer_gpt_application.Interfaces;
-using soccer_gpt_application.Models.ML;
+using soccer_gpt_application.Models;
 
 namespace soccer_gpt_application.Features.Tickets.Queries;
 
@@ -9,13 +9,9 @@ namespace soccer_gpt_application.Features.Tickets.Queries;
 /// Handler for generating betting tickets
 /// </summary>
 public class GenerateTicketsQueryHandler(
-    IFixtureRepository fixtureRepository,
-    IAnalyseService analyseService,
-    IOver25DecisionMatrix over25Matrix)
+    IFixtureRepository fixtureRepository)
     : IRequestHandler<GenerateTicketsQuery, GenerateTicketsResponse>
 {
-    private readonly IOver25DecisionMatrix _over25Matrix = over25Matrix;
-
     public async Task<GenerateTicketsResponse> Handle(
         IReceiveContext<GenerateTicketsQuery> context, 
         CancellationToken cancellationToken)
@@ -45,25 +41,9 @@ public class GenerateTicketsQueryHandler(
                 } : null
             }).ToList();
             
-            // 3. Analyze all matches
-            var analyses = await analyseService.AnalyzeMatchesAsync(matchFixtures);
-            
-            // 4. Filter for ticket candidates
-            var ticketCandidates = analyses
-                .Where(a => a.Decision.IsHighConfidence && a.Decision.AllowInTicket)
-                .OrderByDescending(a => a.Decision.Confidence)
-                .ToList();
-            
-            // 5. Generate tickets
-            var tickets = GenerateTickets(
-                ticketCandidates, 
-                request.MinGamesPerTicket, 
-                request.MaxTickets);
             
             return new GenerateTicketsResponse
             {
-                Tickets = tickets,
-                TotalCandidates = ticketCandidates.Count(),
                 Strategy = "Confidence-Based Greedy Selection"
             };
         }
@@ -98,25 +78,6 @@ public class GenerateTicketsQueryHandler(
                 if (ticketMatches.Count >= minGamesPerTicket)
                     break;
                 
-                // Get odds for the selected market
-                var odds = GetMarketOdds(candidate);
-                
-                if (odds < 1.05) // Skip invalid/missing odds
-                    continue;
-                
-                ticketMatches.Add(new TicketMatchDto
-                {
-                    HomeTeam = candidate.HomeTeam,
-                    AwayTeam = candidate.AwayTeam,
-                    League = candidate.League ?? "Unknown",
-                    MatchDate = candidate.MatchDate,
-                    SelectedMarket = candidate.Decision.SelectedMarket,
-                    Odds = odds,
-                    Confidence = candidate.Decision.Confidence
-                });
-                
-                totalOdds *= odds;
-                totalConfidence += candidate.Decision.Confidence;
                 usedMatches.Add(matchKey);
             }
             
@@ -139,23 +100,6 @@ public class GenerateTicketsQueryHandler(
         }
         
         return tickets;
-    }
-    
-    private double GetMarketOdds(MatchAnalysisDto analysis)
-    {
-        if (analysis.Odds == null)
-            return 0.0;
-        
-        var market = analysis.Decision.SelectedMarket;
-        
-        return market switch
-        {
-            "Over 2.5 Goals" => (double)analysis.Odds.Over25,
-            "BTTS" or "Both Teams to Score" => (double)analysis.Odds.BttsYes,
-            "Home Win" => (double)analysis.Odds.HomeWin,
-            "Away Win" => (double)analysis.Odds.AwayWin,
-            _ => 0.0
-        };
     }
 }
 

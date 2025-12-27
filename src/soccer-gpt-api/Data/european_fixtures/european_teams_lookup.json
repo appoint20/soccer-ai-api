@@ -109,21 +109,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947159",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Athletic Club",
-        "AwayTeam": "PSG",
-        "HomeScore": 0,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947183",
@@ -152,7 +138,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Arsenal": {
@@ -265,21 +251,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947174",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Club Brugge",
-        "AwayTeam": "Arsenal",
-        "HomeScore": 0,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947126",
@@ -308,7 +280,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "PSV Eindhoven": {
@@ -421,21 +393,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947205",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "PSV Eindhoven",
-        "AwayTeam": "Atletico Madrid",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947238",
@@ -464,7 +422,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Union St.Gilloise": {
@@ -577,21 +535,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947217",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Union St.Gilloise",
-        "AwayTeam": "Marseille",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947107",
@@ -620,7 +564,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Benfica": {
@@ -733,21 +677,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947186",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Benfica",
-        "AwayTeam": "Napoli",
-        "HomeScore": 2,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947185",
@@ -776,7 +706,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Qarabag FK": {
@@ -889,21 +819,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947233",
-        "Date": "2025-12-10T17:45:00Z",
-        "DateParsed": "2025-12-10T18:45:00+01:00",
-        "HomeTeam": "Qarabag FK",
-        "AwayTeam": "Ajax",
-        "HomeScore": 2,
-        "AwayScore": 4,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947198",
@@ -932,7 +848,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Juventus": {
@@ -1045,21 +961,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947202",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Juventus",
-        "AwayTeam": "Pafos FC",
-        "HomeScore": 2,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947185",
@@ -1088,7 +990,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Dortmund": {
@@ -1201,21 +1103,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947135",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Dortmund",
-        "AwayTeam": "Bod\u00F8/Glimt",
-        "HomeScore": 2,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947136",
@@ -1244,7 +1132,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Real Madrid": {
@@ -1357,21 +1245,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947116",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Real Madrid",
-        "AwayTeam": "Man City",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947122",
@@ -1400,7 +1274,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Marseille": {
@@ -1513,21 +1387,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947217",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Union St.Gilloise",
-        "AwayTeam": "Marseille",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947142",
@@ -1556,7 +1416,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Tottenham": {
@@ -1669,21 +1529,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947218",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Tottenham",
-        "AwayTeam": "Slavia Prague",
-        "HomeScore": 3,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947136",
@@ -1712,7 +1558,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Villarreal": {
@@ -1825,21 +1671,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947210",
-        "Date": "2025-12-10T17:45:00Z",
-        "DateParsed": "2025-12-10T18:45:00+01:00",
-        "HomeTeam": "Villarreal",
-        "AwayTeam": "FC K\u00F8benhavn",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947208",
@@ -1868,7 +1700,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Olympiacos": {
@@ -1981,21 +1813,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947231",
-        "Date": "2025-12-09T15:30:00Z",
-        "DateParsed": "2025-12-09T16:30:00+01:00",
-        "HomeTeam": "Kairat Almaty",
-        "AwayTeam": "Olympiacos",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947170",
@@ -2024,7 +1842,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Pafos FC": {
@@ -2137,21 +1955,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947202",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Juventus",
-        "AwayTeam": "Pafos FC",
-        "HomeScore": 2,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947114",
@@ -2180,7 +1984,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Slavia Prague": {
@@ -2293,21 +2097,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947218",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Tottenham",
-        "AwayTeam": "Slavia Prague",
-        "HomeScore": 3,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947151",
@@ -2336,7 +2126,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Bod\u00F8/Glimt": {
@@ -2449,21 +2239,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947135",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Dortmund",
-        "AwayTeam": "Bod\u00F8/Glimt",
-        "HomeScore": 2,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947163",
@@ -2492,7 +2268,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Ajax": {
@@ -2605,21 +2381,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947233",
-        "Date": "2025-12-10T17:45:00Z",
-        "DateParsed": "2025-12-10T18:45:00+01:00",
-        "HomeTeam": "Qarabag FK",
-        "AwayTeam": "Ajax",
-        "HomeScore": 2,
-        "AwayScore": 4,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947208",
@@ -2648,7 +2410,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Inter": {
@@ -2761,21 +2523,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947124",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Inter",
-        "AwayTeam": "Liverpool",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947126",
@@ -2804,7 +2552,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Bayern M\u00FCnchen": {
@@ -2917,21 +2665,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947105",
-        "Date": "2025-12-09T17:45:00Z",
-        "DateParsed": "2025-12-09T18:45:00+01:00",
-        "HomeTeam": "Bayern M\u00FCnchen",
-        "AwayTeam": "Sporting CP",
-        "HomeScore": 3,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947107",
@@ -2960,7 +2694,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Chelsea": {
@@ -3073,21 +2807,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947111",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Atalanta",
-        "AwayTeam": "Chelsea",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947114",
@@ -3116,7 +2836,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Liverpool": {
@@ -3229,21 +2949,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947124",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Inter",
-        "AwayTeam": "Liverpool",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947142",
@@ -3272,7 +2978,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Atletico Madrid": {
@@ -3385,21 +3091,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947205",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "PSV Eindhoven",
-        "AwayTeam": "Atletico Madrid",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947207",
@@ -3428,7 +3120,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "PSG": {
@@ -3541,21 +3233,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947159",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Athletic Club",
-        "AwayTeam": "PSG",
-        "HomeScore": 0,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947157",
@@ -3584,7 +3262,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Atalanta": {
@@ -3697,21 +3375,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947111",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Atalanta",
-        "AwayTeam": "Chelsea",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947183",
@@ -3740,7 +3404,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Club Brugge": {
@@ -3853,21 +3517,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947174",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Club Brugge",
-        "AwayTeam": "Arsenal",
-        "HomeScore": 0,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947193",
@@ -3896,7 +3546,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Monaco": {
@@ -4009,21 +3659,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947247",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Monaco",
-        "AwayTeam": "Galatasaray",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947122",
@@ -4052,7 +3688,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FC K\u00F8benhavn": {
@@ -4165,21 +3801,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947210",
-        "Date": "2025-12-10T17:45:00Z",
-        "DateParsed": "2025-12-10T18:45:00+01:00",
-        "HomeTeam": "Villarreal",
-        "AwayTeam": "FC K\u00F8benhavn",
-        "HomeScore": 2,
-        "AwayScore": 3,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947240",
@@ -4208,7 +3830,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Leverkusen": {
@@ -4321,21 +3943,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947171",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Leverkusen",
-        "AwayTeam": "Newcastle",
-        "HomeScore": 2,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947170",
@@ -4364,7 +3972,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Frankfurt": {
@@ -4477,21 +4085,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947146",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Barcelona",
-        "AwayTeam": "Frankfurt",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947198",
@@ -4520,7 +4114,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Galatasaray": {
@@ -4633,21 +4227,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947247",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Monaco",
-        "AwayTeam": "Galatasaray",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947207",
@@ -4676,7 +4256,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Man City": {
@@ -4789,21 +4369,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947116",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Real Madrid",
-        "AwayTeam": "Man City",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947163",
@@ -4832,7 +4398,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Napoli": {
@@ -4945,21 +4511,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947186",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Benfica",
-        "AwayTeam": "Napoli",
-        "HomeScore": 2,
-        "AwayScore": 0,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947240",
@@ -4988,7 +4540,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Newcastle": {
@@ -5101,21 +4653,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947171",
-        "Date": "2025-12-10T20:00:00Z",
-        "DateParsed": "2025-12-10T21:00:00+01:00",
-        "HomeTeam": "Leverkusen",
-        "AwayTeam": "Newcastle",
-        "HomeScore": 2,
-        "AwayScore": 2,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947238",
@@ -5144,7 +4682,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Barcelona": {
@@ -5257,21 +4795,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947146",
-        "Date": "2025-12-09T20:00:00Z",
-        "DateParsed": "2025-12-09T21:00:00+01:00",
-        "HomeTeam": "Barcelona",
-        "AwayTeam": "Frankfurt",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947151",
@@ -5300,7 +4824,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Sporting CP": {
@@ -5413,21 +4937,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947105",
-        "Date": "2025-12-09T17:45:00Z",
-        "DateParsed": "2025-12-09T18:45:00+01:00",
-        "HomeTeam": "Bayern M\u00FCnchen",
-        "AwayTeam": "Sporting CP",
-        "HomeScore": 3,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947157",
@@ -5456,7 +4966,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Kairat Almaty": {
@@ -5569,21 +5079,7 @@
     ],
     "UelFixtures": [],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947231",
-        "Date": "2025-12-09T15:30:00Z",
-        "DateParsed": "2025-12-09T16:30:00+01:00",
-        "HomeTeam": "Kairat Almaty",
-        "AwayTeam": "Olympiacos",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UCL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947193",
@@ -5612,7 +5108,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FC Midtjylland": {
@@ -5725,21 +5221,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947855",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "FC Midtjylland",
-        "AwayTeam": "Genk",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947915",
@@ -5768,7 +5250,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Sturm Graz": {
@@ -5881,21 +5363,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947869",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Sturm Graz",
-        "AwayTeam": "FK Crvena Zvezda",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947782",
@@ -5924,7 +5392,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "PAOK Thessaloniki": {
@@ -6037,21 +5505,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947861",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Ludogorets Razgrad",
-        "AwayTeam": "PAOK Thessaloniki",
-        "HomeScore": 3,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947824",
@@ -6080,7 +5534,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Maccabi Tel Aviv": {
@@ -6193,21 +5647,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947890",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "VfB Stuttgart",
-        "AwayTeam": "Maccabi Tel Aviv",
-        "HomeScore": 4,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947857",
@@ -6236,7 +5676,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Braga": {
@@ -6349,21 +5789,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947877",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Nice",
-        "AwayTeam": "Braga",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947814",
@@ -6392,7 +5818,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Feyenoord": {
@@ -6505,21 +5931,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947872",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "FCSB",
-        "AwayTeam": "Feyenoord",
-        "HomeScore": 4,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947782",
@@ -6548,7 +5960,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Dinamo Zagreb": {
@@ -6661,21 +6073,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947792",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Dinamo Zagreb",
-        "AwayTeam": "Real Betis",
-        "HomeScore": 1,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947794",
@@ -6704,7 +6102,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Fenerbah\u00E7e": {
@@ -6817,21 +6215,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947914",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Brann",
-        "AwayTeam": "Fenerbah\u00E7e",
-        "HomeScore": 0,
-        "AwayScore": 4,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947808",
@@ -6860,7 +6244,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FK Crvena Zvezda": {
@@ -6973,21 +6357,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947869",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Sturm Graz",
-        "AwayTeam": "FK Crvena Zvezda",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947898",
@@ -7016,7 +6386,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Celtic": {
@@ -7129,21 +6499,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947836",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Celtic",
-        "AwayTeam": "Roma",
-        "HomeScore": 0,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947882",
@@ -7172,7 +6528,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Freiburg": {
@@ -7285,21 +6641,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947856",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Freiburg",
-        "AwayTeam": "Salzburg",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947857",
@@ -7328,7 +6670,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Basel": {
@@ -7441,21 +6783,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947848",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Basel",
-        "AwayTeam": "Aston Villa",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947802",
@@ -7484,7 +6812,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Malm\u00F6 FF": {
@@ -7597,21 +6925,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947779",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "FC Porto",
-        "AwayTeam": "Malm\u00F6 FF",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947898",
@@ -7640,7 +6954,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Ludogorets Razgrad": {
@@ -7753,21 +7067,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947861",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Ludogorets Razgrad",
-        "AwayTeam": "PAOK Thessaloniki",
-        "HomeScore": 3,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947790",
@@ -7796,7 +7096,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Nice": {
@@ -7909,21 +7209,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947877",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Nice",
-        "AwayTeam": "Braga",
-        "HomeScore": 0,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947879",
@@ -7952,7 +7238,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Roma": {
@@ -8065,21 +7351,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947836",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Celtic",
-        "AwayTeam": "Roma",
-        "HomeScore": 0,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947775",
@@ -8108,7 +7380,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Real Betis": {
@@ -8221,21 +7493,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947792",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Dinamo Zagreb",
-        "AwayTeam": "Real Betis",
-        "HomeScore": 1,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947824",
@@ -8264,7 +7522,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Nottm Forest": {
@@ -8377,21 +7635,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947907",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "FC Utrecht",
-        "AwayTeam": "Nottm Forest",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947814",
@@ -8420,7 +7664,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Go Ahead Eagles": {
@@ -8533,21 +7777,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947823",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Lyon",
-        "AwayTeam": "Go Ahead Eagles",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947879",
@@ -8576,7 +7806,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FCSB": {
@@ -8689,21 +7919,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947872",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "FCSB",
-        "AwayTeam": "Feyenoord",
-        "HomeScore": 4,
-        "AwayScore": 3,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947794",
@@ -8732,7 +7948,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Lille": {
@@ -8845,21 +8061,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947844",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Young Boys",
-        "AwayTeam": "Lille",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947885",
@@ -8888,7 +8090,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Brann": {
@@ -9001,21 +8203,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947914",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Brann",
-        "AwayTeam": "Fenerbah\u00E7e",
-        "HomeScore": 0,
-        "AwayScore": 4,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947915",
@@ -9044,7 +8232,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Aston Villa": {
@@ -9157,21 +8345,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947848",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Basel",
-        "AwayTeam": "Aston Villa",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947808",
@@ -9200,7 +8374,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Bologna": {
@@ -9313,21 +8487,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947888",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Celta Vigo",
-        "AwayTeam": "Bologna",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947882",
@@ -9356,7 +8516,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FC Utrecht": {
@@ -9469,21 +8629,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947907",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "FC Utrecht",
-        "AwayTeam": "Nottm Forest",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947908",
@@ -9512,7 +8658,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Lyon": {
@@ -9625,21 +8771,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947823",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Lyon",
-        "AwayTeam": "Go Ahead Eagles",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947845",
@@ -9668,7 +8800,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Ferencvaros": {
@@ -9781,21 +8913,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947832",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Ferencvaros",
-        "AwayTeam": "Rangers",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947835",
@@ -9824,7 +8942,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Viktoria Plzen": {
@@ -9937,21 +9055,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947894",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Panathinaikos",
-        "AwayTeam": "Viktoria Plzen",
-        "HomeScore": 0,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947828",
@@ -9980,7 +9084,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Rangers": {
@@ -10093,21 +9197,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947832",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Ferencvaros",
-        "AwayTeam": "Rangers",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947790",
@@ -10136,7 +9226,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Genk": {
@@ -10249,21 +9339,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947855",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "FC Midtjylland",
-        "AwayTeam": "Genk",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947908",
@@ -10292,7 +9368,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Salzburg": {
@@ -10405,21 +9481,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947856",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Freiburg",
-        "AwayTeam": "Salzburg",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "away"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947802",
@@ -10448,7 +9510,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "FC Porto": {
@@ -10561,21 +9623,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947779",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "FC Porto",
-        "AwayTeam": "Malm\u00F6 FF",
-        "HomeScore": 2,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947828",
@@ -10604,7 +9652,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "VfB Stuttgart": {
@@ -10717,21 +9765,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947890",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "VfB Stuttgart",
-        "AwayTeam": "Maccabi Tel Aviv",
-        "HomeScore": 4,
-        "AwayScore": 1,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947775",
@@ -10760,7 +9794,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Celta Vigo": {
@@ -10873,21 +9907,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947888",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Celta Vigo",
-        "AwayTeam": "Bologna",
-        "HomeScore": 1,
-        "AwayScore": 2,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947885",
@@ -10916,7 +9936,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Young Boys": {
@@ -11029,21 +10049,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947844",
-        "Date": "2025-12-11T17:45:00Z",
-        "DateParsed": "2025-12-11T18:45:00+01:00",
-        "HomeTeam": "Young Boys",
-        "AwayTeam": "Lille",
-        "HomeScore": 1,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947845",
@@ -11072,7 +10078,7 @@
         "Venue": "away"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   },
   "Panathinaikos": {
@@ -11185,21 +10191,7 @@
       }
     ],
     "TotalEuropeanFixtures": 8,
-    "RecentMatches": [
-      {
-        "MatchId": "4947894",
-        "Date": "2025-12-11T20:00:00Z",
-        "DateParsed": "2025-12-11T21:00:00+01:00",
-        "HomeTeam": "Panathinaikos",
-        "AwayTeam": "Viktoria Plzen",
-        "HomeScore": 0,
-        "AwayScore": 0,
-        "Competition": "UEL",
-        "Finished": true,
-        "Started": true,
-        "Venue": "home"
-      }
-    ],
+    "RecentMatches": [],
     "UpcomingMatches": [
       {
         "MatchId": "4947835",
@@ -11228,7 +10220,7 @@
         "Venue": "home"
       }
     ],
-    "HasRecentEuropean": true,
+    "HasRecentEuropean": false,
     "HasUpcomingEuropean": true
   }
 }

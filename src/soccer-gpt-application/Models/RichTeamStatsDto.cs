@@ -13,19 +13,6 @@ public record RichTeamStatsDto
     [JsonPropertyName("avg_goals_against")]
     public double AvgGoalsAgainst { get; init; }
     
-    // Dominance
-    [JsonPropertyName("avg_shots")]
-    public double AvgShots { get; init; }
-    
-    [JsonPropertyName("avg_shots_on_target")]
-    public double AvgShotsOnTarget { get; init; }
-    
-    [JsonPropertyName("avg_corners")]
-    public double AvgCorners { get; init; }
-    
-    [JsonPropertyName("shot_conversion_rate")]
-    public double ShotConversionRate { get; init; } // Goals / ShotsOnTarget
-    
     // Form
     [JsonPropertyName("form_last_5")]
     public string FormLast5 { get; init; } = string.Empty;

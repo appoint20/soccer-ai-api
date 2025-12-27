@@ -23,6 +23,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Traps\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>soccer_gpt_infrastructure</RootNamespace>
