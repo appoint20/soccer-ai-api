@@ -51,10 +51,10 @@ REQUIRED_COLUMNS = ["Date", "HomeTeam", "AwayTeam"]
 # Supported league codes for filtering
 SUPPORTED_LEAGUES = {
     "E0", "E1", "E2", "E3",  # England
-    "D1", "D2",              # Germany
+    "D1",                     # Germany
     "F1", "F2",              # France
     "I1", "I2",              # Italy
-    "SP1", "SP2",            # Spain
+    "SP1",                   # Spain
 }
 
 

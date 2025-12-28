@@ -39,14 +39,6 @@
         "season_start_month": 8,
         "season_end_month": 5
     },
-    "D2": {
-        "name": "2. Bundesliga",
-        "country": "Germany",
-        "tier": 2,
-        "teams": 18,
-        "season_start_month": 8,
-        "season_end_month": 5
-    },
     "F1": {
         "name": "Ligue 1",
         "country": "France",
@@ -84,14 +76,6 @@
         "country": "Spain",
         "tier": 1,
         "teams": 20,
-        "season_start_month": 8,
-        "season_end_month": 5
-    },
-    "SP2": {
-        "name": "La Liga 2",
-        "country": "Spain",
-        "tier": 2,
-        "teams": 22,
         "season_start_month": 8,
         "season_end_month": 5
     }
