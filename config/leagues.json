@@ -1,0 +1,98 @@
+{
+    "E0": {
+        "name": "Premier League",
+        "country": "England",
+        "tier": 1,
+        "teams": 20,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "E1": {
+        "name": "Championship",
+        "country": "England",
+        "tier": 2,
+        "teams": 24,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "E2": {
+        "name": "League One",
+        "country": "England",
+        "tier": 3,
+        "teams": 24,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "E3": {
+        "name": "League Two",
+        "country": "England",
+        "tier": 4,
+        "teams": 24,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "D1": {
+        "name": "Bundesliga",
+        "country": "Germany",
+        "tier": 1,
+        "teams": 18,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "D2": {
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "tier": 2,
+        "teams": 18,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "F1": {
+        "name": "Ligue 1",
+        "country": "France",
+        "tier": 1,
+        "teams": 18,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "F2": {
+        "name": "Ligue 2",
+        "country": "France",
+        "tier": 2,
+        "teams": 18,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "I1": {
+        "name": "Serie A",
+        "country": "Italy",
+        "tier": 1,
+        "teams": 20,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "I2": {
+        "name": "Serie B",
+        "country": "Italy",
+        "tier": 2,
+        "teams": 20,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "SP1": {
+        "name": "La Liga",
+        "country": "Spain",
+        "tier": 1,
+        "teams": 20,
+        "season_start_month": 8,
+        "season_end_month": 5
+    },
+    "SP2": {
+        "name": "La Liga 2",
+        "country": "Spain",
+        "tier": 2,
+        "teams": 22,
+        "season_start_month": 8,
+        "season_end_month": 5
+    }
+}
