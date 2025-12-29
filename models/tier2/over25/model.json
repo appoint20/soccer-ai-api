@@ -2,14 +2,14 @@
   "model_name": "over25",
   "model_type": "xgboost",
   "version": "1.0.0",
-  "training_date": "2025-12-29T16:56:48.294016",
+  "training_date": "2025-12-29T17:03:03.846827",
   "is_trained": true,
-  "n_features": 56,
+  "n_features": 67,
   "metadata": {
     "model_name": "over25",
     "model_type": "xgboost",
     "version": "1.0.0",
-    "created_at": "2025-12-29T16:56:48.104263",
+    "created_at": "2025-12-29T17:03:03.647578",
     "hyperparameters": {
       "n_estimators": 150,
       "max_depth": 4,
@@ -26,8 +26,8 @@
       "random_state": 42,
       "n_jobs": -1
     },
-    "n_features": 56,
-    "training_date": "2025-12-29T16:56:48.294016",
+    "n_features": 67,
+    "training_date": "2025-12-29T17:03:03.846827",
     "training_samples": 913
   }
 }

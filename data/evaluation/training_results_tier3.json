@@ -1,40 +1,40 @@
 {
   "tier": "tier3",
-  "timestamp": "2025-12-29T16:56:49.949640",
+  "timestamp": "2025-12-29T17:03:05.536844",
   "results": {
     "over25": {
-      "train_accuracy": 0.9561091340450771,
+      "train_accuracy": 0.9644128113879004,
       "train_samples": 843,
-      "val_accuracy": 0.8042704626334519,
+      "val_accuracy": 0.800711743772242,
       "val_samples": 281,
       "class_distribution": {
         "positive": 0.47568208778173193,
         "negative": 0.5243179122182681
       },
-      "test_accuracy": 0.8191489361702128
+      "test_accuracy": 0.7978723404255319
     },
     "btts": {
-      "train_accuracy": 0.9347568208778173,
+      "train_accuracy": 0.9572953736654805,
       "train_samples": 843,
-      "val_accuracy": 0.8256227758007118,
+      "val_accuracy": 0.8362989323843416,
       "val_samples": 281,
       "class_distribution": {
         "positive": 0.5077105575326216,
         "negative": 0.4922894424673784
       },
-      "test_accuracy": 0.8120567375886525
+      "test_accuracy": 0.8475177304964538
     },
     "result": {
-      "train_accuracy": 0.9228944246737841,
+      "train_accuracy": 0.9252669039145908,
       "train_samples": 843,
-      "val_accuracy": 0.7188612099644128,
+      "val_accuracy": 0.7224199288256228,
       "val_samples": 281,
       "class_distribution": {
         "H": 0.3143534994068802,
         "D": 0.2538552787663108,
         "A": 0.431791221826809
       },
-      "test_accuracy": 0.723404255319149
+      "test_accuracy": 0.7056737588652482
     }
   }
 }

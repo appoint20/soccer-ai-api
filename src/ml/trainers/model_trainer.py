@@ -371,6 +371,18 @@ class ModelTrainer:
                 seasons = {"Winter": 0, "Spring": 1, "Summer": 2, "Autumn": 3}
                 flat[f"ctx_{key}"] = float(seasons.get(value, 3))
         
+        # Odds features (NEW)
+        odds = features.get("odds_features", {})
+        for key, value in odds.items():
+            if isinstance(value, (int, float)):
+                flat[f"odds_{key}"] = float(value)
+        
+        # Derby features (NEW) - if present
+        derby = features.get("derby_features", {})
+        for key, value in derby.items():
+            if isinstance(value, (int, float)):
+                flat[f"derby_{key}"] = float(value)
+        
         return flat
     
     def _save_training_results(self, tier: str, results: Dict) -> None:

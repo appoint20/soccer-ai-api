@@ -12,6 +12,7 @@ from src.domain.services.team_stats_service import TeamStatsService
 from src.domain.services.h2h_service import H2HService
 from src.domain.services.standings_service import StandingsService
 from src.domain.services.referee_stats_service import RefereeStatsService
+from src.domain.services.derby_service import DerbyService
 from src.data.cache.cache_manager import CacheManager
 from src.utils.stats_utils import round_to_precision
 from src.utils.date_utils import get_season_of_year, is_festive_period
@@ -55,6 +56,7 @@ class FeatureEngineeringService(BaseService):
         self.h2h = h2h_service or H2HService(cache_manager)
         self.standings = standings_service or StandingsService(cache_manager)
         self.referee_stats = referee_stats_service or RefereeStatsService(cache_manager)
+        self.derby = DerbyService()  # Derby detection service
         
         self._feature_names: List[str] = []
     
@@ -150,6 +152,9 @@ class FeatureEngineeringService(BaseService):
             
             # Odds features (NEW)
             "odds_features": self._extract_odds_features(match),
+            
+            # Derby features (NEW)
+            "derby_features": self.derby.get_derby_features(home_team or "", away_team or ""),
         }
         
         return features
