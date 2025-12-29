@@ -147,6 +147,9 @@ class FeatureEngineeringService(BaseService):
             "match_context": self._calculate_match_context(
                 match, home_stats, away_stats, home_context, away_context
             ),
+            
+            # Odds features (NEW)
+            "odds_features": self._extract_odds_features(match),
         }
         
         return features
@@ -314,6 +317,17 @@ class FeatureEngineeringService(BaseService):
             "points_diff",
             "expected_total_goals",
             "is_festive_period",
+            
+            # Odds features (NEW)
+            "home_win_odds",
+            "draw_odds",
+            "away_win_odds",
+            "over25_odds",
+            "under25_odds",
+            "implied_home_prob",
+            "implied_over25_prob",
+            "odds_value_home",
+            "odds_value_over25",
         ]
     
     def flatten_features(self, features: Dict[str, Any]) -> Dict[str, float]:
@@ -388,6 +402,18 @@ class FeatureEngineeringService(BaseService):
         flat["points_diff"] = ctx.get("points_diff", 0)
         flat["expected_total_goals"] = ctx.get("expected_total_goals", 2.5)
         flat["is_festive_period"] = 1.0 if ctx.get("is_festive_period", False) else 0.0
+        
+        # Odds features (NEW)
+        odds = features.get("odds_features", {})
+        flat["home_win_odds"] = odds.get("home_win_odds", 2.5)
+        flat["draw_odds"] = odds.get("draw_odds", 3.3)
+        flat["away_win_odds"] = odds.get("away_win_odds", 3.0)
+        flat["over25_odds"] = odds.get("over25_odds", 1.9)
+        flat["under25_odds"] = odds.get("under25_odds", 1.9)
+        flat["implied_home_prob"] = odds.get("implied_home_prob", 0.4)
+        flat["implied_over25_prob"] = odds.get("implied_over25_prob", 0.5)
+        flat["odds_value_home"] = odds.get("odds_value_home", 0.0)
+        flat["odds_value_over25"] = odds.get("odds_value_over25", 0.0)
         
         return flat
     
@@ -547,3 +573,69 @@ class FeatureEngineeringService(BaseService):
         """Encode season to numeric (0-3)."""
         seasons = {"Winter": 0, "Spring": 1, "Summer": 2, "Autumn": 3}
         return float(seasons.get(season, 3))
+    
+    def _extract_odds_features(self, match: Dict[str, Any]) -> Dict[str, float]:
+        """
+        Extract betting odds features from match data.
+        
+        Calculates:
+        - Raw odds for 1X2 and Over/Under markets
+        - Implied probabilities (1/odds, normalized)
+        - Value indicators (form-based prob - implied prob)
+        
+        Args:
+            match: Match dict with odds columns (b365h, b365d, b365a, etc.)
+            
+        Returns:
+            Dict with odds features
+        """
+        # Default odds (neutral market)
+        home_odds = match.get("b365h") or match.get("home_win_odds") or 2.5
+        draw_odds = match.get("b365d") or match.get("draw_odds") or 3.3
+        away_odds = match.get("b365a") or match.get("away_win_odds") or 3.0
+        over25_odds = match.get("b365_over25") or match.get("over25_odds") or 1.9
+        under25_odds = match.get("b365_under25") or match.get("under25_odds") or 1.9
+        
+        # Ensure valid odds
+        try:
+            home_odds = float(home_odds) if home_odds else 2.5
+            draw_odds = float(draw_odds) if draw_odds else 3.3
+            away_odds = float(away_odds) if away_odds else 3.0
+            over25_odds = float(over25_odds) if over25_odds else 1.9
+            under25_odds = float(under25_odds) if under25_odds else 1.9
+        except (ValueError, TypeError):
+            home_odds, draw_odds, away_odds = 2.5, 3.3, 3.0
+            over25_odds, under25_odds = 1.9, 1.9
+        
+        # Calculate implied probabilities (1/odds, then normalize to remove margin)
+        raw_home_prob = 1.0 / home_odds if home_odds > 0 else 0.4
+        raw_draw_prob = 1.0 / draw_odds if draw_odds > 0 else 0.3
+        raw_away_prob = 1.0 / away_odds if away_odds > 0 else 0.3
+        
+        total_1x2 = raw_home_prob + raw_draw_prob + raw_away_prob
+        implied_home_prob = raw_home_prob / total_1x2 if total_1x2 > 0 else 0.4
+        
+        raw_over25_prob = 1.0 / over25_odds if over25_odds > 0 else 0.5
+        raw_under25_prob = 1.0 / under25_odds if under25_odds > 0 else 0.5
+        
+        total_ou = raw_over25_prob + raw_under25_prob
+        implied_over25_prob = raw_over25_prob / total_ou if total_ou > 0 else 0.5
+        
+        # Value calculation: compare to form-based estimates
+        # Positive value = our model thinks probability is higher than bookmaker
+        # We'll use match context features later; for now, estimate from odds spread
+        avg_home_prob = 0.45  # Base home advantage
+        odds_value_home = avg_home_prob - implied_home_prob
+        odds_value_over25 = 0.5 - implied_over25_prob  # Neutral baseline
+        
+        return {
+            "home_win_odds": round_to_precision(home_odds),
+            "draw_odds": round_to_precision(draw_odds),
+            "away_win_odds": round_to_precision(away_odds),
+            "over25_odds": round_to_precision(over25_odds),
+            "under25_odds": round_to_precision(under25_odds),
+            "implied_home_prob": round_to_precision(implied_home_prob),
+            "implied_over25_prob": round_to_precision(implied_over25_prob),
+            "odds_value_home": round_to_precision(odds_value_home),
+            "odds_value_over25": round_to_precision(odds_value_over25),
+        }
