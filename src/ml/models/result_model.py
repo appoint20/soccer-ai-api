@@ -44,16 +44,17 @@ class ResultModel(BaseModel):
     
     def get_default_hyperparameters(self) -> Dict[str, Any]:
         """Get default XGBoost hyperparameters for result prediction."""
+        # Stronger regularization to prevent overfitting
         return {
-            "n_estimators": 200,
-            "max_depth": 6,
-            "learning_rate": 0.1,
-            "min_child_weight": 5,
-            "subsample": 0.8,
-            "colsample_bytree": 0.8,
-            "gamma": 0.1,
-            "reg_alpha": 0.1,
-            "reg_lambda": 1.0,
+            "n_estimators": 150,  # Reduced from 200
+            "max_depth": 4,  # Reduced from 6
+            "learning_rate": 0.05,  # Reduced from 0.1
+            "min_child_weight": 7,  # Increased from 5
+            "subsample": 0.7,  # Reduced for regularization
+            "colsample_bytree": 0.7,  # Reduced for regularization
+            "gamma": 0.3,  # Increased for regularization
+            "reg_alpha": 0.5,  # Increased L1 regularization
+            "reg_lambda": 2.0,  # Increased L2 regularization
             "objective": "multi:softprob",
             "num_class": 3,
             "eval_metric": "mlogloss",

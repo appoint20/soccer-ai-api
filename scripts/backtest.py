@@ -232,10 +232,21 @@ def run_backtest(weeks: int = 10):
     print(f"  Testing period: {start_date} to {end_date} ({weeks} weeks)")
     print()
     
-    # Initialize prediction service
-    print("[2/3] Initializing prediction service...")
-    prediction_service = PredictionService()
-    prediction_service.load_models()
+    # Initialize prediction services for each tier
+    print("[2/3] Initializing prediction services...")
+    
+    TIER_MAP = {
+        "E0": "tier1", "D1": "tier1", "I1": "tier1", "SP1": "tier1", "F1": "tier1",
+        "E1": "tier2", "I2": "tier2", "F2": "tier2",
+        "E2": "tier3", "E3": "tier3",
+    }
+    
+    prediction_services = {}
+    for tier in ["tier1", "tier2", "tier3"]:
+        ps = PredictionService(tier=tier)
+        ps.load_models(tier=tier)
+        prediction_services[tier] = ps
+        print(f"  Loaded {tier} models")
     print()
     
     # Run backtest week by week
@@ -263,6 +274,11 @@ def run_backtest(weeks: int = 10):
                 continue
             
             try:
+                # Get correct prediction service for this league's tier
+                league = match.get("league", "E0")
+                tier = TIER_MAP.get(league, "tier1")
+                prediction_service = prediction_services[tier]
+                
                 # Predict with time-travel (only past data)
                 prediction = predict_match_with_time_travel(
                     match, all_matches, prediction_service

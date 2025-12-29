@@ -42,17 +42,18 @@ class Over25Model(BaseModel):
     
     def get_default_hyperparameters(self) -> Dict[str, Any]:
         """Get default XGBoost hyperparameters for Over 2.5 prediction."""
+        # Stronger regularization to prevent overfitting
         return {
-            "n_estimators": 200,
-            "max_depth": 5,
-            "learning_rate": 0.1,
-            "min_child_weight": 3,
-            "subsample": 0.8,
-            "colsample_bytree": 0.8,
-            "gamma": 0.1,
-            "reg_alpha": 0.1,
-            "reg_lambda": 1.0,
-            "scale_pos_weight": 1.0,  # Adjust for class imbalance
+            "n_estimators": 150,  # Reduced from 200
+            "max_depth": 4,  # Reduced from 5 (less complex trees)
+            "learning_rate": 0.05,  # Reduced from 0.1 (slower learning)
+            "min_child_weight": 5,  # Increased from 3 (more conservative splits)
+            "subsample": 0.7,  # Reduced for more regularization
+            "colsample_bytree": 0.7,  # Reduced for more regularization
+            "gamma": 0.3,  # Increased from 0.1 (higher min loss reduction)
+            "reg_alpha": 0.5,  # Increased L1 regularization
+            "reg_lambda": 2.0,  # Increased L2 regularization
+            "scale_pos_weight": 1.0,
             "objective": "binary:logistic",
             "eval_metric": "logloss",
             "use_label_encoder": False,

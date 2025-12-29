@@ -42,17 +42,18 @@ class BTTSModel(BaseModel):
     
     def get_default_hyperparameters(self) -> Dict[str, Any]:
         """Get default LightGBM hyperparameters for BTTS prediction."""
+        # Stronger regularization to prevent overfitting
         return {
-            "n_estimators": 200,
-            "num_leaves": 50,
-            "max_depth": 7,
-            "learning_rate": 0.1,
-            "min_child_samples": 30,
-            "subsample": 0.8,
-            "colsample_bytree": 0.8,
-            "reg_alpha": 0.1,
-            "reg_lambda": 0.5,
-            "class_weight": "balanced",  # Handle class imbalance
+            "n_estimators": 150,  # Reduced from 200
+            "num_leaves": 31,  # Reduced from 50 (less complex)
+            "max_depth": 5,  # Reduced from 7
+            "learning_rate": 0.05,  # Reduced from 0.1
+            "min_child_samples": 50,  # Increased from 30
+            "subsample": 0.7,  # Reduced for regularization
+            "colsample_bytree": 0.7,  # Reduced for regularization
+            "reg_alpha": 0.5,  # Increased L1 regularization
+            "reg_lambda": 1.0,  # Increased L2 regularization
+            "class_weight": "balanced",
             "objective": "binary",
             "metric": "binary_logloss",
             "random_state": 42,

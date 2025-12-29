@@ -98,14 +98,39 @@ class ExcelLoader:
         try:
             # Load based on file extension
             if file_path.suffix.lower() in ('.xlsx', '.xls'):
-                df = pd.read_excel(file_path)
+                # Load ALL sheets from Excel file
+                excel_file = pd.ExcelFile(file_path)
+                sheet_names = excel_file.sheet_names
+                
+                all_dfs = []
+                for sheet_name in sheet_names:
+                    # Only load supported leagues
+                    if filter_unsupported_leagues and sheet_name not in SUPPORTED_LEAGUES:
+                        continue
+                    
+                    try:
+                        sheet_df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                        # Add league code from sheet name
+                        sheet_df['Div'] = sheet_name
+                        all_dfs.append(sheet_df)
+                        self.logger.debug(f"Loaded {len(sheet_df)} rows from sheet {sheet_name}")
+                    except Exception as e:
+                        self.logger.warning(f"Failed to load sheet {sheet_name}: {e}")
+                        continue
+                
+                if not all_dfs:
+                    self.logger.error(f"No valid data found in {file_path.name}")
+                    return None
+                
+                df = pd.concat(all_dfs, ignore_index=True)
+                self.logger.info(f"Loaded {len(df)} rows from {len(all_dfs)} sheets in {file_path.name}")
+                
             elif file_path.suffix.lower() == '.csv':
                 df = pd.read_csv(file_path, encoding='utf-8', on_bad_lines='skip')
+                self.logger.info(f"Loaded {len(df)} rows from {file_path.name}")
             else:
                 self.logger.error(f"Unsupported file format: {file_path.suffix}")
                 return None
-            
-            self.logger.info(f"Loaded {len(df)} rows from {file_path.name}")
             
             # Validate required columns
             if not self._validate_columns(df, file_path):
