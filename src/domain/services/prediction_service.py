@@ -134,10 +134,24 @@ class PredictionService(BaseService):
         # Flatten features for ML
         flat_features = self.feature_service.flatten_features(features)
         
-        # Convert to numpy array
-        feature_names = list(flat_features.keys())
-        X = np.array([[flat_features.get(name, 0.0) for name in feature_names]])
+        # Get feature names from trained model (if available) to ensure consistency
+        if "over25" in self.models and self.models["over25"].feature_names:
+            model_feature_names = self.models["over25"].feature_names
+        elif "btts" in self.models and self.models["btts"].feature_names:
+            model_feature_names = self.models["btts"].feature_names
+        elif "result" in self.models and self.models["result"].feature_names:
+            model_feature_names = self.models["result"].feature_names
+        else:
+            model_feature_names = list(flat_features.keys())
+        
+        # Build feature array in the EXACT order as training
+        X = np.array([[flat_features.get(name, 0.0) for name in model_feature_names]])
         X = np.nan_to_num(X, nan=0.0)
+        
+        # Validate shape
+        expected_features = len(model_feature_names)
+        if X.shape[1] != expected_features:
+            raise ValueError(f"Feature shape mismatch, expected: {expected_features}, got {X.shape[1]}")
         
         predictions = {
             "match_id": features.get("match_id"),
