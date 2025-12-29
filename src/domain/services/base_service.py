@@ -163,9 +163,9 @@ class BaseService(ABC):
         
         return name
     
+    @staticmethod
     def filter_matches_for_team(
-        self,
-        matches: List,
+            matches: List,
         team_name: str,
         as_of_date: Optional[date] = None,
         home_only: bool = False,
