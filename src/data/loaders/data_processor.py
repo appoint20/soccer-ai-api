@@ -107,9 +107,22 @@ class DataProcessor:
     def _parse_dates(self, df: pd.DataFrame) -> pd.DataFrame:
         """Parse and validate date columns."""
         if 'date' in df.columns:
-            df['match_date'] = df['date'].apply(
-                lambda x: parse_date(str(x)) if pd.notna(x) else None
-            )
+            def safe_parse_date(x):
+                if pd.isna(x):
+                    return None
+                # Handle pandas Timestamp
+                if hasattr(x, 'date'):
+                    return x.date()
+                # Handle datetime
+                from datetime import datetime, date
+                if isinstance(x, datetime):
+                    return x.date()
+                if isinstance(x, date):
+                    return x
+                # Try string parsing
+                return parse_date(str(x))
+            
+            df['match_date'] = df['date'].apply(safe_parse_date)
             
             # Drop rows without valid dates
             before = len(df)

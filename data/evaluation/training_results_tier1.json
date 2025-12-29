@@ -1,0 +1,40 @@
+{
+  "tier": "tier1",
+  "timestamp": "2025-12-29T15:12:48.416733",
+  "results": {
+    "over25": {
+      "train_accuracy": 1.0,
+      "train_samples": 792,
+      "val_accuracy": 0.6515151515151515,
+      "val_samples": 264,
+      "class_distribution": {
+        "positive": 0.5782828282828283,
+        "negative": 0.4217171717171717
+      },
+      "test_accuracy": 0.5871212121212122
+    },
+    "btts": {
+      "train_accuracy": 0.8901515151515151,
+      "train_samples": 792,
+      "val_accuracy": 0.6818181818181818,
+      "val_samples": 264,
+      "class_distribution": {
+        "positive": 0.5631313131313131,
+        "negative": 0.43686868686868685
+      },
+      "test_accuracy": 0.6590909090909091
+    },
+    "result": {
+      "train_accuracy": 1.0,
+      "train_samples": 792,
+      "val_accuracy": 0.5378787878787878,
+      "val_samples": 264,
+      "class_distribution": {
+        "H": 0.31691919191919193,
+        "D": 0.22853535353535354,
+        "A": 0.45454545454545453
+      },
+      "test_accuracy": 0.6098484848484849
+    }
+  }
+}

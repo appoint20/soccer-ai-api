@@ -1,0 +1,34 @@
+{
+  "model_name": "btts",
+  "model_type": "lightgbm",
+  "version": "1.0.0",
+  "training_date": "2025-12-29T15:12:47.497484",
+  "is_trained": true,
+  "n_features": 56,
+  "metadata": {
+    "model_name": "btts",
+    "model_type": "lightgbm",
+    "version": "1.0.0",
+    "created_at": "2025-12-29T15:12:47.380120",
+    "hyperparameters": {
+      "n_estimators": 200,
+      "num_leaves": 50,
+      "max_depth": 7,
+      "learning_rate": 0.1,
+      "min_child_samples": 30,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_alpha": 0.1,
+      "reg_lambda": 0.5,
+      "class_weight": "balanced",
+      "objective": "binary",
+      "metric": "binary_logloss",
+      "random_state": 42,
+      "n_jobs": -1,
+      "verbose": -1
+    },
+    "n_features": 56,
+    "training_date": "2025-12-29T15:12:47.497484",
+    "training_samples": 792
+  }
+}
