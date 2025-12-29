@@ -62,6 +62,24 @@ class MatchAnalysis(BaseModel):
     result: ResultPrediction
 
 
+class ComprehensiveMatchAnalysis(BaseModel):
+    """Comprehensive analysis with all models and statistics."""
+    match_info: Dict[str, Any] = Field(..., description="Match details")
+    team_stats: Dict[str, Any] = Field(..., description="Home and away team stats")
+    h2h: Dict[str, Any] = Field(..., description="Head-to-head statistics")
+    predictions: Dict[str, Any] = Field(..., description="ML, Dixon-Coles, Monte Carlo, Ensemble")
+    reasons: Dict[str, List[str]] = Field(..., description="Human-readable reasons")
+    confidence_summary: Dict[str, str] = Field(..., description="Confidence levels")
+
+
+class ComprehensiveAnalyzeResponse(BaseModel):
+    """Response for comprehensive analysis endpoint."""
+    date: str
+    total_matches: int
+    matches: List[ComprehensiveMatchAnalysis]
+    generated_at: str
+
+
 class AnalyzeMatchesResponse(BaseModel):
     """Response for /analyze/matches endpoint."""
     date: str

@@ -9,6 +9,8 @@ from fastapi import APIRouter, HTTPException, Query
 
 from src.api.schemas import (
     AnalyzeMatchesResponse,
+    ComprehensiveAnalyzeResponse,
+    ComprehensiveMatchAnalysis,
     GenerateTicketsResponse,
     MatchAnalysis,
     Over25Prediction,
@@ -20,6 +22,7 @@ from src.api.schemas import (
 )
 from src.domain.services.prediction_service import PredictionService
 from src.domain.services.feature_engineering_service import FeatureEngineeringService
+from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
 from src.data.loaders.csv_loader import CSVLoader
 from src.data.storage.json_storage import JSONStorage
 from src.utils.logger import get_logger
@@ -27,14 +30,15 @@ from src.utils.logger import get_logger
 router = APIRouter()
 logger = get_logger("PredictionsRouter")
 
-# Global prediction service (loaded on startup)
+# Global services
 _prediction_service: Optional[PredictionService] = None
+_comprehensive_service: Optional[ComprehensiveAnalysisService] = None
 _historical_matches: List = []
 
 
 def load_prediction_service():
     """Load prediction service and historical data."""
-    global _prediction_service, _historical_matches
+    global _prediction_service, _comprehensive_service, _historical_matches
     
     # Load historical matches
     storage = JSONStorage()
@@ -56,6 +60,14 @@ def load_prediction_service():
         logger.info("Loaded trained models")
     except Exception as e:
         logger.warning(f"Could not load models (will use fallback): {e}")
+    
+    # Initialize comprehensive analysis service
+    try:
+        _comprehensive_service = ComprehensiveAnalysisService()
+        _comprehensive_service.initialize(_historical_matches)
+        logger.info("Initialized comprehensive analysis service")
+    except Exception as e:
+        logger.warning(f"Could not initialize comprehensive service: {e}")
 
 
 @router.get("/analyze/matches", response_model=AnalyzeMatchesResponse)
@@ -156,6 +168,85 @@ async def analyze_matches(
             continue
     
     return AnalyzeMatchesResponse(
+        date=date,
+        total_matches=len(analyses),
+        matches=analyses,
+        generated_at=datetime.now().isoformat(),
+    )
+
+
+@router.get("/analyze/comprehensive", response_model=ComprehensiveAnalyzeResponse)
+async def analyze_comprehensive(
+    date: str = Query(..., description="Date in YYYY-MM-DD format", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+):
+    """
+    Comprehensive analysis with all models and statistics.
+    
+    Provides:
+    - Team statistics (form, goals, etc.)
+    - H2H statistics
+    - ML predictions with reasons
+    - Monte Carlo simulations (draw detection)
+    - Dixon-Coles Poisson predictions
+    - Ensemble combined predictions with confidence
+    
+    Parameters:
+    - **date**: Date to analyze (YYYY-MM-DD format)
+    
+    Returns:
+    - List of comprehensive match analyses
+    """
+    global _comprehensive_service, _historical_matches
+    
+    if _comprehensive_service is None:
+        load_prediction_service()
+    
+    if _comprehensive_service is None:
+        raise HTTPException(status_code=500, detail="Comprehensive analysis service not available")
+    
+    # Load upcoming fixtures
+    csv_loader = CSVLoader()
+    try:
+        df = csv_loader.load("data/raw/upcoming/fixtures.csv")
+        if df is None or df.empty:
+            fixtures = []
+        else:
+            fixtures = df.to_dict('records')
+            for f in fixtures:
+                if 'parsed_date' in f:
+                    f['match_date'] = f['parsed_date']
+                elif 'date' in f:
+                    f['match_date'] = f['date']
+    except Exception as e:
+        logger.error(f"Failed to load fixtures: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load fixtures: {e}")
+    
+    # Filter by date
+    target_date = date
+    matches_for_date = [
+        f for f in fixtures
+        if str(f.get("match_date", ""))[:10] == target_date
+    ]
+    
+    if not matches_for_date:
+        return ComprehensiveAnalyzeResponse(
+            date=date,
+            total_matches=0,
+            matches=[],
+            generated_at=datetime.now().isoformat(),
+        )
+    
+    # Analyze each match
+    analyses = []
+    for match in matches_for_date:
+        try:
+            analysis = _comprehensive_service.analyze_match(match, _historical_matches)
+            analyses.append(ComprehensiveMatchAnalysis(**analysis))
+        except Exception as e:
+            logger.error(f"Failed comprehensive analysis for {match}: {e}")
+            continue
+    
+    return ComprehensiveAnalyzeResponse(
         date=date,
         total_matches=len(analyses),
         matches=analyses,
