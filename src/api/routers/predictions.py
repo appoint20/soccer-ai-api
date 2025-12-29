@@ -19,10 +19,15 @@ from src.api.schemas import (
     ResultProbabilities,
     Ticket,
     TicketSelection,
+    BacktestResponse,
+    BacktestSummary,
+    MarketAccuracy,
+    LeagueAccuracy,
 )
 from src.domain.services.prediction_service import PredictionService
 from src.domain.services.feature_engineering_service import FeatureEngineeringService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
+from src.domain.services.backtest_service import BacktestService
 from src.data.loaders.csv_loader import CSVLoader
 from src.data.storage.json_storage import JSONStorage
 from src.utils.logger import get_logger
@@ -33,6 +38,7 @@ logger = get_logger("PredictionsRouter")
 # Global services
 _prediction_service: Optional[PredictionService] = None
 _comprehensive_service: Optional[ComprehensiveAnalysisService] = None
+_backtest_service: Optional[BacktestService] = None
 _historical_matches: List = []
 
 
@@ -371,5 +377,65 @@ async def generate_tickets(
         date=date,
         tickets=tickets,
         total_tickets=len(tickets),
+        generated_at=datetime.now().isoformat(),
+    )
+
+
+@router.get("/backtest/run", response_model=BacktestResponse)
+async def run_backtest(
+    weeks: int = Query(default=10, ge=1, le=52, description="Number of weeks to backtest"),
+    confidence: float = Query(default=0.55, ge=0.5, le=0.9, description="Minimum confidence threshold"),
+    exclude_derbies: bool = Query(default=False, description="Exclude derby matches"),
+):
+    """
+    Run backtesting for model performance evaluation.
+    
+    Provides:
+    - Total matches qualified vs ignored
+    - Per league accuracy breakdown
+    - Per market (over25, btts, result) accuracy
+    - Weekly breakdown
+    
+    Parameters:
+    - **weeks**: Number of weeks to test (1-52)
+    - **confidence**: Minimum confidence threshold (0.5-0.9)
+    - **exclude_derbies**: Whether to exclude derby matches
+    
+    Returns:
+    - Backtest results with accuracy metrics
+    """
+    global _backtest_service, _historical_matches
+    
+    # Load historical if needed
+    if not _historical_matches:
+        storage = JSONStorage()
+        _historical_matches = storage.load("data/processed/matches.json") or []
+        logger.info(f"Loaded {len(_historical_matches)} historical matches for backtest")
+    
+    if not _historical_matches:
+        raise HTTPException(status_code=500, detail="No historical data available")
+    
+    # Initialize backtest service
+    _backtest_service = BacktestService(confidence_threshold=confidence)
+    
+    # Run backtest
+    try:
+        results = _backtest_service.run_backtest(
+            _historical_matches,
+            weeks=weeks,
+            exclude_derbies=exclude_derbies,
+        )
+    except Exception as e:
+        logger.error(f"Backtest failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Backtest failed: {str(e)}")
+    
+    # Convert to response model
+    return BacktestResponse(
+        summary=BacktestSummary(**results["summary"]),
+        market_accuracy={
+            k: MarketAccuracy(**v) for k, v in results["market_accuracy"].items()
+        },
+        league_accuracy=[LeagueAccuracy(**la) for la in results["league_accuracy"]],
+        weekly_breakdown=results["weekly_breakdown"],
         generated_at=datetime.now().isoformat(),
     )

@@ -146,3 +146,40 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     timestamp: str
+
+
+class MarketAccuracy(BaseModel):
+    """Market accuracy details."""
+    total_predictions: int
+    qualified_predictions: int
+    correct_predictions: int
+    accuracy: float
+
+
+class LeagueAccuracy(BaseModel):
+    """League accuracy details."""
+    league_code: str
+    league_name: str
+    total_matches: int
+    qualified_matches: int
+    ignored_matches: int
+    accuracy: Dict[str, float] = Field(..., description="Accuracy per market")
+
+
+class BacktestSummary(BaseModel):
+    """Backtest summary."""
+    test_period: Dict[str, Any]
+    total_matches: int
+    qualified_matches: int
+    ignored_matches: int
+    derbies_excluded: int
+    confidence_threshold: float
+
+
+class BacktestResponse(BaseModel):
+    """Response for backtest endpoint."""
+    summary: BacktestSummary
+    market_accuracy: Dict[str, MarketAccuracy]
+    league_accuracy: List[LeagueAccuracy]
+    weekly_breakdown: List[Dict[str, Any]]
+    generated_at: str
