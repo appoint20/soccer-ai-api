@@ -171,15 +171,25 @@ class BacktestSummary(BaseModel):
     test_period: Dict[str, Any]
     total_matches: int
     qualified_matches: int
-    ignored_matches: int
+    risky_matches: int
     derbies_excluded: int
     confidence_threshold: float
+
+
+class ModelAgreementLevel(BaseModel):
+    """Model agreement level accuracy."""
+    total: int
+    correct: int
+    accuracy: float
 
 
 class BacktestResponse(BaseModel):
     """Response for backtest endpoint."""
     summary: BacktestSummary
     market_accuracy: Dict[str, MarketAccuracy]
+    model_agreement: Dict[str, Dict[str, ModelAgreementLevel]] = Field(
+        ..., description="Accuracy when models agree/disagree"
+    )
     league_accuracy: List[LeagueAccuracy]
     weekly_breakdown: List[Dict[str, Any]]
     generated_at: str

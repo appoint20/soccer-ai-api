@@ -1,7 +1,7 @@
 """
 Predictions router for match analysis and ticket generation.
 """
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional, List
 import uuid
 
@@ -23,9 +23,9 @@ from src.api.schemas import (
     BacktestSummary,
     MarketAccuracy,
     LeagueAccuracy,
+    ModelAgreementLevel,
 )
 from src.domain.services.prediction_service import PredictionService
-from src.domain.services.feature_engineering_service import FeatureEngineeringService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
 from src.domain.services.backtest_service import BacktestService
 from src.data.loaders.csv_loader import CSVLoader
@@ -434,6 +434,13 @@ async def run_backtest(
         summary=BacktestSummary(**results["summary"]),
         market_accuracy={
             k: MarketAccuracy(**v) for k, v in results["market_accuracy"].items()
+        },
+        model_agreement={
+            market: {
+                level: ModelAgreementLevel(**data)
+                for level, data in levels.items()
+            }
+            for market, levels in results["model_agreement"].items()
         },
         league_accuracy=[LeagueAccuracy(**la) for la in results["league_accuracy"]],
         weekly_breakdown=results["weekly_breakdown"],

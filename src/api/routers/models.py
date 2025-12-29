@@ -2,9 +2,7 @@
 Models router for model information and retraining.
 """
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 
 from src.api.schemas import ModelsInfoResponse, ModelInfo
 from src.domain.services.prediction_service import PredictionService
