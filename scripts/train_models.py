@@ -78,10 +78,10 @@ def main():
     print(f"  Loaded {len(matches)} historical matches")
     print()
     
-    # Step 2: Generate features
-    print("[2/4] Generating features for ML training...")
+    # Step 2: Filter for time-travel training (exclude last 10 weeks)
+    print("[2/4] Filtering data for time-travel training...")
     
-    feature_service = FeatureEngineeringService()
+    from datetime import timedelta
     
     # Only use matches with complete data for training
     valid_matches = [
@@ -91,18 +91,59 @@ def main():
     
     print(f"  Valid matches with scores: {len(valid_matches)}")
     
-    # Sample for faster training (use all for production)
-    sample_size = min(5000, len(valid_matches))
-    sample_matches = valid_matches[-sample_size:]  # Most recent
+    # Find date range and exclude last 10 weeks (test period)
+    dates = []
+    for m in valid_matches:
+        match_date = m.get("match_date")
+        if match_date:
+            if isinstance(match_date, str):
+                dates.append(datetime.fromisoformat(match_date[:10]))
+            elif hasattr(match_date, 'date'):
+                dates.append(match_date)
     
-    print(f"  Using {sample_size} most recent matches for training")
+    if dates:
+        latest_date = max(dates)
+        cutoff_date = latest_date - timedelta(weeks=10)
+        
+        # Filter to only include matches BEFORE the test period
+        training_matches = []
+        for m in valid_matches:
+            match_date = m.get("match_date")
+            if match_date:
+                if isinstance(match_date, str):
+                    match_dt = datetime.fromisoformat(match_date[:10])
+                else:
+                    match_dt = match_date
+                
+                if match_dt < cutoff_date:
+                    training_matches.append(m)
+        
+        print(f"  Latest match date: {latest_date.date() if hasattr(latest_date, 'date') else latest_date}")
+        print(f"  Cutoff date (excluding last 10 weeks): {cutoff_date.date() if hasattr(cutoff_date, 'date') else cutoff_date}")
+        print(f"  Training matches (before cutoff): {len(training_matches)}")
+    else:
+        training_matches = valid_matches
+        print("  WARNING: Could not determine dates, using all matches")
+    
+    print()
+    
+    # Step 3: Generate features
+    print("[3/5] Generating features for ML training...")
+    
+    feature_service = FeatureEngineeringService()
+    
+    # Sample for faster training
+    sample_size = min(5000, len(training_matches))
+    sample_matches = training_matches[-sample_size:]  # Most recent in training period
+    
+    print(f"  Using {len(sample_matches)} matches for training")
     
     features = feature_service.generate_training_features(sample_matches)
     print(f"  Generated {len(features)} feature vectors")
     print()
     
-    # Step 3: Train models
-    print("[3/4] Training ML models...")
+    # Step 4: Train models
+    print("[4/5] Training ML models...")
     
     trainer = ModelTrainer(models_dir="models")
     evaluator = ModelEvaluator()
@@ -143,9 +184,9 @@ def main():
     else:
         print("    Skipped (not enough samples)")
     
-    # Step 4: Summary
+    # Step 5: Summary
     print()
-    print("[4/4] Training complete!")
+    print("[5/5] Training complete!")
     print()
     print("=" * 60)
     print("Models saved to: models/<tier>/<model_type>/")

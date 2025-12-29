@@ -1,40 +1,40 @@
 {
   "tier": "tier1",
-  "timestamp": "2025-12-29T16:10:15.473396",
+  "timestamp": "2025-12-29T16:23:46.623650",
   "results": {
     "over25": {
-      "train_accuracy": 0.9399538106235565,
-      "train_samples": 1299,
-      "val_accuracy": 0.8060046189376443,
-      "val_samples": 433,
+      "train_accuracy": 0.9573268921095008,
+      "train_samples": 1242,
+      "val_accuracy": 0.8623188405797102,
+      "val_samples": 414,
       "class_distribution": {
-        "positive": 0.5219399538106235,
-        "negative": 0.4780600461893765
+        "positive": 0.5314009661835749,
+        "negative": 0.4685990338164251
       },
-      "test_accuracy": 0.8317972350230415
+      "test_accuracy": 0.8457831325301205
     },
     "btts": {
-      "train_accuracy": 0.970746728252502,
-      "train_samples": 1299,
-      "val_accuracy": 0.8429561200923787,
-      "val_samples": 433,
+      "train_accuracy": 0.9887278582930756,
+      "train_samples": 1242,
+      "val_accuracy": 0.9227053140096618,
+      "val_samples": 414,
       "class_distribution": {
-        "positive": 0.5327174749807544,
-        "negative": 0.4672825250192456
+        "positive": 0.5491143317230274,
+        "negative": 0.45088566827697263
       },
-      "test_accuracy": 0.847926267281106
+      "test_accuracy": 0.9253012048192771
     },
     "result": {
-      "train_accuracy": 0.8852963818321786,
-      "train_samples": 1299,
-      "val_accuracy": 0.6859122401847575,
-      "val_samples": 433,
+      "train_accuracy": 0.8808373590982287,
+      "train_samples": 1242,
+      "val_accuracy": 0.7391304347826086,
+      "val_samples": 414,
       "class_distribution": {
-        "H": 0.317167051578137,
-        "D": 0.24634334103156275,
-        "A": 0.43648960739030024
+        "H": 0.322061191626409,
+        "D": 0.24879227053140096,
+        "A": 0.42914653784219003
       },
-      "test_accuracy": 0.7350230414746544
+      "test_accuracy": 0.6987951807228916
     }
   }
 }
