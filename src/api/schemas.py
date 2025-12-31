@@ -273,3 +273,76 @@ class BacktestResponse(BaseModel):
     league_accuracy: List[LeagueAccuracy]
     weekly_breakdown: List[Dict[str, Any]]
     generated_at: str
+
+
+# ============== Backtest Report Schemas ==============
+
+class LeagueQualificationStats(BaseModel):
+    """Qualification stats for a single league."""
+    league: str = Field(..., description="League code")
+    total_matches: int
+    qualified_matches: int
+    not_qualified_matches: int
+    qualified_pct: float = Field(..., description="Percentage qualified")
+    over25_accuracy_pct: float = Field(0.0, description="Over 2.5 accuracy %")
+    btts_accuracy_pct: float = Field(0.0, description="BTTS accuracy %")
+    result_accuracy_pct: float = Field(0.0, description="Result accuracy %")
+
+
+class MarketAccuracyReport(BaseModel):
+    """Market accuracy with percentages."""
+    total: int
+    correct: int
+    accuracy_pct: float = Field(..., description="Accuracy as percentage")
+    qualified_total: int = 0
+    qualified_correct: int = 0
+    qualified_accuracy_pct: float = 0.0
+
+
+class BacktestReportResponse(BaseModel):
+    """Detailed backtest report response."""
+    test_period: Dict[str, str]
+    total_matches: int
+    qualified_matches: int
+    qualified_pct: float
+    not_qualified_matches: int
+    not_qualified_pct: float
+    
+    market_accuracy: Dict[str, MarketAccuracyReport]
+    league_stats: List[LeagueQualificationStats]
+    
+    generated_at: str
+
+
+# ============== Weekly Tickets Schemas ==============
+
+class TicketSelection(BaseModel):
+    """Single selection in a ticket."""
+    match_id: str
+    home_team: str
+    away_team: str
+    league: str
+    date: str
+    market: str = Field(..., description="over25, btts, home_win, draw, away_win")
+    odds: float
+    confidence: float
+    qualified: bool = False
+
+
+class WeeklyTicket(BaseModel):
+    """Single ticket with selections."""
+    ticket_id: int
+    ticket_type: str = Field(..., description="mixed or goals_only")
+    selections: List[TicketSelection]
+    total_odds: float
+    expected_return: float = Field(..., description="Return if all correct (stake=10)")
+
+
+class WeeklyTicketsResponse(BaseModel):
+    """Weekly tickets response."""
+    week_start: str
+    week_end: str
+    mixed_tickets: List[WeeklyTicket] = Field(..., description="2 tickets with wins/draws")
+    goals_only_tickets: List[WeeklyTicket] = Field(..., description="3 tickets with over25/btts only")
+    total_tickets: int = 5
+    generated_at: str

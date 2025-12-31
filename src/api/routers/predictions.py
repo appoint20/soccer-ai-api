@@ -30,6 +30,11 @@ from src.api.schemas import (
     MarketAccuracy,
     LeagueAccuracy,
     ModelAgreementLevel,
+    BacktestReportResponse,
+    LeagueQualificationStats,
+    MarketAccuracyReport,
+    WeeklyTicketsResponse,
+    WeeklyTicket,
 )
 from src.domain.services.prediction_service import PredictionService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
@@ -37,6 +42,8 @@ from src.domain.services.backtest_service import BacktestService
 from src.domain.services.match_stats_service import MatchStatsService
 from src.domain.services.team_stats_service import TeamStatsService
 from src.domain.services.h2h_service import H2HService
+from src.domain.services.backtest_report_service import BacktestReportService
+from src.domain.services.weekly_ticket_service import WeeklyTicketService
 from src.statistics.dixon_coles_model import DixonColesModel
 from src.data.loaders.csv_loader import CSVLoader
 from src.data.storage.json_storage import JSONStorage
@@ -571,4 +578,88 @@ async def run_backtest(
         league_accuracy=[LeagueAccuracy(**la) for la in results["league_accuracy"]],
         weekly_breakdown=results["weekly_breakdown"],
         generated_at=datetime.now().isoformat(),
+    )
+
+
+@router.get("/backtest/report", response_model=BacktestReportResponse)
+async def get_backtest_report(
+    weeks: int = Query(default=15, ge=1, le=52, description="Weeks to backtest"),
+):
+    """
+    Get detailed backtest report with qualification stats.
+    
+    Returns:
+    - Total qualified/not-qualified matches with percentages
+    - Per-league breakdown of qualification and accuracy
+    - Market accuracy with qualified vs not-qualified comparison
+    """
+    global _historical_matches
+    
+    if not _historical_matches:
+        load_prediction_service()
+    
+    if not _historical_matches:
+        raise HTTPException(status_code=500, detail="No historical matches loaded")
+    
+    # Generate report
+    service = BacktestReportService()
+    
+    try:
+        report = service.generate_report(_historical_matches, weeks=weeks)
+    except Exception as e:
+        logger.error(f"Backtest report failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+    
+    return BacktestReportResponse(
+        test_period=report["test_period"],
+        total_matches=report["total_matches"],
+        qualified_matches=report["qualified_matches"],
+        qualified_pct=report["qualified_pct"],
+        not_qualified_matches=report["not_qualified_matches"],
+        not_qualified_pct=report["not_qualified_pct"],
+        market_accuracy={
+            k: MarketAccuracyReport(**v) for k, v in report["market_accuracy"].items()
+        },
+        league_stats=[LeagueQualificationStats(**ls) for ls in report["league_stats"]],
+        generated_at=report["generated_at"],
+    )
+
+
+@router.get("/tickets/weekly", response_model=WeeklyTicketsResponse)
+async def get_weekly_tickets(
+    week_start: str = Query(..., description="Week start date (YYYY-MM-DD)", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+):
+    """
+    Generate 5 weekly betting tickets.
+    
+    Rules:
+    - 2 mixed tickets (can include 1 win/draw each + goals markets)
+    - 3 goals-only tickets (only over25/btts)
+    - Max 2 games from same league per ticket
+    - Min odds: 1.76 for over25/btts, 2.0 for wins
+    """
+    global _historical_matches
+    
+    if not _historical_matches:
+        load_prediction_service()
+    
+    if not _historical_matches:
+        raise HTTPException(status_code=500, detail="No historical matches loaded")
+    
+    # Generate tickets
+    service = WeeklyTicketService()
+    
+    try:
+        tickets = service.generate_weekly_tickets(_historical_matches, week_start)
+    except Exception as e:
+        logger.error(f"Ticket generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Ticket generation failed: {str(e)}")
+    
+    return WeeklyTicketsResponse(
+        week_start=tickets["week_start"],
+        week_end=tickets["week_end"],
+        mixed_tickets=[WeeklyTicket(**t) for t in tickets["mixed_tickets"]],
+        goals_only_tickets=[WeeklyTicket(**t) for t in tickets["goals_only_tickets"]],
+        total_tickets=tickets["total_tickets"],
+        generated_at=tickets["generated_at"],
     )
