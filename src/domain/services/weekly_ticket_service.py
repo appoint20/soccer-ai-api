@@ -11,7 +11,6 @@ Rules:
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from collections import defaultdict
-import random
 
 from src.domain.services.base_service import BaseService
 from src.domain.services.match_stats_service import MatchStatsService
@@ -74,9 +73,12 @@ class WeeklyTicketService(BaseService):
         
         self.logger.info(f"Analyzed {len(analyzed)} matches")
         
+        # Track used matches across ALL tickets to prevent duplicates
+        used_matches = set()
+        
         # Generate tickets
-        mixed_tickets = self._generate_mixed_tickets(analyzed, 2)
-        goals_tickets = self._generate_goals_only_tickets(analyzed, 3)
+        mixed_tickets = self._generate_mixed_tickets(analyzed, 2, used_matches)
+        goals_tickets = self._generate_goals_only_tickets(analyzed, 3, used_matches)
         
         return {
             "week_start": week_start,
@@ -154,6 +156,7 @@ class WeeklyTicketService(BaseService):
         self,
         analyzed: List[Dict],
         count: int,
+        used_matches: set,
     ) -> List[Dict]:
         """
         Generate mixed tickets (1 win/draw + goals markets).
@@ -162,9 +165,9 @@ class WeeklyTicketService(BaseService):
         - Max 1 win/draw per ticket
         - Max 2 games from same league
         - Min odds: 2.0 for result, 1.76 for goals
+        - No match appears in multiple tickets
         """
         tickets = []
-        used_matches = set()
         
         for ticket_id in range(1, count + 1):
             selections = []
@@ -248,6 +251,7 @@ class WeeklyTicketService(BaseService):
         self,
         analyzed: List[Dict],
         count: int,
+        used_matches: set,
     ) -> List[Dict]:
         """
         Generate goals-only tickets (over25/btts only).
@@ -257,9 +261,9 @@ class WeeklyTicketService(BaseService):
         - Max 2 games from same league
         - Min odds: 1.76
         - Prefer qualified matches
+        - No match appears in multiple tickets
         """
         tickets = []
-        used_matches = set()
         
         for ticket_id in range(1, count + 1):
             selections = []
