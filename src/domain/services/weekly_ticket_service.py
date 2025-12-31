@@ -110,12 +110,13 @@ class WeeklyTicketService(BaseService):
         stats = self.match_stats.calculate_match_stats(home, away, all_matches, league=league)
         qual = stats.get("qualification", {})
         
-        # Extract odds from match data
-        home_odds = float(match.get("B365H") or match.get("home_odds") or 2.5)
-        draw_odds = float(match.get("B365D") or match.get("draw_odds") or 3.3)
-        away_odds = float(match.get("B365A") or match.get("away_odds") or 3.0)
-        over25_odds = float(match.get("B365>2.5") or match.get("over25_odds") or 1.9)
-        btts_odds = 1.85  # Estimate if not available
+        # Extract ACTUAL odds from match data (lowercase field names)
+        home_odds = float(match.get("b365h") or match.get("B365H") or 0)
+        draw_odds = float(match.get("b365d") or match.get("B365D") or 0)
+        away_odds = float(match.get("b365a") or match.get("B365A") or 0)
+        over25_odds = float(match.get("b365_over25") or match.get("B365>2.5") or 0)
+        # BTTS odds not typically in data, estimate from over25
+        btts_odds = over25_odds * 0.97 if over25_odds else 0  # Slightly lower than over25
         
         # Get confidences
         over25_pred = pred.get("over25", {})
@@ -342,19 +343,18 @@ class WeeklyTicketService(BaseService):
         return tickets
     
     def _get_best_result_selection(self, match: Dict) -> Optional[Dict]:
-        """Get best result selection for a match."""
+        """Get best result selection for a match (home_win or draw only, NO away_win)."""
         preds = match["predictions"]
         odds = match["odds"]
         
-        # Find highest confidence result
+        # Only home_win and draw - EXCLUDE away_win per user request
         options = [
             ("home_win", preds["home_win_conf"], odds["home_win"]),
             ("draw", preds["draw_conf"], odds["draw"]),
-            ("away_win", preds["away_win_conf"], odds["away_win"]),
         ]
         
-        # Filter by min odds
-        valid = [(m, c, o) for m, c, o in options if o >= self.MIN_ODDS_RESULT]
+        # Filter by min odds and ensure odds > 0
+        valid = [(m, c, o) for m, c, o in options if o >= self.MIN_ODDS_RESULT and o > 0]
         
         if not valid:
             return None
@@ -394,8 +394,8 @@ class WeeklyTicketService(BaseService):
         else:
             options.append(("btts", preds["btts_conf"], odds["btts"], False))
         
-        # Filter by min odds
-        valid = [(m, c, o, q) for m, c, o, q in options if o >= self.MIN_ODDS_GOALS]
+        # Filter by min odds AND ensure odds > 0 (valid data)
+        valid = [(m, c, o, q) for m, c, o, q in options if o >= self.MIN_ODDS_GOALS and o > 0]
         
         if not valid:
             return None
