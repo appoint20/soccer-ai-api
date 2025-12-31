@@ -13,6 +13,7 @@ from src.domain.services.h2h_service import H2HService
 from src.domain.services.standings_service import StandingsService
 from src.domain.services.referee_stats_service import RefereeStatsService
 from src.domain.services.derby_service import DerbyService
+from src.domain.services.match_stats_service import MatchStatsService
 from src.data.cache.cache_manager import CacheManager
 from src.utils.stats_utils import round_to_precision
 from src.utils.date_utils import get_season_of_year, is_festive_period
@@ -28,8 +29,9 @@ class FeatureEngineeringService(BaseService):
     - League standings
     - Referee tendencies
     - Match context
+    - BTTS/Over25 venue-specific stats (NEW)
     
-    Generates ~48 features per match for ML models.
+    Generates ~60 features per match for ML models.
     """
     
     def __init__(
@@ -38,6 +40,7 @@ class FeatureEngineeringService(BaseService):
         h2h_service: Optional[H2HService] = None,
         standings_service: Optional[StandingsService] = None,
         referee_stats_service: Optional[RefereeStatsService] = None,
+        match_stats_service: Optional[MatchStatsService] = None,
         cache_manager: Optional[CacheManager] = None,
     ):
         """
@@ -48,6 +51,7 @@ class FeatureEngineeringService(BaseService):
             h2h_service: H2H service instance
             standings_service: Standings service instance
             referee_stats_service: Referee stats service instance
+            match_stats_service: Match stats service for BTTS/Over25
             cache_manager: Optional cache manager
         """
         super().__init__(cache_manager)
@@ -57,6 +61,7 @@ class FeatureEngineeringService(BaseService):
         self.standings = standings_service or StandingsService(cache_manager)
         self.referee_stats = referee_stats_service or RefereeStatsService(cache_manager)
         self.derby = DerbyService()  # Derby detection service
+        self.match_stats = match_stats_service or MatchStatsService(cache_manager)  # NEW
         
         self._feature_names: List[str] = []
     
@@ -124,6 +129,11 @@ class FeatureEngineeringService(BaseService):
                 referee_features = self.referee_stats.get_referee_influence_features(
                     referee, all_matches
                 )
+            
+            # Get BTTS/Over25 venue-specific stats (NEW)
+            btts_o25_stats = self.match_stats.calculate_match_stats(
+                home_team, away_team, all_matches, as_of_date, league
+            )
         
         # Build feature vector
         features = {
@@ -150,11 +160,14 @@ class FeatureEngineeringService(BaseService):
                 match, home_stats, away_stats, home_context, away_context
             ),
             
-            # Odds features (NEW)
+            # Odds features
             "odds_features": self._extract_odds_features(match),
             
-            # Derby features (NEW)
+            # Derby features
             "derby_features": self.derby.get_derby_features(home_team or "", away_team or ""),
+            
+            # BTTS/Over25 venue features (NEW - 12 features)
+            "btts_over25_features": self._extract_btts_over25_features(btts_o25_stats),
         }
         
         return features
@@ -323,7 +336,7 @@ class FeatureEngineeringService(BaseService):
             "expected_total_goals",
             "is_festive_period",
             
-            # Odds features (NEW)
+            # Odds features
             "home_win_odds",
             "draw_odds",
             "away_win_odds",
@@ -333,6 +346,24 @@ class FeatureEngineeringService(BaseService):
             "implied_over25_prob",
             "odds_value_home",
             "odds_value_over25",
+            
+            # BTTS features (NEW)
+            "home_btts_l9_rate",
+            "home_btts_home6_rate",
+            "home_scored_l9_rate",
+            "away_btts_l9_rate",
+            "away_btts_away6_rate",
+            "away_scored_l9_rate",
+            
+            # Over 2.5 features (NEW)
+            "home_o25_l9_rate",
+            "home_o25_home6_rate",
+            "away_o25_l9_rate",
+            "away_o25_away6_rate",
+            
+            # Qualification flags (NEW)
+            "btts_qualified",
+            "over25_qualified",
         ]
     
     def flatten_features(self, features: Dict[str, Any]) -> Dict[str, float]:
@@ -408,7 +439,7 @@ class FeatureEngineeringService(BaseService):
         flat["expected_total_goals"] = ctx.get("expected_total_goals", 2.5)
         flat["is_festive_period"] = 1.0 if ctx.get("is_festive_period", False) else 0.0
         
-        # Odds features (NEW)
+        # Odds features
         odds = features.get("odds_features", {})
         flat["home_win_odds"] = odds.get("home_win_odds", 2.5)
         flat["draw_odds"] = odds.get("draw_odds", 3.3)
@@ -419,6 +450,21 @@ class FeatureEngineeringService(BaseService):
         flat["implied_over25_prob"] = odds.get("implied_over25_prob", 0.5)
         flat["odds_value_home"] = odds.get("odds_value_home", 0.0)
         flat["odds_value_over25"] = odds.get("odds_value_over25", 0.0)
+        
+        # BTTS/Over25 venue features (NEW)
+        btts_o25 = features.get("btts_over25_features", {})
+        flat["home_btts_l9_rate"] = btts_o25.get("home_btts_l9_rate", 0.5)
+        flat["home_btts_home6_rate"] = btts_o25.get("home_btts_home6_rate", 0.5)
+        flat["home_scored_l9_rate"] = btts_o25.get("home_scored_l9_rate", 0.7)
+        flat["away_btts_l9_rate"] = btts_o25.get("away_btts_l9_rate", 0.5)
+        flat["away_btts_away6_rate"] = btts_o25.get("away_btts_away6_rate", 0.5)
+        flat["away_scored_l9_rate"] = btts_o25.get("away_scored_l9_rate", 0.7)
+        flat["home_o25_l9_rate"] = btts_o25.get("home_o25_l9_rate", 0.5)
+        flat["home_o25_home6_rate"] = btts_o25.get("home_o25_home6_rate", 0.5)
+        flat["away_o25_l9_rate"] = btts_o25.get("away_o25_l9_rate", 0.5)
+        flat["away_o25_away6_rate"] = btts_o25.get("away_o25_away6_rate", 0.5)
+        flat["btts_qualified"] = btts_o25.get("btts_qualified", 0.0)
+        flat["over25_qualified"] = btts_o25.get("over25_qualified", 0.0)
         
         return flat
     
@@ -643,4 +689,51 @@ class FeatureEngineeringService(BaseService):
             "implied_over25_prob": round_to_precision(implied_over25_prob),
             "odds_value_home": round_to_precision(odds_value_home),
             "odds_value_over25": round_to_precision(odds_value_over25),
+        }
+    
+    def _extract_btts_over25_features(self, btts_o25_stats: Dict[str, Any]) -> Dict[str, float]:
+        """
+        Extract BTTS and Over 2.5 venue-specific features.
+        
+        Features:
+        - Home team BTTS/Over25 last 9 overall
+        - Home team BTTS/Over25 last 6 at home
+        - Away team BTTS/Over25 last 9 overall  
+        - Away team BTTS/Over25 last 6 away
+        - Home/Away scored rates
+        - Qualification flags as binary
+        
+        Args:
+            btts_o25_stats: Stats from MatchStatsService
+            
+        Returns:
+            Dict with 12 BTTS/Over25 features
+        """
+        btts = btts_o25_stats.get("btts", {})
+        over25 = btts_o25_stats.get("over25", {})
+        qualification = btts_o25_stats.get("qualification", {})
+        
+        home_btts = btts.get("home_team", {})
+        away_btts = btts.get("away_team", {})
+        home_o25 = over25.get("home_team", {})
+        away_o25 = over25.get("away_team", {})
+        
+        return {
+            # BTTS features (6)
+            "home_btts_l9_rate": home_btts.get("overall_9", {}).get("pct", 50.0) / 100.0,
+            "home_btts_home6_rate": home_btts.get("home_6", {}).get("pct", 50.0) / 100.0,
+            "home_scored_l9_rate": home_btts.get("scored_overall_9", {}).get("pct", 70.0) / 100.0,
+            "away_btts_l9_rate": away_btts.get("overall_9", {}).get("pct", 50.0) / 100.0,
+            "away_btts_away6_rate": away_btts.get("away_6", {}).get("pct", 50.0) / 100.0,
+            "away_scored_l9_rate": away_btts.get("scored_overall_9", {}).get("pct", 70.0) / 100.0,
+            
+            # Over 2.5 features (4)
+            "home_o25_l9_rate": home_o25.get("overall_9", {}).get("pct", 50.0) / 100.0,
+            "home_o25_home6_rate": home_o25.get("home_6", {}).get("pct", 50.0) / 100.0,
+            "away_o25_l9_rate": away_o25.get("overall_9", {}).get("pct", 50.0) / 100.0,
+            "away_o25_away6_rate": away_o25.get("away_6", {}).get("pct", 50.0) / 100.0,
+            
+            # Qualification flags as binary (2)
+            "btts_qualified": 1.0 if qualification.get("btts_qualified", False) else 0.0,
+            "over25_qualified": 1.0 if qualification.get("over25_qualified", False) else 0.0,
         }

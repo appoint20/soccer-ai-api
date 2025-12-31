@@ -275,3 +275,94 @@ class MonteCarloPredictor:
             "top_scorelines": probs["top_scorelines"],
             "draw_analysis": draw_analysis,
         }
+    
+    def predict_with_team_stats(
+        self,
+        home_team: str,
+        away_team: str,
+        team_stats: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Predict using Poisson simulation + team historical rates.
+        
+        Combines:
+        - MC simulation probabilities (Poisson-based)
+        - Team historical BTTS/Over25 rates (L9 + L6 venue)
+        
+        Formula:
+        - final_prob = 0.6 * mc_prob + 0.4 * historical_rate
+        
+        Args:
+            home_team: Home team name
+            away_team: Away team name
+            team_stats: Stats from MatchStatsService.calculate_match_stats()
+            
+        Returns:
+            Enhanced prediction with combined probabilities
+        """
+        # Get Monte Carlo probabilities
+        base_pred = self.predict(home_team, away_team)
+        mc_over25 = base_pred["over25"]
+        mc_btts = base_pred["btts"]
+        
+        # Extract historical rates
+        btts = team_stats.get("btts", {})
+        over25 = team_stats.get("over25", {})
+        qualification = team_stats.get("qualification", {})
+        
+        # Home team rates (weighted: 40% overall, 60% venue)
+        home_btts_rate = (
+            btts.get("home_team", {}).get("overall_9", {}).get("pct", 50) * 0.4 +
+            btts.get("home_team", {}).get("home_6", {}).get("pct", 50) * 0.6
+        ) / 100.0
+        
+        away_btts_rate = (
+            btts.get("away_team", {}).get("overall_9", {}).get("pct", 50) * 0.4 +
+            btts.get("away_team", {}).get("away_6", {}).get("pct", 50) * 0.6
+        ) / 100.0
+        
+        home_o25_rate = (
+            over25.get("home_team", {}).get("overall_9", {}).get("pct", 50) * 0.4 +
+            over25.get("home_team", {}).get("home_6", {}).get("pct", 50) * 0.6
+        ) / 100.0
+        
+        away_o25_rate = (
+            over25.get("away_team", {}).get("overall_9", {}).get("pct", 50) * 0.4 +
+            over25.get("away_team", {}).get("away_6", {}).get("pct", 50) * 0.6
+        ) / 100.0
+        
+        # Combined historical rates (average of both teams)
+        hist_btts = (home_btts_rate + away_btts_rate) / 2
+        hist_o25 = (home_o25_rate + away_o25_rate) / 2
+        
+        # Home/Away scored rates (for BTTS confidence)
+        home_scored = btts.get("home_team", {}).get("scored_overall_9", {}).get("pct", 70) / 100.0
+        away_scored = btts.get("away_team", {}).get("scored_overall_9", {}).get("pct", 70) / 100.0
+        
+        # Final probabilities: 60% MC + 40% historical
+        final_btts = mc_btts * 0.6 + hist_btts * 0.4
+        final_o25 = mc_over25 * 0.6 + hist_o25 * 0.4
+        
+        # Adjust based on scored rates (both teams must score for BTTS)
+        # If one team rarely scores, reduce BTTS probability
+        min_scored_rate = min(home_scored, away_scored)
+        if min_scored_rate < 0.6:  # If one team scores < 60% of games
+            final_btts *= (0.5 + min_scored_rate)  # Reduce proportionally
+        
+        return {
+            **base_pred,
+            "enhanced_btts": round(final_btts, 4),
+            "enhanced_over25": round(final_o25, 4),
+            "historical_rates": {
+                "home_btts": round(home_btts_rate, 3),
+                "away_btts": round(away_btts_rate, 3),
+                "home_over25": round(home_o25_rate, 3),
+                "away_over25": round(away_o25_rate, 3),
+                "home_scored": round(home_scored, 3),
+                "away_scored": round(away_scored, 3),
+            },
+            "qualification": {
+                "btts_qualified": qualification.get("btts_qualified", False),
+                "over25_qualified": qualification.get("over25_qualified", False),
+            },
+        }
