@@ -28,7 +28,7 @@ class WeeklyTicketService(BaseService):
     
     # Ticket constraints
     MAX_GAMES_PER_LEAGUE = 2
-    SELECTIONS_PER_TICKET = 4
+    SELECTIONS_PER_TICKET = 3
     
     def __init__(self, cache_manager: Optional[CacheManager] = None):
         super().__init__(cache_manager)
