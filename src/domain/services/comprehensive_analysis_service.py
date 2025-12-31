@@ -18,6 +18,7 @@ from src.domain.services.feature_engineering_service import FeatureEngineeringSe
 from src.domain.services.team_stats_service import TeamStatsService
 from src.domain.services.h2h_service import H2HService
 from src.domain.services.derby_service import DerbyService
+from src.domain.services.match_stats_service import MatchStatsService
 from src.statistics.dixon_coles_model import DixonColesModel
 from src.statistics.monte_carlo import MonteCarloPredictor
 from src.data.cache.cache_manager import CacheManager
@@ -62,6 +63,7 @@ class ComprehensiveAnalysisService(BaseService):
         self.team_stats = TeamStatsService(cache_manager)
         self.h2h_service = H2HService(cache_manager)
         self.derby_service = DerbyService()
+        self.match_stats = MatchStatsService(cache_manager)
         
         # ML Services per tier
         self.ml_services: Dict[str, PredictionService] = {}
@@ -143,6 +145,11 @@ class ComprehensiveAnalysisService(BaseService):
         is_derby = self.derby_service.is_derby(home_team, away_team)
         derby_info = self.derby_service.get_derby_info(home_team, away_team)
         
+        # 3b. Enhanced BTTS/Over25 Stats (last 9 + last 6 venue-specific)
+        enhanced_stats = self.match_stats.calculate_match_stats(
+            home_team, away_team, historical_matches, as_of_date, league
+        )
+        
         # 4. ML Predictions
         ml_prediction = self._get_ml_prediction(match, historical_matches, tier)
         
@@ -176,6 +183,7 @@ class ComprehensiveAnalysisService(BaseService):
                 "home": self._summarize_team_stats(home_stats),
                 "away": self._summarize_team_stats(away_stats),
             },
+            "btts_over25_stats": enhanced_stats,
             "h2h": self._summarize_h2h(h2h_stats),
             "predictions": {
                 "ml": ml_prediction,
