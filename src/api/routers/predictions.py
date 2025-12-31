@@ -14,6 +14,11 @@ from src.api.schemas import (
     GenerateTicketsResponse,
     MatchAnalysis,
     MatchTeamStats,
+    MatchOdds,
+    MatchAverage,
+    MatchH2H,
+    MLModelPrediction,
+    PoissonDistribution,
     Over25Prediction,
     BTTSPrediction,
     ResultPrediction,
@@ -30,6 +35,9 @@ from src.domain.services.prediction_service import PredictionService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
 from src.domain.services.backtest_service import BacktestService
 from src.domain.services.match_stats_service import MatchStatsService
+from src.domain.services.team_stats_service import TeamStatsService
+from src.domain.services.h2h_service import H2HService
+from src.statistics.dixon_coles_model import DixonColesModel
 from src.data.loaders.csv_loader import CSVLoader
 from src.data.storage.json_storage import JSONStorage
 from src.utils.logger import get_logger
@@ -42,12 +50,16 @@ _prediction_service: Optional[PredictionService] = None
 _comprehensive_service: Optional[ComprehensiveAnalysisService] = None
 _backtest_service: Optional[BacktestService] = None
 _match_stats_service: Optional[MatchStatsService] = None
+_team_stats_service: Optional[TeamStatsService] = None
+_h2h_service: Optional[H2HService] = None
+_dixon_coles: Optional[DixonColesModel] = None
 _historical_matches: List = []
 
 
 def load_prediction_service():
     """Load prediction service and historical data."""
-    global _prediction_service, _comprehensive_service, _match_stats_service, _historical_matches
+    global _prediction_service, _comprehensive_service, _match_stats_service
+    global _team_stats_service, _h2h_service, _dixon_coles, _historical_matches
     
     # Load historical matches
     storage = JSONStorage()
@@ -72,6 +84,18 @@ def load_prediction_service():
     
     # Initialize match stats service
     _match_stats_service = MatchStatsService()
+    
+    # Initialize team stats and H2H services
+    _team_stats_service = TeamStatsService()
+    _h2h_service = H2HService()
+    
+    # Initialize Dixon-Coles model
+    try:
+        _dixon_coles = DixonColesModel(xi=0.01, rho=-0.10)
+        _dixon_coles.fit(_historical_matches)
+        logger.info("Initialized Dixon-Coles model")
+    except Exception as e:
+        logger.warning(f"Could not initialize Dixon-Coles: {e}")
     
     # Initialize comprehensive analysis service
     try:
@@ -140,23 +164,96 @@ async def analyze_matches(
     analyses = []
     for match in matches_for_date:
         try:
-            prediction = _prediction_service.predict_match(match, _historical_matches)
+            home_team = match.get("home_team", "")
+            away_team = match.get("away_team", "")
+            league = match.get("league", "")
             
+            # ML Prediction
+            prediction = _prediction_service.predict_match(match, _historical_matches)
             over25 = prediction.get("over25", {})
             btts = prediction.get("btts", {})
             result = prediction.get("result", {})
             
-            # Calculate team stats with qualification flags
+            # Odds (from fixture data if available)
+            odds_data = None
+            if match.get("home_odds") or match.get("B365H"):
+                odds_data = MatchOdds(
+                    home=float(match.get("home_odds") or match.get("B365H") or 0),
+                    draw=float(match.get("draw_odds") or match.get("B365D") or 0),
+                    away=float(match.get("away_odds") or match.get("B365A") or 0),
+                )
+            
+            # Team Averages
+            average_data = None
+            if _team_stats_service:
+                home_stats = _team_stats_service.calculate_team_stats(
+                    home_team, _historical_matches, league=league
+                )
+                away_stats = _team_stats_service.calculate_team_stats(
+                    away_team, _historical_matches, league=league
+                )
+                
+                home_overall = home_stats.get("overall", {})
+                away_overall = away_stats.get("overall", {})
+                
+                average_data = MatchAverage(
+                    home_goal_avg=round(home_overall.get("goals_scored_avg", 0), 2),
+                    away_goal_avg=round(away_overall.get("goals_scored_avg", 0), 2),
+                    home_win_rate=round(home_overall.get("win_rate", 0), 2),
+                    away_win_rate=round(away_overall.get("win_rate", 0), 2),
+                    home_conceded_avg=round(home_overall.get("goals_conceded_avg", 0), 2),
+                    away_conceded_avg=round(away_overall.get("goals_conceded_avg", 0), 2),
+                )
+            
+            # H2H
+            h2h_data = None
+            if _h2h_service:
+                h2h_stats = _h2h_service.get_h2h_stats(home_team, away_team, _historical_matches)
+                h2h_data = MatchH2H(
+                    total_matches=h2h_stats.get("total_meetings", 0),
+                    home_wins=h2h_stats.get("overall_record", {}).get("home_wins", 0),
+                    draws=h2h_stats.get("overall_record", {}).get("draws", 0),
+                    away_wins=h2h_stats.get("overall_record", {}).get("away_wins", 0),
+                    avg_goals=round(h2h_stats.get("goal_statistics", {}).get("avg_total_goals", 0), 2),
+                    btts_rate=round(h2h_stats.get("goal_statistics", {}).get("btts_rate", 0), 2),
+                    over25_rate=round(h2h_stats.get("goal_statistics", {}).get("over25_rate", 0), 2),
+                )
+            
+            # ML Model structured output
+            ml_model_data = MLModelPrediction(
+                prediction=result.get("prediction", "D"),
+                confidence=max(result.get("probabilities", {}).values()) if result.get("probabilities") else 0.33,
+                over25={"prediction": over25.get("prediction", "NO"), "confidence": over25.get("probability", 0.5)},
+                btts={"prediction": btts.get("prediction", "NO"), "confidence": btts.get("probability", 0.5)},
+            )
+            
+            # Poisson Distribution (Dixon-Coles)
+            poisson_data = None
+            if _dixon_coles:
+                try:
+                    home_xg, away_xg = _dixon_coles.get_expected_goals(home_team, away_team)
+                    dc_probs = _dixon_coles.predict_1x2(home_team, away_team)
+                    dc_o25 = _dixon_coles.predict_over25_prob(home_team, away_team)
+                    dc_btts = _dixon_coles.predict_btts_prob(home_team, away_team)
+                    
+                    poisson_data = PoissonDistribution(
+                        home_win=round(dc_probs.get("home_win", 0), 4),
+                        draw=round(dc_probs.get("draw", 0), 4),
+                        away_win=round(dc_probs.get("away_win", 0), 4),
+                        over25=round(dc_o25, 4),
+                        btts=round(dc_btts, 4),
+                        expected_home_goals=round(home_xg, 2),
+                        expected_away_goals=round(away_xg, 2),
+                    )
+                except Exception:
+                    pass
+            
+            # Team Stats (BTTS/Over25 qualification)
             team_stats_data = None
             if _match_stats_service:
-                home_team = match.get("home_team", "")
-                away_team = match.get("away_team", "")
-                league = match.get("league", "")
-                
                 stats = _match_stats_service.calculate_match_stats(
                     home_team, away_team, _historical_matches, league=league
                 )
-                
                 team_stats_data = MatchTeamStats(
                     btts=stats["btts"],
                     over25=stats["over25"],
@@ -165,11 +262,17 @@ async def analyze_matches(
             
             analysis = MatchAnalysis(
                 match_id=prediction.get("match_id"),
-                home_team=match.get("home_team", ""),
-                away_team=match.get("away_team", ""),
+                home_team=home_team,
+                away_team=away_team,
                 date=str(match.get("match_date", ""))[:10],
                 time=match.get("time"),
-                league=match.get("league", ""),
+                league=league,
+                odds=odds_data,
+                average=average_data,
+                h2h=h2h_data,
+                ml_model=ml_model_data,
+                poisson_distribution=poisson_data,
+                team_stats=team_stats_data,
                 over25=Over25Prediction(
                     prediction=over25.get("prediction", "NO"),
                     probability=over25.get("probability", 0.5),
@@ -189,7 +292,6 @@ async def analyze_matches(
                     ),
                     confidence=result.get("confidence", "LOW"),
                 ),
-                team_stats=team_stats_data,
             )
             analyses.append(analysis)
             

@@ -62,6 +62,53 @@ class MatchTeamStats(BaseModel):
     qualification: Dict[str, Any] = Field(..., description="Qualification flags")
 
 
+class MatchOdds(BaseModel):
+    """Match betting odds."""
+    home: Optional[float] = Field(None, description="Home win odds")
+    draw: Optional[float] = Field(None, description="Draw odds")
+    away: Optional[float] = Field(None, description="Away win odds")
+
+
+class MatchAverage(BaseModel):
+    """Average statistics for the match."""
+    home_goal_avg: float = Field(0.0, description="Home team goals average")
+    away_goal_avg: float = Field(0.0, description="Away team goals average")
+    home_win_rate: float = Field(0.0, description="Home team win rate")
+    away_win_rate: float = Field(0.0, description="Away team win rate")
+    home_conceded_avg: float = Field(0.0, description="Home team conceded average")
+    away_conceded_avg: float = Field(0.0, description="Away team conceded average")
+
+
+class MatchH2H(BaseModel):
+    """Head-to-head statistics."""
+    total_matches: int = Field(0, description="Total H2H matches")
+    home_wins: int = Field(0, description="Home team wins")
+    draws: int = Field(0, description="Draws")
+    away_wins: int = Field(0, description="Away team wins")
+    avg_goals: float = Field(0.0, description="Average goals in H2H")
+    btts_rate: float = Field(0.0, description="BTTS rate in H2H")
+    over25_rate: float = Field(0.0, description="Over 2.5 rate in H2H")
+
+
+class MLModelPrediction(BaseModel):
+    """ML model prediction output."""
+    prediction: str = Field(..., description="H, D, or A")
+    confidence: float = Field(..., description="Confidence 0-1")
+    over25: Dict[str, Any] = Field(..., description="Over 2.5 prediction")
+    btts: Dict[str, Any] = Field(..., description="BTTS prediction")
+
+
+class PoissonDistribution(BaseModel):
+    """Poisson distribution probabilities."""
+    home_win: float = Field(0.0, description="Home win probability")
+    draw: float = Field(0.0, description="Draw probability")
+    away_win: float = Field(0.0, description="Away win probability")
+    over25: float = Field(0.0, description="Over 2.5 probability")
+    btts: float = Field(0.0, description="BTTS probability")
+    expected_home_goals: float = Field(0.0, description="Expected home goals")
+    expected_away_goals: float = Field(0.0, description="Expected away goals")
+
+
 class MatchAnalysis(BaseModel):
     """Complete analysis for a single match."""
     match_id: Optional[str] = None
@@ -70,10 +117,29 @@ class MatchAnalysis(BaseModel):
     date: str
     time: Optional[str] = None
     league: str
-    over25: Over25Prediction
-    btts: BTTSPrediction
-    result: ResultPrediction
+    
+    # Odds
+    odds: Optional[MatchOdds] = Field(None, description="Betting odds")
+    
+    # Averages
+    average: Optional[MatchAverage] = Field(None, description="Team averages")
+    
+    # H2H
+    h2h: Optional[MatchH2H] = Field(None, description="Head-to-head stats")
+    
+    # ML Model
+    ml_model: Optional[MLModelPrediction] = Field(None, description="ML predictions")
+    
+    # Poisson
+    poisson_distribution: Optional[PoissonDistribution] = Field(None, description="Poisson probabilities")
+    
+    # Team Stats (BTTS/Over25 qualification)
     team_stats: Optional[MatchTeamStats] = Field(None, description="BTTS/Over25 team stats")
+    
+    # Legacy fields (for backward compatibility)
+    over25: Optional[Over25Prediction] = None
+    btts: Optional[BTTSPrediction] = None
+    result: Optional[ResultPrediction] = None
 
 
 class ComprehensiveMatchAnalysis(BaseModel):
