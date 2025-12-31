@@ -1,7 +1,9 @@
 {
+  "status": "success",
+  "message": "Successfully retrained tier1 in 140.64s",
+  "timestamp": "2025-12-31T22:17:05.081190",
   "tier": "tier1",
-  "timestamp": "2025-12-31T22:17:05.080909",
-  "results": {
+  "details": {
     "over25": {
       "train_accuracy": 0.8013064779531845,
       "train_samples": 3674,

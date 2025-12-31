@@ -6,7 +6,7 @@ Rules:
 - 2 mixed tickets (can include wins/draws/over25/btts) - max 1 win/draw each
 - 3 goals-only tickets (only over25/btts)
 - Max 2 games from same league per ticket
-- Min odds: 1.76 for over25/btts, 2.0 for wins
+- Min odds: 1.60 for over25/btts, 2.0 for wins
 """
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
@@ -23,7 +23,7 @@ class WeeklyTicketService(BaseService):
     """Service for generating weekly betting tickets."""
     
     # Odds constraints
-    MIN_ODDS_GOALS = 1.76  # Over25/BTTS
+    MIN_ODDS_GOALS = 1.60  # Over25/BTTS
     MIN_ODDS_RESULT = 2.0  # Win/Draw
     
     # Ticket constraints
@@ -57,10 +57,56 @@ class WeeklyTicketService(BaseService):
         end_str = end.strftime("%Y-%m-%d")
         
         # Get matches for this week
-        week_matches = [
+        all_week_matches = [
             m for m in matches
-            if week_start <= m.get("match_date", "")[:10] < end_str
+            if week_start <= str(m.get("match_date", ""))[:10] < end_str
         ]
+        
+        if not all_week_matches:
+            self.logger.info(f"No matches found for week {week_start}")
+            return {
+                "week_start": week_start,
+                "week_end": end_str,
+                "mixed_tickets": [],
+                "goals_only_tickets": [],
+                "total_tickets": 0,
+                "generated_at": datetime.now().isoformat(),
+            }
+
+        # Restriction: Only take matches spread on two days (busiest 2-day window)
+        # 1. Group by date
+        by_date = defaultdict(list)
+        for m in all_week_matches:
+            d = str(m.get("match_date", ""))[:10]
+            if d:
+                by_date[d].append(m)
+        
+        # 2. Find best 2 consecutive days (max total matches)
+        sorted_dates = sorted(by_date.keys())
+        best_window = []
+        max_count = 0
+        
+        # Check single days generally, but finding best 2-day span
+        if len(sorted_dates) == 1:
+            best_window = [sorted_dates[0]]
+        else:
+            for i in range(len(sorted_dates)-1):
+                d1 = sorted_dates[i]
+                d2 = sorted_dates[i+1]
+                
+                # Check if consecutive (or close enough to be considered a "weekend" block)
+                # Ideally check datetime delta, but for now just picking max sum
+                count = len(by_date[d1]) + len(by_date[d2])
+                if count > max_count:
+                    max_count = count
+                    best_window = [d1, d2]
+        
+        # 3. Filter matches to this window
+        week_matches = []
+        for d in best_window:
+            week_matches.extend(by_date[d])
+
+        self.logger.info(f"Week {week_start}: Selected 2-day window {best_window} with {len(week_matches)} matches")
         
         self.logger.info(f"Found {len(week_matches)} matches for week {week_start}")
         
@@ -98,7 +144,7 @@ class WeeklyTicketService(BaseService):
         home = match.get("home_team", "")
         away = match.get("away_team", "")
         league = match.get("league", "")
-        date = match.get("match_date", "")[:10]
+        date = str(match.get("match_date", ""))[:10]
         
         if not home or not away:
             return None
@@ -107,7 +153,17 @@ class WeeklyTicketService(BaseService):
         pred = self.prediction_service.predict_match(match, all_matches)
         
         # Get qualification
-        stats = self.match_stats.calculate_match_stats(home, away, all_matches, league=league)
+        match_date_str = date
+        match_date_obj = datetime.strptime(match_date_str, "%Y-%m-%d").date() if match_date_str else None
+        
+        # DEBUG LOGGING
+        self.logger.info(f"Analyizing match {home} vs {away}. Date: {match_date_str}. Type: {type(match_date_obj)}")
+        
+        stats = self.match_stats.calculate_match_stats(
+            home, away, all_matches, 
+            league=league,
+            as_of_date=match_date_obj
+        )
         qual = stats.get("qualification", {})
         
         # Extract ACTUAL odds from match data (lowercase field names)
@@ -151,6 +207,7 @@ class WeeklyTicketService(BaseService):
                 "over25": qual.get("over25_qualified", False),
                 "btts": qual.get("btts_qualified", False),
             },
+            "low_scoring_stats": stats.get("low_scoring", {}),
         }
     
     def _generate_mixed_tickets(
@@ -160,12 +217,12 @@ class WeeklyTicketService(BaseService):
         used_matches: set,
     ) -> List[Dict]:
         """
-        Generate mixed tickets (1 win/draw + goals markets).
+        Generate mixed tickets (1 win + goals markets).
         
         Rules:
-        - Max 1 win/draw per ticket
+        - Max 1 win per ticket (NO DRAWS)
         - Max 2 games from same league
-        - Min odds: 2.0 for result, 1.76 for goals
+        - Min odds: 2.0 for result, 1.60 for goals
         - No match appears in multiple tickets
         """
         tickets = []
@@ -260,7 +317,7 @@ class WeeklyTicketService(BaseService):
         Rules:
         - Only over25 and btts markets
         - Max 2 games from same league
-        - Min odds: 1.76
+        - Min odds: 1.60
         - Prefer qualified matches
         - No match appears in multiple tickets
         """
@@ -343,14 +400,13 @@ class WeeklyTicketService(BaseService):
         return tickets
     
     def _get_best_result_selection(self, match: Dict) -> Optional[Dict]:
-        """Get best result selection for a match (home_win or draw only, NO away_win)."""
+        """Get best result selection for a match (home_win ONLY, NO draws/away_win)."""
         preds = match["predictions"]
         odds = match["odds"]
         
-        # Only home_win and draw - EXCLUDE away_win per user request
+        # Only home_win - EXCLUDE draw and away_win per user request
         options = [
             ("home_win", preds["home_win_conf"], odds["home_win"]),
-            ("draw", preds["draw_conf"], odds["draw"]),
         ]
         
         # Filter by min odds and ensure odds > 0
@@ -373,6 +429,7 @@ class WeeklyTicketService(BaseService):
             "odds": odd,
             "confidence": round(conf, 3),
             "qualified": False,
+            "low_scoring_stats": match.get("low_scoring_stats", {}),
         }
     
     def _get_best_goals_selection(self, match: Dict) -> Optional[Dict]:
@@ -414,4 +471,5 @@ class WeeklyTicketService(BaseService):
             "odds": odd,
             "confidence": round(conf, 3),
             "qualified": is_qual,
+            "low_scoring_stats": match.get("low_scoring_stats", {}),
         }

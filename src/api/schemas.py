@@ -3,7 +3,15 @@ Pydantic schemas for API request/response models.
 """
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from enum import Enum
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class ModelTier(str, Enum):
+    """Model tier enum."""
+    TIER1 = "tier1"
+    TIER2 = "tier2"
+    TIER3 = "tier3"
 
 
 # ============== Request Schemas ==============
@@ -67,6 +75,8 @@ class MatchOdds(BaseModel):
     home: Optional[float] = Field(None, description="Home win odds")
     draw: Optional[float] = Field(None, description="Draw odds")
     away: Optional[float] = Field(None, description="Away win odds")
+    over25: Optional[float] = Field(None, description="Over 2.5 goals odds")
+    btts: Optional[float] = Field(None, description="Both teams to score odds")
 
 
 class MatchAverage(BaseModel):
@@ -127,19 +137,39 @@ class MatchAnalysis(BaseModel):
     # H2H
     h2h: Optional[MatchH2H] = Field(None, description="Head-to-head stats")
     
-    # ML Model
-    ml_model: Optional[MLModelPrediction] = Field(None, description="ML predictions")
+    # Predictions (consolidated from ML model)
+    predictions: Optional[Dict[str, Any]] = Field(None, description="All predictions (over25, btts, result)")
     
     # Poisson
     poisson_distribution: Optional[PoissonDistribution] = Field(None, description="Poisson probabilities")
     
     # Team Stats (BTTS/Over25 qualification)
     team_stats: Optional[MatchTeamStats] = Field(None, description="BTTS/Over25 team stats")
-    
-    # Legacy fields (for backward compatibility)
-    over25: Optional[Over25Prediction] = None
-    btts: Optional[BTTSPrediction] = None
-    result: Optional[ResultPrediction] = None
+
+
+class MatchAnalysisDto(BaseModel):
+    """Match analysis for API response (similar to MatchAnalysis but strictly typed)."""
+    match_id: Optional[str]
+    home_team: str
+    away_team: str
+    date: str
+    time: Optional[str] = None
+    league: str
+    odds: Optional[MatchOdds]
+    predictions: Optional[Dict[str, Any]]
+    poisson_distribution: Optional[PoissonDistribution]
+    team_stats: Optional[MatchTeamStats]
+    h2h: Optional[MatchH2H]
+    average: Optional[MatchAverage]
+
+
+class AnalysisResponse(BaseModel):
+    """Response for comprehensive analysis."""
+    date: str
+    total_matches: int
+    matches: List[Dict[str, Any]] # Flexible dict to accommodate various analysis depths
+    summary: str
+
 
 
 class ComprehensiveMatchAnalysis(BaseModel):
@@ -161,22 +191,32 @@ class ComprehensiveAnalyzeResponse(BaseModel):
 
 
 class AnalyzeMatchesResponse(BaseModel):
-    """Response for /analyze/matches endpoint."""
-    date: str
-    total_matches: int
-    matches: List[MatchAnalysis]
+    """Response for /analyze/matches endpoint with pagination."""
+    model_config = {"json_schema_extra": {"exclude_none": True}}
+    
+    items: List[MatchAnalysis] = Field(..., description="Array of match analyses")
+    total: int = Field(..., description="Total number of matches")
+    offset: Optional[int] = Field(None, description="Pagination offset (only if provided)")
+    limit: Optional[int] = Field(None, description="Pagination limit (only if provided)")
     generated_at: str
+    
+    def model_dump(self, **kwargs):
+        """Override to exclude None values."""
+        kwargs.setdefault("exclude_none", True)
+        return super().model_dump(**kwargs)
 
 
 class TicketSelection(BaseModel):
     """Single selection in a ticket."""
-    match: str = Field(..., description="Home vs Away")
+    match_id: str
+    home_team: str
+    away_team: str
     league: str
-    time: Optional[str] = None
-    market: str = Field(..., description="over25, btts, home_win, etc.")
-    selection: str = Field(..., description="The pick (YES, NO, H, D, A)")
-    probability: float
-    confidence: str
+    date: str
+    market: str = Field(..., description="over25, btts, home_win, draw, away_win")
+    odds: float
+    confidence: float
+    qualified: bool = False
 
 
 class Ticket(BaseModel):
@@ -315,18 +355,6 @@ class BacktestReportResponse(BaseModel):
 
 
 # ============== Weekly Tickets Schemas ==============
-
-class TicketSelection(BaseModel):
-    """Single selection in a ticket."""
-    match_id: str
-    home_team: str
-    away_team: str
-    league: str
-    date: str
-    market: str = Field(..., description="over25, btts, home_win, draw, away_win")
-    odds: float
-    confidence: float
-    qualified: bool = False
 
 
 class WeeklyTicket(BaseModel):

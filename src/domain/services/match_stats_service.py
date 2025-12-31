@@ -47,6 +47,13 @@ class TeamOver25Stats:
 
 
 @dataclass
+class TeamLowScoringStats:
+    """Low scoring (0-0, 1-0, 0-1) statistics for a single team."""
+    overall: MatchCount
+    venue_specific: MatchCount
+
+
+@dataclass
 class QualificationFlags:
     """Qualification flags based on thresholds."""
     over25_qualified: bool
@@ -62,7 +69,7 @@ class StatsConfig:
     OVERALL_MATCHES = 9
     VENUE_MATCHES = 6
     OVER25_THRESHOLD = 55.0  # Both teams > 55% → qualified
-    BTTS_THRESHOLD = 60.0    # Both teams > 60% → qualified
+    BTTS_THRESHOLD = 55.0    # Both teams > 55% → qualified
     
     # Combined weighting
     OVERALL_WEIGHT = 0.4
@@ -147,6 +154,14 @@ class MatchStatsService(BaseService):
                 "home_team": self._over25_to_dict(home_over25, "home"),
                 "away_team": self._over25_to_dict(away_over25, "away"),
             },
+            "low_scoring": {
+                "home_team": self._low_scoring_to_dict(
+                    self._calculate_team_low_scoring(home_team, home_matches, is_home=True), "home"
+                ),
+                "away_team": self._low_scoring_to_dict(
+                    self._calculate_team_low_scoring(away_team, away_matches, is_home=False), "away"
+                ),
+            },
             "qualification": {
                 "over25_qualified": qualification.over25_qualified,
                 "over25_reason": qualification.over25_reason,
@@ -183,7 +198,7 @@ class MatchStatsService(BaseService):
             
             team_matches.append(m)
         
-        team_matches.sort(key=lambda x: x.get("match_date", ""), reverse=True)
+        team_matches.sort(key=lambda x: self._parse_date(x.get("match_date")) or date(1900, 1, 1), reverse=True)
         return team_matches
     
     # ============== BTTS Calculations ==============
@@ -269,6 +284,40 @@ class MatchStatsService(BaseService):
             count=count,
             pct=round((count / len(matches)) * 100, 1),
         )
+
+    # ============== Low Scoring Calculations ==============
+
+    def _calculate_team_low_scoring(
+        self,
+        team: str,
+        matches: List[Dict],
+        is_home: bool,
+    ) -> TeamLowScoringStats:
+        """Calculate Low Scoring (0-0, 1-0, 0-1) stats."""
+        if is_home:
+            venue_matches = [m for m in matches if m.get("home_team") == team]
+        else:
+            venue_matches = [m for m in matches if m.get("away_team") == team]
+        
+        overall_matches = matches[:self.config.OVERALL_MATCHES]
+        venue_only = venue_matches[:self.config.VENUE_MATCHES]
+        
+        return TeamLowScoringStats(
+            overall=self._count_low_scoring(overall_matches),
+            venue_specific=self._count_low_scoring(venue_only),
+        )
+
+    def _count_low_scoring(self, matches: List[Dict]) -> MatchCount:
+        """Count 0-0, 1-0, 0-1 occurrences."""
+        if not matches:
+            return MatchCount(matches=0, count=0, pct=0.0)
+        
+        count = sum(1 for m in matches if self._is_low_scoring(m))
+        return MatchCount(
+            matches=len(matches),
+            count=count,
+            pct=round((count / len(matches)) * 100, 1),
+        )
     
     # ============== Qualification Logic ==============
     
@@ -349,6 +398,12 @@ class MatchStatsService(BaseService):
         """Check if match had over 2.5 goals."""
         return (match.get("fthg", 0) + match.get("ftag", 0)) > 2.5
     
+    def _is_low_scoring(self, match: Dict) -> bool:
+        """Check if match was 0-0, 1-0, or 0-1."""
+        h = match.get("fthg", 0)
+        a = match.get("ftag", 0)
+        return (h == 0 and a == 0) or (h == 1 and a == 0) or (h == 0 and a == 1)
+    
     def _team_scored(self, match: Dict, team: str) -> bool:
         """Check if team scored in match."""
         if match.get("home_team") == team:
@@ -412,6 +467,23 @@ class MatchStatsService(BaseService):
             venue_key: {
                 "matches": stats.venue_specific.matches,
                 "over25_count": stats.venue_specific.count,
+                "pct": stats.venue_specific.pct,
+            },
+        }
+
+    def _low_scoring_to_dict(self, stats: TeamLowScoringStats, venue: str) -> Dict:
+        """Convert LowScoring stats to dict."""
+        venue_key = f"{venue}_6"
+        
+        return {
+            "overall_9": {
+                "matches": stats.overall.matches,
+                "low_scoring_count": stats.overall.count,
+                "pct": stats.overall.pct,
+            },
+            venue_key: {
+                "matches": stats.venue_specific.matches,
+                "low_scoring_count": stats.venue_specific.count,
                 "pct": stats.venue_specific.pct,
             },
         }

@@ -2,10 +2,12 @@
 Models router for model information and retraining.
 """
 from datetime import datetime
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from src.api.schemas import ModelsInfoResponse, ModelInfo
+from src.api.schemas import ModelsInfoResponse, ModelInfo, ModelTier
 from src.domain.services.prediction_service import PredictionService
+from src.domain.services.model_retraining_service import ModelRetrainingService
+from src.api.dependencies import get_prediction_service, get_retraining_service
 from src.utils.logger import get_logger
 
 router = APIRouter()
@@ -13,20 +15,16 @@ logger = get_logger("ModelsRouter")
 
 
 @router.get("/info", response_model=ModelsInfoResponse)
-async def get_models_info():
+async def get_models_info(
+    service: PredictionService = Depends(get_prediction_service),
+):
     """
     Get information about loaded models.
     
     Returns:
     - Model information including version, training date, and status
     """
-    service = PredictionService()
-    
-    try:
-        service.load_models()
-    except Exception as e:
-        logger.warning(f"Could not load models: {e}")
-    
+    # Service is already initialized and models loaded at startup
     info = service.get_model_info()
     
     models_dict = {}
@@ -50,12 +48,13 @@ async def get_models_info():
 @router.post("/retrain")
 async def retrain_models(
     background_tasks: BackgroundTasks,
-    tier: str = "tier1",
+    tier: ModelTier = ModelTier.TIER1,
+    service: ModelRetrainingService = Depends(get_retraining_service),
 ):
     """
     Trigger model retraining.
     
-    Starts retraining in the background.
+    Starts retraining in the background. Uses concurrency lock.
     
     Parameters:
     - **tier**: Model tier to retrain (tier1, tier2, tier3)
@@ -65,8 +64,16 @@ async def retrain_models(
     """
     logger.info(f"Retraining requested for tier: {tier}")
     
+    # Check lock status before submitting background task to provide immediate feedback
+    # Note: There's a tiny race condition window here between check and execution, 
+    # but the service handles the lock safely anyway.
+    status = service.get_status()
+    if status.get("status") == "running":
+         raise HTTPException(status_code=409, detail=f"Retraining already in progress for {status.get('tier')}")
+
     # Add retraining task to background
-    background_tasks.add_task(_retrain_models, tier)
+    # We pass the method itself. FastAPI will run it in a threadpool since it's a synchronous method.
+    background_tasks.add_task(service.start_retraining, tier)
     
     return {
         "status": "started",
@@ -76,33 +83,14 @@ async def retrain_models(
     }
 
 
-async def _retrain_models(tier: str):
-    """Background task to retrain models."""
-    logger.info(f"Starting background retraining for {tier}...")
+@router.get("/retrain/status")
+async def get_retraining_status(
+    service: ModelRetrainingService = Depends(get_retraining_service),
+):
+    """
+    Get current retraining status.
     
-    try:
-        from src.ml.trainers import ModelTrainer
-        from src.data.storage.json_storage import JSONStorage
-        from src.domain.services.feature_engineering_service import FeatureEngineeringService
-        
-        # Load matches
-        storage = JSONStorage()
-        matches = storage.load("data/processed/matches.json") or []
-        
-        if not matches:
-            logger.error("No matches found for training")
-            return
-        
-        # Generate features
-        feature_service = FeatureEngineeringService()
-        features = feature_service.generate_training_features(matches)
-        
-        # Train models
-        trainer = ModelTrainer()
-        tier_features = trainer.filter_by_tier(features, tier)
-        results = trainer.train_all_models(tier_features, tier)
-        
-        logger.info(f"Retraining complete: {results}")
-        
-    except Exception as e:
-        logger.error(f"Retraining failed: {e}")
+    Returns:
+    - Status of current or last training run
+    """
+    return service.get_status()

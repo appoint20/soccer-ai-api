@@ -11,6 +11,43 @@ from src.utils.helpers import parse_date, parse_time
 # Required columns for upcoming fixtures
 REQUIRED_COLUMNS = ["Date", "HomeTeam", "AwayTeam"]
 
+# Team name normalization map (short name -> full name in historical data)
+TEAM_NAME_MAP = {
+    # England
+    "Man City": "Manchester City",
+    "Man United": "Manchester United",
+    "Spurs": "Tottenham",
+    "Wolves": "Wolverhampton",
+    "West Ham": "West Ham United",
+    "Sheffield Utd": "Sheffield United",
+    "Sheffield Wed": "Sheffield Weds",
+    "Sheff Utd": "Sheffield United",
+    "Sheff Wed": "Sheffield Weds",
+    "Nott'm Forest": "Nott'm Forest",  # Keep as-is (matches historical)
+    "QPR": "QPR",
+    "Brighton": "Brighton",
+    "Newcastle": "Newcastle",
+    "Leicester": "Leicester",
+    # Germany
+    "Bayern": "Bayern Munich",
+    "Dortmund": "Dortmund",
+    "RB Leipzig": "RB Leipzig",
+    "Leverkusen": "Leverkusen",
+    "M'gladbach": "M'gladbach",
+    # Spain
+    "Ath Madrid": "Ath Madrid",
+    "Ath Bilbao": "Ath Bilbao",
+    "Real Madrid": "Real Madrid",
+    # Italy
+    "Inter": "Inter",
+    "AC Milan": "Milan",
+    "Juventus": "Juventus",
+    # France
+    "Paris SG": "Paris SG",
+    "Lyon": "Lyon",
+    "Marseille": "Marseille",
+}
+
 
 class CSVLoader:
     """
@@ -61,6 +98,9 @@ class CSVLoader:
             
             # Standardize column names
             df = self._standardize_columns(df)
+            
+            # Normalize team names (e.g., Man City -> Manchester City)
+            df = self._normalize_team_names(df)
             
             # Parse dates and times
             df = self._parse_datetime(df)
@@ -143,10 +183,33 @@ class CSVLoader:
                 new_name = 'home_team'
             elif new_name in ('awayteam', 'away'):
                 new_name = 'away_team'
+            elif new_name in ('div', 'division'):
+                new_name = 'league'
             
             rename_map[col] = new_name
         
         return df.rename(columns=rename_map)
+    
+    def _normalize_team_names(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize team names to match historical data.
+        
+        Converts short names (e.g., 'Man City') to full names 
+        used in historical data (e.g., 'Manchester City').
+        
+        Args:
+            df: DataFrame with team columns
+            
+        Returns:
+            DataFrame with normalized team names
+        """
+        for col in ['home_team', 'away_team']:
+            if col in df.columns:
+                df[col] = df[col].apply(
+                    lambda x: TEAM_NAME_MAP.get(x, x) if pd.notna(x) else x
+                )
+        
+        return df
     
     def _parse_datetime(self, df: pd.DataFrame) -> pd.DataFrame:
         """

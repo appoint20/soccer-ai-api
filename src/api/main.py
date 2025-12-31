@@ -16,8 +16,9 @@ from src.api.schemas import (
     ModelsInfoResponse,
     ErrorResponse,
 )
-from src.api.routers import predictions, models
+from src.api.routers import analysis, models
 from src.utils.logger import get_logger
+from src.api.dependencies import ServiceContainer
 
 logger = get_logger("API")
 
@@ -30,17 +31,59 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     logger.info("Starting soccer-gpt-api...")
     
-    # Startup: Load models
+    # Initialize all services
+    ServiceContainer.init_services()
+    
+    # Initialize Scheduler
+    from src.domain.services.scheduler_service import SchedulerService
+    scheduler = SchedulerService()
+    await scheduler.start()
+    
+    # Startup: Sanitize fixtures and historical files
     try:
-        from src.api.routers.predictions import load_prediction_service
-        load_prediction_service()
-        logger.info("Prediction service loaded successfully")
+        from src.data.loaders.excel_sanitizer import ExcelSanitizer
+        from pathlib import Path
+        sanitizer = ExcelSanitizer()
+        
+        # 1. Sanitize upcoming fixtures
+        excel_path = Path("data/raw/upcoming/fixtures.xlsx")
+        csv_path = Path("data/raw/upcoming/fixtures.csv")
+        clean_path = Path("data/raw/upcoming/fixtures_clean.csv")
+        
+        if excel_path.exists():
+            df = sanitizer.sanitize(excel_path, clean_path)
+            if df is not None:
+                logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+        elif csv_path.exists():
+            df = sanitizer.sanitize(csv_path, clean_path)
+            if df is not None:
+                logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+        
+        # 2. Sanitize historical Excel files
+        historical_dir = Path("data/raw/historical")
+        if historical_dir.exists():
+            for excel_file in historical_dir.glob("*.xlsx"):
+                clean_file = excel_file.with_suffix(".csv")
+                df = sanitizer.sanitize(excel_file, clean_file)
+                if df is not None:
+                    logger.info(f"Sanitized {excel_file.name}: {len(df)} matches")
+            
+            for xls_file in historical_dir.glob("*.xls"):
+                if not xls_file.name.endswith(".xlsx"):
+                    clean_file = xls_file.with_suffix(".csv")
+                    df = sanitizer.sanitize(xls_file, clean_file)
+                    if df is not None:
+                        logger.info(f"Sanitized {xls_file.name}: {len(df)} matches")
     except Exception as e:
-        logger.warning(f"Could not load prediction service: {e}")
+        logger.warning(f"Could not sanitize data files: {e}")
+    
+    # Startup complete
+    logger.info("Startup complete")
     
     yield
     
     # Shutdown
+    await scheduler.stop()
     logger.info("Shutting down soccer-gpt-api...")
 
 
@@ -87,7 +130,7 @@ app.add_middleware(
 
 
 # Include routers
-app.include_router(predictions.router, tags=["Predictions"])
+app.include_router(analysis.router, tags=["Analysis"])
 app.include_router(models.router, prefix="/models", tags=["Models"])
 
 

@@ -3,7 +3,7 @@ Prediction service for making predictions on matches.
 
 Main interface for using trained models to predict match outcomes.
 """
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
@@ -237,67 +237,27 @@ class PredictionService(BaseService):
     
     def _fallback_over25(self, features: Dict) -> Dict[str, Any]:
         """Fallback Over 2.5 prediction using feature averages."""
-        home_features = features.get("home_features", {})
-        away_features = features.get("away_features", {})
-        h2h = features.get("h2h_features", {})
-        
-        # Simple average of over25 rates
-        rates = [
-            home_features.get("over25_rate_season", 0.5),
-            away_features.get("over25_rate_season", 0.5),
-            h2h.get("over25_rate", 0.5),
-        ]
-        
-        avg_prob = sum(rates) / len(rates)
-        
         return {
-            "prediction": "YES" if avg_prob > 0.5 else "NO",
-            "probability": round(avg_prob, 3),
+            "prediction": "NO",
+            "probability": 0.0,
             "confidence": "LOW",
             "fallback": True,
         }
     
     def _fallback_btts(self, features: Dict) -> Dict[str, Any]:
-        """Fallback BTTS prediction using feature averages."""
-        home_features = features.get("home_features", {})
-        away_features = features.get("away_features", {})
-        h2h = features.get("h2h_features", {})
-        
-        rates = [
-            home_features.get("btts_rate_season", 0.5),
-            away_features.get("btts_rate_season", 0.5),
-            h2h.get("btts_rate", 0.5),
-        ]
-        
-        avg_prob = sum(rates) / len(rates)
-        
+        """Fallback BTTS prediction."""
         return {
-            "prediction": "YES" if avg_prob > 0.5 else "NO",
-            "probability": round(avg_prob, 3),
+            "prediction": "NO",
+            "probability": 0.0,
             "confidence": "LOW",
             "fallback": True,
         }
     
     def _fallback_result(self, features: Dict) -> Dict[str, Any]:
-        """Fallback result prediction using feature averages."""
-        home_features = features.get("home_features", {})
-        away_features = features.get("away_features", {})
-        
-        home_win_rate = home_features.get("win_rate_venue", 0.45)
-        away_win_rate = away_features.get("win_rate_venue", 0.30)
-        
-        # Normalize
-        total = home_win_rate + away_win_rate + 0.25  # 0.25 for draw
-        home_prob = home_win_rate / total
-        away_prob = away_win_rate / total
-        draw_prob = 0.25 / total
-        
-        probs = {"home_win": home_prob, "draw": draw_prob, "away_win": away_prob}
-        prediction = max(probs, key=probs.get)
-        
+        """Fallback result prediction."""
         return {
-            "prediction": {"home_win": "H", "draw": "D", "away_win": "A"}[prediction],
-            "probabilities": {k: round(v, 3) for k, v in probs.items()},
+            "prediction": "D",
+            "probabilities": {"home_win": 0.0, "draw": 0.0, "away_win": 0.0},
             "confidence": "LOW",
             "fallback": True,
         }
@@ -319,3 +279,92 @@ class PredictionService(BaseService):
             info["models"][name] = model.get_info()
         
         return info
+
+    def analyze_matches_for_date(
+        self,
+        matches: List[Dict[str, Any]],
+        historical_matches: List[Dict[str, Any]],
+        dixon_coles_model: Any,
+        match_stats_service: Any,
+        h2h_service: Any
+    ) -> List[Dict[str, Any]]:
+        """
+        Analyze a list of matches for a specific date.
+        
+        Orchestrates the entire analysis pipeline:
+        1. ML Predictions
+        2. Dixon-Coles Projections
+        3. Match Stats (BTTS/Over25 qualification)
+        4. H2H Statistics
+        5. Formats response object
+        
+        Args:
+            matches: List of match dictionaries (normalized)
+            historical_matches: Historical match data
+            comprehensive_service: Service for deeper analysis
+            dixon_coles_model: Statistical model
+            match_stats_service: Stats service
+            h2h_service: H2H service
+            
+        Returns:
+            List of fully analyzed match objects ready for API response
+        """
+        results = []
+        
+        for match in matches:
+            match_date = match.get("match_date")
+            home_team = match.get("home_team")
+            away_team = match.get("away_team")
+            league = match.get("league")
+            
+            # 1. Base ML Prediction
+            prediction = self.predict_match(match, historical_matches)
+            
+            # 2. Dixon-Coles
+            poisson = None
+            if dixon_coles_model:
+                try:
+                    poisson = dixon_coles_model.predict_match(home_team, away_team)
+                except Exception:
+                    pass # Graceful fallback
+            
+            # 3. Match Stats & Qualification (BTTS/Over25)
+            # Use 'as_of_date' logic if date is in past? 
+            # For upcoming, we usually just pass None or today.
+            stats = match_stats_service.calculate_match_stats(
+                home_team, away_team, historical_matches, league=league
+            )
+            
+            # 4. H2H
+            h2h = h2h_service.get_h2h_stats(home_team, away_team, historical_matches)
+            
+            # 5. Odds (Safe extraction)
+            odds = {
+                "home": float(match.get("b365h") or 0.0),
+                "draw": float(match.get("b365d") or 0.0),
+                "away": float(match.get("b365a") or 0.0),
+                "over25": float(match.get("b365_over25") or 0.0),
+                "btts": float(match.get("btts_odds") or 0.0) # Strictly from source or 0
+            }
+            
+            # 6. Build Consolidated Result
+            analysis_result = {
+                "match_id": match.get("match_id"),
+                "home_team": home_team,
+                "away_team": away_team,
+                "date": match_date,
+                "time": match.get("time"),
+                "league": league,
+                "odds": odds,
+                "predictions": prediction, # ML Output
+                "poisson_distribution": poisson,
+                "team_stats": stats,
+                "h2h": h2h,
+                "average": { # Calculated fields
+                    "home_goal_avg": stats.get("home_team", {}).get("goals_scored_avg", 0.0),
+                    "away_goal_avg": stats.get("away_team", {}).get("goals_scored_avg", 0.0)
+                }
+            }
+            results.append(analysis_result)
+            
+        return results
