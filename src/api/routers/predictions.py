@@ -13,6 +13,7 @@ from src.api.schemas import (
     ComprehensiveMatchAnalysis,
     GenerateTicketsResponse,
     MatchAnalysis,
+    MatchTeamStats,
     Over25Prediction,
     BTTSPrediction,
     ResultPrediction,
@@ -28,6 +29,7 @@ from src.api.schemas import (
 from src.domain.services.prediction_service import PredictionService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
 from src.domain.services.backtest_service import BacktestService
+from src.domain.services.match_stats_service import MatchStatsService
 from src.data.loaders.csv_loader import CSVLoader
 from src.data.storage.json_storage import JSONStorage
 from src.utils.logger import get_logger
@@ -39,12 +41,13 @@ logger = get_logger("PredictionsRouter")
 _prediction_service: Optional[PredictionService] = None
 _comprehensive_service: Optional[ComprehensiveAnalysisService] = None
 _backtest_service: Optional[BacktestService] = None
+_match_stats_service: Optional[MatchStatsService] = None
 _historical_matches: List = []
 
 
 def load_prediction_service():
     """Load prediction service and historical data."""
-    global _prediction_service, _comprehensive_service, _historical_matches
+    global _prediction_service, _comprehensive_service, _match_stats_service, _historical_matches
     
     # Load historical matches
     storage = JSONStorage()
@@ -66,6 +69,9 @@ def load_prediction_service():
         logger.info("Loaded trained models")
     except Exception as e:
         logger.warning(f"Could not load models (will use fallback): {e}")
+    
+    # Initialize match stats service
+    _match_stats_service = MatchStatsService()
     
     # Initialize comprehensive analysis service
     try:
@@ -140,6 +146,23 @@ async def analyze_matches(
             btts = prediction.get("btts", {})
             result = prediction.get("result", {})
             
+            # Calculate team stats with qualification flags
+            team_stats_data = None
+            if _match_stats_service:
+                home_team = match.get("home_team", "")
+                away_team = match.get("away_team", "")
+                league = match.get("league", "")
+                
+                stats = _match_stats_service.calculate_match_stats(
+                    home_team, away_team, _historical_matches, league=league
+                )
+                
+                team_stats_data = MatchTeamStats(
+                    btts=stats["btts"],
+                    over25=stats["over25"],
+                    qualification=stats["qualification"],
+                )
+            
             analysis = MatchAnalysis(
                 match_id=prediction.get("match_id"),
                 home_team=match.get("home_team", ""),
@@ -166,6 +189,7 @@ async def analyze_matches(
                     ),
                     confidence=result.get("confidence", "LOW"),
                 ),
+                team_stats=team_stats_data,
             )
             analyses.append(analysis)
             

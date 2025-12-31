@@ -49,6 +49,19 @@ class ResultPrediction(BaseModel):
     confidence: str = Field(..., description="HIGH, MEDIUM, or LOW")
 
 
+class TeamMatchStats(BaseModel):
+    """Team statistics for BTTS/Over25 qualification."""
+    overall_9: Dict[str, Any] = Field(..., description="Last 9 matches overall")
+    venue_6: Dict[str, Any] = Field(..., description="Last 6 home/away matches")
+
+
+class MatchTeamStats(BaseModel):
+    """Statistics for both teams in a match."""
+    btts: Dict[str, Any] = Field(..., description="BTTS statistics")
+    over25: Dict[str, Any] = Field(..., description="Over 2.5 statistics")
+    qualification: Dict[str, Any] = Field(..., description="Qualification flags")
+
+
 class MatchAnalysis(BaseModel):
     """Complete analysis for a single match."""
     match_id: Optional[str] = None
@@ -60,6 +73,7 @@ class MatchAnalysis(BaseModel):
     over25: Over25Prediction
     btts: BTTSPrediction
     result: ResultPrediction
+    team_stats: Optional[MatchTeamStats] = Field(None, description="BTTS/Over25 team stats")
 
 
 class ComprehensiveMatchAnalysis(BaseModel):
