@@ -11,7 +11,7 @@ class FixtureService:
     Eliminates duplication of CSV loading logic across routers.
     """
     
-    def __init__(self, fixtures_path: str = "data/raw/upcoming/fixtures.csv"):
+    def __init__(self, fixtures_path: str = "data/raw/upcoming/fixtures_clean.csv"):
         self.logger = get_logger("FixtureService")
         self.fixtures_path = Path(fixtures_path)
         self.loader = CSVLoader()

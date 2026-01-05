@@ -3,7 +3,7 @@ Referee statistics service for analyzing referee influence on matches.
 
 Calculates referee tendencies for goals, cards, and match outcomes.
 """
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 from collections import defaultdict
 
@@ -41,6 +41,7 @@ class RefereeStatsService(BaseService):
         self,
         referee_name: str,
         matches: List,
+        as_of_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Calculate all statistics for a referee.
@@ -48,6 +49,7 @@ class RefereeStatsService(BaseService):
         Args:
             referee_name: Name of referee
             matches: All matches
+            as_of_date: Only include matches STRICTLY BEFORE this date
             
         Returns:
             Dict with referee statistics
@@ -56,17 +58,38 @@ class RefereeStatsService(BaseService):
         if not referee_name:
             return self._empty_stats()
         
-        cache_key = self.generate_cache_key("referee", referee_name)
+        # Check cache
+        cache_key_date = str(as_of_date) if as_of_date else "latest"
+        cache_key = self.generate_cache_key("referee", referee_name, cache_key_date)
         cached = self.get_cached(cache_key)
         if cached is not None:
             return cached
         
         with self.track_performance("calculate_referee_stats"):
-            # Filter matches for this referee
-            ref_matches = [
-                m for m in matches
-                if self._get_referee(m) == referee_name
-            ]
+            # Filter matches for this referee AND date
+            ref_matches = []
+            for m in matches:
+                # 1. Check Referee Name
+                if self._get_referee(m) != referee_name:
+                    continue
+                    
+                # 2. Check Date (Time Travel)
+                # If as_of_date is set, exclude matches ON or AFTER it
+                if as_of_date:
+                    match_date = self._get_field(m, "match_date")
+                    current_date = None
+                    if isinstance(match_date, str):
+                        try:
+                            current_date = datetime.fromisoformat(str(match_date)[:10]).date()
+                        except:
+                            pass
+                    elif isinstance(match_date, date):
+                        current_date = match_date
+                    
+                    if current_date and current_date >= as_of_date:
+                        continue
+                
+                ref_matches.append(m)
             
             if not ref_matches:
                 return self._empty_stats()
@@ -89,6 +112,7 @@ class RefereeStatsService(BaseService):
         self,
         referee_name: str,
         matches: List,
+        as_of_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Get features indicating referee's influence on matches.
@@ -96,11 +120,12 @@ class RefereeStatsService(BaseService):
         Args:
             referee_name: Referee name
             matches: All matches
+            as_of_date: Reference date for time travel
             
         Returns:
             Influence features
         """
-        stats = self.calculate_referee_stats(referee_name, matches)
+        stats = self.calculate_referee_stats(referee_name, matches, as_of_date)
         
         if not stats or stats["matches_officiated"] == 0:
             return self._default_influence()

@@ -23,7 +23,9 @@ TEAM_NAME_MAP = {
     "Sheffield Wed": "Sheffield Weds",
     "Sheff Utd": "Sheffield United",
     "Sheff Wed": "Sheffield Weds",
+    "Sheff Wed": "Sheffield Weds",
     "Nott'm Forest": "Nott'm Forest",  # Keep as-is (matches historical)
+    "West Brom": "West Bromwich",
     "QPR": "QPR",
     "Brighton": "Brighton",
     "Newcastle": "Newcastle",

@@ -107,9 +107,9 @@ class FeatureEngineeringService(BaseService):
                 away_team, all_matches, as_of_date, league
             )
             
-            # Get H2H stats
+            # Get H2H stats (Pass as_of_date for leakage prevention)
             h2h_stats = self.h2h.get_h2h_stats(
-                home_team, away_team, all_matches
+                home_team, away_team, all_matches, None, as_of_date
             )
             
             # Get standings context
@@ -123,11 +123,11 @@ class FeatureEngineeringService(BaseService):
                     away_team, all_matches, league, as_of_date
                 )
             
-            # Get referee influence
+            # Get referee influence (Pass as_of_date for leakage prevention)
             referee_features = {}
             if referee:
                 referee_features = self.referee_stats.get_referee_influence_features(
-                    referee, all_matches
+                    referee, all_matches, as_of_date
                 )
             
             # Get BTTS/Over25 venue-specific stats (NEW)

@@ -16,7 +16,7 @@ from src.api.schemas import (
     ModelsInfoResponse,
     ErrorResponse,
 )
-from src.api.routers import analysis, models
+from src.api.routers import analysis, models, leagues, backtest
 from src.utils.logger import get_logger
 from src.api.dependencies import ServiceContainer
 
@@ -132,6 +132,8 @@ app.add_middleware(
 # Include routers
 app.include_router(analysis.router, tags=["Analysis"])
 app.include_router(models.router, prefix="/models", tags=["Models"])
+app.include_router(leagues.router, tags=["System"])
+app.include_router(backtest.router, prefix="/backtest", tags=["Backtest"])
 
 
 # ============== Root Endpoints ==============

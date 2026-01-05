@@ -53,6 +53,7 @@ class H2HService(BaseService):
         away_team: str,
         matches: List,
         max_meetings: Optional[int] = None,
+        as_of_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Get H2H statistics between two teams.
@@ -62,6 +63,7 @@ class H2HService(BaseService):
             away_team: Away team name  
             matches: All historical matches
             max_meetings: Override default max meetings
+            as_of_date: Date reference for time travel
             
         Returns:
             Dict with H2H statistics
@@ -72,8 +74,9 @@ class H2HService(BaseService):
         if not home_team or not away_team:
             return self._empty_h2h_stats()
         
-        # Check cache
-        cache_key = self.generate_cache_key("h2h", home_team, away_team)
+        # Check cache (key must include date for backtesting safety)
+        cache_key_date = str(as_of_date) if as_of_date else "latest"
+        cache_key = self.generate_cache_key("h2h", home_team, away_team, cache_key_date)
         cached = self.get_cached(cache_key)
         if cached is not None:
             return cached
@@ -82,7 +85,8 @@ class H2HService(BaseService):
             # Extract H2H matches
             h2h_matches = self.extract_h2h_matches(
                 home_team, away_team, matches,
-                max_meetings or self.max_meetings
+                max_meetings or self.max_meetings,
+                as_of_date
             )
             
             if not h2h_matches:
@@ -118,6 +122,7 @@ class H2HService(BaseService):
         team_b: str,
         matches: List,
         max_meetings: Optional[int] = None,
+        as_of_date: Optional[date] = None,
     ) -> List:
         """
         Extract all matches between two teams.
@@ -127,6 +132,7 @@ class H2HService(BaseService):
             team_b: Second team
             matches: All matches
             max_meetings: Maximum matches to return
+            as_of_date: Only include matches STRICTLY BEFORE this date
             
         Returns:
             List of H2H matches, sorted by date (most recent first)
@@ -143,7 +149,28 @@ class H2HService(BaseService):
                 away = getattr(match, "away_team", None)
                 match_date = getattr(match, "match_date", None)
             
-            # Check if this is an H2H match (either direction)
+            # Normalize names for comparison
+            home = str(home).strip() if home else ""
+            away = str(away).strip() if away else ""
+            
+            # 1. Normalize match date object
+            current_date = None
+            if match_date:
+                if isinstance(match_date, str):
+                    try:
+                        current_date = datetime.fromisoformat(str(match_date)[:10]).date()
+                    except:
+                        pass
+                elif isinstance(match_date, date):
+                    current_date = match_date
+            
+            # 2. Check Date Filter (Time Travel)
+            # If as_of_date is set, we MUST EXCLUDE any match happening ON or AFTER that date
+            if as_of_date and current_date:
+                if current_date >= as_of_date:
+                    continue
+            
+            # 3. Check if H2H
             is_h2h = (
                 (home == team_a and away == team_b) or
                 (home == team_b and away == team_a)

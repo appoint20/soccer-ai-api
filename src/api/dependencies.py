@@ -14,6 +14,7 @@ logger = get_logger("ServiceContainer")
 
 from src.domain.services.fixture_service import FixtureService
 from src.domain.services.ticket_service import TicketService
+from src.domain.services.gemini_service import GeminiService
 
 class ServiceContainer:
     """Dependency injection container for services."""
@@ -26,6 +27,7 @@ class ServiceContainer:
     retraining_service: Optional[ModelRetrainingService] = None
     fixture_service: Optional[FixtureService] = None
     ticket_service: Optional[TicketService] = None
+    gemini_service: Optional[GeminiService] = None
     dixon_coles: Optional[DixonColesModel] = None
     historical_matches: list = []
 
@@ -59,7 +61,10 @@ class ServiceContainer:
         cls.h2h_service = H2HService()
         cls.backtest_service = BacktestService()
         cls.fixture_service = FixtureService()
-        cls.ticket_service = TicketService()
+        cls.backtest_service = BacktestService()
+        cls.fixture_service = FixtureService()
+        cls.gemini_service = GeminiService()
+        cls.ticket_service = TicketService(gemini_service=cls.gemini_service)
         
         # Initialize Retraining Service
         cls.retraining_service = ModelRetrainingService()
@@ -85,10 +90,7 @@ def get_prediction_service() -> PredictionService:
         return PredictionService()
     return ServiceContainer.prediction_service
 
-def get_comprehensive_service() -> ComprehensiveAnalysisService:
-    if not ServiceContainer.comprehensive_service:
-        raise RuntimeError("ComprehensiveAnalysisService not initialized")
-    return ServiceContainer.comprehensive_service
+# ComprehensiveAnalysisService removed - merged into PredictionService
 
 def get_match_stats_service() -> MatchStatsService:
     if not ServiceContainer.match_stats_service:
@@ -119,6 +121,11 @@ def get_ticket_service() -> TicketService:
     if not ServiceContainer.ticket_service:
         return TicketService()
     return ServiceContainer.ticket_service
+
+def get_gemini_service() -> GeminiService:
+    if not ServiceContainer.gemini_service:
+        return GeminiService()
+    return ServiceContainer.gemini_service
 
 def get_dixon_coles() -> Optional[DixonColesModel]:
     return ServiceContainer.dixon_coles

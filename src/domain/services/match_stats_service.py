@@ -68,8 +68,8 @@ class StatsConfig:
     """Configuration for statistics calculation."""
     OVERALL_MATCHES = 9
     VENUE_MATCHES = 6
-    OVER25_THRESHOLD = 55.0  # Both teams > 55% → qualified
-    BTTS_THRESHOLD = 55.0    # Both teams > 55% → qualified
+    OVER25_THRESHOLD = 50.0  # Both teams > 50% → qualified
+    BTTS_THRESHOLD = 50.0    # Both teams > 50% → qualified
     
     # Combined weighting
     OVERALL_WEIGHT = 0.4
@@ -168,6 +168,92 @@ class MatchStatsService(BaseService):
                 "btts_qualified": qualification.btts_qualified,
                 "btts_reason": qualification.btts_reason,
             },
+            "qualification": {
+                "over25_qualified": qualification.over25_qualified,
+                "over25_reason": qualification.over25_reason,
+                "btts_qualified": qualification.btts_qualified,
+                "btts_reason": qualification.btts_reason,
+            },
+        }
+
+    def calculate_aggregate_stats(
+        self,
+        home_team: str,
+        away_team: str,
+        matches: List[Dict],
+        h2h_matches: List[Dict],
+        as_of_date: Optional[date] = None,
+        league: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Calculate aggregated stats for specific windows (Last 3 Home/Away, Last 5 Overall).
+        
+        Returns:
+            Dict structured by market (over25, btts, result) with specific window stats.
+        """
+        # 1. Get Team Matches
+        home_all = self._get_team_matches(home_team, matches, as_of_date, None) # Ignore league filter for form? Or keep it? Usually form is all comps or league specific. Let's start with all comps for sample size.
+        away_all = self._get_team_matches(away_team, matches, as_of_date, None)
+        
+        # 2. Get Slices
+        # Last 3 Venue Specific
+        home_home_3 = [m for m in home_all if m.get("home_team") == home_team][:3]
+        away_away_3 = [m for m in away_all if m.get("away_team") == away_team][:3]
+        
+        # Last 5 Overall
+        home_5 = home_all[:5]
+        away_5 = away_all[:5]
+        
+        # Last 5 H2H
+        h2h_5 = h2h_matches[:5]
+        
+        # 3. Calculate Stats per Market
+        
+        # Helper to calc %. Returns 0.0 if no matches.
+        def calc_pct(matches, predicate):
+            if not matches: return 0.0
+            count = sum(1 for m in matches if predicate(m))
+            return round((count / len(matches)) * 100, 1)
+
+        # Over 2.5
+        over25_stats = {
+            "home_last_3_home": calc_pct(home_home_3, self._is_over25),
+            "away_last_3_away": calc_pct(away_away_3, self._is_over25),
+            "home_last_5_overall": calc_pct(home_5, self._is_over25),
+            "away_last_5_overall": calc_pct(away_5, self._is_over25),
+            "h2h_last_5": calc_pct(h2h_5, self._is_over25),
+        }
+        
+        # BTTS
+        btts_stats = {
+            "home_last_3_home": calc_pct(home_home_3, self._is_btts),
+            "away_last_3_away": calc_pct(away_away_3, self._is_btts),
+            "home_last_5_overall": calc_pct(home_5, self._is_btts),
+            "away_last_5_overall": calc_pct(away_5, self._is_btts),
+            "h2h_last_5": calc_pct(h2h_5, self._is_btts),
+        }
+        
+        # Result (Win %)
+        # For Home Team: Win %
+        # For Away Team: Win %
+        
+        def is_win(m, team):
+            if m.get("home_team") == team and m.get("fthg") > m.get("ftag"): return True
+            if m.get("away_team") == team and m.get("ftag") > m.get("fthg"): return True
+            return False
+            
+        result_stats = {
+            "home_last_3_home": calc_pct(home_home_3, lambda m: is_win(m, home_team)),
+            "away_last_3_away": calc_pct(away_away_3, lambda m: is_win(m, away_team)),
+            "home_last_5_overall": calc_pct(home_5, lambda m: is_win(m, home_team)),
+            "away_last_5_overall": calc_pct(away_5, lambda m: is_win(m, away_team)),
+            "h2h_last_5": calc_pct(h2h_5, lambda m: is_win(m, home_team)), # H2H Win rate for HOME team
+        }
+        
+        return {
+            "over25": over25_stats,
+            "btts": btts_stats,
+            "result": result_stats
         }
     
     # ============== Team Match Retrieval ==============

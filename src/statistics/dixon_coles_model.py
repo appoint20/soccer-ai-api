@@ -297,3 +297,29 @@ class DixonColesModel(PoissonModel):
             "btts_prob": self.predict_btts_prob(home_team, away_team),
             "home_advantage": round(self.home_advantage, 2),
         }
+
+    def predict_match(self, home_team: str, away_team: str) -> Dict[str, float]:
+        """
+        Predict match outcomes for API response.
+        
+        Args:
+            home_team: Home team name
+            away_team: Away team name
+            
+        Returns:
+            Dict matching PoissonDistribution schema
+        """
+        home_xg, away_xg = self.get_expected_goals(home_team, away_team)
+        result_probs = self.predict_1x2(home_team, away_team)
+        over25 = self.predict_over25_prob(home_team, away_team)
+        btts = self.predict_btts_prob(home_team, away_team)
+        
+        return {
+            "home_win": result_probs["home_win"],
+            "draw": result_probs["draw"],
+            "away_win": result_probs["away_win"],
+            "over25": over25,
+            "btts": btts,
+            "expected_home_goals": home_xg,
+            "expected_away_goals": away_xg
+        }

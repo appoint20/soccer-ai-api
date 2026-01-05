@@ -146,6 +146,37 @@ class MatchAnalysis(BaseModel):
     # Team Stats (BTTS/Over25 qualification)
     team_stats: Optional[MatchTeamStats] = Field(None, description="BTTS/Over25 team stats")
 
+    # New fields
+    is_derby: bool = Field(False, description="Is derby match")
+    raw_predictions: Optional[Dict[str, Any]] = Field(None, description="Raw model outputs")
+    ai_insight: Optional[Dict[str, Any]] = Field(None, description="Gemini AI generated insight")
+
+
+class MarketStats(BaseModel):
+    """Detailed stats for a specific market (Over25, BTTS, Result)."""
+    home_last_3_home: float = 0.0
+    away_last_3_away: float = 0.0
+    home_last_5_overall: float = 0.0
+    away_last_5_overall: float = 0.0
+    h2h_last_5: float = 0.0
+    poisson_probability: float = 0.0
+    prediction: str = "N/A"
+    probability: float = 0.0
+
+
+class AggregateMatchAnalysis(BaseModel):
+    """Refactored match analysis with aggregated stats."""
+    match_id: Optional[str] = None
+    home_team: str
+    away_team: str
+    date: str
+    time: Optional[str] = None
+    league: str
+    odds: Optional[MatchOdds] = None
+    
+    analysis: Dict[str, MarketStats] # Keys: "over25", "btts", "result"
+    ai_insight: Optional[Dict[str, Any]] = None
+
 
 class MatchAnalysisDto(BaseModel):
     """Match analysis for API response (similar to MatchAnalysis but strictly typed)."""
@@ -161,6 +192,7 @@ class MatchAnalysisDto(BaseModel):
     team_stats: Optional[MatchTeamStats]
     h2h: Optional[MatchH2H]
     average: Optional[MatchAverage]
+    ai_insight: Optional[Dict[str, Any]]
 
 
 class AnalysisResponse(BaseModel):
@@ -178,7 +210,6 @@ class ComprehensiveMatchAnalysis(BaseModel):
     team_stats: Dict[str, Any] = Field(..., description="Home and away team stats")
     h2h: Dict[str, Any] = Field(..., description="Head-to-head statistics")
     predictions: Dict[str, Any] = Field(..., description="ML, Dixon-Coles, Monte Carlo, Ensemble")
-    reasons: Dict[str, List[str]] = Field(..., description="Human-readable reasons")
     confidence_summary: Dict[str, str] = Field(..., description="Confidence levels")
 
 
@@ -194,7 +225,7 @@ class AnalyzeMatchesResponse(BaseModel):
     """Response for /analyze/matches endpoint with pagination."""
     model_config = {"json_schema_extra": {"exclude_none": True}}
     
-    items: List[MatchAnalysis] = Field(..., description="Array of match analyses")
+    items: List[AggregateMatchAnalysis] = Field(..., description="Array of match analyses")
     total: int = Field(..., description="Total number of matches")
     offset: Optional[int] = Field(None, description="Pagination offset (only if provided)")
     limit: Optional[int] = Field(None, description="Pagination limit (only if provided)")
@@ -234,6 +265,8 @@ class GenerateTicketsResponse(BaseModel):
     date: str
     tickets: List[Ticket]
     total_tickets: int
+    offset: Optional[int] = None
+    limit: Optional[int] = None
     generated_at: str
 
 
@@ -354,23 +387,4 @@ class BacktestReportResponse(BaseModel):
     generated_at: str
 
 
-# ============== Weekly Tickets Schemas ==============
 
-
-class WeeklyTicket(BaseModel):
-    """Single ticket with selections."""
-    ticket_id: int
-    ticket_type: str = Field(..., description="mixed or goals_only")
-    selections: List[TicketSelection]
-    total_odds: float
-    expected_return: float = Field(..., description="Return if all correct (stake=10)")
-
-
-class WeeklyTicketsResponse(BaseModel):
-    """Weekly tickets response."""
-    week_start: str
-    week_end: str
-    mixed_tickets: List[WeeklyTicket] = Field(..., description="2 tickets with wins/draws")
-    goals_only_tickets: List[WeeklyTicket] = Field(..., description="3 tickets with over25/btts only")
-    total_tickets: int = 5
-    generated_at: str
