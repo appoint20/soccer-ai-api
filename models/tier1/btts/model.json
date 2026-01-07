@@ -2,14 +2,14 @@
   "model_name": "btts",
   "model_type": "lightgbm",
   "version": "1.0.0",
-  "training_date": "2025-12-31T22:17:04.416412",
+  "training_date": "2026-01-06T09:37:26.525142",
   "is_trained": true,
   "n_features": 67,
   "metadata": {
     "model_name": "btts",
     "model_type": "lightgbm",
     "version": "1.0.0",
-    "created_at": "2025-12-31T22:17:03.946080",
+    "created_at": "2026-01-06T09:37:26.378522",
     "hyperparameters": {
       "n_estimators": 150,
       "num_leaves": 31,
@@ -28,7 +28,7 @@
       "verbose": -1
     },
     "n_features": 67,
-    "training_date": "2025-12-31T22:17:04.416412",
+    "training_date": "2026-01-06T09:37:26.525142",
     "training_samples": 3674
   }
 }

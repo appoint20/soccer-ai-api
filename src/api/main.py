@@ -16,7 +16,7 @@ from src.api.schemas import (
     ModelsInfoResponse,
     ErrorResponse,
 )
-from src.api.routers import analysis, models, leagues, backtest
+from src.api.routers import analysis, tickets, models, leagues, backtest
 from src.utils.logger import get_logger
 from src.api.dependencies import ServiceContainer
 
@@ -77,6 +77,28 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Could not sanitize data files: {e}")
     
+    # Run data health check
+    try:
+        from src.domain.services.data_health_service import DataHealthService
+        from src.domain.services.upcoming_match_service import SUPPORTED_LEAGUES
+        
+        health_service = DataHealthService()
+        health_report = health_service.validate_on_startup(
+            historical_matches=ServiceContainer.historical_matches,
+            supported_leagues=SUPPORTED_LEAGUES,
+        )
+        if not health_report.is_healthy:
+            logger.warning(f"Data health issues: {health_report.warnings}")
+    except Exception as e:
+        logger.warning(f"Could not run data health check: {e}")
+    
+    # Set historical matches for V2 router
+    try:
+        from src.api.routers.analyze_v2 import set_historical_matches
+        set_historical_matches(ServiceContainer.historical_matches)
+    except Exception as e:
+        logger.warning(f"Could not set historical matches for V2: {e}")
+    
     # Startup complete
     logger.info("Startup complete")
     
@@ -131,6 +153,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(analysis.router, tags=["Analysis"])
+app.include_router(tickets.router, tags=["Tickets"])
 app.include_router(models.router, prefix="/models", tags=["Models"])
 app.include_router(leagues.router, tags=["System"])
 app.include_router(backtest.router, prefix="/backtest", tags=["Backtest"])

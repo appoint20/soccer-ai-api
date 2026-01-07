@@ -137,3 +137,138 @@ def get_backtest_service() -> BacktestService:
     if not ServiceContainer.backtest_service:
         return BacktestService()
     return ServiceContainer.backtest_service
+
+
+# ============== Clean Architecture Dependencies ==============
+
+# Lazy-loaded instances (initialized once, thread-safe via GIL)
+_upcoming_repository = None
+_historical_repository = None
+_match_analyzer = None
+_analyze_use_case = None
+
+
+def get_analyze_matches_use_case():
+    """
+    Factory for AnalyzeMatchesUseCase with all dependencies injected.
+    
+    Uses proper dependency injection - no global mutable state in router.
+    """
+    global _upcoming_repository, _historical_repository, _match_analyzer, _analyze_use_case
+    
+    if _analyze_use_case is not None:
+        return _analyze_use_case
+    
+    # Import here to avoid circular imports
+    from src.infrastructure.repositories.match_repository import (
+        UpcomingMatchRepository,
+        HistoricalMatchRepository,
+        LEAGUE_NAMES,
+    )
+    from src.application.use_cases.analyze_matches import (
+        AnalyzeMatchesUseCase,
+        MatchAnalyzer,
+    )
+    from src.domain.services.calculators.team_form_calculator import TeamFormCalculator
+    from src.domain.services.calculators.h2h_stats_calculator import H2HStatsCalculator
+    from src.domain.services.calculators.poisson_goal_calculator import PoissonGoalCalculator
+    from src.domain.services.calculators.monte_carlo_uncertainty_adjuster import MonteCarloUncertaintyAdjuster
+    from src.domain.services.calculators.match_confidence_calculator import MatchConfidenceCalculator
+    
+    # Create repositories
+    _upcoming_repository = UpcomingMatchRepository()
+    _historical_repository = HistoricalMatchRepository()
+    _historical_repository.set_matches(ServiceContainer.historical_matches)
+    
+    # Create calculators
+    form_calc = TeamFormCalculator()
+    h2h_calc = H2HStatsCalculator()
+    poisson_calc = PoissonGoalCalculator()
+    mc_adjuster = MonteCarloUncertaintyAdjuster()
+    confidence_calc = MatchConfidenceCalculator()
+    
+    # Create match analyzer
+    _match_analyzer = MatchAnalyzer(
+        form_calculator=form_calc,
+        h2h_calculator=h2h_calc,
+        poisson_calculator=poisson_calc,
+        monte_carlo_adjuster=mc_adjuster,
+        confidence_calculator=confidence_calc,
+        league_names=LEAGUE_NAMES,
+    )
+    
+    # Create AI analyzer adapter (real Gemini)
+    ai_analyzer = _create_ai_analyzer()
+    
+    # Create use case
+    _analyze_use_case = AnalyzeMatchesUseCase(
+        upcoming_repository=_upcoming_repository,
+        historical_repository=_historical_repository,
+        match_analyzer=_match_analyzer,
+        ai_analyzer=ai_analyzer,
+    )
+    
+    logger.info("Initialized AnalyzeMatchesUseCase with dependencies")
+    return _analyze_use_case
+
+
+def _create_ai_analyzer():
+    """Create AI analyzer adapter for use case."""
+    from src.domain.services.ai_analysis_service import AIAnalysisService
+    
+    class AIAnalyzerAdapter:
+        """Adapter between AIAnalysisService and use case interface."""
+        
+        def __init__(self):
+            self._service = AIAnalysisService()
+        
+        def enrich_batch(self, analyses):
+            """Enrich analyses with AI predictions."""
+            from collections import defaultdict
+            
+            # Group by league
+            by_league = defaultdict(list)
+            for analysis in analyses:
+                by_league[analysis.league].append(analysis)
+            
+            # Process each league
+            for league, league_analyses in by_league.items():
+                # Prepare data for AI
+                match_data = []
+                for a in league_analyses:
+                    match_data.append({
+                        "match_id": a.match_id,
+                        "home_team": a.home_team,
+                        "away_team": a.away_team,
+                        "home_last_5": a.home_last_5.to_dict(),
+                        "away_last_5": a.away_last_5.to_dict(),
+                        "h2h_last_5": a.h2h_stats.to_dict(),
+                        "poisson": a.poisson.to_dict(),
+                        "overall_confidence": a.overall_confidence,
+                    })
+                
+                try:
+                    # Call AI service
+                    ai_results = self._service.analyze_matches_batch(
+                        matches=match_data,
+                        league=league,
+                    )
+                    
+                    # Merge results back
+                    from src.application.use_cases.analyze_matches import AIAnalysis
+                    
+                    for analysis in league_analyses:
+                        if analysis.match_id in ai_results:
+                            ai_data = ai_results[analysis.match_id]
+                            analysis.ai_analysis = AIAnalysis(
+                                best_prediction=ai_data.best_prediction,
+                                reason=ai_data.reason,
+                                short_analysis=ai_data.short_analysis,
+                                confidence_level=ai_data.confidence_level,
+                            )
+                except Exception as e:
+                    logger.error(f"AI analysis failed for league {league}: {e}")
+            
+            return analyses
+    
+    return AIAnalyzerAdapter()

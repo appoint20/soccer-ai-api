@@ -387,4 +387,110 @@ class BacktestReportResponse(BaseModel):
     generated_at: str
 
 
+# ============== Analysis Schemas ==============
 
+class TeamFormStats(BaseModel):
+    """Team form statistics for a specific lookback window ."""
+    over_25_rate: float = Field(0.0, ge=0, le=1)
+    btts_rate: float = Field(0.0, ge=0, le=1)
+    win_rate: float = Field(0.0, ge=0, le=1)
+    lose_rate: float = Field(0.0, ge=0, le=1)
+    draw_rate: float = Field(0.0, ge=0, le=1)
+    goals_2_3_rate: float = Field(0.0, ge=0, le=1)
+    avg_goals_scored: float = Field(0.0, ge=0)
+    avg_goals_conceded: float = Field(0.0, ge=0)
+    sample_size: int = Field(0, ge=0)
+    effective_sample_size: float = Field(0.0, ge=0)
+
+
+class H2HStats(BaseModel):
+    """H2H statistics with reliability score ."""
+    over_25_rate: float = Field(0.0, ge=0, le=1)
+    btts_rate: float = Field(0.0, ge=0, le=1)
+    home_win_rate: float = Field(0.0, ge=0, le=1)
+    away_win_rate: float = Field(0.0, ge=0, le=1)
+    draw_rate: float = Field(0.0, ge=0, le=1)
+    goals_2_3_rate: float = Field(0.0, ge=0, le=1)
+    avg_total_goals: float = Field(0.0, ge=0)
+    total_matches: int = Field(0, ge=0)
+    h2h_reliability: float = Field(0.0, ge=0, le=1)
+
+
+class PoissonProbabilities(BaseModel):
+    """Poisson + Dixon-Coles probabilities ."""
+    expected_score: str = Field("", description="Formatted score e.g. '1.25 - 0.85'")
+    expected_home_goals: float = Field(0.0, ge=0)
+    expected_away_goals: float = Field(0.0, ge=0)
+    home_win: float = Field(0.0, ge=0, le=1)
+    draw: float = Field(0.0, ge=0, le=1)
+    away_win: float = Field(0.0, ge=0, le=1)
+    over_25: float = Field(0.0, ge=0, le=1)
+    under_25: float = Field(0.0, ge=0, le=1)
+    btts: float = Field(0.0, ge=0, le=1)
+    btts_no: float = Field(0.0, ge=0, le=1)
+    goals_2_3: float = Field(0.0, ge=0, le=1)
+
+
+class MonteCarloMarketResult(BaseModel):
+    """Monte Carlo result for a single market ."""
+    adjusted_probability: float = Field(0.0, ge=0, le=1)
+    confidence_lower: float = Field(0.0, ge=0, le=1)
+    confidence_upper: float = Field(0.0, ge=0, le=1)
+    streak_length: int = Field(0, ge=0)
+    regression_applied: bool = False
+
+
+class MonteCarloResults(BaseModel):
+    """Monte Carlo results for all markets ."""
+    over_25: MonteCarloMarketResult
+    btts: MonteCarloMarketResult
+    home_win: MonteCarloMarketResult
+    away_win: MonteCarloMarketResult
+    draw: MonteCarloMarketResult
+    goals_2_3: MonteCarloMarketResult
+
+
+class AIAnalysis(BaseModel):
+    """AI-generated analysis for a match."""
+    best_prediction: str = Field(..., description="Recommended bet: Over 2.5, BTTS Yes, Home Win, etc.")
+    reason: str = Field(..., description="2-3 sentences explaining why")
+    short_analysis: str = Field(..., description="3-5 sentences match outlook")
+    confidence_level: str = Field(..., description="HIGH, MEDIUM, or LOW")
+
+
+class MatchAnalysis(BaseModel):
+    """Complete analysis for a single match."""
+    match_id: str
+    home_team: str
+    away_team: str
+    date: str
+    time: Optional[str] = None
+    league: str  # Full league name
+    
+    # Team Form Stats
+    home_last_5: TeamFormStats
+    away_last_5: TeamFormStats
+    home_last_3_home: TeamFormStats
+    away_last_3_away: TeamFormStats
+    
+    # H2H
+    h2h_last_5: H2HStats
+    
+    # Probabilities
+    poisson: PoissonProbabilities
+    monte_carlo: MonteCarloResults
+    
+    # Overall confidence (0-100) for AI sorting
+    overall_confidence: int = Field(0, ge=0, le=100)
+    
+    # AI Analysis (optional - populated by AI service)
+    ai_analysis: Optional[AIAnalysis] = None
+
+
+class AnalyzeResponse(BaseModel):
+    """Paginated response for analysis."""
+    items: List[MatchAnalysis]
+    total: int
+    page: int
+    limit: int
+    generated_at: str
