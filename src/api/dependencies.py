@@ -212,6 +212,14 @@ def get_analyze_matches_use_case():
     return _analyze_use_case
 
 
+def get_match_analyzer():
+    """Get the initialized MatchAnalyzer instance."""
+    # Ensure initialized
+    if _match_analyzer is None:
+        get_analyze_matches_use_case()
+    return _match_analyzer
+
+
 def _create_ai_analyzer():
     """Create AI analyzer adapter for use case."""
     from src.domain.services.ai_analysis_service import AIAnalysisService
@@ -222,8 +230,14 @@ def _create_ai_analyzer():
         def __init__(self):
             self._service = AIAnalysisService()
         
-        def enrich_batch(self, analyses):
-            """Enrich analyses with AI predictions."""
+        def enrich_batch(self, analyses, date: str = None, refresh: bool = False):
+            """Enrich analyses with AI predictions.
+            
+            Args:
+                analyses: List of SingleMatchAnalysis objects
+                date: Date string for caching (YYYY-MM-DD)
+                refresh: Force refresh from AI (bypass cache)
+            """
             from collections import defaultdict
             
             # Group by league
@@ -240,6 +254,7 @@ def _create_ai_analyzer():
                         "match_id": a.match_id,
                         "home_team": a.home_team,
                         "away_team": a.away_team,
+                        "date": a.date,
                         "home_last_5": a.home_last_5.to_dict(),
                         "away_last_5": a.away_last_5.to_dict(),
                         "h2h_last_5": a.h2h_stats.to_dict(),
@@ -248,10 +263,12 @@ def _create_ai_analyzer():
                     })
                 
                 try:
-                    # Call AI service
+                    # Call AI service with caching support
                     ai_results = self._service.analyze_matches_batch(
                         matches=match_data,
                         league=league,
+                        date=date,
+                        refresh=refresh,
                     )
                     
                     # Merge results back

@@ -441,13 +441,13 @@ class MonteCarloMarketResult(BaseModel):
 
 
 class MonteCarloResults(BaseModel):
-    """Monte Carlo results for all markets ."""
-    over_25: MonteCarloMarketResult
-    btts: MonteCarloMarketResult
-    home_win: MonteCarloMarketResult
-    away_win: MonteCarloMarketResult
-    draw: MonteCarloMarketResult
-    goals_2_3: MonteCarloMarketResult
+    """Monte Carlo results - flat probability format."""
+    over_25_probability: float = Field(0.0, ge=0, le=1)
+    btts_probability: float = Field(0.0, ge=0, le=1)
+    home_win_probability: float = Field(0.0, ge=0, le=1)
+    away_win_probability: float = Field(0.0, ge=0, le=1)
+    draw_probability: float = Field(0.0, ge=0, le=1)
+    goals_2_3_probability: float = Field(0.0, ge=0, le=1)
 
 
 class AIAnalysis(BaseModel):
@@ -456,22 +456,75 @@ class AIAnalysis(BaseModel):
     reason: str = Field(..., description="2-3 sentences explaining why")
     short_analysis: str = Field(..., description="3-5 sentences match outlook")
     confidence_level: str = Field(..., description="HIGH, MEDIUM, or LOW")
+    trap: Optional[str] = Field(None, description="Warning about potential traps")
+
+
+class VenueFormStats(BaseModel):
+    """Venue-specific form statistics (home or away)."""
+    form_string: str = ""
+    matches_played: int = 0
+    wins: int = 0
+    draws: int = 0
+    losses: int = 0
+    goals_scored: int = 0
+    goals_conceded: int = 0
+    points: int = 0
+    avg_goals_scored: float = 0.0
+    avg_goals_conceded: float = 0.0
+    over_25_rate: float = 0.0
+    btts_rate: float = 0.0
+    win_rate: float = 0.0
+    lose_rate: float = 0.0
+    draw_rate: float = 0.0
+    goals_2_3_rate: float = 0.0
+
+
+class TeamStats(BaseModel):
+    """Complete team statistics for a match."""
+    form: str = ""  # e.g., "DWLDW"
+    form_points: int = 0
+    position: int = 0
+    points: int = 0
+    last_5_overall: TeamFormStats
+    venue_form: VenueFormStats
+
+
+class MatchAnalysisMarket(BaseModel):
+    """Single market analysis result."""
+    probability: float = 0.0
+    probability_pct: str = "0%"
+    confidence: str = "LOW"
+    verdict: str = "SKIP"
+
+
+class MatchAnalysisResult(BaseModel):
+    """Aggregated match analysis for all markets."""
+    over_25: MatchAnalysisMarket
+    btts: MatchAnalysisMarket
+    goals_2_3: MatchAnalysisMarket
+    home_win: MatchAnalysisMarket
+    away_win: MatchAnalysisMarket
+    draw: MatchAnalysisMarket
+    confidence_index: int = 0
 
 
 class MatchAnalysis(BaseModel):
-    """Complete analysis for a single match."""
+    """Complete analysis for a single match (flattened structure)."""
     match_id: str
     home_team: str
     away_team: str
     date: str
     time: Optional[str] = None
-    league: str  # Full league name
+    league: str
     
-    # Team Form Stats
-    home_last_5: TeamFormStats
-    away_last_5: TeamFormStats
-    home_last_3_home: TeamFormStats
-    away_last_3_away: TeamFormStats
+    # Enrichment (flattened)
+    matchday: int = 0
+    position_difference: int = 0
+    points_difference: int = 0
+    
+    # Team Stats
+    homeStats: TeamStats
+    awayStats: TeamStats
     
     # H2H
     h2h_last_5: H2HStats
@@ -480,11 +533,48 @@ class MatchAnalysis(BaseModel):
     poisson: PoissonProbabilities
     monte_carlo: MonteCarloResults
     
-    # Overall confidence (0-100) for AI sorting
+    # Overall confidence
     overall_confidence: int = Field(0, ge=0, le=100)
     
-    # AI Analysis (optional - populated by AI service)
+    # AI Analysis
     ai_analysis: Optional[AIAnalysis] = None
+    
+    # Aggregated Match Analysis (replaces aggregated_markets)
+    match_analysis: Optional[MatchAnalysisResult] = None
+
+
+# ============== Aggregated Markets Schemas (Chart-Ready) ==============
+
+class MarketSourceSchema(BaseModel):
+    """Individual source contribution to a market."""
+    source: str
+    probability: float
+    weight: float
+    contribution: float
+
+
+class AggregatedMarketSchema(BaseModel):
+    """Aggregated probability for a single betting market."""
+    market: str
+    probability: float
+    probability_pct: str
+    confidence: str  # HIGH, MEDIUM, LOW
+    verdict: str  # LIKELY, POSSIBLE, UNLIKELY, SKIP
+    sources: List[MarketSourceSchema]
+    source_variance: float
+
+
+class AggregatedMarketsSchema(BaseModel):
+    """Complete aggregation result for all markets (chart-ready)."""
+    over_25: AggregatedMarketSchema
+    btts: AggregatedMarketSchema
+    goals_2_3: AggregatedMarketSchema
+    home_win: AggregatedMarketSchema
+    away_win: AggregatedMarketSchema
+    draw: AggregatedMarketSchema
+    confidence_index: int
+    radar_chart_data: Optional[Dict[str, float]] = None
+    best_markets: Optional[List[str]] = None
 
 
 class AnalyzeResponse(BaseModel):

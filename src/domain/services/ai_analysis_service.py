@@ -21,45 +21,126 @@ class AIAnalysis:
     reason: str                # 2-3 sentences
     short_analysis: str        # 3-5 sentences  
     confidence_level: str      # "HIGH" | "MEDIUM" | "LOW"
+    trap: str = ""             # Warning about potential traps
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 
 # Prompt template for AI analysis (JSON output)
-AI_ANALYSIS_PROMPT = """You are a professional football match analyst.
+AI_ANALYSIS_PROMPT = """You are a professional football match analyst and betting risk assessor.
 
-TASK: Analyze each match and provide betting recommendations.
+IMPORTANT:
+- You MUST NOT invent, assume, or estimate any missing information.
+- You MUST ONLY use the data provided.
+- You MUST be conservative and risk-aware.
+- If signals conflict or confidence is low → SAY SO CLEARLY.
+- The user is staking real money. Any reckless or forced prediction is considered a failure.
 
-RULES:
-- Use ONLY the data provided
-- Be conservative - if signals conflict, say "NO BET"
-- Do NOT mention ML, Poisson, algorithms, or probabilities
-- Use football logic: form, quality, tactics, history
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRIMARY OBJECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-For EACH match, output a JSON object with:
-- "best_prediction": One of: "Over 2.5 Goals", "BTTS Yes", "Home Win", "Away Win", "Draw", "NO BET"
-- "reason": 2-3 sentences explaining WHY (football logic only)
-- "short_analysis": 3-5 sentences summarizing the match outlook
-- "confidence_level": "HIGH", "MEDIUM", or "LOW"
+For EACH match:
+1. Evaluate ALL provided data sources
+2. Identify the SINGLE BEST betting option (if any)
+3. Assign a confidence level: HIGH / MEDIUM / LOW / very low
+4. If NO bet is safe → take the best pick and add confidence level very low
+5. If you find any trap in data based on odds and calculated data add 1-2 line for that
 
-CONFIDENCE RULES:
-- HIGH: 3+ data sources agree, clear form advantage
-- MEDIUM: 2 sources agree, some uncertainty
-- LOW: Mixed signals but slight edge visible
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA TRUST HIERARCHY (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-OUTPUT FORMAT (JSON only, no markdown):
+You MUST respect this priority order when conflicts exist:
+
+1️⃣ team_stats  
+2️⃣ head-to-head (h2h)  
+3️⃣ poisson_distribution combined with dixon coles
+4️⃣ monte_carlo  
+5️⃣ aggregated match_analysis
+
+Lower priority data CANNOT override higher priority data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALLOWED MARKETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Choose ONLY ONE of:
+- Over 2.5 Goals (primary focus if possible chose this instead of wins or draw)
+- BTTS Yes (primary focus if possible chose this instead of wins or draw)
+- BTTS No
+- Home Win. (secondary chose)
+- Away Win
+- Draw
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DRAW SAFETY RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A DRAW may be recommended ONLY IF:
+- draw probability ≥ 29%
+- AND no strong favorite exists
+
+Otherwise → DO NOT recommend draw
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONFLICT HANDLING (VERY IMPORTANT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If models disagree:
+- Explain WHY they disagree
+- Identify which side is more trustworthy based on DATA TRUST HIERARCHY
+- Reduce confidence accordingly
+
+If confidence is LOW → explicitly warn about risk
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REASONING STYLE (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For each recommendation:
+- 2–4 short sentences
+- Football logic ONLY:
+  - scoring consistency
+  - defensive weakness
+  - historical matchup
+  - tactical balance
+
+❌ DO NOT mention:
+- poisson
+- simulations
+- probabilities
+- models
+- percentages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT (MANDATORY JSON)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Output valid JSON only (no markdown, no code blocks).
+For each match, use the match_id as the key:
+
 {
   "match_id_1": {
-    "best_prediction": "...",
-    "reason": "...",
-    "short_analysis": "...",
-    "confidence_level": "..."
+    "best_prediction": "Over 2.5 Goals" | "BTTS Yes" | "Home Win" | "Away Win" | "Draw",
+    "reason": "2-3 sentences explaining WHY using football logic",
+    "short_analysis": "3-5 sentences summarizing the match outlook",
+    "confidence_level": "HIGH" | "MEDIUM" | "LOW" | "VERY LOW",
+    "trap": "1-2 sentence warning if any trap detected, or empty string"
   },
   "match_id_2": { ... }
 }
 
-MATCH DATA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAIL-SAFE RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If the match is chaotic, contradictory, or marginal:
+→ Set best_prediction to "NO BET" with reason explaining why
+
+DO NOT force a prediction.
+Capital preservation is more important than action.
 """
 
 
@@ -84,7 +165,7 @@ class GeminiProvider(AIProvider):
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel("gemini-2.0-flash")
+                self.model = genai.GenerativeModel("gemini-2.5-pro")
                 self.logger.info("Gemini provider initialized")
             except Exception as e:
                 self.logger.error(f"Failed to initialize Gemini: {e}")
@@ -141,7 +222,10 @@ class AIAnalysisService:
     AI Analysis Service with configurable provider.
     
     Supports batch processing by league for token efficiency.
+    Caches responses by date to reduce API calls.
     """
+    
+    CACHE_DIR = "data/cache/ai_analysis"
     
     def __init__(self, provider: Optional[str] = None):
         """
@@ -159,11 +243,66 @@ class AIAnalysisService:
             self._provider = GeminiProvider()
         
         self.logger.info(f"AI Analysis Service using provider: {provider_name}")
+        
+        # Ensure cache directory exists
+        os.makedirs(self.CACHE_DIR, exist_ok=True)
+    
+    def _get_cache_path(self, date: str, league: str) -> str:
+        """Get cache file path for date and league."""
+        safe_league = league.replace(" ", "_").replace("/", "_").lower()
+        return f"{self.CACHE_DIR}/ai_{date}_{safe_league}.json"
+    
+    def _load_cache(self, date: str, league: str) -> Optional[Dict[str, AIAnalysis]]:
+        """Load cached AI analysis if exists."""
+        cache_path = self._get_cache_path(date, league)
+        
+        try:
+            if os.path.exists(cache_path):
+                with open(cache_path, 'r') as f:
+                    data = json.load(f)
+                
+                # Convert to AIAnalysis objects
+                result = {}
+                for match_id, item in data.items():
+                    result[match_id] = AIAnalysis(
+                        best_prediction=item.get("best_prediction", "NO BET"),
+                        reason=item.get("reason", ""),
+                        short_analysis=item.get("short_analysis", ""),
+                        confidence_level=item.get("confidence_level", "LOW"),
+                        trap=item.get("trap", ""),
+                    )
+                
+                self.logger.info(f"Loaded cached AI analysis for {date}/{league}: {len(result)} matches")
+                return result
+        except Exception as e:
+            self.logger.warning(f"Failed to load cache: {e}")
+        
+        return None
+    
+    def _save_cache(self, date: str, league: str, results: Dict[str, AIAnalysis]) -> None:
+        """Save AI analysis to cache."""
+        cache_path = self._get_cache_path(date, league)
+        
+        try:
+            # Convert to dict for JSON serialization
+            data = {
+                match_id: analysis.to_dict()
+                for match_id, analysis in results.items()
+            }
+            
+            with open(cache_path, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            self.logger.info(f"Saved AI analysis cache: {cache_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to save cache: {e}")
     
     def analyze_matches_batch(
         self,
         matches: List[Dict[str, Any]],
         league: str,
+        date: Optional[str] = None,
+        refresh: bool = False,
     ) -> Dict[str, AIAnalysis]:
         """
         Analyze a batch of matches (typically one league).
@@ -171,6 +310,8 @@ class AIAnalysisService:
         Args:
             matches: List of match analysis dicts with stats
             league: League name for logging
+            date: Date string for caching (YYYY-MM-DD)
+            refresh: Force refresh from AI (bypass cache)
             
         Returns:
             Dict mapping match_id to AIAnalysis
@@ -178,7 +319,30 @@ class AIAnalysisService:
         if not matches:
             return {}
         
-        self.logger.info(f"Analyzing {len(matches)} matches for {league}")
+        # Extract date from first match if not provided
+        if not date and matches:
+            date = matches[0].get("date", "")
+        
+        # Try cache first (unless refresh requested)
+        if date and not refresh:
+            cached = self._load_cache(date, league)
+            if cached:
+                # Check if all matches are in cache
+                match_ids = {m.get("match_id") for m in matches}
+                cached_ids = set(cached.keys())
+                
+                if match_ids.issubset(cached_ids):
+                    self.logger.info(f"Using cached AI analysis for {league}")
+                    return {mid: cached[mid] for mid in match_ids if mid in cached}
+                else:
+                    missing = match_ids - cached_ids
+                    self.logger.info(f"Cache miss for {league}: {len(missing)} matches missing from cache")
+            else:
+                self.logger.info(f"No cache found for {date}/{league}")
+        elif refresh:
+            self.logger.info("Refresh requested: bypassing cache")
+        else:
+            self.logger.warning("No date provided for caching")
         
         # Prepare compact data for prompt
         match_data = []
@@ -203,6 +367,10 @@ class AIAnalysisService:
             
             # Parse JSON
             result = self._parse_response(response_text, [m["match_id"] for m in match_data])
+            
+            # Save to cache
+            if date and result:
+                self._save_cache(date, league, result)
             
             self.logger.info(f"Successfully analyzed {len(result)} matches for {league}")
             return result
@@ -276,6 +444,7 @@ class AIAnalysisService:
                         reason=item.get("reason", ""),
                         short_analysis=item.get("short_analysis", ""),
                         confidence_level=item.get("confidence_level", "LOW"),
+                        trap=item.get("trap", ""),
                     )
             
         except json.JSONDecodeError as e:

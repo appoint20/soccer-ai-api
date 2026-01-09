@@ -1,0 +1,20 @@
+{
+  "2025-12-28_Milan_vs_Verona_I1": {
+    "best_prediction": "Over 2.5 Goals",
+    "reason": "Milan's high-powered offense is facing a Verona side whose recent away matches have all been high-scoring due to a vulnerable defense. Current team dynamics strongly suggest an open game with multiple goals, despite historically low-scoring encounters.",
+    "short_analysis": "Milan enters as the clear favorite, boasting a strong winning record and a potent attack. Verona's recent away form is defined by goals at both ends, with their defense consistently being breached. The clash between Milan's offensive strength and Verona's defensive fragility is the key factor pointing towards a high goal count.",
+    "confidence_level": "MEDIUM"
+  },
+  "2025-12-28_Cremonese_vs_Napoli_I1": {
+    "best_prediction": "BTTS No",
+    "reason": "Cremonese possesses a very weak attack, averaging well under a goal per game, while Napoli boasts a formidable and disciplined defense. The combination of Cremonese's offensive struggles and Napoli's defensive solidity makes it highly unlikely that both teams will score.",
+    "short_analysis": "This match pits a struggling Cremonese attack against one of the league's best defensive units in Napoli. Both teams' recent matches have been low-scoring affairs, and all available data points to that trend continuing. The primary certainty lies in the difficulty Cremonese will face in breaking down Napoli's backline.",
+    "confidence_level": "HIGH"
+  },
+  "2025-12-28_Bologna_vs_Sassuolo_I1": {
+    "best_prediction": "BTTS Yes",
+    "reason": "Both Bologna and Sassuolo are in poor form but consistently manage to both score and concede goals. This pattern is powerfully confirmed by their head-to-head history, where both teams have scored in all of their recent meetings.",
+    "short_analysis": "This is a clash between two evenly-matched teams who are struggling for wins but rarely fail to get on the scoresheet. The key statistical signature for both sides is their defensive vulnerability combined with a consistent, if not prolific, attack. Historical encounters strongly reinforce this pattern, making a game where both sides score a highly probable outcome.",
+    "confidence_level": "HIGH"
+  }
+}

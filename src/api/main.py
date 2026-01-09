@@ -155,7 +155,7 @@ app.add_middleware(
 app.include_router(analysis.router, tags=["Analysis"])
 app.include_router(tickets.router, tags=["Tickets"])
 app.include_router(models.router, prefix="/models", tags=["Models"])
-app.include_router(leagues.router, tags=["System"])
+app.include_router(leagues.router)
 app.include_router(backtest.router, prefix="/backtest", tags=["Backtest"])
 
 

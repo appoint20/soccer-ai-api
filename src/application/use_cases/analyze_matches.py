@@ -12,7 +12,7 @@ Single Responsibility: Orchestrate match analysis workflow.
 Dependencies are injected, making this fully testable.
 """
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional, Protocol
 
 from src.domain.entities.match import Match
@@ -38,6 +38,7 @@ class AnalyzeMatchesRequest:
     page: int = 1
     limit: int = 50
     include_ai: bool = True
+    refresh: bool = False  # Force refresh AI cache
 
 
 @dataclass
@@ -77,6 +78,12 @@ class SingleMatchAnalysis:
     
     # AI Analysis (optional)
     ai_analysis: Optional[AIAnalysis] = None
+    
+    # Aggregated Markets (chart-ready)
+    aggregated_markets: Optional[dict] = None
+    
+    # Enrichment Data (matchday, form, standings)
+    enrichment_data: Optional[dict] = None
 
 
 @dataclass
@@ -139,6 +146,7 @@ class MatchAnalyzer:
         self._mc_adjuster = monte_carlo_adjuster
         self._confidence_calc = confidence_calculator
         self._league_names = league_names
+        self.logger = get_logger("MatchAnalyzer")
     
     def analyze(
         self,
@@ -148,7 +156,10 @@ class MatchAnalyzer:
         """Analyze a single match with all calculators."""
         
         # Convert Match entities to dicts for calculators (temporary bridge)
-        hist_dicts = [self._match_to_dict(m) for m in historical_matches]
+        if historical_matches and isinstance(historical_matches[0], dict):
+            hist_dicts = historical_matches
+        else:
+            hist_dicts = [self._match_to_dict(m) for m in historical_matches]
         
         # 1. Team Form Stats
         home_last_5 = self._form_calc.calculate_form_stats(
@@ -156,6 +167,7 @@ class MatchAnalyzer:
             matches=hist_dicts,
             last_n=5,
             venue_filter=None,
+            as_of_date=match.match_date,
         )
         
         away_last_5 = self._form_calc.calculate_form_stats(
@@ -163,6 +175,7 @@ class MatchAnalyzer:
             matches=hist_dicts,
             last_n=5,
             venue_filter=None,
+            as_of_date=match.match_date,
         )
         
         home_last_3_home = self._form_calc.calculate_form_stats(
@@ -170,6 +183,7 @@ class MatchAnalyzer:
             matches=hist_dicts,
             last_n=3,
             venue_filter="home",
+            as_of_date=match.match_date,
         )
         
         away_last_3_away = self._form_calc.calculate_form_stats(
@@ -177,6 +191,7 @@ class MatchAnalyzer:
             matches=hist_dicts,
             last_n=3,
             venue_filter="away",
+            as_of_date=match.match_date,
         )
         
         # 2. H2H Stats
@@ -185,6 +200,7 @@ class MatchAnalyzer:
             away_team=match.away_team,
             matches=hist_dicts,
             last_n=5,
+            as_of_date=match.match_date,
         )
         
         # 3. Poisson Probabilities
@@ -202,6 +218,7 @@ class MatchAnalyzer:
             match.home_team,
             match.away_team,
             hist_dicts,
+            as_of_date=match.match_date,
         )
         
         mc_results = self._mc_adjuster.calculate_all_markets(
@@ -226,7 +243,22 @@ class MatchAnalyzer:
             league_code=match.league,
         )
         
-        # 6. Build result
+        # 6. Aggregate probabilities (chart-ready)
+        aggregated_markets = self._aggregate_probabilities(
+            home_form=home_last_5,
+            away_form=away_last_5,
+            h2h=h2h_stats,
+            poisson=poisson_probs,
+            mc=mc_results,
+        )
+        
+        # 7. Calculate enrichment data
+        enrichment_data = self._calculate_enrichment(
+            match=match,
+            historical_matches=historical_matches,
+        )
+        
+        # 8. Build result
         league_name = self._league_names.get(match.league, match.league)
         
         return SingleMatchAnalysis(
@@ -244,6 +276,8 @@ class MatchAnalyzer:
             poisson=poisson_probs,
             monte_carlo=mc_results,
             overall_confidence=overall_confidence,
+            aggregated_markets=aggregated_markets,
+            enrichment_data=enrichment_data,
         )
     
     def _match_to_dict(self, match: Match) -> dict:
@@ -262,6 +296,8 @@ class MatchAnalyzer:
             "match_date": match.match_date.isoformat() if match.match_date else None,
             "Div": match.league,
             "league": match.league,
+            "season": self._get_current_season(),
+            "Season": self._get_current_season(),
         }
     
     def _build_recent_outcomes(
@@ -270,6 +306,7 @@ class MatchAnalyzer:
         away_team: str,
         historical_matches: List[dict],
         last_n: int = 5,
+        as_of_date: Optional[date] = None,
     ) -> dict:
         """Build recent outcome lists for Monte Carlo adjustment."""
         home_lower = home_team.lower().strip()
@@ -282,6 +319,24 @@ class MatchAnalyzer:
             match_away = str(match.get("away_team", "")).lower().strip()
             
             if home_lower in [match_home, match_away] or away_lower in [match_home, match_away]:
+                if as_of_date:
+                    d_val = match.get("date") or match.get("match_date") or match.get("Date")
+                    if d_val:
+                        try:
+                            if isinstance(d_val, str):
+                                m_date = datetime.fromisoformat(d_val[:10]).date()
+                            elif isinstance(d_val, datetime):
+                                m_date = d_val.date()
+                            elif isinstance(d_val, date):
+                                m_date = d_val
+                            else:
+                                m_date = None
+                            
+                            if m_date and m_date >= as_of_date:
+                                continue
+                        except:
+                            pass
+
                 combined_matches.append(match)
         
         # Sort by date descending
@@ -313,6 +368,95 @@ class MatchAnalyzer:
             outcomes["goals_2_3"].append(total in [2, 3])
         
         return outcomes
+    
+    def _aggregate_probabilities(
+        self,
+        home_form: TeamFormStats,
+        away_form: TeamFormStats,
+        h2h: H2HStats,
+        poisson: PoissonProbabilities,
+        mc: MonteCarloResults,
+    ) -> dict:
+        """Aggregate probabilities from all sources into chart-ready format."""
+        from src.domain.aggregation import ProbabilityAggregator, SourceProbabilities
+        
+        sources = SourceProbabilities(
+            poisson_over_25=poisson.over_25,
+            poisson_btts=poisson.btts,
+            poisson_goals_2_3=poisson.goals_2_3,
+            poisson_home_win=poisson.home_win,
+            poisson_away_win=poisson.away_win,
+            poisson_draw=poisson.draw,
+            mc_over_25=mc.over_25.adjusted_probability,
+            mc_btts=mc.btts.adjusted_probability,
+            mc_goals_2_3=mc.goals_2_3.adjusted_probability,
+            mc_home_win=mc.home_win.adjusted_probability,
+            mc_away_win=mc.away_win.adjusted_probability,
+            mc_draw=mc.draw.adjusted_probability,
+            home_form_over_25=home_form.over_25_rate,
+            home_form_btts=home_form.btts_rate,
+            home_form_goals_2_3=home_form.goals_2_3_rate,
+            away_form_over_25=away_form.over_25_rate,
+            away_form_btts=away_form.btts_rate,
+            away_form_goals_2_3=away_form.goals_2_3_rate,
+            h2h_over_25=h2h.over_25_rate,
+            h2h_btts=h2h.btts_rate,
+            h2h_goals_2_3=h2h.goals_2_3_rate,
+            h2h_home_win=h2h.home_win_rate,
+            h2h_away_win=h2h.away_win_rate,
+            h2h_draw=h2h.draw_rate,
+            h2h_reliability=h2h.h2h_reliability,
+        )
+        
+        result = ProbabilityAggregator().aggregate(sources)
+        agg_dict = result.to_dict()
+        agg_dict["radar_chart_data"] = result.get_radar_chart_data()
+        agg_dict["best_markets"] = [m.market.value for m in result.get_best_markets(0.55)]
+        return agg_dict
+    
+    def _calculate_enrichment(
+        self,
+        match: Match,
+        historical_matches: List[Match],
+    ) -> dict:
+        """Calculate enrichment data (matchday, standings, form strings)."""
+        from src.domain.enrichment import MatchEnrichmentService
+        
+        # Load raw historical data from JSON storage (more reliable than entity conversion)
+        from src.data.storage.json_storage import JSONStorage
+        storage = JSONStorage()
+        history_dicts = storage.load("data/processed/matches.json") or []
+        
+        # Get current season
+        season = match.season if hasattr(match, 'season') and match.season else self._get_current_season()
+        
+        try:
+            service = MatchEnrichmentService()
+            result = service.enrich_match(
+                home_team=match.home_team,
+                away_team=match.away_team,
+                match_date=match.match_date,
+                league_code=match.league,
+                season=season,
+                historical_matches=history_dicts,
+            )
+            return result.to_dict()
+        except Exception as e:
+            self.logger.error(f"Enrichment failed: {e}")
+            return {}
+    
+    def _get_current_season(self) -> str:
+        """Get current season string in format matching data (e.g., 2024-25)."""
+        from datetime import date
+        today = date.today()
+        if today.month >= 8:
+            start_year = today.year
+            end_year = (today.year + 1) % 100  # Last 2 digits
+            return f"{start_year}-{end_year:02d}"
+        else:
+            start_year = today.year - 1
+            end_year = today.year % 100  # Last 2 digits
+            return f"{start_year}-{end_year:02d}"
 
 
 # ============== Use Case ==============
@@ -387,7 +531,11 @@ class AnalyzeMatchesUseCase:
         # 5. Enrich with AI if requested
         if request.include_ai and self._ai_analyzer:
             try:
-                analyses = self._ai_analyzer.enrich_batch(analyses)
+                analyses = self._ai_analyzer.enrich_batch(
+                    analyses,
+                    date=request.date,
+                    refresh=request.refresh,
+                )
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
                 # Continue without AI

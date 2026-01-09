@@ -1,0 +1,14 @@
+{
+  "2025-12-28_Sunderland_vs_Leeds_E0": {
+    "best_prediction": "BTTS Yes",
+    "reason": "Leeds' away games consistently feature goals from both sides due to their potent attack and tendency to concede. While Sunderland has struggled offensively, Leeds' defensive vulnerabilities present a clear opportunity for the home team to find the net.",
+    "short_analysis": "This match pits Sunderland's low-scoring approach against Leeds' high-octane, open style. Leeds' attack is formidable, but their perfect record of conceding in recent away games suggests Sunderland will get chances. The outcome hinges on whether Sunderland's weak attack can capitalize against a leaky away defence.",
+    "confidence_level": "MEDIUM"
+  },
+  "2025-12-28_Crystal Palace_vs_Tottenham_E0": {
+    "best_prediction": "BTTS No",
+    "reason": "Both teams have shown a recent pattern of games where at least one side fails to score, a trend strongly supported by their head-to-head history. Crystal Palace's attack has been struggling, and Tottenham's offense is not prolific enough to suggest a wide-open match.",
+    "short_analysis": "This fixture appears likely to be a cagey affair, despite Crystal Palace's defensive issues. Both teams have low rates of both-teams-to-score in their recent matches, and their historical meetings follow the same pattern. The most probable scenario is a low-scoring game where one team secures a clean sheet.",
+    "confidence_level": "MEDIUM"
+  }
+}
