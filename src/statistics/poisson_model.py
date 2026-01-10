@@ -147,6 +147,32 @@ class PoissonModel:
             f"avg_away={self.avg_away_goals:.2f}, teams={len(self.attack_strength)}"
         )
     
+    def _find_team_key(self, team_name: str) -> str:
+        """Find matching team key using fuzzy matching."""
+        # Exact match
+        if team_name in self.attack_strength:
+            return team_name
+        
+        # Normalize and try common variations
+        team_lower = team_name.lower().strip()
+        
+        for key in self.attack_strength.keys():
+            key_lower = key.lower().strip()
+            
+            # Case-insensitive exact match
+            if team_lower == key_lower:
+                return key
+            
+            # Substring match (e.g., "Man United" in "Manchester United")
+            if team_lower in key_lower or key_lower in team_lower:
+                return key
+            
+            # First word match (e.g., "Newcastle" matches "Newcastle United")
+            if team_lower.split()[0] == key_lower.split()[0]:
+                return key
+        
+        return team_name  # Return original if no match
+    
     def get_expected_goals(
         self,
         home_team: str,
@@ -162,11 +188,15 @@ class PoissonModel:
         Returns:
             Tuple of (home_xg, away_xg)
         """
+        # Use fuzzy matching to find team keys
+        home_key = self._find_team_key(home_team)
+        away_key = self._find_team_key(away_team)
+        
         # Get team strengths (default to average)
-        home_attack = self.attack_strength.get(home_team, 1.0)
-        home_defense = self.defense_strength.get(home_team, 1.0)
-        away_attack = self.attack_strength.get(away_team, 1.0)
-        away_defense = self.defense_strength.get(away_team, 1.0)
+        home_attack = self.attack_strength.get(home_key, 1.0)
+        home_defense = self.defense_strength.get(home_key, 1.0)
+        away_attack = self.attack_strength.get(away_key, 1.0)
+        away_defense = self.defense_strength.get(away_key, 1.0)
         
         # Expected goals = league_avg * attack_strength * opp_defense
         home_xg = self.avg_home_goals * home_attack * away_defense

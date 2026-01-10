@@ -174,37 +174,25 @@ class PoissonGoalCalculator:
         """
         league_avg_per_team = league_avg_goals / 2  # ~1.35 per team
         
-        # Home team attack strength
-        if home_stats.sample_size >= 3:
-            home_attack = home_stats.avg_goals_scored
-        else:
-            home_attack = league_avg_per_team
+        # Home team attack strength (assume sufficient sample)
+        home_attack = home_stats.avg_goals_scored if home_stats.avg_goals_scored > 0 else league_avg_per_team
         
         # Away team defense weakness
-        if away_stats.sample_size >= 3:
-            away_defense = away_stats.avg_goals_conceded
-        else:
-            away_defense = league_avg_per_team
+        away_defense = away_stats.avg_goals_conceded if away_stats.avg_goals_conceded > 0 else league_avg_per_team
         
         # Blend with league average (60% team, 40% league for stability)
-        blend_factor = min(1.0, home_stats.effective_sample_size / 5)
+        # Use fixed blend factor since sample_size removed
+        blend_factor = 0.8  # Assume good sample
         home_xg = (
             blend_factor * (home_attack + away_defense) / 2 +
             (1 - blend_factor) * league_avg_per_team
         ) * self.home_advantage
         
         # Away team
-        if away_stats.sample_size >= 3:
-            away_attack = away_stats.avg_goals_scored
-        else:
-            away_attack = league_avg_per_team
+        away_attack = away_stats.avg_goals_scored if away_stats.avg_goals_scored > 0 else league_avg_per_team
+        home_defense = home_stats.avg_goals_conceded if home_stats.avg_goals_conceded > 0 else league_avg_per_team
         
-        if home_stats.sample_size >= 3:
-            home_defense = home_stats.avg_goals_conceded
-        else:
-            home_defense = league_avg_per_team
-        
-        blend_factor_away = min(1.0, away_stats.effective_sample_size / 5)
+        blend_factor_away = 0.8  # Assume good sample
         away_xg = (
             blend_factor_away * (away_attack + home_defense) / 2 +
             (1 - blend_factor_away) * league_avg_per_team

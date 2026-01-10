@@ -1,0 +1,92 @@
+{
+  "date": "2026-01-02",
+  "league": "Championship",
+  "analyses": {
+    "2026-01-02_Blackburn_Rovers_Wrexham": {
+      "best_prediction": "BTTS Yes",
+      "reason": "Wrexham's away games are chaotic, as they score and concede at a very high rate. Blackburn possesses a solid defense, but Wrexham's potent attack and defensive frailties make it likely both teams will find the net.",
+      "short_analysis": "This match pits Blackburn's defensive stability against Wrexham's high-octane, high-risk style. Wrexham consistently scores over two goals per game on the road but also concedes just as many. Expect Wrexham's approach to force an open game where both sides have scoring opportunities.",
+      "confidence_level": "MEDIUM",
+      "trap": ""
+    },
+    "2026-01-02_Bristol_City_Portsmouth": {
+      "best_prediction": "BTTS No",
+      "reason": "Historically, this fixture has been one-sided, with Bristol City keeping clean sheets consistently against Portsmouth. Despite both teams' recent form suggesting goals, the head-to-head record indicates a tight defensive performance from the home side is likely.",
+      "short_analysis": "Recent form for both teams points towards goals, but the historical matchups tell a different story. Portsmouth struggles to score on the road, and the head-to-head history shows Bristol City has successfully nullified their attack in the past. This clash between recent trends and historical data makes the match difficult to predict.",
+      "confidence_level": "LOW",
+      "trap": "Recent form for both teams shows a high tendency for both teams to score, which is in direct conflict with a strong head-to-head history of clean sheets for the home side."
+    },
+    "2026-01-02_Charlton_Athletic_Coventry_City": {
+      "best_prediction": "Draw",
+      "reason": "Both teams are struggling to score, particularly Coventry who also maintain a very tight defense. With neither side showing significant attacking threat, they are likely to cancel each other out in a low-scoring stalemate.",
+      "short_analysis": "This matchup features two teams with limited firepower. Charlton has been inconsistent in front of goal at home, while Coventry is defensively organized but lacks a cutting edge in attack away from home. A tight, tactical battle with few clear-cut chances is the most probable outcome.",
+      "confidence_level": "MEDIUM",
+      "trap": ""
+    },
+    "2026-01-02_Derby_County_Middlesbrough": {
+      "best_prediction": "BTTS Yes",
+      "reason": "Derby's home matches have consistently seen both teams scoring due to their balanced attack and vulnerable defense. Middlesbrough also possesses enough attacking quality to exploit Derby's backline and find the net.",
+      "short_analysis": "Derby's recent home form is defined by an inability to keep clean sheets, though they usually score themselves. Middlesbrough is a capable side that scores consistently on their travels. This tactical balance strongly suggests that both teams will have opportunities to score during the match.",
+      "confidence_level": "MEDIUM",
+      "trap": ""
+    },
+    "2026-01-02_Hull_City_Stoke_City": {
+      "best_prediction": "Home Win",
+      "reason": "Hull City is a very strong home side with a powerful attack that scores nearly two goals per game. They face a Stoke City team that is exceptionally poor on the road and struggles immensely to score.",
+      "short_analysis": "This match presents a clear mismatch in form and quality. Hull's dominance at home, driven by their potent offense, is up against a Stoke side that has shown little to no attacking threat in away fixtures. All signs point towards a comfortable victory for the home team.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    },
+    "2026-01-02_Ipswich_Town_Oxford_United": {
+      "best_prediction": "Home Win",
+      "reason": "Ipswich Town boasts a strong home record, built on a solid defense and a consistent attack. They are facing an Oxford United side that is defensively frail and struggles to win games away from home.",
+      "short_analysis": "Ipswich appears to have a decisive advantage in this fixture. Their defensive solidity at home is a key factor, especially against an Oxford team that concedes frequently on their travels. Ipswich's ability to control the game at home should secure them the three points.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    },
+    "2026-01-02_Preston_North_End_Sheffield_Wednesday": {
+      "best_prediction": "Over 2.5 Goals",
+      "reason": "Sheffield Wednesday's away matches are consistently high-scoring affairs due to their extremely vulnerable defense and surprisingly capable attack. This pattern is strong enough to force an open game, even against a typically defensive Preston side.",
+      "short_analysis": "This is a fascinating clash of styles. Preston is organized and low-scoring at home, while every single one of Sheffield Wednesday's recent away games has been a goal-fest. The visitor's chaotic nature, conceding over 2.5 goals per game, is likely to dictate the tempo and lead to multiple goals.",
+      "confidence_level": "MEDIUM",
+      "trap": ""
+    },
+    "2026-01-02_Queens_Park_Rangers_Norwich_City": {
+      "best_prediction": "BTTS Yes",
+      "reason": "QPR's home games are remarkably open, with a perfect record of both scoring and conceding. Norwich City is a strong away side with a consistent goal threat, making it highly probable that both teams will score.",
+      "short_analysis": "Expect an entertaining match with goals at both ends. QPR's attacking philosophy at home leaves them defensively exposed, a weakness Norwich has the quality to exploit. Given that both teams are consistently involved in high-action games, a clean sheet for either side seems unlikely.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    },
+    "2026-01-02_Southampton_Millwall": {
+      "best_prediction": "BTTS Yes",
+      "reason": "Southampton's home games have consistently seen both teams score, as their potent attack is matched by a very leaky defense. While Millwall struggles to score away, Southampton's defensive fragility presents a clear opportunity for them to find the net.",
+      "short_analysis": "This is a clash between Southampton's incredibly porous defense and Millwall's anemic away attack. Southampton's record of conceding in every home game is a glaring weakness. Historical matchups also suggest Millwall can score against this opponent, making a goal for both sides a plausible outcome despite Millwall's poor form.",
+      "confidence_level": "LOW",
+      "trap": "Southampton's perfect 'BTTS Yes' record at home is tempting, but it clashes with Millwall's extremely low away goal average, creating a significant risk."
+    },
+    "2026-01-02_Swansea_City_West_Bromwich_Albion": {
+      "best_prediction": "Home Win",
+      "reason": "Swansea is a formidable team at home, with a strong winning record and a tight defense. They face a West Brom side that is winless and scores just 0.5 goals per game on their travels.",
+      "short_analysis": "The data points heavily towards a home victory. Swansea's defensive stability and consistent home performances are a stark contrast to West Brom's struggles on the road. The away team's complete lack of attacking threat and poor results make a Swansea win the most logical conclusion.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    },
+    "2026-01-02_Watford_Birmingham_City": {
+      "best_prediction": "Home Win",
+      "reason": "Watford is a dominant force at home, boasting a high win rate and a powerful attack. They host a Birmingham team that is winless away from home and has a defense that concedes nearly two goals per game.",
+      "short_analysis": "This appears to be a straightforward mismatch. Watford's excellent home form should overwhelm a Birmingham side that has been exceptionally poor on their travels all season. The combination of Watford's scoring prowess and Birmingham's defensive woes points to a clear home win.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    },
+    "2026-01-02_Sheffield_United_Leicester_City": {
+      "best_prediction": "Over 2.5 Goals",
+      "reason": "This match features two teams with extremely vulnerable defenses, both conceding over two goals per game in their recent fixtures. Both sides also possess potent attacks, creating the perfect recipe for a high-scoring encounter.",
+      "short_analysis": "Defense appears to be optional for both teams based on recent form. Every respective home and away match for these clubs has seen a high number of goals. With both teams consistently scoring and conceding multiple times per game, another open, high-scoring affair is highly anticipated.",
+      "confidence_level": "HIGH",
+      "trap": ""
+    }
+  },
+  "created_at": "2026-01-10T14:21:20.828234",
+  "match_count": 12
+}

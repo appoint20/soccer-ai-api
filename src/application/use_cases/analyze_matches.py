@@ -11,7 +11,7 @@ This use case orchestrates the match analysis workflow:
 Single Responsibility: Orchestrate match analysis workflow.
 Dependencies are injected, making this fully testable.
 """
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, date
 from typing import List, Optional, Protocol, Dict, Any
 
@@ -26,8 +26,6 @@ from src.domain.services.calculators.monte_carlo_uncertainty_adjuster import (
 from src.domain.services.calculators.match_confidence_calculator import MatchConfidenceCalculator
 from src.utils.logger import get_logger
 from src.api.schemas import MatchAnalysisResult
-# Use dict or Any for BacktestResult to avoid circular imports if needed, or strict typing if possible
-from src.api.schemas import BacktestReportResponse, MarketAccuracyReport
 
 logger = get_logger("AnalyzeMatchesUseCase")
 
@@ -48,7 +46,6 @@ class TeamStats:
     """Canonical team statistics (matches schema)."""
     last_5: TeamFormStats
     venue_last_3: Optional[TeamFormStats] = None
-    form: Optional[str] = None
     position: Optional[int] = None
     points: Optional[int] = None
     goals_scored: Optional[int] = None
@@ -73,8 +70,6 @@ class SingleMatchAnalysis:
     date: str
     time: Optional[str]
     league: str
-    
-    # Enrichment Flattened
     matchday: int
     position_difference: int
     points_difference: int
@@ -314,15 +309,14 @@ class MatchAnalyzer:
         
         # Update form in stats objects (Side Effect)
         if home_last_5: home_last_5.form = home_enrich.get("form", "")
-        if home_last_3: home_last_3.form = home_enrich.get("venue_form", {}).get("form", "")
-        
+        if home_last_3: home_last_3.form = home_enrich.get("venue_form", {}).get("form_string", "")
+
         if away_last_5: away_last_5.form = away_enrich.get("form", "")
-        if away_last_3: away_last_3.form = away_enrich.get("venue_form", {}).get("form", "")
+        if away_last_3: away_last_3.form = away_enrich.get("venue_form", {}).get("form_string", "")
 
         home_stats = TeamStats(
             last_5=home_last_5,
             venue_last_3=home_last_3,
-            form=None, # Deprecated/Moved to last_5
             position=home_enrich.get("position"),
             points=home_enrich.get("points"),
             goals_scored=home_goals.get("total_scored", 0),
@@ -332,7 +326,6 @@ class MatchAnalyzer:
         away_stats = TeamStats(
             last_5=away_last_5,
             venue_last_3=away_last_3,
-            form=None, # Deprecated/Moved to last_5
             position=away_enrich.get("position"),
             points=away_enrich.get("points"),
             goals_scored=away_goals.get("total_scored", 0),
@@ -567,16 +560,17 @@ class MatchAnalyzer:
 class AnalyzeMatchesUseCase:
     """
     Use Case: Analyze upcoming matches with statistical calculations.
-    
+
     Responsibilities:
     - Orchestrate match analysis workflow
     - Coordinate between repository and analyzer
     - Handle pagination
     - Enrich with AI analysis if requested
-    
+    - Verify AI predictions for past dates
+
     All dependencies are injected for testability.
     """
-    
+
     def __init__(
         self,
         upcoming_repository,  # IUpcomingMatchRepository
@@ -584,12 +578,14 @@ class AnalyzeMatchesUseCase:
         match_analyzer: MatchAnalyzer,
         ai_analyzer: Optional[IAIAnalyzer] = None,
         backtest_service: Optional[IBacktestService] = None,
+        ai_backtest_service = None,  # AIPredictionBacktestService
     ):
         self._upcoming_repo = upcoming_repository
         self._historical_repo = historical_repository
         self._match_analyzer = match_analyzer
         self._ai_analyzer = ai_analyzer
         self._backtest_service = backtest_service
+        self._ai_backtest_service = ai_backtest_service
     
     def execute(self, request: AnalyzeMatchesRequest) -> AnalyzeMatchesResult:
         """Execute the analyze matches use case."""
@@ -644,8 +640,41 @@ class AnalyzeMatchesUseCase:
                 )
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
-                
-        # 6. Calculate backtest stats (if service available)
+
+        # 6. Verify AI predictions for past dates
+        if self._ai_backtest_service and request.date:
+            from datetime import datetime as dt
+            is_past = request.date < dt.now().date()
+            logger.info(f"Backtest check: request.date={request.date}, today={dt.now().date()}, is_past={is_past}")
+
+            if is_past:
+                logger.info(f"Running AI prediction backtest for {request.date}")
+                ai_backtest_results = []
+
+                for analysis in analyses:
+                    if analysis.ai_analysis:
+                        # Handle both dict (from cache) and object
+                        best_pred = None
+                        if isinstance(analysis.ai_analysis, dict):
+                            best_pred = analysis.ai_analysis.get("best_prediction")
+                        else:
+                            best_pred = getattr(analysis.ai_analysis, "best_prediction", None)
+
+                        if best_pred:
+                            backtest_result = self._ai_backtest_service.verify_prediction(
+                                home_team=analysis.home_team,
+                                away_team=analysis.away_team,
+                                match_date=request.date,
+                                ai_best_prediction=best_pred,
+                            )
+
+                            if backtest_result:
+                                analysis.backtest_result = backtest_result
+                                ai_backtest_results.append(backtest_result)
+
+                logger.info(f"Backtested {len(ai_backtest_results)} AI predictions")
+
+        # 7. Calculate backtest stats (if service available)
         backtest_stats = {}
         if self._backtest_service:
             try:
@@ -653,6 +682,16 @@ class AnalyzeMatchesUseCase:
                 backtest_stats = self._backtest_service.calculate_stats(analyses)
             except Exception as e:
                 logger.error(f"Backtest calculation failed: {e}")
+
+        # Calculate AI backtest stats if we have results
+        if self._ai_backtest_service and request.date:
+            from datetime import datetime as dt
+            is_past = request.date < dt.now().date()
+
+            if is_past:
+                ai_results = [a.backtest_result for a in analyses if a.backtest_result]
+                if ai_results:
+                    backtest_stats = self._ai_backtest_service.calculate_daily_stats(ai_results)
 
         return AnalyzeMatchesResult(
             analyses=analyses,

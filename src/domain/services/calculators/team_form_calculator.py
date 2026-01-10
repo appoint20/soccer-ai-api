@@ -22,8 +22,6 @@ class TeamFormStats:
     goals_2_3_rate: float = 0.0
     avg_goals_scored: float = 0.0
     avg_goals_conceded: float = 0.0
-    sample_size: int = 0
-    effective_sample_size: float = 0.0  # Weighted sample size
     form: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
@@ -37,8 +35,6 @@ class TeamFormStats:
             "goals_2_3_rate": round(self.goals_2_3_rate, 3),
             "avg_goals_scored": round(self.avg_goals_scored, 2),
             "avg_goals_conceded": round(self.avg_goals_conceded, 2),
-            "sample_size": self.sample_size,
-            "effective_sample_size": round(self.effective_sample_size, 2),
             "form": self.form,
         }
 
@@ -51,16 +47,18 @@ class TeamFormCalculator:
     weight = decay ^ match_age_index (most recent = index 0)
     """
     
-    def __init__(self, default_decay: float = 0.85):
+    def __init__(self, default_decay: float = 0.85, team_matcher=None):
         """
         Initialize calculator.
         
         Args:
             default_decay: Decay factor for exponential weighting (0-1).
                           0.85 means each older match has 85% the weight of previous.
+            team_matcher: Optional TeamNameMatcher for fuzzy team name matching.
         """
         self.logger = get_logger("TeamFormCalculator")
         self.default_decay = default_decay
+        self._team_matcher = team_matcher
     
     def calculate_form_stats(
         self,
@@ -103,7 +101,6 @@ class TeamFormCalculator:
         # Calculate weights
         weights = [decay ** i for i in range(sample_size)]
         total_weight = sum(weights)
-        effective_sample_size = total_weight
         
         # Initialize accumulators
         over_25_weighted = 0.0
@@ -131,6 +128,11 @@ class TeamFormCalculator:
             goals_scored_weighted += weight * stats["goals_scored"]
             goals_conceded_weighted += weight * stats["goals_conceded"]
         
+        # Generate form string (e.g., "WWLDW") from most recent matches
+        form_string = "".join(
+            self._extract_match_stats(m, team)["result"] for m in recent_matches
+        )
+        
         # Normalize by total weight
         return TeamFormStats(
             over_25_rate=over_25_weighted / total_weight,
@@ -141,8 +143,7 @@ class TeamFormCalculator:
             goals_2_3_rate=goals_2_3_weighted / total_weight,
             avg_goals_scored=goals_scored_weighted / total_weight,
             avg_goals_conceded=goals_conceded_weighted / total_weight,
-            sample_size=sample_size,
-            effective_sample_size=effective_sample_size,
+            form=form_string,
         )
     
     def _get_team_matches(
@@ -153,16 +154,20 @@ class TeamFormCalculator:
         as_of_date: Optional[date],
     ) -> List[Dict[str, Any]]:
         """Filter matches for team, venue, and date, then sort by recency."""
-        team_lower = team.lower().strip()
         filtered = []
         
         for match in matches:
             # Check team participation
-            home_team = str(match.get("HomeTeam", match.get("home_team", ""))).lower().strip()
-            away_team = str(match.get("AwayTeam", match.get("away_team", ""))).lower().strip()
+            home_team = str(match.get("HomeTeam", match.get("home_team", ""))).strip()
+            away_team = str(match.get("AwayTeam", match.get("away_team", ""))).strip()
             
-            is_home = home_team == team_lower
-            is_away = away_team == team_lower
+            # Use fuzzy matching if available, otherwise exact match
+            if self._team_matcher:
+                is_home = self._team_matcher.matches(team, home_team)
+                is_away = self._team_matcher.matches(team, away_team)
+            else:
+                is_home = home_team.lower() == team.lower()
+                is_away = away_team.lower() == team.lower()
             
             if not is_home and not is_away:
                 continue

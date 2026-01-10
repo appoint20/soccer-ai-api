@@ -28,48 +28,78 @@ def get_ticket_service() -> TicketService:
 
 @router.get("/generate", response_model=Dict[str, Any])
 async def generate_tickets(
-    date: str = Query(..., description="Date of matches (YYYY-MM-DD)"),
-    limit: int = Query(20, ge=1, le=50, description="Max matches to analyze"),
+    date: str = Query(..., description="Start date for ticket generation (YYYY-MM-DD)"),
+    days: int = Query(3, ge=1, le=7, description="Number of days to include (e.g., 3 for Fri-Sun)"),
+    limit_per_day: int = Query(20, ge=1, le=50, description="Max matches per day"),
     use_case: AnalyzeMatchesUseCase = Depends(get_analyze_matches_use_case),
     ticket_service: TicketService = Depends(get_ticket_service),
 ):
     """
-    Generate betting tickets using the analysis pipeline and AI.
-    
+    Generate betting tickets for multiple days (e.g., weekend: Fri-Sun-Mon).
+
+    If it's Friday, gathers matches for Fri, Sat, Sun, and optionally Mon.
+    Analyzes all matches from supported leagues' current matchday and generates
+    1-5 tickets, each containing 3 matches with high confidence.
+
     Uses AnalyzeMatchesUseCase for:
     - Poisson probabilities
     - Form analysis
-    - H2H stats  
+    - H2H stats
     - AI insights from Gemini 2.5 Pro
     """
+    from datetime import datetime, timedelta
     from src.domain.constants import GEMINI_TICKET_PROMPT
-    
-    # 1. Run analysis using the use case
-    request = AnalyzeMatchesRequest(
-        date=date,
-        page=1,
-        limit=limit,
-        include_ai=True,
-    )
-    
+
+    # Parse start date
     try:
-        result = use_case.execute(request)
-    except Exception as e:
-        logger.error(f"Analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
+        start_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    # Gather analyses for multiple days
+    all_analyses = []
+    dates_analyzed = []
+
+    for day_offset in range(days):
+        current_date = start_date + timedelta(days=day_offset)
+        date_str = current_date.strftime("%Y-%m-%d")
+        dates_analyzed.append(date_str)
+
+        logger.info(f"Analyzing matches for {date_str}")
+
+        # Run analysis for this day
+        request = AnalyzeMatchesRequest(
+            date=current_date,
+            page=1,
+            limit=limit_per_day,
+            refresh=False,  # Use cached AI analysis if available
+        )
+
+        try:
+            result = use_case.execute(request)
+            if result.analyses:
+                all_analyses.extend(result.analyses)
+                logger.info(f"Found {len(result.analyses)} matches for {date_str}")
+        except Exception as e:
+            logger.error(f"Analysis failed for {date_str}: {e}")
+            # Continue with other days even if one fails
+            continue
     
-    if not result.analyses:
+    if not all_analyses:
         return {
-            "date": date,
+            "start_date": date,
+            "days_analyzed": dates_analyzed,
             "total_matches": 0,
-            "error": "No matches found for date",
+            "error": "No matches found for the specified date range",
             "tickets": [],
         }
     
+    logger.info(f"Total matches gathered across {len(dates_analyzed)} days: {len(all_analyses)}")
+
     # 2. Convert analyses to streamlined dict format for ticket service
     # Only include data the Gemini prompt actually uses
     analyses_for_tickets = []
-    for analysis in result.analyses:
+    for analysis in all_analyses:
         match_data = {
             "match_id": analysis.match_id,
             "home_team": analysis.home_team,
@@ -78,29 +108,31 @@ async def generate_tickets(
             "time": analysis.time,
             "league": analysis.league,
             # Poisson probabilities - primary data source for predictions
-            "poisson": analysis.poisson.to_dict(),
+            "poisson": analysis.poisson,
             # Monte Carlo adjusted probabilities
-            "monte_carlo": {
-                "over_25": analysis.monte_carlo.over_25.to_dict(),
-                "btts": analysis.monte_carlo.btts.to_dict(),
-                "home_win": analysis.monte_carlo.home_win.to_dict(),
-                "away_win": analysis.monte_carlo.away_win.to_dict(),
-                "draw": analysis.monte_carlo.draw.to_dict(),
-            },
+            "monte_carlo": analysis.monte_carlo,
             # Form data for context
-            "home_form": analysis.home_last_5.to_dict(),
-            "away_form": analysis.away_last_5.to_dict(),
+            "homeStats": analysis.homeStats,
+            "awayStats": analysis.awayStats,
             # H2H for historical context
-            "h2h": analysis.h2h_stats.to_dict(),
+            "h2h_last_5": analysis.h2h_last_5,
         }
         
         # Include AI analysis if available - this is critical for ticket selection
         if analysis.ai_analysis:
-            match_data["ai_analysis"] = {
-                "best_prediction": analysis.ai_analysis.best_prediction,
-                "reason": analysis.ai_analysis.reason,
-                "confidence_level": analysis.ai_analysis.confidence_level,
-            }
+            # Handle both dict (from cache) and object
+            if isinstance(analysis.ai_analysis, dict):
+                match_data["ai_analysis"] = {
+                    "best_prediction": analysis.ai_analysis.get("best_prediction"),
+                    "reason": analysis.ai_analysis.get("reason"),
+                    "confidence_level": analysis.ai_analysis.get("confidence_level"),
+                }
+            else:
+                match_data["ai_analysis"] = {
+                    "best_prediction": getattr(analysis.ai_analysis, "best_prediction", None),
+                    "reason": getattr(analysis.ai_analysis, "reason", None),
+                    "confidence_level": getattr(analysis.ai_analysis, "confidence_level", None),
+                }
         
         # Include odds if available - critical for ticket value assessment
         if analysis.odds:
@@ -115,8 +147,9 @@ async def generate_tickets(
     )
     
     return {
-        "date": date,
+        "start_date": date,
+        "days_analyzed": dates_analyzed,
         "total_matches": len(analyses_for_tickets),
-        "generated_at": result.generated_at,
+        "generated_at": datetime.now().isoformat(),
         **tickets_result,
     }

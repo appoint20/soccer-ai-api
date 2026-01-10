@@ -399,8 +399,6 @@ class TeamFormStats(BaseModel):
     goals_2_3_rate: float = Field(0.0, ge=0, le=1)
     avg_goals_scored: float = Field(0.0, ge=0)
     avg_goals_conceded: float = Field(0.0, ge=0)
-    sample_size: int = Field(0, ge=0)
-    effective_sample_size: float = Field(0.0, ge=0)
     form: Optional[str] = None
 
 
@@ -503,8 +501,7 @@ class MatchAnalysisResult(BaseModel):
 class TeamStats(BaseModel):
     """Canonical team statistics."""
     last_5: Optional['TeamFormStats'] = None
-    venue_last_3: Optional['TeamFormStats'] = None # Renamed from home_last_3/away_last_3
-    form: Optional[str] = None
+    venue_last_3: Optional['TeamFormStats'] = None
     position: Optional[int] = None
     points: Optional[int] = None
     goals_scored: Optional[int] = None

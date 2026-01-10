@@ -1,0 +1,15 @@
+{
+  "date": "2026-01-02",
+  "league": "La Liga",
+  "analyses": {
+    "2026-01-02_Rayo_Vallecano_Getafe": {
+      "best_prediction": "BTTS No",
+      "reason": "Both teams have demonstrated extreme difficulty in scoring goals in their recent matches, each averaging well under one goal per game. Rayo Vallecano's attack has been particularly ineffective at home, and Getafe's away scoring record is equally poor. With both sides struggling so severely in the final third, it is highly unlikely that both will find the back of the net.",
+      "short_analysis": "This matchup features two teams in dreadful form, especially in an attacking sense. Rayo has a 0% home win rate and Getafe struggles significantly on the road, with both sides finding goals nearly impossible to come by. This points towards a tight, low-scoring affair where clear-cut chances will be rare. The most likely outcome is a game decided by a single goal, if any, making it improbable for both teams to score.",
+      "confidence_level": "MEDIUM",
+      "trap": "Statistical models indicate a higher chance for a home win and for both teams to score, which contradicts the hard data from recent matches. This is a potential trap as both teams have been exceptionally poor offensively in reality."
+    }
+  },
+  "created_at": "2026-01-10T14:19:54.656670",
+  "match_count": 1
+}

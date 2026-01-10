@@ -188,8 +188,9 @@ def get_analyze_matches_use_case():
     _historical_repository = HistoricalMatchRepository()
     _historical_repository.set_matches(ServiceContainer.historical_matches)
     
-    # Create calculators
-    form_calc = TeamFormCalculator()
+    # Create calculators (inject TeamNameMatcher for fuzzy matching)
+    team_matcher = TeamNameMatcher()
+    form_calc = TeamFormCalculator(team_matcher=team_matcher)
     h2h_calc = H2HStatsCalculator()
     poisson_calc = PoissonGoalCalculator()
     mc_adjuster = MonteCarloUncertaintyAdjuster()
@@ -207,7 +208,11 @@ def get_analyze_matches_use_case():
     
     # Create AI analyzer adapter (real Gemini)
     ai_analyzer = _create_ai_analyzer()
-    
+
+    # Create AI backtest service
+    from src.domain.services.ai_prediction_backtest_service import AIPredictionBacktestService
+    ai_backtest_service = AIPredictionBacktestService(_historical_repository)
+
     # Create use case
     _analyze_use_case = AnalyzeMatchesUseCase(
         upcoming_repository=_upcoming_repository,
@@ -215,6 +220,7 @@ def get_analyze_matches_use_case():
         match_analyzer=_match_analyzer,
         ai_analyzer=ai_analyzer,
         backtest_service=_create_backtest_adapter(backtest_uc),
+        ai_backtest_service=ai_backtest_service,
     )
     
     logger.info("Initialized AnalyzeMatchesUseCase with dependencies")
@@ -246,6 +252,7 @@ def _create_ai_analyzer():
                 analyses: List of SingleMatchAnalysis objects
                 date: Date string for caching (YYYY-MM-DD)
                 refresh: Force refresh from AI (bypass cache)
+            """
             from collections import defaultdict
             from datetime import datetime
             
@@ -258,14 +265,19 @@ def _create_ai_analyzer():
             enriched_analyses = []
             for league, league_analyses in by_league.items():
                 start = datetime.now()
-                enriched = self._service.enrich_matches_with_ai(
+                result_map = self._service.analyze_matches_batch(
                     analyses=league_analyses,
-                    league_name=league,
+                    league=league,
                     date=date,
-                    refresh_cache=refresh
+                    refresh=refresh
                 )
-                enriched_analyses.extend(enriched)
-                logger.debug(f"AI enriched {len(enriched)} matches for {league} in {datetime.now() - start}")
+                # result_map is {match_id: AIAnalysis}, we need to attach to analyses
+                for analysis in league_analyses:
+                    ai_result = result_map.get(analysis.match_id)
+                    if ai_result:
+                        analysis.ai_analysis = ai_result.to_dict()
+                    enriched_analyses.append(analysis)
+                logger.debug(f"AI enriched {len(league_analyses)} matches for {league} in {datetime.now() - start}")
                 
             # Restore order? The use case loop might rely on order.
             # Map by ID

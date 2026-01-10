@@ -62,7 +62,7 @@ class MatchAnalysisPresenter:
             
             # Models (Convert dataclasses to dicts)
             poisson=asdict(analysis.poisson),
-            monte_carlo=asdict(analysis.monte_carlo),
+            monte_carlo=MatchAnalysisPresenter._map_monte_carlo(analysis.monte_carlo),
             overall_confidence=analysis.overall_confidence,
             ai_analysis=MatchAnalysisPresenter._build_ai_analysis(analysis),
             match_analysis=MatchAnalysisPresenter._build_match_analysis(analysis),
@@ -79,3 +79,25 @@ class MatchAnalysisPresenter:
     def _build_match_analysis(analysis: SingleMatchAnalysis) -> Optional[MatchAnalysisResult]:
         """Pass through match analysis result."""
         return analysis.match_analysis
+
+    @staticmethod
+    def _map_monte_carlo(mc_results) -> Dict[str, Any]:
+        """Map domain MonteCarloResults to API schema format."""
+        if not mc_results:
+            return {
+                "over_25_probability": 0.0,
+                "btts_probability": 0.0,
+                "home_win_probability": 0.0,
+                "away_win_probability": 0.0,
+                "draw_probability": 0.0,
+                "goals_2_3_probability": 0.0,
+            }
+
+        return {
+            "over_25_probability": mc_results.over_25.adjusted_probability,
+            "btts_probability": mc_results.btts.adjusted_probability,
+            "home_win_probability": mc_results.home_win.adjusted_probability,
+            "away_win_probability": mc_results.away_win.adjusted_probability,
+            "draw_probability": mc_results.draw.adjusted_probability,
+            "goals_2_3_probability": mc_results.goals_2_3.adjusted_probability,
+        }

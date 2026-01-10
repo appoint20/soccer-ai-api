@@ -1,0 +1,15 @@
+{
+  "date": "2025-12-26",
+  "league": "Premier League",
+  "analyses": {
+    "2025-12-26_Man United_vs_Newcastle_E0": {
+      "best_prediction": "Over 2.5 Goals",
+      "reason": "Manchester United's attack is prolific, consistently scoring multiple goals, while their defense tends to concede. Newcastle also possesses a strong scoring record but struggles defensively, making them likely to both score and concede. The attacking firepower on both sides points towards a game with several goals.",
+      "short_analysis": "This match features two teams with potent offenses and vulnerable backlines. Manchester United's high scoring rate at home combined with Newcastle's tendency to be involved in high-scoring affairs suggests goals are likely from both teams. While United are the favorites to win, Newcastle's ability to score makes the goals market a more balanced option than the outright result.",
+      "confidence_level": "LOW",
+      "trap": "The primary team statistics are based on a sample size of zero, making them highly unreliable. Any conclusion drawn from these figures, like the 100% over 2.5 rate, is speculative."
+    }
+  },
+  "created_at": "2026-01-10T11:36:08.584207",
+  "match_count": 1
+}

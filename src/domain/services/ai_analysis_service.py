@@ -387,7 +387,6 @@ class AIAnalysisService:
             "btts_rate": d.get("btts_rate", 0),
             "avg_scored": d.get("avg_goals_scored", 0),
             "avg_conceded": d.get("avg_goals_conceded", 0),
-            "sample": d.get("sample_size", 0),
         }
     
     def _extract_h2h_summary(self, h2h: Any) -> Dict[str, Any]:

@@ -11,7 +11,7 @@ ABSOLUTE OUTPUT GUARANTEE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 If ANY rule below is violated → OUTPUT ERROR JSON.
-DO NOT try to “best effort” the answer.
+DO NOT attempt “best effort”.
 STRUCTURAL CORRECTNESS IS MORE IMPORTANT THAN OUTPUT.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -40,15 +40,17 @@ MARKET DISTRIBUTION RULES (HARD)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 GLOBAL LIMITS:
-- Over 2.5 + BTTS combined = MAX 80% of ALL selections
-- At least ONE non-goal market per ticket is REQUIRED
+- Over 2.5 + BTTS combined = MAX 85% of ALL selections (wins and draw qualified if not then the limit doesnt exists)
 
-PER-TICKET LIMITS:
-- Goal-based markets (Over 2.5 / BTTS): No hard limit
-- Result-based markets (Win/Draw): Preferred but NOT mandatory if quality is low
+PER-TICKET GUIDELINES:
+- Goal-based markets (Over 2.5 / BTTS): UNRESTRICTED
+- Result-based markets (Home / Away / Draw): OPTIONAL
 
-If high-confidence result bets exist, include 1 per ticket.
-If NOT, fill tickets with best available goal-bets.
+MARKET PRIORITY:
+1. If high-confidence result-based bets (≥ 60%) exist → include up to 1 per ticket
+2. If NONE exist → construct tickets using ONLY goal-based markets
+
+Goal-only tickets are VALID if result-based confidence is insufficient.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ALLOWED MARKETS
@@ -58,52 +60,53 @@ ALLOWED MARKETS
 - BTTS Yes
 - Home Win
 - Away Win
-- Draw (MAX 1 per ticket)
+- Draw
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONFIDENCE & ODDS RULES (HARD)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Minimum confidence:
+Minimum percentage from match_analysis:
 - Over 2.5 / BTTS ≥ 55%
-- Win / Draw ≥ 60%
+- Home / Away / Draw ≥ 60%
 
 Minimum odds:
 - Over 2.5 ≥ 1.60
-- Win / Draw ≥ 2.0
+- Home / Away / Draw ≥ 2.00
 
-SPECIAL RULE FOR MISSING BTTS ODDS:
-- If BTTS odds are 0.0 or missing in data:
-- YOU MUST ESTIMATE the odds based on the probability or standard market rates (typically 1.70 - 1.90).
-- DO NOT exclude a high-quality BTTS pick just because odds are missing.
-- Use your football knowledge to assign a realistic expected price.
+SPECIAL RULE — MISSING BTTS ODDS:
+- If BTTS odds are 0.0 or missing:
+  - YOU MUST ESTIMATE realistic odds using football market knowledge
+  - Typical expected range: 1.70 – 1.90
+  - Do NOT exclude high-quality BTTS selections due to missing odds
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SELECTION PROCEDURE (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1 — BUILD QUALIFIED POOL
-- Remove all matches failing confidence OR odds rules
+STEP 1 — QUALIFIED POOL
+- Remove matches failing confidence OR odds rules
 
-STEP 2 — TAG EACH MATCH
-Each match MUST be tagged as ONE category:
-- GOAL_BASED (Over 2.5 / BTTS)
-- RESULT_BASED (Home / Away / Draw)
+STEP 2 — MARKET TAGGING
+- Tag each match as:
+  - GOAL_BASED (Over 2.5 / BTTS)
+  - RESULT_BASED (Home / Away / Draw)
 
 STEP 3 — TICKET CONSTRUCTION
-For EACH ticket:
-- Select EXACTLY:
-  - 1 RESULT_BASED match
-  - 1–2 GOAL_BASED matches
-- Consume matches immediately after assignment
+- Build tickets sequentially
+- For each ticket:
+  - Select EXACTLY 3 matches
+  - Prefer 1 RESULT_BASED match IF AVAILABLE
+  - Fill remaining slots with GOAL_BASED matches
+  - If no RESULT_BASED matches exist → use 3 GOAL_BASED matches
+  - Consume matches immediately after assignment
 
 STEP 4 — FINAL VALIDATION (MANDATORY)
 Verify ALL:
 ✔ Exactly 3 selections per ticket  
 ✔ No reused match_id  
-✔ Market distribution matches availability (Goal-only tickets ALLOWED if results are risky)  
-✔ No ticket contains 3 goal-based bets (PREFERRED, but ALLOWED if necessary)  
-✔ Over 2.5 + BTTS ≤ 85% globally  
+✔ qualified_matches ≥ 3  
+✔ Global goal-market percentage ≤ 85% if wins and draws qualified otherwise no limit
 
 If ANY check fails → OUTPUT ERROR JSON
 
@@ -111,24 +114,28 @@ If ANY check fails → OUTPUT ERROR JSON
 DATA INTEGRITY RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- match_name = teams EXACTLY as input
+- match_id, match_name, odds, datetime MUST match input EXACTLY
 - datetime = date + time EXACTLY
-- If date OR time missing → OMIT match
+- If date OR time missing → OMIT the match entirely
+- Use ONLY provided match objects
+- Do NOT modify or enrich input data
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REASONING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- 2–3 short sentences per selection
-- Football logic only:
-  - form
-  - team quality
-  - motivation
-  - tactical trends
+- 2–3 concise sentences per selection
+- Football logic ONLY:
+  - recent form
+  - attacking trends
+  - defensive weaknesses
+  - motivation / schedule pressure
 
 DO NOT mention:
 - ML
+- AI
 - Poisson
+- Monte Carlo
 - probabilities
 - algorithms
 
@@ -137,7 +144,7 @@ STAKE & PAYOUT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 - Stake = 100
-- total_odds = multiplied & rounded (2 decimals)
+- total_odds = multiplied & rounded to 2 decimals
 - expected_return = stake × total_odds
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -164,7 +171,9 @@ OUTPUT FORMAT (JSON ONLY)
   ]
 }
 
-NO TEXT. NO COMMENTS. JSON ONLY.
+NO TEXT.
+NO COMMENTS.
+JSON ONLY.
 
 """
 

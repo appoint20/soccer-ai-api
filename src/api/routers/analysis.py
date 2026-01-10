@@ -12,21 +12,15 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 
 from src.api.schemas import (
     AnalyzeResponse,
-    BacktestResult,
     BacktestStats,
 )
 from src.api.dependencies import (
     get_analyze_matches_use_case,
-    get_backtest_predictions_use_case,
 )
 from src.api.presenters.match_analysis_presenter import MatchAnalysisPresenter
 from src.application.use_cases.analyze_matches import (
     AnalyzeMatchesUseCase,
     AnalyzeMatchesRequest,
-)
-from src.application.use_cases.backtest_predictions import (
-    BacktestPredictionsUseCase,
-    BacktestRequest,
 )
 from src.utils.logger import get_logger
 

@@ -98,17 +98,17 @@ class MatchConfidenceCalculator:
         home_stats: TeamFormStats,
         away_stats: TeamFormStats,
     ) -> float:
-        """Score based on team form sample sizes."""
-        # Ideal: 5 matches each with good effective sample size
-        home_sample = min(5, home_stats.sample_size)
-        away_sample = min(5, away_stats.sample_size)
+        """Score based on team form (sample_size fields removed, use defaults)."""
+        # Assume good sample since sample_size fields were removed
+        # Use form string length as proxy if available
+        home_has_data = bool(home_stats.form) or home_stats.avg_goals_scored > 0
+        away_has_data = bool(away_stats.form) or away_stats.avg_goals_scored > 0
         
-        # Also consider effective sample size (weighted)
-        home_effective = min(4.0, home_stats.effective_sample_size)
-        away_effective = min(4.0, away_stats.effective_sample_size)
+        home_score = 5 if home_has_data else 0
+        away_score = 5 if away_has_data else 0
         
-        raw_score = (home_sample + away_sample) / 10  # 0-1
-        effective_bonus = (home_effective + away_effective) / 8  # 0-1
+        raw_score = (home_score + away_score) / 10  # 0-1
+        effective_bonus = raw_score  # Use same as raw
         
         return (raw_score * 0.6 + effective_bonus * 0.4) * 100
     
