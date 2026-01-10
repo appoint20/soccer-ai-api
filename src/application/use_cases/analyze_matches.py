@@ -11,9 +11,9 @@ This use case orchestrates the match analysis workflow:
 Single Responsibility: Orchestrate match analysis workflow.
 Dependencies are injected, making this fully testable.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime, date
-from typing import List, Optional, Protocol
+from typing import List, Optional, Protocol, Dict, Any
 
 from src.domain.entities.match import Match
 from src.domain.services.calculators.team_form_calculator import TeamFormCalculator, TeamFormStats
@@ -25,6 +25,9 @@ from src.domain.services.calculators.monte_carlo_uncertainty_adjuster import (
 )
 from src.domain.services.calculators.match_confidence_calculator import MatchConfidenceCalculator
 from src.utils.logger import get_logger
+from src.api.schemas import MatchAnalysisResult
+# Use dict or Any for BacktestResult to avoid circular imports if needed, or strict typing if possible
+from src.api.schemas import BacktestReportResponse, MarketAccuracyReport
 
 logger = get_logger("AnalyzeMatchesUseCase")
 
@@ -34,11 +37,22 @@ logger = get_logger("AnalyzeMatchesUseCase")
 @dataclass(frozen=True)
 class AnalyzeMatchesRequest:
     """Input for analyze matches use case."""
-    date: Optional[str] = None
+    date: Optional[date] = None
     page: int = 1
     limit: int = 50
-    include_ai: bool = True
     refresh: bool = False  # Force refresh AI cache
+    
+
+@dataclass
+class TeamStats:
+    """Canonical team statistics (matches schema)."""
+    last_5: TeamFormStats
+    venue_last_3: Optional[TeamFormStats] = None
+    form: Optional[str] = None
+    position: Optional[int] = None
+    points: Optional[int] = None
+    goals_scored: Optional[int] = None
+    goals_conceded: Optional[int] = None
 
 
 @dataclass
@@ -52,7 +66,7 @@ class AIAnalysis:
 
 @dataclass
 class SingleMatchAnalysis:
-    """Analysis result for a single match."""
+    """Canonical analysis result for a single match (matches schema)."""
     match_id: str
     home_team: str
     away_team: str
@@ -60,30 +74,34 @@ class SingleMatchAnalysis:
     time: Optional[str]
     league: str
     
-    # Form stats
-    home_last_5: TeamFormStats
-    away_last_5: TeamFormStats
-    home_last_3_home: TeamFormStats
-    away_last_3_away: TeamFormStats
+    # Enrichment Flattened
+    matchday: int
+    position_difference: int
+    points_difference: int
     
-    # H2H
-    h2h_stats: H2HStats
+    # Canonical Stats Objects
+    homeStats: TeamStats
+    awayStats: TeamStats
+    h2h_last_5: H2HStats
     
     # Probabilities
     poisson: PoissonProbabilities
     monte_carlo: MonteCarloResults
     
     # Confidence
-    overall_confidence: int
+    overall_confidence: float
     
-    # AI Analysis (optional)
+    # Aggregated Markets (renamed from aggregated_markets)
+    match_analysis: Optional[MatchAnalysisResult] = None
+    
+    # AI Analysis
     ai_analysis: Optional[AIAnalysis] = None
     
-    # Aggregated Markets (chart-ready)
-    aggregated_markets: Optional[dict] = None
+    # Odds
+    odds: Optional[dict] = None
     
-    # Enrichment Data (matchday, form, standings)
-    enrichment_data: Optional[dict] = None
+    # Backtest
+    backtest_result: Optional[dict] = None  # Using dict to simulate BacktestResult structure
 
 
 @dataclass
@@ -94,6 +112,7 @@ class AnalyzeMatchesResult:
     page: int
     limit: int
     generated_at: str
+    backtest_stats: Optional[dict] = None  # Overall backtest stats
 
 
 # ============== Match Analyzer Protocol ==============
@@ -116,8 +135,17 @@ class IAIAnalyzer(Protocol):
     def enrich_batch(
         self,
         analyses: List[SingleMatchAnalysis],
+        date: Optional[str] = None,
+        refresh: bool = False, 
     ) -> List[SingleMatchAnalysis]:
         """Enrich analyses with AI predictions."""
+        ...
+
+class IBacktestService(Protocol):
+    """Interface for backtesting service."""
+    
+    def calculate_stats(self, analyses: List[SingleMatchAnalysis]) -> Dict[str, Any]:
+        """Calculate backtest specific stats."""
         ...
 
 
@@ -178,7 +206,7 @@ class MatchAnalyzer:
             as_of_date=match.match_date,
         )
         
-        home_last_3_home = self._form_calc.calculate_form_stats(
+        home_last_3 = self._form_calc.calculate_form_stats(
             team=match.home_team,
             matches=hist_dicts,
             last_n=3,
@@ -186,7 +214,7 @@ class MatchAnalyzer:
             as_of_date=match.match_date,
         )
         
-        away_last_3_away = self._form_calc.calculate_form_stats(
+        away_last_3 = self._form_calc.calculate_form_stats(
             team=match.away_team,
             matches=hist_dicts,
             last_n=3,
@@ -212,6 +240,10 @@ class MatchAnalyzer:
             league_code=match.league,
             league_avg_goals=2.7,
         )
+        # Populate expected_score as Integer x-y (e.g. "1-2")
+        home_exp = int(round(poisson_probs.expected_home_goals))
+        away_exp = int(round(poisson_probs.expected_away_goals))
+        poisson_probs.expected_score = f"{home_exp}-{away_exp}"
         
         # 4. Monte Carlo Adjustment
         recent_outcomes = self._build_recent_outcomes(
@@ -244,7 +276,7 @@ class MatchAnalyzer:
         )
         
         # 6. Aggregate probabilities (chart-ready)
-        aggregated_markets = self._aggregate_probabilities(
+        match_analysis = self._aggregate_probabilities(
             home_form=home_last_5,
             away_form=away_last_5,
             h2h=h2h_stats,
@@ -258,8 +290,54 @@ class MatchAnalyzer:
             historical_matches=historical_matches,
         )
         
-        # 8. Build result
+        # 8. Extract odds from match
+        odds_data = None
+        if match.b365h or match.b365d or match.b365a or match.b365_over25:
+            odds_data = {
+                "home_win": match.b365h,
+                "draw": match.b365d,
+                "away_win": match.b365a,
+                "over_25": match.b365_over25,
+                "under_25": match.b365_under25,
+            }
+        
+        # 9. Build result
         league_name = self._league_names.get(match.league, match.league)
+        
+        # Construct Canonical TeamStats
+        # Use enrichment data for season stats
+        home_enrich = enrichment_data.get("home", {})
+        away_enrich = enrichment_data.get("away", {})
+        
+        home_goals = home_enrich.get("goals", {})
+        away_goals = away_enrich.get("goals", {})
+        
+        # Update form in stats objects (Side Effect)
+        if home_last_5: home_last_5.form = home_enrich.get("form", "")
+        if home_last_3: home_last_3.form = home_enrich.get("venue_form", {}).get("form", "")
+        
+        if away_last_5: away_last_5.form = away_enrich.get("form", "")
+        if away_last_3: away_last_3.form = away_enrich.get("venue_form", {}).get("form", "")
+
+        home_stats = TeamStats(
+            last_5=home_last_5,
+            venue_last_3=home_last_3,
+            form=None, # Deprecated/Moved to last_5
+            position=home_enrich.get("position"),
+            points=home_enrich.get("points"),
+            goals_scored=home_goals.get("total_scored", 0),
+            goals_conceded=home_goals.get("total_conceded", 0),
+        )
+        
+        away_stats = TeamStats(
+            last_5=away_last_5,
+            venue_last_3=away_last_3,
+            form=None, # Deprecated/Moved to last_5
+            position=away_enrich.get("position"),
+            points=away_enrich.get("points"),
+            goals_scored=away_goals.get("total_scored", 0),
+            goals_conceded=away_goals.get("total_conceded", 0),
+        )
         
         return SingleMatchAnalysis(
             match_id=match.id,
@@ -268,18 +346,27 @@ class MatchAnalyzer:
             date=match.match_date.isoformat() if match.match_date else "",
             time=match.match_time.strftime("%H:%M") if match.match_time else None,
             league=league_name,
-            home_last_5=home_last_5,
-            away_last_5=away_last_5,
-            home_last_3_home=home_last_3_home,
-            away_last_3_away=away_last_3_away,
-            h2h_stats=h2h_stats,
+            
+            # Flattened Enrichment
+            matchday=enrichment_data.get("matchday", 0),
+            position_difference=enrichment_data.get("position_difference", 0),
+            points_difference=enrichment_data.get("points_difference", 0),
+            
+            # Canonical Stats
+            homeStats=home_stats,
+            awayStats=away_stats,
+            h2h_last_5=h2h_stats,
+            
+            # Core models
             poisson=poisson_probs,
             monte_carlo=mc_results,
             overall_confidence=overall_confidence,
-            aggregated_markets=aggregated_markets,
-            enrichment_data=enrichment_data,
+            
+            # Additional
+            match_analysis=match_analysis,
+            odds=odds_data,
         )
-    
+
     def _match_to_dict(self, match: Match) -> dict:
         """Convert Match entity to dict for legacy calculators."""
         return {
@@ -376,9 +463,10 @@ class MatchAnalyzer:
         h2h: H2HStats,
         poisson: PoissonProbabilities,
         mc: MonteCarloResults,
-    ) -> dict:
+    ) -> MatchAnalysisResult:
         """Aggregate probabilities from all sources into chart-ready format."""
         from src.domain.aggregation import ProbabilityAggregator, SourceProbabilities
+        from src.api.schemas import MatchAnalysisMarket, MatchAnalysisResult
         
         sources = SourceProbabilities(
             poisson_over_25=poisson.over_25,
@@ -409,10 +497,25 @@ class MatchAnalyzer:
         )
         
         result = ProbabilityAggregator().aggregate(sources)
-        agg_dict = result.to_dict()
-        agg_dict["radar_chart_data"] = result.get_radar_chart_data()
-        agg_dict["best_markets"] = [m.market.value for m in result.get_best_markets(0.55)]
-        return agg_dict
+        
+        # Helper to map Domain AggregatedMarket -> API MatchAnalysisMarket
+        def to_api(market) -> MatchAnalysisMarket:
+            return MatchAnalysisMarket(
+                probability=market.final_probability,
+                probability_pct=f"{int(market.final_probability * 100)}%",
+                confidence=market.confidence.value,
+                verdict=market.verdict.value,
+            )
+
+        return MatchAnalysisResult(
+            over_25=to_api(result.over_25),
+            btts=to_api(result.btts),
+            goals_2_3=to_api(result.goals_2_3),
+            home_win=to_api(result.home_win),
+            away_win=to_api(result.away_win),
+            draw=to_api(result.draw),
+            confidence_index=result.overall_confidence_index,
+        )
     
     def _calculate_enrichment(
         self,
@@ -480,18 +583,20 @@ class AnalyzeMatchesUseCase:
         historical_repository,  # IHistoricalMatchRepository
         match_analyzer: MatchAnalyzer,
         ai_analyzer: Optional[IAIAnalyzer] = None,
+        backtest_service: Optional[IBacktestService] = None,
     ):
         self._upcoming_repo = upcoming_repository
         self._historical_repo = historical_repository
         self._match_analyzer = match_analyzer
         self._ai_analyzer = ai_analyzer
+        self._backtest_service = backtest_service
     
     def execute(self, request: AnalyzeMatchesRequest) -> AnalyzeMatchesResult:
         """Execute the analyze matches use case."""
         logger.info(f"Analyzing matches: date={request.date}, page={request.page}")
         
-        # 1. Load upcoming matches
-        upcoming_matches = self._upcoming_repo.get_by_date(request.date)
+        # 1. Load matches - check if we should use daily CSV for past dates
+        upcoming_matches = self._load_matches_for_date(request.date)
         
         if not upcoming_matches:
             logger.info("No matches found")
@@ -501,6 +606,7 @@ class AnalyzeMatchesUseCase:
                 page=request.page,
                 limit=request.limit,
                 generated_at=datetime.now().isoformat(),
+                backtest_stats={},  # Empty stats
             )
         
         total = len(upcoming_matches)
@@ -529,21 +635,126 @@ class AnalyzeMatchesUseCase:
         logger.info(f"Analyzed {len(analyses)} matches successfully")
         
         # 5. Enrich with AI if requested
-        if request.include_ai and self._ai_analyzer:
+        if self._ai_analyzer:
             try:
                 analyses = self._ai_analyzer.enrich_batch(
                     analyses,
-                    date=request.date,
+                    date=request.date.isoformat() if request.date else None,
                     refresh=request.refresh,
                 )
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
-                # Continue without AI
-        
+                
+        # 6. Calculate backtest stats (if service available)
+        backtest_stats = {}
+        if self._backtest_service:
+            try:
+                # Assuming service returns summary stats
+                backtest_stats = self._backtest_service.calculate_stats(analyses)
+            except Exception as e:
+                logger.error(f"Backtest calculation failed: {e}")
+
         return AnalyzeMatchesResult(
             analyses=analyses,
             total=total,
             page=request.page,
             limit=request.limit,
             generated_at=datetime.now().isoformat(),
+            backtest_stats=backtest_stats,
         )
+    
+    def _load_matches_for_date(self, target_date: Optional[date]) -> List[Match]:
+        """
+        Load matches for a given date.
+        
+        For past dates, attempts to load from daily CSV files first.
+        Falls back to the standard upcoming repository.
+        """
+        import os
+        from datetime import datetime as dt
+        
+        if not target_date:
+            # No date filter, use standard repo
+            return self._upcoming_repo.get_by_date(None)
+        
+        # Check if this is a past date
+        today = dt.now().date()
+        is_past = target_date < today
+        
+        date_str = target_date.isoformat()
+        
+        if is_past:
+            # Try to load from daily CSV
+            daily_csv_path = f"data/raw/upcoming/daily/fixtures_{date_str}.csv"
+            if os.path.exists(daily_csv_path):
+                logger.info(f"Loading from daily CSV: {daily_csv_path}")
+                return self._load_matches_from_csv(daily_csv_path, date_str)
+        
+        # Fall back to standard repository
+        return self._upcoming_repo.get_by_date(date_str)
+    
+    def _load_matches_from_csv(self, csv_path: str, date_str: str) -> List[Match]:
+        """Load Match entities from a daily CSV file."""
+        import csv
+        from datetime import datetime as dt
+        
+        matches = []
+        
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    home_team = row.get("HomeTeam", "")
+                    away_team = row.get("AwayTeam", "")
+                    
+                    match_id = f"{date_str}_{home_team}_{away_team}".replace(" ", "_")
+                    
+                    # Parse date from CSV Date column (more accurate than filename)
+                    csv_date = row.get("Date", date_str)
+                    try:
+                        match_date = dt.strptime(csv_date, "%Y-%m-%d").date()
+                    except:
+                        match_date = dt.strptime(date_str, "%Y-%m-%d").date()
+                    
+                    # Parse time
+                    match_time = None
+                    time_str = row.get("Time", "")
+                    if time_str:
+                        try:
+                            match_time = dt.strptime(time_str, "%H:%M").time()
+                        except:
+                            pass
+                    
+                    # Parse odds columns
+                    def safe_float(val):
+                        try:
+                            return float(val) if val else None
+                        except (ValueError, TypeError):
+                            return None
+                    
+                    match = Match(
+                        id=match_id,
+                        home_team=home_team,
+                        away_team=away_team,
+                        match_date=match_date,
+                        match_time=match_time,
+                        league=row.get("Div", ""),
+                        season="2025-26",
+                        fthg=None,
+                        ftag=None,
+                        ftr=None,
+                        # Odds from fixture CSV
+                        b365h=safe_float(row.get("B365H")),
+                        b365d=safe_float(row.get("B365D")),
+                        b365a=safe_float(row.get("B365A")),
+                        b365_over25=safe_float(row.get("B365>2.5")),
+                        b365_under25=safe_float(row.get("B365<2.5")),
+                    )
+                    matches.append(match)
+            
+            logger.info(f"Loaded {len(matches)} matches from {csv_path}")
+            
+        except Exception as e:
+            logger.error(f"Error loading CSV {csv_path}: {e}")
+        
+        return matches

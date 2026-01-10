@@ -12,6 +12,7 @@ from src.api.dependencies import (
 from src.application.use_cases.analyze_matches import MatchAnalyzer, SingleMatchAnalysis
 from src.infrastructure.repositories.match_repository import HistoricalMatchRepository
 from src.utils.stats_utils import round_to_precision
+from src.domain.services.analysis_backtest_service import AnalysisBacktestService
 
 router = APIRouter()
 logger = get_logger("BacktestRouter")
@@ -84,147 +85,21 @@ async def run_backtest(
             generated_at=datetime.now().isoformat()
         )
 
-    # 2. Run Analysis Loop
-    results = []
-    market_stats = {
-        "over_25": {"correct": 0, "total": 0},
-        "btts": {"correct": 0, "total": 0},
-        "home_win": {"correct": 0, "total": 0},
-        "away_win": {"correct": 0, "total": 0},
+    # 2. Run Backtest via Service
+    service = AnalysisBacktestService(match_analyzer)
+    result = service.run_backtest(target_matches, historical_matches)
+
+    # 3. Format Response
+    market_accuracies = {
+        k: v["accuracy"] for k, v in result.market_stats.items()
     }
-    
-    for i, match in enumerate(target_matches):
-        if i % 50 == 0:
-            logger.info(f"Processing match {i+1}/{len(target_matches)}")
-            
-        # Context: All matches STRICTLY BEFORE this match.date
-        # (This prevents data leakage)
-        # However, for efficiency, passing all_entities works IF the calculators
-        # respect dates. But strictly safe way is filtering.
-        # Given performance, filtering list 10k items 100 times is slow.
-        # Calculators convert to dicts anyway.
-        # BUT MatchAnalyzer filters mainly by match itself.
-        # To be safe, let's trust calculators usually, but filtering is safer.
-        # Let's optimize: `past_matches` grows as acceptable index increases.
-        # Since `all_entities` is sorted by date, we can slice.
-        # Find index of this match in `all_entities`.
-        
-        # This is slow unless optimized.
-        # Let's just pass `all_entities`. The calculators SHOULD handle date<=match_date exclusion logic.
-        # Wait, usually "past n matches" logic filters where date < current.
-        # If the current match is in the list with result, it might be picked up?
-        # Standard implementation of `calculate_form_stats` usually filters `if m.date < target_date`.
-        # I'll rely on that for now to keep it reasonably fast.
-        
-        try:
-            analysis = match_analyzer.analyze(
-                match=match,
-                historical_matches=historical_matches # Pass dicts for performance (O(1) conversion)
-            )
-            
-            # 3. Evaluate Predictions
-            result = evaluate_prediction(analysis, match, request.min_confidence)
-            if result:
-                results.append(result)
-                
-                # Update Market Stats
-                m_type = result["market"]
-                if m_type in market_stats:
-                    market_stats[m_type]["total"] += 1
-                    if result["is_correct"]:
-                        market_stats[m_type]["correct"] += 1
-                        
-        except Exception as e:
-            logger.error(f"Error analyzing match {match.id}: {e}")
-            continue
-
-    # 4. Aggregate Stats
-    total_correct = sum(1 for r in results if r["is_correct"])
-    total_analyzed = len(results)
-    
-    market_accuracies = {}
-    for m, stats in market_stats.items():
-        if stats["total"] > 0:
-            market_accuracies[m] = round_to_precision((stats["correct"] / stats["total"]) * 100)
-        else:
-            market_accuracies[m] = 0.0
-
-    overall_accuracy = (total_correct / total_analyzed * 100) if total_analyzed > 0 else 0.0
     
     return BacktestResponse(
-        total_matches=len(target_matches),
-        analyzed_matches=total_analyzed,
-        accuracy_rate=round_to_precision(overall_accuracy),
-        correct_predictions=total_correct,
+        total_matches=result.total_matches,
+        analyzed_matches=result.total_matches,
+        accuracy_rate=round_to_precision(result.accuracy),
+        correct_predictions=result.correct_predictions,
         market_accuracy=market_accuracies,
-        predictions=results[:100], # Limit response size
+        predictions=result.predictions[:200], # Limit response size
         generated_at=datetime.now().isoformat()
     )
-
-
-def evaluate_prediction(analysis: SingleMatchAnalysis, match, threshold: float) -> Optional[Dict]:
-    """Compare analysis prediction vs actual result."""
-    
-    # We look at `aggregated_markets` for the "Best Pick" logic equivalent
-    # Or just check probabilities directly.
-    # User asks "how the model is doing".
-    # Let's evaluate the HIGHEST probability market (if > threshold).
-    
-    markets = analysis.aggregated_markets
-    if not markets:
-        return None
-        
-    # Find best market
-    best_market = None
-    best_prob = 0.0
-    
-    # Check Over 2.5
-    p_over = markets.get("over_25", {}).get("probability", 0)
-    if p_over > best_prob:
-        best_prob = p_over
-        best_market = "over_25"
-        
-    # Check BTTS
-    p_btts = markets.get("btts", {}).get("probability", 0)
-    if p_btts > best_prob:
-        best_prob = p_btts
-        best_market = "btts"
-        
-    # Check Home Win
-    p_home = markets.get("home_win", {}).get("probability", 0)
-    if p_home > best_prob:
-        best_prob = p_home
-        best_market = "home_win"
-        
-    # Check Away Win
-    p_away = markets.get("away_win", {}).get("probability", 0)
-    if p_away > best_prob:
-        best_prob = p_away
-        best_market = "away_win"
-        
-    if best_prob < threshold:
-        return None # No bet
-        
-    # Verify Result
-    is_correct = False
-    home_goals = match.fthg
-    away_goals = match.ftag
-    total_goals = home_goals + away_goals
-    
-    if best_market == "over_25":
-        is_correct = total_goals > 2.5
-    elif best_market == "btts":
-        is_correct = (home_goals > 0 and away_goals > 0)
-    elif best_market == "home_win":
-        is_correct = home_goals > away_goals
-    elif best_market == "away_win":
-        is_correct = away_goals > home_goals
-        
-    return {
-        "date": str(match.match_date),
-        "match": f"{match.home_team} vs {match.away_team}",
-        "market": best_market,
-        "probability": round_to_precision(best_prob),
-        "is_correct": is_correct,
-        "actual_score": f"{home_goals}-{away_goals}"
-    }

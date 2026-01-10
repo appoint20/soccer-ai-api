@@ -1,230 +1,114 @@
-# 🎯 Soccer Predictor API
+# SoccerGPT API
 
-European Soccer Match Prediction System (MVP)
+This project provides an advanced AI-powered football match analysis and prediction API. It combines statistical models (Poisson, Monte Carlo, Team Form, H2H) with Large Language Models (LLMs) to generate "fair" odds, probabilities, and betting insights.
 
-Predicts match outcomes for Over 2.5 Goals, BTTS, and Match Results using statistical analysis and machine learning.
+## Project Overview
 
-## 🚀 Features
+**Goal:** To provide professional-grade football match analysis that relies on data-driven probabilities rather than gut feeling.  
+**Core Features:**
 
-- **Primary Predictions**: Over 2.5 Goals (75% target), BTTS (80% target)
-- **Secondary Predictions**: Win/Draw match results
-- **10 Supported Leagues**: E0, E1, E2, E3 (England), D1 (Germany), F1, F2 (France), I1, I2 (Italy), SP1 (Spain)
-- **Clean Architecture**: Domain-driven design with clear separation of concerns
-- **JSON Storage**: Simple file-based storage for MVP
+- **Hybrid Analysis:** Combines statistical math models with AI reasoning.
+- **Backtesting:** Ability to "time travel" and analyze past matches to verify prediction accuracy.
+- **Canonical Data Structure:** A strict, single source of truth for match analysis throughout the entire pipeline (Domain -> AI -> API).
+- **Time-Aware Analysis:** Ensures no data leakage for historical analysis; only uses data available *before* the match started.
 
-## 📁 Project Structure
+## Endpoints
 
-```
-soccer-predictor/
-├── src/
-│   ├── domain/
-│   │   ├── entities/          # Match, Team, Prediction dataclasses
-│   │   └── services/          # Business logic services
-│   ├── data/
-│   │   ├── loaders/           # Excel & CSV data loaders
-│   │   └── storage/           # JSON file operations
-│   └── utils/                 # Config, logging, helpers
-├── data/
-│   ├── raw/
-│   │   ├── historical/        # Excel files with historical data
-│   │   └── upcoming/          # CSV files with fixtures
-│   ├── processed/             # JSON processed data
-│   └── predictions/           # Generated predictions
-├── models/                    # ML models (future phases)
-├── config/                    # Configuration files
-├── logs/                      # Application logs
-├── tests/                     # Unit tests
-├── scripts/                   # Utility scripts
-├── requirements.txt
-└── setup.py
-```
+### 1. `GET /matches/analyze`
 
-## 🛠️ Installation
+**Description:**  
+The main workhorse endpoint. Analyzes upcoming matches for a specific date or runs a backtest verification for a past date.
 
-### Prerequisites
+**Business Logic:**
 
-- Python 3.10+
-- pip
+1. **Data Loading:** Fetches matches for the requested date. If the date is in the past, it loads "snapshot" data from that day to ensure historical accuracy.
+2. **Statistical Modeling:**
+    - **Form Calculation:** Computes 5-match and 3-match rolling form stats (Win %, BTTS %, Over 2.5 %, etc.).
+    - **H2H Analysis:** Analyzes the last 5 head-to-head encounters.
+    - **Poisson Distribution:** Calculates expected goal probabilities based on attack/defense strengths.
+    - **Monte Carlo Simulation:** Runs 10,000 match simulations to adjust for variance and uncertainty.
+    - **Confidence Scoring:** Assigns an overall confidence score (0-100) based on model agreement and data reliability.
+3. **AI Enrichment:**
+    - Sends the *canonical* analysis object to an LLM (Gemini/OpenAI).
+    - The LLM generates a "Best Prediction", "Reasoning", and "Verdict" based *strictly* on the provided stats.
+    - **Note:** AI analysis is mandatory and performed for every request.
+4. **Backtesting (Time Travel):**
+    - If the requested date is in the past, the system compares its predictions against the *actual* final score.
+    - It returns a `backtest_result` object indicating if the prediction was correct and providing an accuracy report.
+5. **Response:** Returns a standard `AnalyzeResponse` containing a list of `MatchAnalysis` objects.
 
-### Setup
+**Query Parameters:**
 
-1. **Clone the repository**
+- `date` (required): YYYY-MM-DD string.
+- `page` (optional): Page number (default: 1).
+- `limit` (optional): Items per page (default: 50).
+- `refresh` (optional): `true` to bypass cache and force re-analysis (default: `false`).
 
-   ```bash
-   git clone <repository-url>
-   cd soccer-predictor
-   ```
+**Example Response (Truncated):**
 
-2. **Create virtual environment**
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Install package in development mode**
-
-   ```bash
-   pip install -e .
-   ```
-
-## 📊 Data Requirements
-
-### Historical Data Format (Excel/CSV)
-
-Place historical match data in `data/raw/historical/`. Files should follow football-data.co.uk format:
-
-**Required columns:**
-
-- `Date` - Match date
-- `HomeTeam` - Home team name
-- `AwayTeam` - Away team name
-
-**Optional columns:**
-
-- `Time` - Match time
-- `FTHG`, `FTAG` - Full-time goals
-- `FTR` - Full-time result (H/D/A)
-- `HTHG`, `HTAG` - Half-time goals
-- `HS`, `AS` - Shots
-- `HST`, `AST` - Shots on target
-- `HF`, `AF` - Fouls
-- `HC`, `AC` - Corners
-- `HY`, `AY` - Yellow cards
-- `HR`, `AR` - Red cards
-- `B365H`, `B365D`, `B365A` - Betting odds
-
-**File naming convention:**
-
-- `E0_2324.xlsx` → Premier League 2023-24
-- `D1_2425.csv` → Bundesliga 2024-25
-
-### Upcoming Fixtures Format (CSV)
-
-Place fixture data in `data/raw/upcoming/`:
-
-```csv
-Date,Time,HomeTeam,AwayTeam,League
-2024-12-28,15:00,Arsenal,Chelsea,E0
-2024-12-28,17:30,Man City,Liverpool,E0
+```json
+{
+  "total": 12,
+  "generated_at": "2025-10-25T14:30:00.123456",
+  "is_past_date": false,
+  "items": [
+    {
+      "match_id": "eng_pl_2025_arsenal_vs_chelsea",
+      "home_team": "Arsenal",
+      "away_team": "Chelsea",
+      "date": "2025-10-25",
+      "overall_confidence": 78.5,
+      "homeStats": {
+        "last_5": { "win_rate": 0.8, "btts_rate": 0.6, "over_25_rate": 0.4 },
+        "position": 2,
+        "points": 24
+      },
+      "ai_analysis": {
+        "best_prediction": "Home Win",
+        "reason": "Arsenal's home form is dominant with 2.4 xG per game...",
+        "confidence_level": "HIGH"
+      },
+      "match_analysis": {
+        "over_25": { "probability": 0.65, "verdict": "Likely" },
+        "btts": { "probability": 0.55, "verdict": "Neutral" }
+      }
+    }
+  ]
+}
 ```
 
-## 🚀 Usage
+### 2. `POST /tickets/generate`
 
-### Load Historical Data
+**Description:**  
+Generates betting "tickets" (accumulators/parlays) based on the analyzed matches.
 
-```bash
-python scripts/initial_data_load.py
-```
+**Business Logic:**
 
-This will:
+1. **Filtering:** Selects high-confidence matches from the analyzed pool.
+2. **Strategy Application:** Applies specific betting strategies (e.g., "Safe Accumulator", "High Risk/High Reward", "Value Bets").
+3. **Optimization:** Uses AI to select the optimal combination of bets to maximize expected value (EV) while keeping risk within user-defined bounds.
 
-1. Scan `data/raw/historical/` for Excel/CSV files
-2. Process and validate data
-3. Save to `data/processed/matches.json`
-4. Print statistics about loaded data
+### 3. `GET /system/health`
 
-### Run Tests
+**Description:**  
+Simple health check to ensure API and dependencies (Database, AI Service) are operational.
 
-```bash
-# Run all tests
-pytest tests/ -v
+---
 
-# Run with coverage
-pytest tests/ -v --cov=src
-```
+## Data Structures & Cleanup Verification
 
-### Code Quality
+**Cleanup Status:** ✅ **Verified**
 
-```bash
-# Format code
-black src/ tests/ scripts/
+- We have completely removed the generic `enrichment_data` dictionary that was causing data hiding.
+- We have removed the redundant `aggregated_markets` field.
+- **Single Source of Truth:** The system now uses a strict `MatchAnalysis` schema (defined in `src/api/schemas.py`) across all layers:
+  - **Domain:** `SingleMatchAnalysis` (Canonical)
+  - **AI Service:** Consumes `SingleMatchAnalysis`
+  - **API Response:** Returns `MatchAnalysis` (identical structure)
 
-# Lint code
-flake8 src/ tests/ scripts/
-
-# Type check
-mypy src/
-```
-
-## 📋 Supported Leagues
-
-| Code | League | Country |
-|------|--------|---------|
-| E0 | Premier League | England |
-| E1 | Championship | England |
-| E2 | League One | England |
-| E3 | League Two | England |
-| D1 | Bundesliga | Germany |
-| F1 | Ligue 1 | France |
-| F2 | Ligue 2 | France |
-| I1 | Serie A | Italy |
-| I2 | Serie B | Italy |
-| SP1 | La Liga | Spain |
-
-## 🔮 Next Steps (Phase 2)
-
-- [ ] Team statistics calculation service
-- [ ] Head-to-head analysis
-- [ ] Poisson distribution model
-- [ ] Over 2.5 and BTTS prediction
-- [ ] API endpoints (FastAPI)
-
-## 📝 Configuration
-
-### Environment Variables (.env)
-
-```env
-ENVIRONMENT=development
-LOG_LEVEL=DEBUG
-DATA_RAW_PATH=data/raw
-DATA_PROCESSED_PATH=data/processed
-```
-
-### Settings (config/settings.yaml)
-
-```yaml
-features:
-  lookback_matches: 5
-  min_matches_for_stats: 3
-
-thresholds:
-  over25:
-    high_confidence: 0.70
-    medium_confidence: 0.55
-```
-
-## 🧪 Testing
-
-The test suite covers:
-
-- Entity creation and serialization
-- JSON storage operations
-- Data loading and processing
-- Helper utility functions
-
-```bash
-# Quick test
-pytest tests/test_data_loading.py -v
-
-# Full test with coverage
-pytest tests/ -v --cov=src --cov-report=html
-```
-
-## 📄 License
-
-MIT License
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+**Canonical Object Structure:**
+The `MatchAnalysis` object acts as the contract for the entire system:
+- **Stats:** `homeStats`, `awayStats` (strictly typed `TeamStats` objects, no random dicts)
+- **Models:** `poisson`, `monte_carlo` (Probability objects)
+- **Results:** `match_analysis` (The aggregated verdict from all models)
+- **AI:** `ai_analysis` (The LLM's interpretation)

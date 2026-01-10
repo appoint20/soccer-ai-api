@@ -225,7 +225,10 @@ class AIAnalysisService:
     Caches responses by date to reduce API calls.
     """
     
-    CACHE_DIR = "data/cache/ai_analysis"
+    # Use Firestore cache (with file fallback)
+    # Import here to avoid circular dependency
+    from src.infrastructure.cache.firestore_cache import get_cache
+    _cache = get_cache()
     
     def __init__(self, provider: Optional[str] = None):
         """
@@ -243,27 +246,15 @@ class AIAnalysisService:
             self._provider = GeminiProvider()
         
         self.logger.info(f"AI Analysis Service using provider: {provider_name}")
-        
-        # Ensure cache directory exists
-        os.makedirs(self.CACHE_DIR, exist_ok=True)
-    
-    def _get_cache_path(self, date: str, league: str) -> str:
-        """Get cache file path for date and league."""
-        safe_league = league.replace(" ", "_").replace("/", "_").lower()
-        return f"{self.CACHE_DIR}/ai_{date}_{safe_league}.json"
     
     def _load_cache(self, date: str, league: str) -> Optional[Dict[str, AIAnalysis]]:
-        """Load cached AI analysis if exists."""
-        cache_path = self._get_cache_path(date, league)
-        
+        """Load cached AI analysis using Firestore (with file fallback)."""
         try:
-            if os.path.exists(cache_path):
-                with open(cache_path, 'r') as f:
-                    data = json.load(f)
-                
+            cached = self._cache.get_ai_analysis(date, league)
+            if cached and "analyses" in cached:
                 # Convert to AIAnalysis objects
                 result = {}
-                for match_id, item in data.items():
+                for match_id, item in cached["analyses"].items():
                     result[match_id] = AIAnalysis(
                         best_prediction=item.get("best_prediction", "NO BET"),
                         reason=item.get("reason", ""),
@@ -280,26 +271,22 @@ class AIAnalysisService:
         return None
     
     def _save_cache(self, date: str, league: str, results: Dict[str, AIAnalysis]) -> None:
-        """Save AI analysis to cache."""
-        cache_path = self._get_cache_path(date, league)
-        
+        """Save AI analysis to Firestore cache."""
         try:
-            # Convert to dict for JSON serialization
+            # Convert to dict for serialization
             data = {
                 match_id: analysis.to_dict()
                 for match_id, analysis in results.items()
             }
             
-            with open(cache_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            self.logger.info(f"Saved AI analysis cache: {cache_path}")
+            self._cache.save_ai_analysis(date, league, data)
+            self.logger.info(f"Saved AI analysis cache: {date}/{league}")
         except Exception as e:
             self.logger.error(f"Failed to save cache: {e}")
     
     def analyze_matches_batch(
         self,
-        matches: List[Dict[str, Any]],
+        analyses: List[Any], # Typed as List[SingleMatchAnalysis] but avoiding circular import in type hint
         league: str,
         date: Optional[str] = None,
         refresh: bool = False,
@@ -308,7 +295,7 @@ class AIAnalysisService:
         Analyze a batch of matches (typically one league).
         
         Args:
-            matches: List of match analysis dicts with stats
+            analyses: List of SingleMatchAnalysis objects
             league: League name for logging
             date: Date string for caching (YYYY-MM-DD)
             refresh: Force refresh from AI (bypass cache)
@@ -316,19 +303,19 @@ class AIAnalysisService:
         Returns:
             Dict mapping match_id to AIAnalysis
         """
-        if not matches:
+        if not analyses:
             return {}
         
         # Extract date from first match if not provided
-        if not date and matches:
-            date = matches[0].get("date", "")
+        if not date and analyses:
+            date = analyses[0].date
         
         # Try cache first (unless refresh requested)
         if date and not refresh:
             cached = self._load_cache(date, league)
             if cached:
                 # Check if all matches are in cache
-                match_ids = {m.get("match_id") for m in matches}
+                match_ids = {a.match_id for a in analyses}
                 cached_ids = set(cached.keys())
                 
                 if match_ids.issubset(cached_ids):
@@ -346,16 +333,17 @@ class AIAnalysisService:
         
         # Prepare compact data for prompt
         match_data = []
-        for m in matches:
+        for a in analyses:
+            # Access fields via canonical object structure
             match_data.append({
-                "match_id": m.get("match_id"),
-                "home_team": m.get("home_team"),
-                "away_team": m.get("away_team"),
-                "home_form": self._extract_form_summary(m.get("home_last_5", {})),
-                "away_form": self._extract_form_summary(m.get("away_last_5", {})),
-                "h2h": self._extract_h2h_summary(m.get("h2h_last_5", {})),
-                "poisson": self._extract_poisson_summary(m.get("poisson", {})),
-                "overall_confidence": m.get("overall_confidence", 0),
+                "match_id": a.match_id,
+                "home_team": a.home_team,
+                "away_team": a.away_team,
+                "home_form": self._extract_form_summary(a.homeStats.last_5),
+                "away_form": self._extract_form_summary(a.awayStats.last_5),
+                "h2h": self._extract_h2h_summary(a.h2h_last_5),
+                "poisson": self._extract_poisson_summary(a.poisson),
+                "overall_confidence": a.overall_confidence,
             })
         
         # Build prompt
@@ -364,9 +352,11 @@ class AIAnalysisService:
         try:
             # Call AI
             response_text = self._provider.generate(prompt)
+            self.logger.info(f"Raw AI response: {response_text[:500]}...") # Log first 500 chars
             
             # Parse JSON
             result = self._parse_response(response_text, [m["match_id"] for m in match_data])
+            self.logger.info(f"Parsed result keys: {list(result.keys())}")
             
             # Save to cache
             if date and result:
@@ -379,43 +369,65 @@ class AIAnalysisService:
             self.logger.error(f"AI analysis failed for {league}: {e}")
             return {}
     
-    def _extract_form_summary(self, form: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract compact form summary for prompt."""
+    def _extract_form_summary(self, form: Any) -> Dict[str, Any]:
+        """Extract compact form summary from TeamFormStats object."""
         if not form:
             return {}
+        # Handle Pydantic model vs dataclass vs dict
+        if hasattr(form, "dict"):
+            d = form.dict()
+        elif hasattr(form, "__dict__"):
+            d = form.__dict__
+        else:
+            d = form
+            
         return {
-            "win_rate": form.get("win_rate", 0),
-            "over25_rate": form.get("over_25_rate", 0),
-            "btts_rate": form.get("btts_rate", 0),
-            "avg_scored": form.get("avg_goals_scored", 0),
-            "avg_conceded": form.get("avg_goals_conceded", 0),
-            "sample": form.get("sample_size", 0),
+            "win_rate": d.get("win_rate", 0),
+            "over25_rate": d.get("over_25_rate", 0),
+            "btts_rate": d.get("btts_rate", 0),
+            "avg_scored": d.get("avg_goals_scored", 0),
+            "avg_conceded": d.get("avg_goals_conceded", 0),
+            "sample": d.get("sample_size", 0),
         }
     
-    def _extract_h2h_summary(self, h2h: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract compact H2H summary for prompt."""
+    def _extract_h2h_summary(self, h2h: Any) -> Dict[str, Any]:
+        """Extract compact H2H summary from H2HStats object."""
         if not h2h:
             return {}
+        if hasattr(h2h, "dict"):
+            d = h2h.dict()
+        elif hasattr(h2h, "__dict__"):
+            d = h2h.__dict__
+        else:
+            d = h2h
+            
         return {
-            "matches": h2h.get("total_matches", 0),
-            "home_win_rate": h2h.get("home_win_rate", 0),
-            "over25_rate": h2h.get("over_25_rate", 0),
-            "btts_rate": h2h.get("btts_rate", 0),
-            "reliability": h2h.get("h2h_reliability", 0),
+            "matches": d.get("total_matches", 0),
+            "home_win_rate": d.get("home_win_rate", 0),
+            "over25_rate": d.get("over_25_rate", 0),
+            "btts_rate": d.get("btts_rate", 0),
+            "reliability": d.get("h2h_reliability", 0),
         }
     
-    def _extract_poisson_summary(self, poisson: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract compact Poisson summary for prompt."""
+    def _extract_poisson_summary(self, poisson: Any) -> Dict[str, Any]:
+        """Extract compact Poisson summary from PoissonProbabilities object."""
         if not poisson:
             return {}
+        if hasattr(poisson, "dict"):
+            d = poisson.dict()
+        elif hasattr(poisson, "__dict__"):
+            d = poisson.__dict__
+        else:
+            d = poisson
+            
         return {
-            "home_win": poisson.get("home_win", 0),
-            "draw": poisson.get("draw", 0),
-            "away_win": poisson.get("away_win", 0),
-            "over25": poisson.get("over_25", 0),
-            "btts": poisson.get("btts", 0),
-            "xg_home": poisson.get("expected_home_goals", 0),
-            "xg_away": poisson.get("expected_away_goals", 0),
+            "home_win": d.get("home_win", 0),
+            "draw": d.get("draw", 0),
+            "away_win": d.get("away_win", 0),
+            "over25": d.get("over_25", 0),
+            "btts": d.get("btts", 0),
+            "xg_home": d.get("expected_home_goals", 0),
+            "xg_away": d.get("expected_away_goals", 0),
         }
     
     def _parse_response(

@@ -24,6 +24,7 @@ class TeamFormStats:
     avg_goals_conceded: float = 0.0
     sample_size: int = 0
     effective_sample_size: float = 0.0  # Weighted sample size
+    form: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -38,6 +39,7 @@ class TeamFormStats:
             "avg_goals_conceded": round(self.avg_goals_conceded, 2),
             "sample_size": self.sample_size,
             "effective_sample_size": round(self.effective_sample_size, 2),
+            "form": self.form,
         }
 
 

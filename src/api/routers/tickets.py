@@ -38,20 +38,18 @@ async def generate_tickets(
     
     Uses AnalyzeMatchesUseCase for:
     - Poisson probabilities
-    - Monte Carlo adjustments
     - Form analysis
     - H2H stats  
-    - Aggregated market analysis
     - AI insights from Gemini 2.5 Pro
     """
     from src.domain.constants import GEMINI_TICKET_PROMPT
     
-    # 1. Run analysis using the new use case (AI always enabled)
+    # 1. Run analysis using the use case
     request = AnalyzeMatchesRequest(
         date=date,
         page=1,
         limit=limit,
-        include_ai=True,  # AI always required
+        include_ai=True,
     )
     
     try:
@@ -68,7 +66,8 @@ async def generate_tickets(
             "tickets": [],
         }
     
-    # 2. Convert analyses to dict format for ticket service
+    # 2. Convert analyses to streamlined dict format for ticket service
+    # Only include data the Gemini prompt actually uses
     analyses_for_tickets = []
     for analysis in result.analyses:
         match_data = {
@@ -76,8 +75,11 @@ async def generate_tickets(
             "home_team": analysis.home_team,
             "away_team": analysis.away_team,
             "date": analysis.date,
+            "time": analysis.time,
             "league": analysis.league,
+            # Poisson probabilities - primary data source for predictions
             "poisson": analysis.poisson.to_dict(),
+            # Monte Carlo adjusted probabilities
             "monte_carlo": {
                 "over_25": analysis.monte_carlo.over_25.to_dict(),
                 "btts": analysis.monte_carlo.btts.to_dict(),
@@ -85,21 +87,24 @@ async def generate_tickets(
                 "away_win": analysis.monte_carlo.away_win.to_dict(),
                 "draw": analysis.monte_carlo.draw.to_dict(),
             },
-            "h2h": analysis.h2h_stats.to_dict(),
+            # Form data for context
             "home_form": analysis.home_last_5.to_dict(),
             "away_form": analysis.away_last_5.to_dict(),
-            "overall_confidence": analysis.overall_confidence,
-            "aggregated_markets": analysis.aggregated_markets,
-            "enrichment": analysis.enrichment_data,
+            # H2H for historical context
+            "h2h": analysis.h2h_stats.to_dict(),
         }
         
-        # Include AI analysis if available
+        # Include AI analysis if available - this is critical for ticket selection
         if analysis.ai_analysis:
             match_data["ai_analysis"] = {
                 "best_prediction": analysis.ai_analysis.best_prediction,
                 "reason": analysis.ai_analysis.reason,
                 "confidence_level": analysis.ai_analysis.confidence_level,
             }
+        
+        # Include odds if available - critical for ticket value assessment
+        if analysis.odds:
+            match_data["odds"] = analysis.odds
         
         analyses_for_tickets.append(match_data)
     

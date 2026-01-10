@@ -6,6 +6,22 @@ import uuid
 
 
 @dataclass
+class MatchResult:
+    """Result of a completed match."""
+    home_goals: int
+    away_goals: int
+    outcome: str  # 'H', 'D', 'A'
+    
+    @property
+    def total_goals(self) -> int:
+        return self.home_goals + self.away_goals
+        
+    @property
+    def score(self) -> str:
+        return f"{self.home_goals}-{self.away_goals}"
+
+
+@dataclass
 class Match:
     """
     Represents a football match with all relevant statistics.
@@ -136,6 +152,17 @@ class Match:
         date_str = self.match_date.isoformat()
         return f"{date_str}_{self.home_team}_vs_{self.away_team}_{self.league}"
     
+    @property
+    def result(self) -> Optional[MatchResult]:
+        """Get match result object."""
+        if self.fthg is not None and self.ftag is not None and self.ftr is not None:
+            return MatchResult(
+                home_goals=self.fthg,
+                away_goals=self.ftag,
+                outcome=self.ftr
+            )
+        return None
+
     def to_dict(self) -> dict:
         """Convert match to dictionary for JSON serialization."""
         data = asdict(self)

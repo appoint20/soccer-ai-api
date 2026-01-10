@@ -1,4 +1,9 @@
 from typing import Optional
+from fastapi import Depends
+from src.infrastructure.repositories.historical_match_repository import CSVHistoricalMatchRepository, IHistoricalMatchRepository
+from src.domain.services.team_name_matcher import TeamNameMatcher
+from src.domain.services.prediction_evaluator import PredictionEvaluator
+from src.application.use_cases.backtest_predictions import BacktestPredictionsUseCase
 from src.domain.services.prediction_service import PredictionService
 from src.domain.services.comprehensive_analysis_service import ComprehensiveAnalysisService
 from src.domain.services.backtest_service import BacktestService
@@ -159,6 +164,9 @@ def get_analyze_matches_use_case():
     if _analyze_use_case is not None:
         return _analyze_use_case
     
+    # Get backtest use case first
+    backtest_uc = get_backtest_predictions_use_case()
+    
     # Import here to avoid circular imports
     from src.infrastructure.repositories.match_repository import (
         UpcomingMatchRepository,
@@ -206,6 +214,7 @@ def get_analyze_matches_use_case():
         historical_repository=_historical_repository,
         match_analyzer=_match_analyzer,
         ai_analyzer=ai_analyzer,
+        backtest_service=_create_backtest_adapter(backtest_uc),
     )
     
     logger.info("Initialized AnalyzeMatchesUseCase with dependencies")
@@ -237,55 +246,118 @@ def _create_ai_analyzer():
                 analyses: List of SingleMatchAnalysis objects
                 date: Date string for caching (YYYY-MM-DD)
                 refresh: Force refresh from AI (bypass cache)
-            """
             from collections import defaultdict
+            from datetime import datetime
             
-            # Group by league
             by_league = defaultdict(list)
             for analysis in analyses:
-                by_league[analysis.league].append(analysis)
-            
-            # Process each league
-            for league, league_analyses in by_league.items():
-                # Prepare data for AI
-                match_data = []
-                for a in league_analyses:
-                    match_data.append({
-                        "match_id": a.match_id,
-                        "home_team": a.home_team,
-                        "away_team": a.away_team,
-                        "date": a.date,
-                        "home_last_5": a.home_last_5.to_dict(),
-                        "away_last_5": a.away_last_5.to_dict(),
-                        "h2h_last_5": a.h2h_stats.to_dict(),
-                        "poisson": a.poisson.to_dict(),
-                        "overall_confidence": a.overall_confidence,
-                    })
+                league = analysis.league
+                by_league[league].append(analysis)
                 
-                try:
-                    # Call AI service with caching support
-                    ai_results = self._service.analyze_matches_batch(
-                        matches=match_data,
-                        league=league,
-                        date=date,
-                        refresh=refresh,
-                    )
-                    
-                    # Merge results back
-                    from src.application.use_cases.analyze_matches import AIAnalysis
-                    
-                    for analysis in league_analyses:
-                        if analysis.match_id in ai_results:
-                            ai_data = ai_results[analysis.match_id]
-                            analysis.ai_analysis = AIAnalysis(
-                                best_prediction=ai_data.best_prediction,
-                                reason=ai_data.reason,
-                                short_analysis=ai_data.short_analysis,
-                                confidence_level=ai_data.confidence_level,
-                            )
-                except Exception as e:
-                    logger.error(f"AI analysis failed for league {league}: {e}")
+            # Enrich each league batch
+            enriched_analyses = []
+            for league, league_analyses in by_league.items():
+                start = datetime.now()
+                enriched = self._service.enrich_matches_with_ai(
+                    analyses=league_analyses,
+                    league_name=league,
+                    date=date,
+                    refresh_cache=refresh
+                )
+                enriched_analyses.extend(enriched)
+                logger.debug(f"AI enriched {len(enriched)} matches for {league} in {datetime.now() - start}")
+                
+            # Restore order? The use case loop might rely on order.
+            # Map by ID
+            enriched_map = {a.match_id: a for a in enriched_analyses}
             
-            return analyses
-    
+            # Return in original order, maintaining non-enriched if missing
+            return [enriched_map.get(a.match_id, a) for a in analyses]
+
     return AIAnalyzerAdapter()
+
+def _create_backtest_adapter(use_case):
+    """Create adapter for BacktestPredictionsUseCase to IBacktestService."""
+    from src.application.use_cases.backtest_predictions import BacktestRequest
+    from datetime import datetime
+    
+    class BacktestServiceAdapter:
+        def __init__(self, uc):
+            self._uc = uc
+            self.logger = logger
+            
+        def calculate_stats(self, analyses: list) -> dict:
+            if not analyses:
+                return {}
+            
+            # Determine target date from first analysis
+            # Format: YYYY-MM-DD
+            target_date = analyses[0].date
+            
+            try:
+                # Execute backtest
+                response = self._uc.execute(BacktestRequest(
+                    analyses=analyses,
+                    target_date=target_date
+                ))
+                
+                # Update analyses with match results (Side Effect)
+                for analysis in analyses:
+                    if analysis.match_id in response.match_results:
+                        # Convert BacktestResult object to dict if needed?
+                        # SingleMatchAnalysis.backtest_result is Optional[dict]
+                        # response.match_results contains BacktestResult objects (Pydantic/Dataclass?)
+                        # Use vars() or .dict() or asdict()
+                        res = response.match_results[analysis.match_id]
+                        # Assuming it has to_dict or is simple object
+                        analysis.backtest_result = {
+                            "actual_score": res.actual_score,
+                            "actual_result": res.actual_result,
+                            "predicted_market": res.predicted_market,
+                            "was_correct": res.was_correct,
+                            "explanation": res.explanation
+                        }
+                
+                # Return stats as dict
+                if response.stats:
+                    return {
+                        "total_predictions": response.stats.total_predictions,
+                        "correct_predictions": response.stats.correct_predictions,
+                        "incorrect_predictions": response.stats.incorrect_predictions,
+                        "accuracy_percentage": response.stats.accuracy_percentage,
+                        "by_market": response.stats.by_market
+                    }
+                return {}
+                
+            except Exception as e:
+                self.logger.error(f"Backtest adapter failed: {e}")
+                return {}
+
+    return BacktestServiceAdapter(use_case)
+
+
+_backtest_use_case = None
+
+def get_backtest_predictions_use_case():
+    """Factory for BacktestPredictionsUseCase."""
+    global _backtest_use_case, _historical_repository
+    
+    if _backtest_use_case:
+        return _backtest_use_case
+        
+    from src.application.use_cases.backtest_predictions import BacktestPredictionsUseCase
+    from src.domain.services.prediction_evaluator import PredictionEvaluator
+    from src.infrastructure.repositories.match_repository import HistoricalMatchRepository
+    
+    # Ensure repo is initialized
+    if _historical_repository is None:
+        _historical_repository = HistoricalMatchRepository()
+        _historical_repository.set_matches(ServiceContainer.historical_matches)
+        
+    evaluator = PredictionEvaluator()
+    
+    _backtest_use_case = BacktestPredictionsUseCase(
+        historical_repo=_historical_repository,
+        prediction_evaluator=evaluator
+    )
+    return _backtest_use_case

@@ -188,6 +188,19 @@ class HistoricalMatchRepository:
         team_matches.sort(key=lambda m: m.match_date or date.min, reverse=True)
         
         return team_matches[:last_n]
+
+    def find_by_teams_and_date(self, home_team: str, away_team: str, match_date: date) -> Optional[Match]:
+        """Find a specific historical match."""
+        all_matches = self.get_all()
+        home_lower = home_team.lower().strip()
+        away_lower = away_team.lower().strip()
+        
+        for match in all_matches:
+            if (match.match_date == match_date and 
+                match.home_team.lower() == home_lower and 
+                match.away_team.lower() == away_lower):
+                return match
+        return None
     
     def get_h2h(self, team_a: str, team_b: str, last_n: int = 5) -> List[Match]:
         """Get head-to-head matches between two teams."""

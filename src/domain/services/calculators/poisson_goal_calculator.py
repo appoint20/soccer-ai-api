@@ -24,6 +24,7 @@ TAU_BY_LEAGUE = {
 @dataclass
 class PoissonProbabilities:
     """Poisson + Dixon-Coles probability results."""
+    expected_score: str = ""
     expected_home_goals: float = 0.0
     expected_away_goals: float = 0.0
     home_win: float = 0.0

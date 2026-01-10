@@ -4,6 +4,7 @@ Pydantic schemas for API request/response models.
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 from enum import Enum
+from dataclasses import dataclass
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -383,14 +384,13 @@ class BacktestReportResponse(BaseModel):
     
     market_accuracy: Dict[str, MarketAccuracyReport]
     league_stats: List[LeagueQualificationStats]
-    
     generated_at: str
 
 
 # ============== Analysis Schemas ==============
 
 class TeamFormStats(BaseModel):
-    """Team form statistics for a specific lookback window ."""
+    """Detailed form statistics for a team for a specific lookback window."""
     over_25_rate: float = Field(0.0, ge=0, le=1)
     btts_rate: float = Field(0.0, ge=0, le=1)
     win_rate: float = Field(0.0, ge=0, le=1)
@@ -401,6 +401,7 @@ class TeamFormStats(BaseModel):
     avg_goals_conceded: float = Field(0.0, ge=0)
     sample_size: int = Field(0, ge=0)
     effective_sample_size: float = Field(0.0, ge=0)
+    form: Optional[str] = None
 
 
 class H2HStats(BaseModel):
@@ -479,16 +480,6 @@ class VenueFormStats(BaseModel):
     goals_2_3_rate: float = 0.0
 
 
-class TeamStats(BaseModel):
-    """Complete team statistics for a match."""
-    form: str = ""  # e.g., "DWLDW"
-    form_points: int = 0
-    position: int = 0
-    points: int = 0
-    last_5_overall: TeamFormStats
-    venue_form: VenueFormStats
-
-
 class MatchAnalysisMarket(BaseModel):
     """Single market analysis result."""
     probability: float = 0.0
@@ -508,8 +499,19 @@ class MatchAnalysisResult(BaseModel):
     confidence_index: int = 0
 
 
+@dataclass
+class TeamStats(BaseModel):
+    """Canonical team statistics."""
+    last_5: Optional['TeamFormStats'] = None
+    venue_last_3: Optional['TeamFormStats'] = None # Renamed from home_last_3/away_last_3
+    form: Optional[str] = None
+    position: Optional[int] = None
+    points: Optional[int] = None
+    goals_scored: Optional[int] = None
+    goals_conceded: Optional[int] = None
+
 class MatchAnalysis(BaseModel):
-    """Complete analysis for a single match (flattened structure)."""
+    """Canonical match analysis object (Single Source of Truth)."""
     match_id: str
     home_team: str
     away_team: str
@@ -517,30 +519,30 @@ class MatchAnalysis(BaseModel):
     time: Optional[str] = None
     league: str
     
-    # Enrichment (flattened)
+    # Enrichment Flattened
     matchday: int = 0
     position_difference: int = 0
     points_difference: int = 0
     
-    # Team Stats
+    # Canonical Stats Objects
     homeStats: TeamStats
     awayStats: TeamStats
-    
-    # H2H
     h2h_last_5: H2HStats
     
-    # Probabilities
+    # Probabilities & Confidence
     poisson: PoissonProbabilities
     monte_carlo: MonteCarloResults
+    overall_confidence: float
     
-    # Overall confidence
-    overall_confidence: int = Field(0, ge=0, le=100)
-    
-    # AI Analysis
-    ai_analysis: Optional[AIAnalysis] = None
-    
-    # Aggregated Match Analysis (replaces aggregated_markets)
+    # Aggregated Result (renamed from aggregated_markets)
     match_analysis: Optional[MatchAnalysisResult] = None
+    
+    # AI & Odds
+    ai_analysis: Optional[AIAnalysis] = None
+    odds: Optional[dict] = None
+    
+    # Backtest
+    backtest_result: Optional["BacktestResult"] = None
 
 
 # ============== Aggregated Markets Schemas (Chart-Ready) ==============
@@ -584,3 +586,24 @@ class AnalyzeResponse(BaseModel):
     page: int
     limit: int
     generated_at: str
+    # Backtest stats (only for past dates)
+    is_past_date: bool = False
+    backtest_stats: Optional["BacktestStats"] = None
+
+
+class BacktestResult(BaseModel):
+    """Result of a prediction vs actual outcome."""
+    actual_score: str  # e.g. "2-1"
+    actual_result: str  # "H", "D", "A"
+    predicted_market: str  # e.g. "Over 2.5", "Home Win"
+    was_correct: bool
+    explanation: Optional[str] = None  # Why prediction was wrong (if wrong)
+
+
+class BacktestStats(BaseModel):
+    """Daily accuracy statistics."""
+    total_predictions: int
+    correct_predictions: int
+    incorrect_predictions: int
+    accuracy_percentage: float
+    by_market: Dict[str, Dict[str, int]] = {}  # {"Over 2.5": {"correct": 5, "total": 8}}
