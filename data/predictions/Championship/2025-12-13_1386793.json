@@ -1,0 +1,339 @@
+{
+  "fixture_id": 1386793,
+  "date": "2025-12-13",
+  "home_team": "Portsmouth",
+  "away_team": "Blackburn",
+  "league": "Championship",
+  "api_prediction": {
+    "winner": {
+      "id": 67,
+      "name": "Blackburn",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-1.5",
+      "away": "-1.5"
+    },
+    "advice": "Double chance : draw or Blackburn",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "44%",
+      "away": "56%"
+    },
+    "att": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "def": {
+      "home": "43%",
+      "away": "57%"
+    },
+    "poisson_distribution": {
+      "home": "37%",
+      "away": "63%"
+    },
+    "h2h": {
+      "home": "25%",
+      "away": "75%"
+    },
+    "goals": {
+      "home": "20%",
+      "away": "80%"
+    },
+    "total": {
+      "home": "36.5%",
+      "away": "63.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216306,
+        "referee": "J. Simpson",
+        "timezone": "UTC",
+        "date": "2025-03-29T15:00:00+00:00",
+        "timestamp": 1743260400,
+        "periods": {
+          "first": 1743260400,
+          "second": 1743264000
+        },
+        "venue": {
+          "id": 573,
+          "name": "Fratton Park",
+          "city": "Portsmouth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 3
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 39",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1355,
+          "name": "Portsmouth",
+          "logo": "https://media.api-sports.io/football/teams/1355.png",
+          "winner": true
+        },
+        "away": {
+          "id": 67,
+          "name": "Blackburn",
+          "logo": "https://media.api-sports.io/football/teams/67.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216023,
+        "referee": "F. Hallam",
+        "timezone": "UTC",
+        "date": "2025-01-15T19:45:00+00:00",
+        "timestamp": 1736970300,
+        "periods": {
+          "first": 1736970300,
+          "second": 1736973900
+        },
+        "venue": {
+          "id": 500,
+          "name": "Ewood Park",
+          "city": "Blackburn, Lancashire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 40,
+        "name": "Championship",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/40.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 16",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 67,
+          "name": "Blackburn",
+          "logo": "https://media.api-sports.io/football/teams/67.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1355,
+          "name": "Portsmouth",
+          "logo": "https://media.api-sports.io/football/teams/1355.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 47754,
+        "referee": "Oliver Langford, England",
+        "timezone": "UTC",
+        "date": "2018-02-13T19:45:00+00:00",
+        "timestamp": 1518551100,
+        "periods": {
+          "first": 1518551100,
+          "second": 1518554700
+        },
+        "venue": {
+          "id": 573,
+          "name": "Fratton Park",
+          "city": "Portsmouth"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2017,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1355,
+          "name": "Portsmouth",
+          "logo": "https://media.api-sports.io/football/teams/1355.png",
+          "winner": false
+        },
+        "away": {
+          "id": 67,
+          "name": "Blackburn",
+          "logo": "https://media.api-sports.io/football/teams/67.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 47952,
+        "referee": "Chris Kavanagh, England",
+        "timezone": "UTC",
+        "date": "2017-10-21T14:00:00+00:00",
+        "timestamp": 1508594400,
+        "periods": {
+          "first": 1508594400,
+          "second": 1508598000
+        },
+        "venue": {
+          "id": null,
+          "name": "Ewood Park",
+          "city": "Blackburn"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2017,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 67,
+          "name": "Blackburn",
+          "logo": "https://media.api-sports.io/football/teams/67.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1355,
+          "name": "Portsmouth",
+          "logo": "https://media.api-sports.io/football/teams/1355.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:02:54.266450"
+}

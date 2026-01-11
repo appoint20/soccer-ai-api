@@ -1,0 +1,339 @@
+{
+  "fixture_id": 1387341,
+  "date": "2025-12-13",
+  "home_team": "Stockport County",
+  "away_team": "Stevenage",
+  "league": "League_One",
+  "api_prediction": {
+    "winner": {
+      "id": 4686,
+      "name": "Stockport County",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": "-3.5",
+    "goals": {
+      "home": "-1.5",
+      "away": "-1.5"
+    },
+    "advice": "Combo Double chance : Stockport County or draw and -3.5 goals",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "54%",
+      "away": "46%"
+    },
+    "att": {
+      "home": "71%",
+      "away": "29%"
+    },
+    "def": {
+      "home": "22%",
+      "away": "78%"
+    },
+    "poisson_distribution": {
+      "home": "42%",
+      "away": "58%"
+    },
+    "h2h": {
+      "home": "50%",
+      "away": "50%"
+    },
+    "goals": {
+      "home": "64%",
+      "away": "36%"
+    },
+    "total": {
+      "home": "50.5%",
+      "away": "49.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1216872,
+        "referee": "M. Woods",
+        "timezone": "UTC",
+        "date": "2025-04-01T18:45:00+00:00",
+        "timestamp": 1743533100,
+        "periods": {
+          "first": 1743533100,
+          "second": 1743536700
+        },
+        "venue": {
+          "id": 3535,
+          "name": "Edgeley Park",
+          "city": "Stockport, Greater Manchester"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 40",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 4686,
+          "name": "Stockport County",
+          "logo": "https://media.api-sports.io/football/teams/4686.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1368,
+          "name": "Stevenage",
+          "logo": "https://media.api-sports.io/football/teams/1368.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1216633,
+        "referee": "A. Chilowicz",
+        "timezone": "UTC",
+        "date": "2024-12-14T15:00:00+00:00",
+        "timestamp": 1734188400,
+        "periods": {
+          "first": 1734188400,
+          "second": 1734192000
+        },
+        "venue": {
+          "id": 21182,
+          "name": "Lamex Stadium",
+          "city": "Stevenage, Hertfordshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": 6
+        }
+      },
+      "league": {
+        "id": 41,
+        "name": "League One",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/41.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2024,
+        "round": "Regular Season - 20",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1368,
+          "name": "Stevenage",
+          "logo": "https://media.api-sports.io/football/teams/1368.png",
+          "winner": true
+        },
+        "away": {
+          "id": 4686,
+          "name": "Stockport County",
+          "logo": "https://media.api-sports.io/football/teams/4686.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 876444,
+        "referee": "B. Madden",
+        "timezone": "UTC",
+        "date": "2023-02-18T15:00:00+00:00",
+        "timestamp": 1676732400,
+        "periods": {
+          "first": 1676732400,
+          "second": 1676736000
+        },
+        "venue": {
+          "id": 3535,
+          "name": "Edgeley Park",
+          "city": "Stockport, Greater Manchester"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 33",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 4686,
+          "name": "Stockport County",
+          "logo": "https://media.api-sports.io/football/teams/4686.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1368,
+          "name": "Stevenage",
+          "logo": "https://media.api-sports.io/football/teams/1368.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 876074,
+        "referee": "A. Herczeg",
+        "timezone": "UTC",
+        "date": "2022-08-06T14:00:00+00:00",
+        "timestamp": 1659794400,
+        "periods": {
+          "first": 1659794400,
+          "second": 1659798000
+        },
+        "venue": {
+          "id": 587,
+          "name": "The Lamex Stadium",
+          "city": "Stevenage, Hertfordshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 42,
+        "name": "League Two",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/42.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 2",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1368,
+          "name": "Stevenage",
+          "logo": "https://media.api-sports.io/football/teams/1368.png",
+          "winner": true
+        },
+        "away": {
+          "id": 4686,
+          "name": "Stockport County",
+          "logo": "https://media.api-sports.io/football/teams/4686.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:19.705033"
+}

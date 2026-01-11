@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1388749,
+  "date": "2025-12-13",
+  "home_team": "Arminia Bielefeld",
+  "away_team": "1. FC Kaiserslautern",
+  "league": "2_Bundesliga",
+  "api_prediction": {
+    "winner": {
+      "id": 188,
+      "name": "Arminia Bielefeld",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Arminia Bielefeld or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "36%",
+      "away": "64%"
+    },
+    "att": {
+      "home": "47%",
+      "away": "53%"
+    },
+    "def": {
+      "home": "46%",
+      "away": "54%"
+    },
+    "poisson_distribution": {
+      "home": "65%",
+      "away": "35%"
+    },
+    "h2h": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "goals": {
+      "home": "65%",
+      "away": "35%"
+    },
+    "total": {
+      "home": "56.5%",
+      "away": "43.5%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 873149,
+        "referee": "M. Thomsen",
+        "timezone": "UTC",
+        "date": "2023-05-13T11:00:00+00:00",
+        "timestamp": 1683975600,
+        "periods": {
+          "first": 1683975600,
+          "second": 1683979200
+        },
+        "venue": {
+          "id": 728,
+          "name": "Fritz-Walter-Stadion",
+          "city": "Kaiserslautern"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2022,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 745,
+          "name": "FC Kaiserslautern",
+          "logo": "https://media.api-sports.io/football/teams/745.png",
+          "winner": false
+        },
+        "away": {
+          "id": 188,
+          "name": "Arminia Bielefeld",
+          "logo": "https://media.api-sports.io/football/teams/188.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 872988,
+        "referee": "P. Alt",
+        "timezone": "UTC",
+        "date": "2022-11-05T19:30:00+00:00",
+        "timestamp": 1667676600,
+        "periods": {
+          "first": 1667676600,
+          "second": 1667680200
+        },
+        "venue": {
+          "id": 697,
+          "name": "Sch\u00fccoArena",
+          "city": "Bielefeld"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2022,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 188,
+          "name": "Arminia Bielefeld",
+          "logo": "https://media.api-sports.io/football/teams/188.png",
+          "winner": false
+        },
+        "away": {
+          "id": 745,
+          "name": "FC Kaiserslautern",
+          "logo": "https://media.api-sports.io/football/teams/745.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 3
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 3
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 11251,
+        "referee": "Guido Winkmann, Germany",
+        "timezone": "UTC",
+        "date": "2018-04-27T16:30:00+00:00",
+        "timestamp": 1524846600,
+        "periods": {
+          "first": 1524846600,
+          "second": 1524850200
+        },
+        "venue": {
+          "id": null,
+          "name": "Sch\u00fcco-Arena",
+          "city": "Bielefeld"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2017,
+        "round": "Regular Season - 32",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 188,
+          "name": "Arminia Bielefeld",
+          "logo": "https://media.api-sports.io/football/teams/188.png",
+          "winner": true
+        },
+        "away": {
+          "id": 745,
+          "name": "FC Kaiserslautern",
+          "logo": "https://media.api-sports.io/football/teams/745.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 11399,
+        "referee": "Florian Badstubner, Germany",
+        "timezone": "UTC",
+        "date": "2017-11-26T12:30:00+00:00",
+        "timestamp": 1511699400,
+        "periods": {
+          "first": 1511699400,
+          "second": 1511703000
+        },
+        "venue": {
+          "id": 728,
+          "name": "Fritz-Walter-Stadion",
+          "city": "Kaiserslautern"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2017,
+        "round": "Regular Season - 15",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 745,
+          "name": "FC Kaiserslautern",
+          "logo": "https://media.api-sports.io/football/teams/745.png",
+          "winner": false
+        },
+        "away": {
+          "id": 188,
+          "name": "Arminia Bielefeld",
+          "logo": "https://media.api-sports.io/football/teams/188.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 17098,
+        "referee": "Christof Gunsch, Germany",
+        "timezone": "UTC",
+        "date": "2017-03-17T17:30:00+00:00",
+        "timestamp": 1489771800,
+        "periods": {
+          "first": 1489771800,
+          "second": 1489775400
+        },
+        "venue": {
+          "id": null,
+          "name": "Sch\u00fcco-Arena",
+          "city": "Bielefeld"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 79,
+        "name": "2. Bundesliga",
+        "country": "Germany",
+        "logo": "https://media.api-sports.io/football/leagues/79.png",
+        "flag": "https://media.api-sports.io/flags/de.svg",
+        "season": 2016,
+        "round": "Regular Season - 25",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 188,
+          "name": "Arminia Bielefeld",
+          "logo": "https://media.api-sports.io/football/teams/188.png",
+          "winner": true
+        },
+        "away": {
+          "id": 745,
+          "name": "FC Kaiserslautern",
+          "logo": "https://media.api-sports.io/football/teams/745.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 2,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 2,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:05:50.318216"
+}

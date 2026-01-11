@@ -1,0 +1,409 @@
+{
+  "fixture_id": 1386227,
+  "date": "2025-12-13",
+  "home_team": "Chesterfield",
+  "away_team": "Barnet",
+  "league": "League_Two",
+  "api_prediction": {
+    "winner": {
+      "id": 1345,
+      "name": "Chesterfield",
+      "comment": "Win or draw"
+    },
+    "win_or_draw": true,
+    "under_over": null,
+    "goals": {
+      "home": "-2.5",
+      "away": "-2.5"
+    },
+    "advice": "Double chance : Chesterfield or draw",
+    "percent": {
+      "home": "45%",
+      "draw": "45%",
+      "away": "10%"
+    }
+  },
+  "teams_comparison": {
+    "form": {
+      "home": "55%",
+      "away": "45%"
+    },
+    "att": {
+      "home": "60%",
+      "away": "40%"
+    },
+    "def": {
+      "home": "40%",
+      "away": "60%"
+    },
+    "poisson_distribution": {
+      "home": "47%",
+      "away": "53%"
+    },
+    "h2h": {
+      "home": "80%",
+      "away": "20%"
+    },
+    "goals": {
+      "home": "65%",
+      "away": "35%"
+    },
+    "total": {
+      "home": "57.8%",
+      "away": "42.2%"
+    }
+  },
+  "h2h": [
+    {
+      "fixture": {
+        "id": 1055923,
+        "referee": "A. Humphries",
+        "timezone": "UTC",
+        "date": "2024-02-27T19:45:00+00:00",
+        "timestamp": 1709063100,
+        "periods": {
+          "first": 1709063100,
+          "second": 1709066700
+        },
+        "venue": {
+          "id": 496,
+          "name": "The Hive Stadium",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 29",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1369,
+          "name": "Barnet",
+          "logo": "https://media.api-sports.io/football/teams/1369.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1345,
+          "name": "Chesterfield",
+          "logo": "https://media.api-sports.io/football/teams/1345.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 0,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 0,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1055807,
+        "referee": "M. Russell",
+        "timezone": "UTC",
+        "date": "2023-11-11T15:00:00+00:00",
+        "timestamp": 1699714800,
+        "periods": {
+          "first": 1699714800,
+          "second": 1699718400
+        },
+        "venue": {
+          "id": 19924,
+          "name": "SMH Group Stadium",
+          "city": "Chesterfield, Derbyshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2023,
+        "round": "Regular Season - 19",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1345,
+          "name": "Chesterfield",
+          "logo": "https://media.api-sports.io/football/teams/1345.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1369,
+          "name": "Barnet",
+          "logo": "https://media.api-sports.io/football/teams/1369.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 4,
+        "away": 2
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 4,
+          "away": 2
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 888405,
+        "referee": "E. Swallow",
+        "timezone": "UTC",
+        "date": "2023-01-28T15:00:00+00:00",
+        "timestamp": 1674918000,
+        "periods": {
+          "first": 1674918000,
+          "second": 1674921600
+        },
+        "venue": {
+          "id": 496,
+          "name": "The Hive Stadium",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 30",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1369,
+          "name": "Barnet",
+          "logo": "https://media.api-sports.io/football/teams/1369.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1345,
+          "name": "Chesterfield",
+          "logo": "https://media.api-sports.io/football/teams/1345.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 0
+      },
+      "score": {
+        "halftime": {
+          "home": 1,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 0
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 888105,
+        "referee": "M. Corlett",
+        "timezone": "UTC",
+        "date": "2022-08-26T18:45:00+00:00",
+        "timestamp": 1661539500,
+        "periods": {
+          "first": 1661539500,
+          "second": 1661543100
+        },
+        "venue": {
+          "id": 11895,
+          "name": "Technique Stadium",
+          "city": "Chesterfield, Derbyshire"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2022,
+        "round": "Regular Season - 5",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1345,
+          "name": "Chesterfield",
+          "logo": "https://media.api-sports.io/football/teams/1345.png",
+          "winner": true
+        },
+        "away": {
+          "id": 1369,
+          "name": "Barnet",
+          "logo": "https://media.api-sports.io/football/teams/1369.png",
+          "winner": false
+        }
+      },
+      "goals": {
+        "home": 3,
+        "away": 1
+      },
+      "score": {
+        "halftime": {
+          "home": 2,
+          "away": 1
+        },
+        "fulltime": {
+          "home": 3,
+          "away": 1
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 725160,
+        "referee": "A. Quelch",
+        "timezone": "UTC",
+        "date": "2022-01-15T15:00:00+00:00",
+        "timestamp": 1642258800,
+        "periods": {
+          "first": 1642258800,
+          "second": 1642262400
+        },
+        "venue": {
+          "id": 496,
+          "name": "The Hive Stadium",
+          "city": "London"
+        },
+        "status": {
+          "long": "Match Finished",
+          "short": "FT",
+          "elapsed": 90,
+          "extra": null
+        }
+      },
+      "league": {
+        "id": 43,
+        "name": "National League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/43.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+        "season": 2021,
+        "round": "Regular Season - 26",
+        "standings": true
+      },
+      "teams": {
+        "home": {
+          "id": 1369,
+          "name": "Barnet",
+          "logo": "https://media.api-sports.io/football/teams/1369.png",
+          "winner": false
+        },
+        "away": {
+          "id": 1345,
+          "name": "Chesterfield",
+          "logo": "https://media.api-sports.io/football/teams/1345.png",
+          "winner": true
+        }
+      },
+      "goals": {
+        "home": 1,
+        "away": 4
+      },
+      "score": {
+        "halftime": {
+          "home": 0,
+          "away": 0
+        },
+        "fulltime": {
+          "home": 1,
+          "away": 4
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ],
+  "fetched_at": "2025-12-10T18:04:28.789288"
+}
