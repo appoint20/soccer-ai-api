@@ -1,4 +1,3 @@
-
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using soccer_gpt_application.Interfaces;
@@ -6,20 +5,10 @@ using soccer_gpt_application.Models;
 
 namespace soccer_gpt_application.Features.Matches.Queries;
 
-public class GetUpcomingMatchesQuery : IRequest
-{
-    public int Offset { get; init; } = 0;
-    public int Limit { get; init; } = 10;
-}
-
-public class GetUpcomingMatchesResponse : IResponse
-{
-    public PagedResponse<UpcomingMatchDto> Data { get; init; } = new();
-}
-
 public class GetUpcomingMatchesQueryHandler(
     IFixtureRepository fixtureRepository,
     ITeamStatsService teamStatsService,
+    ITeamAnalyticsService teamAnalyticsService,
     IAdvancedStatsService advancedStatsService,
     IHistoricalDataRepository historicalRepository,
     ILeaguesRepository leaguesRepository)
@@ -42,14 +31,14 @@ public class GetUpcomingMatchesQueryHandler(
         var enrichedMatches = new List<UpcomingMatchDto>();
         foreach (var match in fixtures)
         {
-            // Calculate Rich Stats
+            // Calculate Generic Stats
             var homeStats = await teamStatsService.CalculateStatsAsync(match.HomeTeam, allHistory);
             var awayStats = await teamStatsService.CalculateStatsAsync(match.AwayTeam, allHistory);
             
             // Calculate Advanced Analytics
             var advancedAnalytics = await advancedStatsService.CalculateAnalyticsAsync(match.HomeTeam, match.AwayTeam, allHistory);
 
-            // Calculate Traps
+            // Calculate Traps && League Name
             var leagueName = leagueMap.TryGetValue(match.League, out var name) ? name : match.League;
             var matchWithLeague = match with { LeagueName = leagueName };
 
@@ -57,13 +46,43 @@ public class GetUpcomingMatchesQueryHandler(
             var h2hMatches = await historicalRepository.GetMatchesBetweenTeamsAsync(match.HomeTeam, match.AwayTeam);
             var h2hAnalysis = CalculateHistoricalH2H(h2hMatches, match.HomeTeam, match.AwayTeam);
 
-            // Add to enriched list (without Gemini yet)
+            // --- New Analytics (Last 9 / Last 3) ---
+            
+            // Home Team Data
+            var homeHistory = historicalRepository.GetMatchesForTeam(match.HomeTeam);
+            var homeLast9 = homeHistory.OrderByDescending(m => m.Date).Take(9).ToList();
+            var homeLast3Home = homeHistory
+                .Where(m => string.Equals(m.HomeTeam, match.HomeTeam, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(m => m.Date)
+                .Take(3)
+                .ToList();
+
+            var homeLast9Stats = teamAnalyticsService.CalculateStats(homeLast9, match.HomeTeam);
+            var homeLast3HomeStats = teamAnalyticsService.CalculateStats(homeLast3Home, match.HomeTeam);
+
+            // Away Team Data
+            var awayHistory = historicalRepository.GetMatchesForTeam(match.AwayTeam);
+            var awayLast9 = awayHistory.OrderByDescending(m => m.Date).Take(9).ToList();
+            var awayLast3Away = awayHistory
+                .Where(m => string.Equals(m.AwayTeam, match.AwayTeam, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(m => m.Date)
+                .Take(3)
+                .ToList();
+
+            var awayLast9Stats = teamAnalyticsService.CalculateStats(awayLast9, match.AwayTeam);
+            var awayLast3AwayStats = teamAnalyticsService.CalculateStats(awayLast3Away, match.AwayTeam);
+
+            // Add to enriched list
             enrichedMatches.Add(matchWithLeague with 
             { 
                 HomeTeamStats = homeStats,
                 AwayTeamStats = awayStats,
                 AdvancedAnalytics = advancedAnalytics,
                 H2HAnalysis = h2hAnalysis,
+                HomeLast9Overall = homeLast9Stats,
+                AwayLast9Overall = awayLast9Stats,
+                HomeLast3Home = homeLast3HomeStats,
+                AwayLast3Away = awayLast3AwayStats
             });
         }
         
@@ -75,7 +94,6 @@ public class GetUpcomingMatchesQueryHandler(
                 Limit = query.Limit,
                 Total = total,
                 Items = enrichedMatches,
-                Summary = new ResponseSummary { TotalStake = 0 }
             }
         };
     }

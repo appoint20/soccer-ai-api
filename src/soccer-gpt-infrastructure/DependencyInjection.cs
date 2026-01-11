@@ -18,10 +18,13 @@ public static class DependencyInjection
         services.AddScoped<IFixtureRepository, FixtureService>();
         services.AddScoped<ILocalTeamStatsRepository, JsonFileLocalTeamStatsRepository>();
         services.AddScoped<IPredictionRepository, JsonFilePredictionRepository>();
-        services.AddSingleton<IHistoricalDataRepository, ExcelHistoricalDataService>();
+        services.AddSingleton<InMemoryHistoricalDataService>();
+        services.AddSingleton<IHistoricalDataRepository>(sp => sp.GetRequiredService<InMemoryHistoricalDataService>());
+        services.AddHostedService(sp => sp.GetRequiredService<InMemoryHistoricalDataService>());
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IAdvancedStatsService, AdvancedStatsService>();
         services.AddScoped<IPoissonGoalModelService, PoissonGoalModelService>();
+        services.AddScoped<ITeamAnalyticsService, TeamAnalyticsService>();
         services.AddScoped<Services.Statistics.DixonColesCalculator>();
         services.AddScoped<Services.Statistics.ValueBettingService>();
         

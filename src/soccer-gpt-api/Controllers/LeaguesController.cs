@@ -1,4 +1,3 @@
-
 using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using soccer_gpt_application.Features.Leagues.Queries;

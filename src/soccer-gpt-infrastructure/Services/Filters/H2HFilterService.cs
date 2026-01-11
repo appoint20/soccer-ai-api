@@ -1,3 +1,4 @@
+using soccer_gpt_application.Models;
 using soccer_gpt_application.Interfaces;
 using System.Text.Json;
 

@@ -1,4 +1,3 @@
-
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -21,35 +20,21 @@ public class JsonFileLeaguesRepository : ILeaguesRepository
 
     private string FindLeaguesJson()
     {
-        // Try common locations
-        var locations = new[]
-        {
-            "Data/leagues.json",
-            "data/leagues.json",
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "leagues.json"),
-        };
-
-        foreach (var loc in locations)
-        {
-            if (File.Exists(loc)) return Path.GetFullPath(loc);
-        }
+        var locations = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "leagues.json");
+        if (File.Exists(locations))
+            _logger.LogError("leagues.json not found at {Path}", _filePath);
         
-        // Fallback to absolute path that we know from previous context if needed, but risky.
-        return "data/leagues.json"; 
+        return Path.GetFullPath(locations);
     }
 
     public async Task<List<LeagueDto>> GetLeaguesAsync(CancellationToken cancellationToken)
     {
-        if (!File.Exists(_filePath))
-        {
-            _logger.LogError("leagues.json not found at {Path}", _filePath);
-            return [];
-        }
-
         try
         {
             await using var stream = File.OpenRead(_filePath);
-            var leagues = await JsonSerializer.DeserializeAsync<List<LeagueDto>>(stream, cancellationToken: cancellationToken);
+            var leagues = await JsonSerializer
+                .DeserializeAsync<List<LeagueDto>>(stream, cancellationToken: cancellationToken);
+            
             return leagues ?? [];
         }
         catch (Exception ex)

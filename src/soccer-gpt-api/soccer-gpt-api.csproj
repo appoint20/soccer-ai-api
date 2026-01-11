@@ -21,4 +21,10 @@
     <ProjectReference Include="..\soccer-gpt-infrastructure\soccer-gpt-infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Data\european_fixtures\european_teams_lookup.json" />
+    <_ContentIncludedByDefault Remove="Data\european_fixtures\ucl_fixtures.json" />
+    <_ContentIncludedByDefault Remove="Data\european_fixtures\uel_fixtures.json" />
+  </ItemGroup>
+
 </Project>

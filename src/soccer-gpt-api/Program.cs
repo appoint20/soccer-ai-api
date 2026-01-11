@@ -1,8 +1,8 @@
+using Mediator.Net;
+using Scalar.AspNetCore;
 using soccer_gpt_application;
 using soccer_gpt_infrastructure;
-using Mediator.Net;
 using Mediator.Net.MicrosoftDependencyInjection;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 

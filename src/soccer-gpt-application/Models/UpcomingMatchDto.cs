@@ -42,6 +42,19 @@ public record UpcomingMatchDto
 
     [JsonPropertyName("gemini")]
     public GeminiAnalysisDto? Gemini { get; init; }
+
+    // New Analytics
+    [JsonPropertyName("home_last_9_overall")]
+    public TeamPerformanceStats? HomeLast9Overall { get; init; }
+
+    [JsonPropertyName("away_last_9_overall")]
+    public TeamPerformanceStats? AwayLast9Overall { get; init; }
+
+    [JsonPropertyName("home_last_3_home")]
+    public TeamPerformanceStats? HomeLast3Home { get; init; }
+
+    [JsonPropertyName("away_last_3_away")]
+    public TeamPerformanceStats? AwayLast3Away { get; init; }
 }
 
 public record TeamScheduleDto

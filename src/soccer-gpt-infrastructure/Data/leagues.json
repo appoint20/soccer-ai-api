@@ -2,133 +2,61 @@
     {
         "id": "E0",
         "api_id": 39,
-        "folder_name": "Premier_League",
         "name": "Premier League",
-        "country": "England",
-        "logo": "https://media.api-sports.io/football/leagues/39.png",
-        "teams_count": 20,
-        "matchday": 16,
-        "start_date": "2025-12-13",
-        "end_date": "2025-12-15"
+        "country": "England"
     },
     {
         "id": "E1",
         "api_id": 40,
-        "folder_name": "Championship",
         "name": "Championship",
-        "country": "England",
-        "logo": "https://media.api-sports.io/football/leagues/40.png",
-        "teams_count": 24,
-        "matchday": 21,
-        "start_date": "2025-12-12",
-        "end_date": "2025-12-15"
+        "country": "England"
     },
     {
         "id": "E2",
         "api_id": 41,
-        "folder_name": "League_One",
         "name": "League One",
-        "country": "England",
-        "logo": "https://media.api-sports.io/football/leagues/41.png",
-        "teams_count": 24,
-        "matchday": 20,
-        "start_date": "2025-12-13",
-        "end_date": "2025-12-13"
+        "country": "England"
     },
     {
         "id": "E3",
         "api_id": 42,
-        "folder_name": "League_Two",
         "name": "League Two",
-        "country": "England",
-        "logo": "https://media.api-sports.io/football/leagues/42.png",
-        "teams_count": 24,
-        "matchday": 20,
-        "start_date": "2025-12-13",
-        "end_date": "2025-12-13"
+        "country": "England"
     },
     {
         "id": "D1",
         "api_id": 78,
-        "folder_name": "Bundesliga",
         "name": "Bundesliga",
-        "country": "Germany",
-        "logo": "https://media.api-sports.io/football/leagues/78.png",
-        "teams_count": 18,
-        "matchday": 13,
-        "start_date": "2024-08-23",
-        "end_date": "2025-05-17"
-    },
-    {
-        "id": "D2",
-        "api_id": 79,
-        "folder_name": "2_Bundesliga",
-        "name": "2. Bundesliga",
-        "country": "Germany",
-        "logo": "https://media.api-sports.io/football/leagues/79.png",
-        "teams_count": 18,
-        "matchday": 14,
-        "start_date": "2024-08-02",
-        "end_date": "2025-05-18"
+        "country": "Germany"
     },
     {
         "id": "I1",
         "api_id": 135,
-        "folder_name": "Serie_A",
         "name": "Serie A",
-        "country": "Italy",
-        "logo": "https://media.api-sports.io/football/leagues/135.png",
-        "teams_count": 20,
-        "matchday": 15,
-        "start_date": "2024-08-17",
-        "end_date": "2025-05-25"
+        "country": "Italy"
     },
     {
         "id": "I2",
         "api_id": 136,
-        "folder_name": "Serie_B",
         "name": "Serie B",
-        "country": "Italy",
-        "logo": "https://media.api-sports.io/football/leagues/136.png",
-        "teams_count": 20,
-        "matchday": 16,
-        "start_date": "2024-08-16",
-        "end_date": "2025-05-09"
+        "country": "Italy"
     },
     {
         "id": "F1",
         "api_id": 61,
-        "folder_name": "Ligue_1",
         "name": "Ligue 1",
-        "country": "France",
-        "logo": "https://media.api-sports.io/football/leagues/61.png",
-        "teams_count": 18,
-        "matchday": 14,
-        "start_date": "2024-08-16",
-        "end_date": "2025-05-18"
+        "country": "France"
     },
     {
         "id": "F2",
         "api_id": 62,
-        "folder_name": "Ligue_2",
         "name": "Ligue 2",
-        "country": "France",
-        "logo": "https://media.api-sports.io/football/leagues/62.png",
-        "teams_count": 20,
-        "matchday": 15,
-        "start_date": "2024-08-16",
-        "end_date": "2025-05-17"
+        "country": "France"
     },
     {
         "id": "SP1",
         "api_id": 140,
-        "folder_name": "La_Liga",
         "name": "La Liga",
-        "country": "Spain",
-        "logo": "https://media.api-sports.io/football/leagues/140.png",
-        "teams_count": 20,
-        "matchday": 16,
-        "start_date": "2024-08-15",
-        "end_date": "2025-05-25"
+        "country": "Spain"
     }
 ]

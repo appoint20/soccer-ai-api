@@ -1,4 +1,3 @@
-
 using System.Text.Json.Serialization;
 
 namespace soccer_gpt_application.Models;
@@ -6,23 +5,14 @@ namespace soccer_gpt_application.Models;
 public class PagedResponse<T>
 {
     [JsonPropertyName("offset")]
-    public int Offset { get; set; }
+    public int Offset { get; init; }
 
     [JsonPropertyName("limit")]
-    public int Limit { get; set; }
+    public int Limit { get; init; }
 
     [JsonPropertyName("total")]
-    public int Total { get; set; }
+    public int Total { get; init; }
 
     [JsonPropertyName("items")]
-    public List<T> Items { get; set; } = new();
-
-    [JsonPropertyName("summary")]
-    public ResponseSummary Summary { get; set; } = new();
-}
-
-public class ResponseSummary
-{
-    [JsonPropertyName("total_stake")]
-    public decimal TotalStake { get; set; }
+    public List<T> Items { get; init; } = [];
 }

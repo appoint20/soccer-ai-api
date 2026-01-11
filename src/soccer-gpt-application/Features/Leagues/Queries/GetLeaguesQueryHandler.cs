@@ -1,4 +1,3 @@
-
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using soccer_gpt_application.Interfaces;
@@ -6,18 +5,12 @@ using soccer_gpt_application.Models;
 
 namespace soccer_gpt_application.Features.Leagues.Queries;
 
-public class GetLeaguesQueryHandler : IRequestHandler<GetLeaguesQuery, GetLeaguesResponse>
+public class GetLeaguesQueryHandler(ILeaguesRepository repository): IRequestHandler<GetLeaguesQuery, GetLeaguesResponse>
 {
-    private readonly ILeaguesRepository _repository;
-
-    public GetLeaguesQueryHandler(ILeaguesRepository repository)
+    public async Task<GetLeaguesResponse> Handle(
+        IReceiveContext<GetLeaguesQuery> context, CancellationToken cancellationToken)
     {
-        _repository = repository;
-    }
-
-    public async Task<GetLeaguesResponse> Handle(IReceiveContext<GetLeaguesQuery> context, CancellationToken cancellationToken)
-    {
-        var leagues = await _repository.GetLeaguesAsync(cancellationToken);
+        var leagues = await repository.GetLeaguesAsync(cancellationToken);
         
         return new GetLeaguesResponse 
         { 

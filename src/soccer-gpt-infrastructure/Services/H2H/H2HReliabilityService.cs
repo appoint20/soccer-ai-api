@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using soccer_gpt_application.Models;
 using soccer_gpt_application.Interfaces;
 
 namespace soccer_gpt_infrastructure.Services.H2H;

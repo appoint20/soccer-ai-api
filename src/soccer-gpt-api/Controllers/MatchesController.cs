@@ -1,4 +1,3 @@
-
 using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using soccer_gpt_application.Features.Matches.Queries;
@@ -19,11 +18,13 @@ public class MatchesController(IMediator mediator) : ControllerBase
     /// <returns>Paged list of matches</returns>
     [HttpGet("upcoming")]
     [ProducesResponseType(typeof(PagedResponse<UpcomingMatchDto>), 200)]
-    public async Task<IActionResult> GetUpcomingMatches([FromQuery] int offset = 0, [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetUpcomingMatches(
+        [FromQuery] int offset = 0, [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
     {
         var response = await mediator.RequestAsync<GetUpcomingMatchesQuery, GetUpcomingMatchesResponse>(
             new GetUpcomingMatchesQuery { Offset = offset, Limit = limit }, 
-            cancellationToken);
+            cancellationToken
+        );
             
         return Ok(response.Data);
     }
