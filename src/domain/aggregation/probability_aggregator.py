@@ -16,7 +16,8 @@ from src.domain.aggregation.models import (
     SourceProbabilities,
     MarketType,
     ConfidenceLevel,
-    MarketVerdict,
+    MarketType,
+    ConfidenceLevel,
 )
 from src.utils.logger import get_logger
 
@@ -186,15 +187,14 @@ class ProbabilityAggregator:
         probs = [poisson, mc, home_form, away_form, h2h]
         variance = statistics.variance(probs) if len(probs) > 1 else 0.0
         
-        # Determine confidence and verdict
+        # Determine confidence
         confidence = self._calculate_confidence(probs)
-        verdict = self._calculate_verdict(final_prob, confidence)
         
         return AggregatedMarket(
             market=market_type,
             final_probability=final_prob,
             confidence=confidence,
-            verdict=verdict,
+            qualified=False,  # Default, calculated later
             sources=sources,
             source_variance=variance,
         )
@@ -226,13 +226,12 @@ class ProbabilityAggregator:
         variance = statistics.variance(probs) if len(probs) > 1 else 0.0
         
         confidence = self._calculate_confidence(probs)
-        verdict = self._calculate_verdict(final_prob, confidence)
         
         return AggregatedMarket(
             market=market_type,
             final_probability=final_prob,
             confidence=confidence,
-            verdict=verdict,
+            qualified=False,  # Default, calculated later
             sources=sources,
             source_variance=variance,
         )
@@ -262,31 +261,6 @@ class ProbabilityAggregator:
             return ConfidenceLevel.MEDIUM
         else:
             return ConfidenceLevel.LOW
-    
-    def _calculate_verdict(
-        self,
-        probability: float,
-        confidence: ConfidenceLevel,
-    ) -> MarketVerdict:
-        """
-        Calculate verdict based on probability and confidence.
-        
-        LIKELY: prob >= 0.60
-        POSSIBLE: 0.45 <= prob < 0.60
-        UNLIKELY: 0.30 <= prob < 0.45
-        SKIP: prob < 0.30 or LOW confidence with prob < 0.55
-        """
-        if confidence == ConfidenceLevel.LOW and probability < 0.55:
-            return MarketVerdict.SKIP
-        
-        if probability >= 0.60:
-            return MarketVerdict.LIKELY
-        elif probability >= 0.45:
-            return MarketVerdict.POSSIBLE
-        elif probability >= 0.30:
-            return MarketVerdict.UNLIKELY
-        else:
-            return MarketVerdict.SKIP
     
     def _calculate_overall_confidence(self, markets: List[AggregatedMarket]) -> int:
         """

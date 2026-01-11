@@ -12,6 +12,7 @@ from src.domain.enrichment.form_calculator import FormCalculator
 from src.domain.enrichment.table_calculator import TableCalculator
 from src.domain.enrichment.goals_aggregator import GoalsAggregator
 from src.domain.enrichment.venue_form_calculator import VenueFormCalculator
+from src.domain.services.team_name_matcher import TeamNameMatcher
 from src.utils.logger import get_logger
 
 logger = get_logger("MatchEnrichmentService")
@@ -26,11 +27,12 @@ class MatchEnrichmentService:
     """
     
     def __init__(self):
+        self.team_matcher = TeamNameMatcher()
         self.matchday_calc = MatchdayCalculator()
-        self.form_calc = FormCalculator()
-        self.table_calc = TableCalculator()
-        self.goals_agg = GoalsAggregator()
-        self.venue_form_calc = VenueFormCalculator()
+        self.form_calc = FormCalculator(team_matcher=self.team_matcher)
+        self.table_calc = TableCalculator(team_matcher=self.team_matcher)
+        self.goals_agg = GoalsAggregator(team_matcher=self.team_matcher)
+        self.venue_form_calc = VenueFormCalculator(team_matcher=self.team_matcher)
     
     def enrich_match(
         self,

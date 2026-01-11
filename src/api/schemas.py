@@ -483,7 +483,18 @@ class MatchAnalysisMarket(BaseModel):
     probability: float = 0.0
     probability_pct: str = "0%"
     confidence: str = "LOW"
-    verdict: str = "SKIP"
+    qualified: bool
+    qualification_reason: Optional[str] = None
+
+
+class DrawAnalysis(BaseModel):
+    """Draw analysis result (Draw Gravity Score)."""
+    probability: float = 0.0
+    probability_pct: str = "0%"
+    confidence: str = "LOW"
+    qualified: bool
+    reason: Optional[str] = None
+    draw_gravity_score: int = Field(..., ge=0, le=100)
 
 
 class MatchAnalysisResult(BaseModel):
@@ -493,8 +504,9 @@ class MatchAnalysisResult(BaseModel):
     goals_2_3: MatchAnalysisMarket
     home_win: MatchAnalysisMarket
     away_win: MatchAnalysisMarket
-    draw: MatchAnalysisMarket
+    draw: DrawAnalysis
     confidence_index: int = 0
+    classic_draw_profile: Optional["ClassicDrawProfile"] = None
 
 
 @dataclass
@@ -542,6 +554,13 @@ class MatchAnalysis(BaseModel):
     backtest_result: Optional["BacktestResult"] = None
 
 
+class ClassicDrawProfile(BaseModel):
+    """Internal profile for structural draw detection."""
+    classic_draw_score: int
+    classic_draw_detected: bool
+    reason: str
+
+
 # ============== Aggregated Markets Schemas (Chart-Ready) ==============
 
 class MarketSourceSchema(BaseModel):
@@ -558,7 +577,7 @@ class AggregatedMarketSchema(BaseModel):
     probability: float
     probability_pct: str
     confidence: str  # HIGH, MEDIUM, LOW
-    verdict: str  # LIKELY, POSSIBLE, UNLIKELY, SKIP
+    qualified: bool
     sources: List[MarketSourceSchema]
     source_variance: float
 
@@ -592,9 +611,16 @@ class BacktestResult(BaseModel):
     """Result of a prediction vs actual outcome."""
     actual_score: str  # e.g. "2-1"
     actual_result: str  # "H", "D", "A"
-    predicted_market: str  # e.g. "Over 2.5", "Home Win"
-    was_correct: bool
+    
+    # AI Specific
+    predicted_market: Optional[str] = None # e.g. "Over 2.5", "Home Win"
+    was_correct: Optional[bool] = None
     explanation: Optional[str] = None  # Why prediction was wrong (if wrong)
+    
+    # Statistical Specific
+    is_btts: Optional[bool] = None
+    is_over25: Optional[bool] = None
+    predictions: Optional[Dict[str, Any]] = None # Detailed breakdown by market
 
 
 class BacktestStats(BaseModel):

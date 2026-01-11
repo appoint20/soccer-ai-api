@@ -107,6 +107,16 @@ class GeminiService:
             return matches
             
         except Exception as e:
-            self.logger.error(f"Gemini enrichment failed: {e}")
-            # Do not fail the whole request, just return matches without insight
+            import traceback
+            error_msg = f"Gemini enrichment failed: {str(e)}\n{traceback.format_exc()}"
+            self.logger.error(error_msg)
+            print(error_msg) # Force verify in stdout
+            
+            # Inject error into matches so it's visible in API
+            for m in matches:
+                 m["ai_insight"] = {
+                     "verdict": "ERROR",
+                     "reasoning": f"AI Generation Failed: {str(e)}",
+                     "confidence": "LOW"
+                 }
             return matches

@@ -19,12 +19,7 @@ class ConfidenceLevel(str, Enum):
     LOW = "LOW"
 
 
-class MarketVerdict(str, Enum):
-    """Market prediction verdict."""
-    LIKELY = "LIKELY"
-    POSSIBLE = "POSSIBLE"
-    UNLIKELY = "UNLIKELY"
-    SKIP = "SKIP"
+
 
 
 class MarketType(str, Enum):
@@ -69,10 +64,21 @@ class AggregatedMarket:
     - verdict: LIKELY/POSSIBLE/UNLIKELY based on probability
     - sources: Raw breakdown for explainability
     """
+@dataclass(frozen=True)
+class AggregatedMarket:
+    """
+    Aggregated probability for a single betting market.
+    
+    Contains:
+    - final_probability: Weighted combination of all sources
+    - confidence: HIGH/MEDIUM/LOW based on source agreement
+    - qualified: Boolean flag indicating if market meets strict entry criteria
+    - sources: Raw breakdown for explainability
+    """
     market: MarketType
     final_probability: float
     confidence: ConfidenceLevel
-    verdict: MarketVerdict
+    qualified: bool
     sources: List[MarketSourceBreakdown]
     source_variance: float = 0.0  # How much sources disagree
     
@@ -82,7 +88,7 @@ class AggregatedMarket:
             "probability": round(self.final_probability, 3),
             "probability_pct": f"{round(self.final_probability * 100)}%",
             "confidence": self.confidence.value,
-            "verdict": self.verdict.value,
+            "qualified": self.qualified,
             "sources": [s.to_dict() for s in self.sources],
             "source_variance": round(self.source_variance, 3),
         }

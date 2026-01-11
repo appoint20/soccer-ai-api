@@ -4,33 +4,33 @@
   "analyses": {
     "2026-01-01_Crystal_Palace_Fulham": {
       "best_prediction": "Away Win",
-      "reason": "Fulham arrives in excellent form, especially in attack, while Crystal Palace has been defensively vulnerable at home, conceding nearly two goals per game. Fulham's strong away record contrasts sharply with Palace's struggles, giving the visitors a clear advantage.",
-      "short_analysis": "This match pits a high-performing Fulham against a struggling Crystal Palace. Fulham's potent attack should be able to exploit Palace's porous defense. While historical matchups have been low-scoring, current form suggests Fulham is the strong favorite to secure a victory on the road. The main risk is if Palace adopts a highly defensive setup that stifles the game.",
-      "confidence_level": "LOW",
-      "trap": "Head-to-head data suggests low-scoring matches between these teams, which contradicts Fulham's high-scoring form and could be a trap for goal-based bets."
+      "reason": "Fulham arrives in excellent form, demonstrating consistent goal-scoring and a high win rate. Crystal Palace is struggling, particularly at home where they find it difficult to score while conceding frequently.",
+      "short_analysis": "The primary dynamic is Fulham's strong attacking rhythm against Crystal Palace's defensive fragility. While Fulham is the clear favorite based on current performance, the head-to-head history suggests this fixture can be tighter than expected. The risk lies in whether Palace's anemic attack can be contained, which seems likely given their recent record.",
+      "confidence_level": "MEDIUM",
+      "trap": "There is a significant trap in the goal markets. Fulham's recent high-scoring form suggests goals, but the historical head-to-head record for this fixture is overwhelmingly low-scoring."
     },
     "2026-01-01_Liverpool_Leeds_United": {
       "best_prediction": "BTTS Yes",
-      "reason": "Both teams have demonstrated potent attacks, with Leeds scoring consistently on the road and Liverpool being prolific at home. Liverpool's defense, while solid, frequently concedes, and Leeds' attacking nature makes it highly likely they will find the net.",
-      "short_analysis": "An exciting match is expected, with two offensively-minded teams. Liverpool's home advantage makes them the favorite, but Leeds' impressive scoring record on the road cannot be ignored. The data strongly suggests that both teams will score, making for an open and entertaining game.",
+      "reason": "Both teams have demonstrated potent attacks and consistent defensive vulnerabilities. Leeds has seen both teams score in all their recent matches, while Liverpool's attacking style at home frequently leads to open, end-to-end games.",
+      "short_analysis": "This match profiles as a high-tempo encounter. Liverpool's offensive power is well-known, but their tendency to concede provides clear opportunities for a very capable Leeds attack. The historical context, though limited, supports the expectation of an open game where both sides find the net with regularity.",
       "confidence_level": "HIGH",
-      "trap": ""
+      "trap": "The trap would be focusing solely on a Liverpool win. Leeds' attacking output is significant enough to make this a highly competitive match, where they are very likely to score regardless of the final result."
     },
     "2026-01-01_Brentford_Tottenham_Hotspur": {
-      "best_prediction": "Home Win",
-      "reason": "Brentford has a solid home record, built upon a strong defense that concedes just over one goal per game. Tottenham has struggled for goals on their travels and faces a difficult challenge against a well-organized Brentford side.",
-      "short_analysis": "This match favors the home side, Brentford, who have been defensively robust and effective at home. Tottenham's inconsistent away form, especially their lack of attacking threat, will likely be their undoing. Expect Brentford to control the game and secure the three points in a potentially tight contest.",
-      "confidence_level": "MEDIUM",
-      "trap": ""
+      "best_prediction": "NO BET",
+      "reason": "There are major contradictions between recent team form and the historical head-to-head record. Brentford's solid home structure and controlled, low-scoring games conflict with a history of more open matches against Tottenham.",
+      "short_analysis": "Tottenham's historical dominance in this fixture clashes with their current poor away attacking form. Conversely, Brentford's strong home performances are undermined by their historical inability to secure a win against this opponent. These conflicting signals create an unpredictable environment where capital preservation is the most logical approach.",
+      "confidence_level": "VERY LOW",
+      "trap": "The primary trap is trusting either form or history in isolation. Betting on a Brentford win ignores their winless H2H record, while betting on Spurs ignores their very weak current away attack."
     },
     "2026-01-01_Sunderland_Manchester_City": {
-      "best_prediction": "Away Win",
-      "reason": "Manchester City possesses a significantly more potent attack and a far superior overall record compared to Sunderland. While Sunderland has been defensively solid at home, their anemic attack, averaging just 0.6 goals per game, is unlikely to pose a threat.",
-      "short_analysis": "This appears to be a classic David vs. Goliath matchup. Manchester City's attacking firepower is expected to overcome Sunderland's resilient side. However, Sunderland's strong defensive statistics suggest this might not be a straightforward victory, and City may have to work hard to break them down.",
-      "confidence_level": "VERY LOW",
-      "trap": "The statistical models show an unusually high probability for a draw, conflicting with the clear quality gap. Sunderland's strong defensive numbers at home might make this a much tougher game for Man City than expected."
+      "best_prediction": "NO BET",
+      "reason": "There is a fundamental clash in styles between Manchester City's high-scoring away approach and Sunderland's extremely low-event, defensive home structure. Sunderland rarely scores but also concedes very few goals at home.",
+      "short_analysis": "While Manchester City is the overwhelmingly stronger team, the match dynamic is not straightforward. Sunderland's defensive organization could frustrate City's attack, leading to a much tighter game than expected. The underlying data points towards a low-scoring affair, making any bet on goals or a comfortable win highly risky.",
+      "confidence_level": "LOW",
+      "trap": "The trap is assuming a routine, high-scoring victory for Manchester City. Sunderland's strong defensive numbers and non-existent attack point towards a cagey match, possibly a narrow 1-0 win or a frustrating draw."
     }
   },
-  "created_at": "2026-01-10T11:46:43.681658",
+  "created_at": "2026-01-11T16:45:47.755823",
   "match_count": 4
 }

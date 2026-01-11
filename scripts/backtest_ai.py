@@ -175,11 +175,25 @@ def analyze_match_with_time_travel(
         "overall_confidence": confidence,
     }
     
+    # Adapter for AI Service
+    class MatchAnalysisAdapter:
+        def __init__(self, data):
+            self.match_id = data["match_id"]
+            self.home_team = data["home_team"]
+            self.away_team = data["away_team"]
+            # Mock structure expected by service
+            self.homeStats = type('obj', (object,), {'last_5': data["home_last_5"]})
+            self.awayStats = type('obj', (object,), {'last_5': data["away_last_5"]})
+            self.h2h_last_5 = data["h2h_last_5"]
+            self.poisson = data["poisson"]
+            self.overall_confidence = data["overall_confidence"]
+            self.date = str(match.get("match_date", ""))[:10]
+
     # 5. Get AI prediction
     ai_analysis = None
     try:
         ai_results = ai_service.analyze_matches_batch(
-            matches=[match_data],
+            analyses=[MatchAnalysisAdapter(match_data)],
             league=LEAGUE_NAMES.get(league, league),
         )
         if match_data["match_id"] in ai_results:
@@ -465,6 +479,25 @@ def run_ai_backtest(weeks: int = 10, sample_per_week: int = 20):
     
     print()
     
+    # By league
+    league_stats = defaultdict(lambda: {"correct": 0, "total": 0})
+    for e in ai_with_result:
+        # League code or name
+        lg = e.get("league")
+        # Map code to name if possible
+        lg_name = LEAGUE_NAMES.get(lg, lg)
+        
+        league_stats[lg_name]["total"] += 1
+        if e["ai_prediction"]["correct"]:
+            league_stats[lg_name]["correct"] += 1
+            
+    print("🏆 BY LEAGUE:")
+    for lg_name, stats in sorted(league_stats.items(), key=lambda x: -x[1]["total"]):
+        acc = stats["correct"] / stats["total"] if stats["total"] > 0 else 0
+        print(f"   {lg_name:20s}: {stats['correct']}/{stats['total']} = {acc:.1%}")
+    
+    print()
+    
     # Save results
     results = {
         "test_period": {
@@ -479,6 +512,7 @@ def run_ai_backtest(weeks: int = 10, sample_per_week: int = 20):
             "ai_accuracy": ai_correct / len(ai_with_result) if ai_with_result else 0,
             "high_confidence_accuracy": high_conf_correct / len(high_conf) if high_conf else 0,
         },
+        "by_league": dict(league_stats),
         "weekly": weekly_stats,
         "by_type": dict(pred_types),
         "sample_predictions": all_evaluations[:50],

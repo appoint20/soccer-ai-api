@@ -182,6 +182,7 @@ def get_analyze_matches_use_case():
     from src.domain.services.calculators.poisson_goal_calculator import PoissonGoalCalculator
     from src.domain.services.calculators.monte_carlo_uncertainty_adjuster import MonteCarloUncertaintyAdjuster
     from src.domain.services.calculators.match_confidence_calculator import MatchConfidenceCalculator
+    from src.domain.services.calculators.qualification_calculator import QualificationCalculator
     
     # Create repositories
     _upcoming_repository = UpcomingMatchRepository()
@@ -191,10 +192,11 @@ def get_analyze_matches_use_case():
     # Create calculators (inject TeamNameMatcher for fuzzy matching)
     team_matcher = TeamNameMatcher()
     form_calc = TeamFormCalculator(team_matcher=team_matcher)
-    h2h_calc = H2HStatsCalculator()
+    h2h_calc = H2HStatsCalculator(team_matcher=team_matcher)
     poisson_calc = PoissonGoalCalculator()
     mc_adjuster = MonteCarloUncertaintyAdjuster()
     confidence_calc = MatchConfidenceCalculator()
+    qual_calc = QualificationCalculator()
     
     # Create match analyzer
     _match_analyzer = MatchAnalyzer(
@@ -212,8 +214,12 @@ def get_analyze_matches_use_case():
     # Create AI backtest service
     from src.domain.services.ai_prediction_backtest_service import AIPredictionBacktestService
     ai_backtest_service = AIPredictionBacktestService(_historical_repository)
+    
+    # Create Statistical Backtest Service (NEW)
+    from src.domain.services.statistical_backtest_service import StatisticalBacktestService
+    stat_backtest_service = StatisticalBacktestService(_historical_repository)
 
-    # Create use case
+    # Create Use Case FIRST (needed for TimeTravelBacktestService)
     _analyze_use_case = AnalyzeMatchesUseCase(
         upcoming_repository=_upcoming_repository,
         historical_repository=_historical_repository,
@@ -221,6 +227,15 @@ def get_analyze_matches_use_case():
         ai_analyzer=ai_analyzer,
         backtest_service=_create_backtest_adapter(backtest_uc),
         ai_backtest_service=ai_backtest_service,
+        qualification_calculator=qual_calc,
+        statistical_backtest_service=stat_backtest_service
+    )
+    
+    # Create Time Travel Backtest Service (NEW)
+    from src.domain.services.time_travel_backtest_service import TimeTravelBacktestService
+    ServiceContainer.time_travel_service = TimeTravelBacktestService(
+        historical_repo=_historical_repository,
+        analyze_use_case=_analyze_use_case
     )
     
     logger.info("Initialized AnalyzeMatchesUseCase with dependencies")
@@ -373,3 +388,15 @@ def get_backtest_predictions_use_case():
         prediction_evaluator=evaluator
     )
     return _backtest_use_case
+
+
+def get_time_travel_backtest_service():
+    """Get initialized TimeTravelBacktestService."""
+    # Ensure dependencies are initialized
+    get_analyze_matches_use_case()
+    
+    from src.domain.services.time_travel_backtest_service import TimeTravelBacktestService
+    return getattr(ServiceContainer, "time_travel_service", None) or TimeTravelBacktestService(
+        historical_repo=_historical_repository,
+        analyze_use_case=_analyze_use_case
+    )

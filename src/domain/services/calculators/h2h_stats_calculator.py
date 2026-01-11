@@ -56,6 +56,7 @@ class H2HStatsCalculator:
         self,
         max_age_seasons: int = 3,
         min_reliable_matches: int = 3,
+        team_matcher: Optional['TeamNameMatcher'] = None,
     ):
         """
         Initialize calculator.
@@ -63,10 +64,12 @@ class H2HStatsCalculator:
         Args:
             max_age_seasons: Exclude H2H matches older than this
             min_reliable_matches: Below this, reliability is dampened
+            team_matcher: Optional matcher for fuzzy team name comparison
         """
         self.logger = get_logger("H2HStatsCalculator")
         self.max_age_seasons = max_age_seasons
         self.min_reliable_matches = min_reliable_matches
+        self.team_matcher = team_matcher
     
     def calculate_h2h_stats(
         self,
@@ -115,8 +118,16 @@ class H2HStatsCalculator:
             total_goals = home_goals + away_goals
             
             # Determine which team was home in this H2H match
-            match_home = str(match.get("HomeTeam", match.get("home_team", ""))).lower().strip()
-            current_home_was_home = match_home == home_team.lower().strip()
+            # Use matcher if available
+            match_home = str(match.get("HomeTeam", match.get("home_team", "")))
+            
+            current_home_was_home = False
+            if self.team_matcher:
+                if self.team_matcher.matches(match_home, home_team):
+                    current_home_was_home = True
+            else:
+                if match_home.lower().strip() == home_team.lower().strip():
+                    current_home_was_home = True
             
             if current_home_was_home:
                 perspective_home_goals = home_goals
@@ -176,14 +187,29 @@ class H2HStatsCalculator:
         cutoff_date = self._get_cutoff_date(as_of_date)
         
         for match in matches:
-            match_home = str(match.get("HomeTeam", match.get("home_team", ""))).lower().strip()
-            match_away = str(match.get("AwayTeam", match.get("away_team", ""))).lower().strip()
+            match_home = str(match.get("HomeTeam", match.get("home_team", "")))
+            match_away = str(match.get("AwayTeam", match.get("away_team", "")))
             
             # Check if it's an H2H match (either direction)
-            is_h2h = (
-                (match_home == home_lower and match_away == away_lower) or
-                (match_home == away_lower and match_away == home_lower)
-            )
+            is_h2h = False
+            
+            if self.team_matcher:
+                # Use fuzzy matching
+                home_vs_home = self.team_matcher.matches(match_home, home_team)
+                away_vs_away = self.team_matcher.matches(match_away, away_team)
+                
+                home_vs_away = self.team_matcher.matches(match_home, away_team)
+                away_vs_home = self.team_matcher.matches(match_away, home_team)
+                
+                if (home_vs_home and away_vs_away) or (home_vs_away and away_vs_home):
+                    is_h2h = True
+            else:
+                # Fallback to strict lower case
+                mh_lower = match_home.lower().strip()
+                ma_lower = match_away.lower().strip()
+                if (mh_lower == home_lower and ma_lower == away_lower) or \
+                   (mh_lower == away_lower and ma_lower == home_lower):
+                    is_h2h = True
             
             if not is_h2h:
                 continue
@@ -205,8 +231,7 @@ class H2HStatsCalculator:
             reverse=True
         )
         
-        return h2h_matches[:last_n]
-    
+        return h2h_matches[:last_n]    
     def _calculate_reliability(
         self,
         h2h_matches: List[Dict[str, Any]],

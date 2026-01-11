@@ -1,1038 +1,71 @@
 {
   "test_period": {
-    "start": "2025-10-19",
+    "start": "2025-12-21",
     "end": "2025-12-28",
-    "weeks": 10
+    "weeks": 1
   },
   "summary": {
-    "total_matches": 150,
-    "ai_predictions": 98,
-    "ai_correct": 56,
-    "ai_accuracy": 0.5714285714285714,
-    "high_confidence_accuracy": 0.6666666666666666
+    "total_matches": 5,
+    "ai_predictions": 5,
+    "ai_correct": 2,
+    "ai_accuracy": 0.4,
+    "high_confidence_accuracy": 0.5
+  },
+  "by_league": {
+    "Premier League": {
+      "correct": 0,
+      "total": 1
+    },
+    "I2": {
+      "correct": 1,
+      "total": 1
+    },
+    "League One": {
+      "correct": 0,
+      "total": 1
+    },
+    "La Liga": {
+      "correct": 0,
+      "total": 1
+    },
+    "League Two": {
+      "correct": 1,
+      "total": 1
+    }
   },
   "weekly": [
     {
       "week": 1,
-      "start_date": "2025-10-19",
-      "total_matches": 15,
-      "ai_predictions": 9,
-      "ai_correct": 3,
-      "ai_accuracy": 0.3333333333333333
-    },
-    {
-      "week": 2,
-      "start_date": "2025-10-26",
-      "total_matches": 15,
-      "ai_predictions": 9,
-      "ai_correct": 5,
-      "ai_accuracy": 0.5555555555555556
-    },
-    {
-      "week": 3,
-      "start_date": "2025-11-02",
-      "total_matches": 15,
-      "ai_predictions": 11,
-      "ai_correct": 6,
-      "ai_accuracy": 0.5454545454545454
-    },
-    {
-      "week": 4,
-      "start_date": "2025-11-09",
-      "total_matches": 15,
-      "ai_predictions": 10,
-      "ai_correct": 7,
-      "ai_accuracy": 0.7
-    },
-    {
-      "week": 5,
-      "start_date": "2025-11-16",
-      "total_matches": 15,
-      "ai_predictions": 11,
-      "ai_correct": 8,
-      "ai_accuracy": 0.7272727272727273
-    },
-    {
-      "week": 6,
-      "start_date": "2025-11-23",
-      "total_matches": 15,
-      "ai_predictions": 10,
-      "ai_correct": 5,
-      "ai_accuracy": 0.5
-    },
-    {
-      "week": 7,
-      "start_date": "2025-11-30",
-      "total_matches": 15,
-      "ai_predictions": 11,
-      "ai_correct": 10,
-      "ai_accuracy": 0.9090909090909091
-    },
-    {
-      "week": 8,
-      "start_date": "2025-12-07",
-      "total_matches": 15,
-      "ai_predictions": 7,
-      "ai_correct": 2,
-      "ai_accuracy": 0.2857142857142857
-    },
-    {
-      "week": 9,
-      "start_date": "2025-12-14",
-      "total_matches": 15,
-      "ai_predictions": 8,
-      "ai_correct": 4,
-      "ai_accuracy": 0.5
-    },
-    {
-      "week": 10,
       "start_date": "2025-12-21",
-      "total_matches": 15,
-      "ai_predictions": 12,
-      "ai_correct": 6,
-      "ai_accuracy": 0.5
+      "total_matches": 5,
+      "ai_predictions": 5,
+      "ai_correct": 2,
+      "ai_accuracy": 0.4
     }
   ],
   "by_type": {
-    "OVER 2.5": {
-      "correct": 20,
-      "total": 33
-    },
     "BTTS YES": {
-      "correct": 13,
-      "total": 28
+      "correct": 1,
+      "total": 2
+    },
+    "OTHER": {
+      "correct": 0,
+      "total": 1
+    },
+    "DRAW": {
+      "correct": 0,
+      "total": 1
     },
     "AWAY WIN": {
-      "correct": 9,
-      "total": 22
-    },
-    "HOME WIN": {
-      "correct": 14,
-      "total": 15
+      "correct": 1,
+      "total": 1
     }
   },
   "sample_predictions": [
     {
-      "match": "Hull vs Charlton",
-      "date": "2025-10-25",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.3515400263316408,
-        "draw": 0.27154539429707714,
-        "away_win": 0.3769145793712823,
-        "over_25": 0.5788892567923499,
-        "btts": 0.6195171780522112
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams have a high tendency to be involved in high-scoring matches. Hull's home form shows a very high Over 2.5 rate, while Charlton also scores and concedes frequently away from home.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Dortmund vs FC Koln",
-      "date": "2025-10-25",
-      "league": "D1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.4649112070355458,
-        "draw": 0.2823022875341112,
-        "away_win": 0.2527865054303429,
-        "over_25": 0.5016300632743568,
-        "btts": 0.5464826779465657
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Dortmund's home form shows a low Over 2.5 rate, while FC Koln's away form suggests BTTS is more likely, creating conflicting signals. The H2H data is limited and not highly reliable, making a clear prediction difficult.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Millwall vs Stoke",
-      "date": "2025-10-21",
-      "league": "E1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "2-0"
-      },
-      "poisson": {
-        "home_win": 0.38582392565218593,
-        "draw": 0.31855001421332263,
-        "away_win": 0.2956260601344914,
-        "over_25": 0.39674898226983873,
-        "btts": 0.4756321851706247
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Cheltenham vs Walsall",
-      "date": "2025-10-25",
-      "league": "E3",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.3196847779842327,
-        "draw": 0.2575292193543335,
-        "away_win": 0.42278600266143385,
-        "over_25": 0.6284804184986413,
-        "btts": 0.6538732789475519
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Walsall's away form shows a perfect BTTS rate, and their scoring record is strong. The head-to-head history also supports both teams scoring, making it a likely outcome.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Annecy vs St Etienne",
-      "date": "2025-10-25",
-      "league": "F2",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "4-0"
-      },
-      "poisson": {
-        "home_win": 0.36813757432338046,
-        "draw": 0.2739336480245624,
-        "away_win": 0.3579287776520571,
-        "over_25": 0.5697046446609672,
-        "btts": 0.6127628448193339
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams show a good tendency to score and concede based on their form. The head-to-head record also supports both teams scoring, with a 100% BTTS rate in their matches.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Ein Frankfurt vs St Pauli",
-      "date": "2025-10-25",
-      "league": "D1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "2-0"
-      },
-      "poisson": {
-        "home_win": 0.4718578094022435,
-        "draw": 0.22987043152801312,
-        "away_win": 0.2982717590697433,
-        "over_25": 0.7284839587340963,
-        "btts": 0.7243604564571258
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Ein Frankfurt's home form shows a very high rate of over 2.5 goals. Their average goals scored and conceded at home also indicate a tendency for high-scoring games, supporting this prediction.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Levante vs Vallecano",
-      "date": "2025-10-19",
-      "league": "SP1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "0-3"
-      },
-      "poisson": {
-        "home_win": 0.48544908645902984,
-        "draw": 0.27182970073567225,
-        "away_win": 0.2427212128052979,
-        "over_25": 0.5324816418167855,
-        "btts": 0.5658920532615492
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Levante's home form shows a tendency for goals, both scoring and conceding. Vallecano's away form suggests they are likely to concede. The data suggests this match has a good chance of exceeding 2.5 goals.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Crawley Town vs Bristol Rvs",
-      "date": "2025-10-25",
-      "league": "E3",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "4-0"
-      },
-      "poisson": {
-        "home_win": 0.4320311712231515,
-        "draw": 0.2612097305515728,
-        "away_win": 0.3067590982252755,
-        "over_25": 0.6096301013203242,
-        "btts": 0.6382339213678592
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams concede frequently based on their form data. Bristol Rovers' away form shows a high BTTS rate, and Crawley Town at home also suggests a tendency for both teams to score.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Tottenham vs Aston Villa",
-      "date": "2025-10-19",
+      "match": "Burnley vs Everton",
+      "date": "2025-12-27",
       "league": "E0",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "1-2"
-      },
-      "poisson": {
-        "home_win": 0.4166878149324018,
-        "draw": 0.2829625540049763,
-        "away_win": 0.30034963106262197,
-        "over_25": 0.5236160428563759,
-        "btts": 0.5736341790783723
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams have high Over 2.5 and BTTS rates in their recent form and head-to-head history. The attacking stats suggest goals are likely, especially with both sides scoring and conceding regularly.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Bolton vs Cardiff",
-      "date": "2025-10-25",
-      "league": "E2",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.36513185581563207,
-        "draw": 0.2564697464356056,
-        "away_win": 0.37839839774876205,
-        "over_25": 0.6404193955176484,
-        "btts": 0.6657540098323778
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams show a high BTTS rate in their recent form. Also, both teams' average scored and conceded goals indicate that they are likely to both find the net. H2H data is unavailable, so form is the key indicator here.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Empoli vs Venezia",
-      "date": "2025-10-19",
-      "league": "I2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.26423829585977365,
-        "draw": 0.2797221592839125,
-        "away_win": 0.45603954485631376,
-        "over_25": 0.5183354855114777,
-        "btts": 0.5621411936634025
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Empoli's home form shows a high BTTS rate and decent scoring, but Venezia is stronger away. The head-to-head record suggests goals, but the Poisson distribution leans towards an away win, creating conflicting signals.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Sheffield Weds vs Middlesbrough",
-      "date": "2025-10-22",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "0-1"
-      },
-      "poisson": {
-        "home_win": 0.27094363673661787,
-        "draw": 0.2834865848876853,
-        "away_win": 0.4455697783756971,
-        "over_25": 0.50840062105408,
-        "btts": 0.5564930116986261
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Portsmouth vs Coventry",
-      "date": "2025-10-21",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "1-2"
-      },
-      "poisson": {
-        "home_win": 0.1390090124561319,
-        "draw": 0.24049769531501655,
-        "away_win": 0.6204932922288515,
-        "over_25": 0.5138121986542025,
-        "btts": 0.4881307924407639
-      },
-      "ai_prediction": {
-        "prediction": "AWAY WIN",
-        "reason": "Coventry has a much better away form, especially in scoring goals. Portsmouth's home form shows they struggle to win and concede goals regularly, suggesting Coventry's attack will likely overwhelm them.",
-        "confidence": "HIGH",
-        "correct": true
-      }
-    },
-    {
-      "match": "Derby vs Norwich",
-      "date": "2025-10-21",
-      "league": "E1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.43364399456321734,
-        "draw": 0.3110218389786788,
-        "away_win": 0.25533416645810375,
-        "over_25": 0.4050247883448909,
-        "btts": 0.47421259308367864
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Both teams are struggling to win games, with neither showing a clear advantage in form. While their head-to-head history suggests goals, their recent form is not convincing enough to make a confident prediction.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Chelsea vs Sunderland",
-      "date": "2025-10-25",
-      "league": "E0",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "1-2"
-      },
-      "poisson": {
-        "home_win": 0.40139596911186853,
-        "draw": 0.2928825198749842,
-        "away_win": 0.3057215110131472,
-        "over_25": 0.48856445494194145,
-        "btts": 0.5480306758200924
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Chelsea's home form suggests goals, but Sunderland's away form is very tight. The teams haven't played each other recently, so head-to-head data is unavailable.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Atalanta vs Milan",
-      "date": "2025-10-28",
-      "league": "I1",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.3365275662285452,
-        "draw": 0.3086623456725354,
-        "away_win": 0.3548100880989194,
-        "over_25": 0.4369305657339036,
-        "btts": 0.5104883836275084
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Oxford vs Millwall",
-      "date": "2025-11-01",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "D",
-        "score": "2-2"
-      },
-      "poisson": {
-        "home_win": 0.29441287379631265,
-        "draw": 0.3150519254438584,
-        "away_win": 0.39053520075982895,
-        "over_25": 0.40788405002378525,
-        "btts": 0.48427700970451065
-      },
-      "ai_prediction": {
-        "prediction": "AWAY WIN",
-        "reason": "Millwall has significantly better away form compared to Oxford's home form. Millwall also has a higher average scored goals away.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Laval vs Le Mans",
-      "date": "2025-10-28",
-      "league": "F2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.2044328009313792,
-        "draw": 0.3131137845730802,
-        "away_win": 0.4824534144955406,
-        "over_25": 0.36355039530393196,
-        "btts": 0.42354183554649066
-      },
-      "ai_prediction": {
-        "prediction": "AWAY WIN",
-        "reason": "Le Mans has a significantly better away form, winning most of their away games and scoring consistently. Laval struggles at home, failing to win and conceding frequently.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Boulogne vs Reims",
-      "date": "2025-10-28",
-      "league": "F2",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "2-6"
-      },
-      "poisson": {
-        "home_win": 0.37572254339506156,
-        "draw": 0.2817976408394166,
-        "away_win": 0.34247981576552183,
-        "over_25": 0.5376912670024147,
-        "btts": 0.5882427673836425
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Lille vs Metz",
-      "date": "2025-10-26",
-      "league": "F1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "6-1"
-      },
-      "poisson": {
-        "home_win": 0.5964593069210742,
-        "draw": 0.2433220747260652,
-        "away_win": 0.16021861835286094,
-        "over_25": 0.5407902821965417,
-        "btts": 0.5263706469234463
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Lille has a strong home win history against Metz and Metz has a very poor away form, conceding many goals. Lille also displays a much higher win rate in their recent matches compared to Metz.",
-        "confidence": "HIGH",
-        "correct": true
-      }
-    },
-    {
-      "match": "Padova vs Juve Stabia",
-      "date": "2025-10-26",
-      "league": "I2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "D",
-        "score": "2-2"
-      },
-      "poisson": {
-        "home_win": 0.3910255376763571,
-        "draw": 0.28184733876885787,
-        "away_win": 0.32712712355478507,
-        "over_25": 0.5352343165045857,
-        "btts": 0.5854561701058841
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "QPR vs Ipswich",
-      "date": "2025-11-01",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "1-4"
-      },
-      "poisson": {
-        "home_win": 0.38996508447103745,
-        "draw": 0.31477553471059244,
-        "away_win": 0.29525938081837,
-        "over_25": 0.40903695375401866,
-        "btts": 0.48529925833871335
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams have shown a tendency to score and concede in their recent matches. Ipswich's away form suggests a higher likelihood of goals at both ends.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Bari vs Mantova",
-      "date": "2025-10-26",
-      "league": "I2",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.4442234565302559,
-        "draw": 0.26684747406990245,
-        "away_win": 0.28892906939984153,
-        "over_25": 0.5801697350501889,
-        "btts": 0.6134537706881685
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Mallorca vs Levante",
-      "date": "2025-10-26",
-      "league": "SP1",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.44727564876373843,
-        "draw": 0.27429822463550363,
-        "away_win": 0.27842612660075794,
-        "over_25": 0.546531022994874,
-        "btts": 0.5864691917640225
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams have shown a tendency to be involved in high-scoring games, especially Levante when playing away. Mallorca's home form suggests they can score, while Levante's away form shows they concede frequently.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Wolverhampton vs Burnley",
-      "date": "2025-10-26",
-      "league": "E0",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "2-3"
-      },
-      "poisson": {
-        "home_win": 0.3484395585667127,
-        "draw": 0.29039632934280313,
-        "away_win": 0.36116411209048416,
-        "over_25": 0.5049298779541688,
-        "btts": 0.5635207426142606
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams have a high BTTS rate in their recent form (0.59). Their head-to-head record also supports this with a BTTS rate of 0.5.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Amiens vs Grenoble",
-      "date": "2025-11-01",
-      "league": "F2",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "2-3"
-      },
-      "poisson": {
-        "home_win": 0.29657918708827885,
-        "draw": 0.29339234096602324,
-        "away_win": 0.4100284719456979,
-        "over_25": 0.48377821034657537,
-        "btts": 0.5431141127109319
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Amiens' home form shows a high rate of over 2.5 goals, and the head-to-head record also supports this trend. Amiens also concedes a lot when playing at home, and Grenoble is likely to take advantage of this.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "RB Leipzig vs Stuttgart",
-      "date": "2025-11-01",
-      "league": "D1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "3-1"
-      },
-      "poisson": {
-        "home_win": 0.4579391329150708,
-        "draw": 0.2640041328519745,
-        "away_win": 0.27805673423295474,
-        "over_25": 0.585499837221483,
-        "btts": 0.6150021246316252
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Birmingham vs Portsmouth",
-      "date": "2025-11-01",
-      "league": "E1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "4-0"
-      },
-      "poisson": {
-        "home_win": 0.3848007610972778,
-        "draw": 0.3048226157303227,
-        "away_win": 0.3103766231723993,
-        "over_25": 0.44686535785201464,
-        "btts": 0.5166200019042734
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Both teams have poor win rates and their scoring records are similar. With low H2H data available and conflicting data points, there's no clear advantage.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Bayern Munich vs Leverkusen",
-      "date": "2025-11-01",
-      "league": "D1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "3-0"
-      },
-      "poisson": {
-        "home_win": 0.5235925194931473,
-        "draw": 0.23789117543794158,
-        "away_win": 0.23851630506891103,
-        "over_25": 0.657816603249421,
-        "btts": 0.6557479547240459
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams have strong attacking records, with high average goals scored in their recent games. H2H history also supports a high-scoring game with a 60% Over 2.5 rate.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Annecy vs Boulogne",
-      "date": "2025-10-31",
-      "league": "F2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.5611526077040631,
-        "draw": 0.23793526355697958,
-        "away_win": 0.20091212873895736,
-        "over_25": 0.6186014739215678,
-        "btts": 0.6099108433471572
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams have a high recent tendency to be involved in high-scoring matches. Annecy's home form and Boulogne's away form both show a greater than 60% rate of matches with over 2.5 goals.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Doncaster vs Barnsley",
-      "date": "2025-11-08",
-      "league": "E2",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "1-2"
-      },
-      "poisson": {
-        "home_win": 0.3454033390588738,
-        "draw": 0.29397425733872967,
-        "away_win": 0.3606224036023964,
-        "over_25": 0.49120687254703244,
-        "btts": 0.5529347915023071
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Both teams have poor form, showing low win rates. The data presents mixed signals with neither team showing clear dominance or a consistent trend towards high-scoring matches.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Rotherham vs Lincoln",
-      "date": "2025-11-08",
-      "league": "E2",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "3-0"
-      },
-      "poisson": {
-        "home_win": 0.3978167093639423,
-        "draw": 0.32857104661552256,
-        "away_win": 0.27361224402053536,
-        "over_25": 0.35866538050590735,
-        "btts": 0.4417147165211984
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Rotherham shows strong home form with a high win rate and scoring record. Lincoln struggles away, especially in scoring goals, giving Rotherham a significant advantage.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Monza vs Spezia",
-      "date": "2025-11-02",
-      "league": "I2",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.48889229293371617,
-        "draw": 0.2664446567266298,
-        "away_win": 0.24466305033965396,
-        "over_25": 0.5539842758225203,
-        "btts": 0.5823023094546095
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Monza's home form is significantly better, with a high win rate and strong goal difference. Spezia struggles away from home, winning rarely and conceding frequently. The historical head-to-head also favors Monza, though the sample size is very small.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Spezia vs Bari",
-      "date": "2025-11-07",
-      "league": "I2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "D",
-        "score": "1-1"
-      },
-      "poisson": {
-        "home_win": 0.3738145707597758,
-        "draw": 0.29711427619465014,
-        "away_win": 0.3290711530455739,
-        "over_25": 0.4780097246165708,
-        "btts": 0.5421495637164045
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Home form is weak, but away form is strong, creating a mixed signal. Head-to-head data suggests low-scoring games, conflicting with form data.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Oviedo vs Osasuna",
-      "date": "2025-11-03",
-      "league": "SP1",
       "actual": {
         "home_win": false,
         "draw": true,
@@ -1044,51 +77,23 @@
         "score": "0-0"
       },
       "poisson": {
-        "home_win": 0.37377688302543893,
-        "draw": 0.2625745938137862,
-        "away_win": 0.36364852316077484,
-        "over_25": 0.6155993851261501,
-        "btts": 0.6472119350511356
+        "home_win": 0.34072801911988476,
+        "draw": 0.2877891486627203,
+        "away_win": 0.3714828322173949,
+        "over_25": 0.5143963843577682,
+        "btts": 0.5705306380858582
       },
       "ai_prediction": {
         "prediction": "BTTS YES",
-        "reason": "Both teams have shown a tendency to both score and concede in their recent matches. Oviedo's home form indicates a high rate of BTTS, and Osasuna also has a good BTTS rate in away games.",
-        "confidence": "MEDIUM",
+        "reason": "Burnley consistently score at home but are exceptionally weak defensively, conceding nearly two goals per game. Everton's attack is not prolific away, but they should find opportunities against such a vulnerable backline. This combination points towards both teams getting on the scoresheet.",
+        "confidence": "VERY LOW",
         "correct": false
       }
     },
     {
-      "match": "Wolfsburg vs Hoffenheim",
-      "date": "2025-11-02",
-      "league": "D1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "2-3"
-      },
-      "poisson": {
-        "home_win": 0.2357057983323448,
-        "draw": 0.28008773713193913,
-        "away_win": 0.48420646453571586,
-        "over_25": 0.4969724894668878,
-        "btts": 0.5372403642324831
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Hoffenheim's away form suggests a high-scoring game is likely, with a high rate of both scoring and conceding. The head-to-head record also supports this, with a significant percentage of past matches exceeding 2.5 goals.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Blackburn vs Derby",
-      "date": "2025-11-08",
-      "league": "E1",
+      "match": "Modena vs Monza",
+      "date": "2025-12-26",
+      "league": "I2",
       "actual": {
         "home_win": false,
         "draw": false,
@@ -1100,214 +105,23 @@
         "score": "1-2"
       },
       "poisson": {
-        "home_win": 0.31630622266822556,
-        "draw": 0.30500823396964555,
-        "away_win": 0.3786855433621287,
-        "over_25": 0.44743100522291607,
-        "btts": 0.5176103172168087
-      },
-      "ai_prediction": null
-    },
-    {
-      "match": "Lazio vs Cagliari",
-      "date": "2025-11-03",
-      "league": "I1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "2-0"
-      },
-      "poisson": {
-        "home_win": 0.5318536445972182,
-        "draw": 0.28082107539703227,
-        "away_win": 0.18732528000574933,
-        "over_25": 0.44693474647932097,
-        "btts": 0.47713144335958074
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Lazio has a strong home record in head-to-head matches against Cagliari, winning all of their recent encounters. Additionally, Lazio's defense is relatively solid at home, conceding few goals, while Cagliari struggles defensively away from home.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Sheffield United vs QPR",
-      "date": "2025-11-08",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "D",
-        "score": "0-0"
-      },
-      "poisson": {
-        "home_win": 0.4386391096707721,
-        "draw": 0.2546740846344934,
-        "away_win": 0.30668680569473467,
-        "over_25": 0.6352362708894539,
-        "btts": 0.65702833114864
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams' form shows a tendency for high-scoring games, especially Sheffield United. Head-to-head history also supports a high probability of over 2.5 goals.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Stoke vs Coventry",
-      "date": "2025-11-08",
-      "league": "E1",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "A",
-        "score": "0-1"
-      },
-      "poisson": {
-        "home_win": 0.4548211870762621,
-        "draw": 0.25072336852133126,
-        "away_win": 0.29445544440240656,
-        "over_25": 0.6454603291711911,
-        "btts": 0.662387807313097
+        "home_win": 0.3192024775728967,
+        "draw": 0.29162025049899776,
+        "away_win": 0.3891772719281054,
+        "over_25": 0.4966341072449169,
+        "btts": 0.5556343343028506
       },
       "ai_prediction": {
         "prediction": "BTTS YES",
-        "reason": "Both teams have been scoring and conceding frequently in their recent away and home games, respectively. The away team, in particular, shows a high BTTS rate in their recent form.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Rennes vs Strasbourg",
-      "date": "2025-11-02",
-      "league": "F1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "4-1"
-      },
-      "poisson": {
-        "home_win": 0.29373027215455416,
-        "draw": 0.2431377460078549,
-        "away_win": 0.46313198183759074,
-        "over_25": 0.6747687192924459,
-        "btts": 0.683750213094251
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams show a high tendency for high-scoring games based on their recent form. Rennes' home form indicates a high rate of both Over 2.5 and BTTS, while Strasbourg's away form shows a 100% Over 2.5 rate.",
+        "reason": "Monza's away games consistently feature goals from both sides, driven by their strong attack and a defense that regularly concedes. While Modena's offense is modest, they are playing at home and face an opponent that does not keep many clean sheets on their travels. This tactical dynamic favors a match where both teams find the net.",
         "confidence": "MEDIUM",
         "correct": true
       }
     },
     {
-      "match": "Reggiana vs Virtus Entella",
-      "date": "2025-11-08",
-      "league": "I2",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "D",
-        "score": "0-0"
-      },
-      "poisson": {
-        "home_win": 0.4584567905379819,
-        "draw": 0.2526253654762552,
-        "away_win": 0.2889178439857629,
-        "over_25": 0.6353284171773471,
-        "btts": 0.6538600766583433
-      },
-      "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Reggiana's home form shows a high tendency for high-scoring games, and their attacking stats are quite strong. Virtus Entella concedes a fair amount away from home, suggesting the potential for goals.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Barnet vs Milton Keynes Dons",
-      "date": "2025-11-08",
-      "league": "E3",
-      "actual": {
-        "home_win": false,
-        "draw": true,
-        "away_win": false,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": false,
-        "ftr": "D",
-        "score": "2-2"
-      },
-      "poisson": {
-        "home_win": 0.3323591119630068,
-        "draw": 0.2670069183053073,
-        "away_win": 0.40063396973168586,
-        "over_25": 0.5942229123575153,
-        "btts": 0.6298631995957118
-      },
-      "ai_prediction": {
-        "prediction": "AWAY WIN",
-        "reason": "Milton Keynes Dons has a much higher win rate in their away form. They also score significantly more goals on average away compared to Barnet's home form, suggesting a strong attacking advantage.",
-        "confidence": "MEDIUM",
-        "correct": false
-      }
-    },
-    {
-      "match": "Lille vs Angers",
-      "date": "2025-11-02",
-      "league": "F1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.5310857246079205,
-        "draw": 0.24823087423886764,
-        "away_win": 0.22068340115321203,
-        "over_25": 0.601215163468267,
-        "btts": 0.6071139078014555
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Lille has a significantly higher home win rate in both their general form and head-to-head matches. Angers struggles away from home, conceding nearly two goals per game. Lille also scores a good amount at home.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Derby vs Hull",
-      "date": "2025-11-04",
-      "league": "E1",
+      "match": "Bradford vs Wigan",
+      "date": "2025-12-26",
+      "league": "E2",
       "actual": {
         "home_win": true,
         "draw": false,
@@ -1319,51 +133,51 @@
         "score": "2-1"
       },
       "poisson": {
-        "home_win": 0.35329323162886245,
-        "draw": 0.3047881095428739,
-        "away_win": 0.34191865882826356,
-        "over_25": 0.4510559737908548,
-        "btts": 0.5217016683674315
+        "home_win": 0.4380547156041147,
+        "draw": 0.33831800284359337,
+        "away_win": 0.2236272815522918,
+        "over_25": 0.30811887823692474,
+        "btts": 0.3874502077844128
       },
       "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "Home and Away forms indicate wins, but H2H is mixed. Poisson distribution suggests a draw is quite possible.",
-        "confidence": "LOW",
-        "correct": null
+        "prediction": "BTTS NO",
+        "reason": "Bradford possesses an exceptionally strong defense at home, conceding very few goals on average. Wigan struggles significantly to score when playing away, suggesting they will find it very difficult to break through. The game dynamic strongly points towards a low-scoring contest where at least one team fails to find the net.",
+        "confidence": "HIGH",
+        "correct": false
       }
     },
     {
-      "match": "Accrington vs Bristol Rvs",
-      "date": "2025-11-15",
-      "league": "E3",
+      "match": "Elche vs Vallecano",
+      "date": "2025-12-21",
+      "league": "SP1",
       "actual": {
         "home_win": true,
         "draw": false,
         "away_win": false,
         "over_25": true,
-        "btts": true,
+        "btts": false,
         "goals_2_3": false,
         "ftr": "H",
-        "score": "3-1"
+        "score": "4-0"
       },
       "poisson": {
-        "home_win": 0.6490529659049346,
-        "draw": 0.2056252816323449,
-        "away_win": 0.14532175246272058,
-        "over_25": 0.6589779563450057,
-        "btts": 0.5997813674395771
+        "home_win": 0.3764678116498185,
+        "draw": 0.3372256641681792,
+        "away_win": 0.2863065241820026,
+        "over_25": 0.33699715190829593,
+        "btts": 0.4260065526686946
       },
       "ai_prediction": {
-        "prediction": "OVER 2.5 GOALS",
-        "reason": "Both teams' recent form suggests a high probability of goals. Accrington's home form shows a high goals rate, while Bristol Rovers concede frequently when away.",
-        "confidence": "MEDIUM",
-        "correct": true
+        "prediction": "DRAW",
+        "reason": "Elche struggles to secure wins at home and Vallecano has been unable to win on the road. Vallecano's attack is particularly weak away from home, making it difficult for either side to establish dominance and secure a victory.",
+        "confidence": "LOW",
+        "correct": false
       }
     },
     {
-      "match": "Lyon vs Paris SG",
-      "date": "2025-11-09",
-      "league": "F1",
+      "match": "Bristol Rvs vs Bromley",
+      "date": "2025-12-26",
+      "league": "E3",
       "actual": {
         "home_win": false,
         "draw": false,
@@ -1375,103 +189,19 @@
         "score": "2-3"
       },
       "poisson": {
-        "home_win": 0.3126704909259005,
-        "draw": 0.27181520845541424,
-        "away_win": 0.4155143006186856,
-        "over_25": 0.5703195691793631,
-        "btts": 0.61008435803605
+        "home_win": 0.12997059496585817,
+        "draw": 0.2501167662811084,
+        "away_win": 0.6199126387530333,
+        "over_25": 0.46280698879218796,
+        "btts": 0.4424612766740449
       },
       "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams have shown a tendency to score and concede, particularly Lyon at home. Head-to-head history supports goals at both ends, and both teams' form indicates scoring ability.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Mallorca vs Getafe",
-      "date": "2025-11-09",
-      "league": "SP1",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": false,
-        "ftr": "H",
-        "score": "1-0"
-      },
-      "poisson": {
-        "home_win": 0.32549487515218833,
-        "draw": 0.29947912475193317,
-        "away_win": 0.3750260000958787,
-        "over_25": 0.4688337802372884,
-        "btts": 0.5348624019750893
-      },
-      "ai_prediction": {
-        "prediction": "NO BET",
-        "reason": "The home team form is poor, but the away team isn't much better. H2H data suggests goals, but the form is conflicting.",
-        "confidence": "LOW",
-        "correct": null
-      }
-    },
-    {
-      "match": "Cheltenham vs Notts County",
-      "date": "2025-11-10",
-      "league": "E3",
-      "actual": {
-        "home_win": false,
-        "draw": false,
-        "away_win": true,
-        "over_25": true,
-        "btts": true,
-        "goals_2_3": true,
-        "ftr": "A",
-        "score": "1-2"
-      },
-      "poisson": {
-        "home_win": 0.3256264769910165,
-        "draw": 0.28383398379486324,
-        "away_win": 0.39053953921412027,
-        "over_25": 0.527326506799329,
-        "btts": 0.5793899043190948
-      },
-      "ai_prediction": {
-        "prediction": "BTTS YES",
-        "reason": "Both teams have a history of scoring in their recent matches, particularly Notts County. The head-to-head record also supports a high probability of both teams finding the net.",
-        "confidence": "MEDIUM",
-        "correct": true
-      }
-    },
-    {
-      "match": "Milton Keynes Dons vs Salford",
-      "date": "2025-11-15",
-      "league": "E3",
-      "actual": {
-        "home_win": true,
-        "draw": false,
-        "away_win": false,
-        "over_25": false,
-        "btts": false,
-        "goals_2_3": true,
-        "ftr": "H",
-        "score": "2-0"
-      },
-      "poisson": {
-        "home_win": 0.49555731768878797,
-        "draw": 0.26739524535357606,
-        "away_win": 0.23704743695763586,
-        "over_25": 0.5442774883068061,
-        "btts": 0.5724562692284861
-      },
-      "ai_prediction": {
-        "prediction": "HOME WIN",
-        "reason": "Milton Keynes Dons have a better win rate at home and score more goals on average. Salford struggles to score away from home and their defensive record is not convincing enough to hold the home side.",
-        "confidence": "MEDIUM",
+        "prediction": "AWAY WIN",
+        "reason": "Bromley arrives in exceptional form, consistently winning matches, while Bristol Rvs has failed to secure a single victory. The visitors' potent attack, averaging nearly two goals per game, is expected to overwhelm a home defense that is extremely porous. Bristol Rvs' very weak offense is unlikely to trouble Bromley's solid defensive unit.",
+        "confidence": "HIGH",
         "correct": true
       }
     }
   ],
-  "generated_at": "2026-01-07T14:51:10.069517"
+  "generated_at": "2026-01-10T20:05:31.655972"
 }

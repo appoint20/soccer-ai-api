@@ -1,0 +1,15 @@
+{
+  "date": "2025-10-25",
+  "league": "Serie A",
+  "analyses": {
+    "2025-10-25_Parma_vs_Como": {
+      "best_prediction": "Draw",
+      "reason": "Parma's attack is exceptionally weak, but their home defense is solid, making them difficult to beat. Como is the team in better form but may lack the offensive power to overcome a defensive setup, pointing towards a potential stalemate.",
+      "short_analysis": "This match pits Parma's low-scoring, defensive style against Como's more consistent but not dominant form. Parma scores very few goals but also concedes few at home. With conflicting signals on whether both teams will score, and a high probability of a low-scoring affair, a draw emerges as a logical conclusion in a tightly contested match.",
+      "confidence_level": "LOW",
+      "trap": "Betting on an Away Win for Como based solely on their better form is a potential trap; the data points towards a very tight, low-scoring game where a draw is a highly probable outcome."
+    }
+  },
+  "created_at": "2026-01-10T19:02:31.984112",
+  "match_count": 1
+}

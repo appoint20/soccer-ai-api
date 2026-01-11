@@ -30,6 +30,7 @@ TEAM_NAME_MAP = {
     "Brighton": "Brighton",
     "Newcastle": "Newcastle",
     "Leicester": "Leicester",
+    "Leeds United": "Leeds",  # Normalize full name to short name
     # Germany
     "Bayern": "Bayern Munich",
     "Dortmund": "Dortmund",

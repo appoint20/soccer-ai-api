@@ -1,0 +1,15 @@
+{
+  "date": "2025-12-26",
+  "league": "League One",
+  "analyses": {
+    "2025-12-26_Bradford_vs_Wigan": {
+      "best_prediction": "BTTS No",
+      "reason": "Bradford possesses an exceptionally strong defense at home, conceding very few goals on average. Wigan struggles significantly to score when playing away, suggesting they will find it very difficult to break through. The game dynamic strongly points towards a low-scoring contest where at least one team fails to find the net.",
+      "short_analysis": "This match is defined by a clash between Bradford's sturdy home defense and Wigan's lackluster away attack. Bradford's impressive 59% win rate at home is built on defensive solidity, not high-scoring games. With both teams' recent matches trending towards low goal counts, and no historical head-to-head data to suggest otherwise, a match where both teams score seems unlikely.",
+      "confidence_level": "HIGH",
+      "trap": "Bradford's high win rate might tempt bettors into the 'Home Win' market, but the underlying data reveals a significant chance of a draw, making that bet riskier than it first appears."
+    }
+  },
+  "created_at": "2026-01-10T19:04:42.334301",
+  "match_count": 1
+}

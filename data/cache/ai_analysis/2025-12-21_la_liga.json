@@ -1,0 +1,15 @@
+{
+  "date": "2025-12-21",
+  "league": "La Liga",
+  "analyses": {
+    "2025-12-21_Elche_vs_Vallecano": {
+      "best_prediction": "Draw",
+      "reason": "Elche struggles to secure wins at home and Vallecano has been unable to win on the road. Vallecano's attack is particularly weak away from home, making it difficult for either side to establish dominance and secure a victory.",
+      "short_analysis": "This match presents a stark contrast in styles. Elche's home games are typically open and high-scoring, but they face a Vallecano side that is extremely defensive and low-scoring on their travels. Given Elche's low win rate at home and Vallecano's inability to win away, a tactical stalemate appears to be a very plausible outcome.",
+      "confidence_level": "LOW",
+      "trap": "The goal markets are a significant trap. Elche's high-scoring home form directly conflicts with Vallecano's extremely low-scoring and defensively solid away form, making any goals-based bet highly unpredictable."
+    }
+  },
+  "created_at": "2026-01-10T19:05:10.619609",
+  "match_count": 1
+}

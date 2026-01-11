@@ -1,0 +1,15 @@
+{
+  "date": "2025-10-21",
+  "league": "Championship",
+  "analyses": {
+    "2025-10-21_Portsmouth_vs_Coventry": {
+      "best_prediction": "Away Win",
+      "reason": "Coventry demonstrates overwhelming away form, scoring nearly three goals per game while maintaining a perfect defensive record. Portsmouth struggles for wins at home and has a vulnerable defense that is likely to be exploited by a potent attack. The disparity in current form and quality points towards an away victory.",
+      "short_analysis": "This match features a dominant away side, Coventry, against a struggling home team, Portsmouth. Coventry's attacking output is immense and their defensive statistics are perfect, suggesting they can control the game. While statistical models show conflicting signals regarding goals, Coventry's superior win rate is the most consistent factor, making them the clear favorite.",
+      "confidence_level": "MEDIUM",
+      "trap": "A significant trap exists in the goal markets. Coventry's perfect away defensive record in the provided stats directly contradicts models that predict a high chance of both teams scoring, making BTTS or Over/Under bets unreliable."
+    }
+  },
+  "created_at": "2026-01-10T19:02:04.292884",
+  "match_count": 1
+}

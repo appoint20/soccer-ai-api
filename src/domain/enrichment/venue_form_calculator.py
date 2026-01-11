@@ -20,6 +20,15 @@ class VenueFormCalculator:
     Away team: last N away matches
     """
     
+    def __init__(self, team_matcher=None):
+        """
+        Initialize calculator.
+        
+        Args:
+            team_matcher: Optional TeamNameMatcher for fuzzy matching
+        """
+        self.matcher = team_matcher
+    
     def calculate_home_form(
         self,
         team: str,
@@ -58,10 +67,20 @@ class VenueFormCalculator:
             home_team = (match.get("home_team") or match.get("HomeTeam") or "").lower()
             away_team = (match.get("away_team") or match.get("AwayTeam") or "").lower()
             
-            # Check venue
-            if venue == "home" and home_team != team_lower:
+            # Check team and venue
+            is_home = False
+            is_away = False
+            
+            if self.matcher:
+                is_home = self.matcher.matches(home_team, team)
+                is_away = self.matcher.matches(away_team, team)
+            else:
+                is_home = home_team == team_lower
+                is_away = away_team == team_lower
+            
+            if venue == "home" and not is_home:
                 continue
-            if venue == "away" and away_team != team_lower:
+            if venue == "away" and not is_away:
                 continue
             
             # Check date

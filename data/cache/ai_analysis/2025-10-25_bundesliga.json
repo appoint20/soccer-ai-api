@@ -1,0 +1,15 @@
+{
+  "date": "2025-10-25",
+  "league": "Bundesliga",
+  "analyses": {
+    "2025-10-25_Ein Frankfurt_vs_St Pauli": {
+      "best_prediction": "Over 2.5 Goals",
+      "reason": "Eintracht Frankfurt's home matches have been consistently high-scoring due to a capable attack and an extremely vulnerable defense. They concede an average of over three goals per game at home, which creates open and chaotic matches. While St Pauli's away attack is not prolific, Frankfurt's defensive fragility should ensure a high number of scoring opportunities.",
+      "short_analysis": "This match features a home team in Eintracht Frankfurt whose games are defined by goals at both ends of the pitch. Their 100% home record for Over 2.5 goals is the most compelling statistic provided, driven by a leaky defense and a potent offense. St Pauli may have a poor scoring record on the road, but they are unlikely to face a more accommodating defense all season, making a high-scoring outcome the most logical expectation.",
+      "confidence_level": "HIGH",
+      "trap": "The trap is focusing on St Pauli's low away scoring average to predict a low-scoring game. This overlooks the dominant factor: Eintracht Frankfurt's exceptionally poor defensive record at home, which consistently leads to high goal totals regardless of the opponent."
+    }
+  },
+  "created_at": "2026-01-10T19:02:54.260231",
+  "match_count": 1
+}

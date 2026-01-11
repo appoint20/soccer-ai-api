@@ -23,6 +23,16 @@ class TableCalculator:
     - Away-only table
     """
     
+    
+    def __init__(self, team_matcher=None):
+        """
+        Initialize calculator.
+        
+        Args:
+            team_matcher: Optional TeamNameMatcher for fuzzy matching
+        """
+        self.matcher = team_matcher
+
     def calculate_table(
         self,
         league_code: str,
@@ -124,11 +134,15 @@ class TableCalculator:
     ) -> Optional[TeamStanding]:
         """Get a specific team's standing."""
         table = self.calculate_table(league_code, season, matches, before_date)
-        team_lower = team.lower()
         
+        # Try finding team with fuzzy matching
         for standing in table:
-            if standing.team.lower() == team_lower:
-                return standing
+            if self.matcher:
+                if self.matcher.matches(standing.team, team):
+                    return standing
+            else:
+                if standing.team.lower() == team.lower():
+                    return standing
         
         return None
     

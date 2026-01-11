@@ -51,19 +51,31 @@ async def lifespan(app: FastAPI):
         clean_path = Path("data/raw/upcoming/fixtures_clean.csv")
         
         if excel_path.exists():
-            df = sanitizer.sanitize(excel_path, clean_path)
-            if df is not None:
-                logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+            if not clean_path.exists() or clean_path.stat().st_size == 0:
+                df = sanitizer.sanitize(excel_path, clean_path)
+                if df is not None:
+                    logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+            else:
+                logger.info(f"Using cached upcoming fixtures: {clean_path}")
+
         elif csv_path.exists():
-            df = sanitizer.sanitize(csv_path, clean_path)
-            if df is not None:
-                logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+             if not clean_path.exists() or clean_path.stat().st_size == 0:
+                df = sanitizer.sanitize(csv_path, clean_path)
+                if df is not None:
+                    logger.info(f"Sanitized upcoming fixtures: {len(df)} matches")
+             else:
+                logger.info(f"Using cached upcoming fixtures: {clean_path}")
         
         # 2. Sanitize historical Excel files
         historical_dir = Path("data/raw/historical")
         if historical_dir.exists():
             for excel_file in historical_dir.glob("*.xlsx"):
                 clean_file = excel_file.with_suffix(".csv")
+                # Skip if CSV exists and is newer than Excel
+                if clean_file.exists() and clean_file.stat().st_mtime >= excel_file.stat().st_mtime:
+                    logger.info(f"Using cached historical data: {clean_file.name}")
+                    continue
+                    
                 df = sanitizer.sanitize(excel_file, clean_file)
                 if df is not None:
                     logger.info(f"Sanitized {excel_file.name}: {len(df)} matches")
@@ -71,6 +83,10 @@ async def lifespan(app: FastAPI):
             for xls_file in historical_dir.glob("*.xls"):
                 if not xls_file.name.endswith(".xlsx"):
                     clean_file = xls_file.with_suffix(".csv")
+                    if clean_file.exists() and clean_file.stat().st_mtime >= xls_file.stat().st_mtime:
+                         logger.info(f"Using cached historical data: {clean_file.name}")
+                         continue
+
                     df = sanitizer.sanitize(xls_file, clean_file)
                     if df is not None:
                         logger.info(f"Sanitized {xls_file.name}: {len(df)} matches")

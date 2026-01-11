@@ -97,6 +97,14 @@ class SingleMatchAnalysis:
     
     # Backtest
     backtest_result: Optional[dict] = None  # Using dict to simulate BacktestResult structure
+    
+    
+    # Backtest
+    # Backtest
+    backtest_result: Optional[dict] = None  # Using dict to simulate BacktestResult structure
+    
+    # Draw Analysis (DGS)
+    draw_analysis: Optional[dict] = None
 
 
 @dataclass
@@ -459,7 +467,7 @@ class MatchAnalyzer:
     ) -> MatchAnalysisResult:
         """Aggregate probabilities from all sources into chart-ready format."""
         from src.domain.aggregation import ProbabilityAggregator, SourceProbabilities
-        from src.api.schemas import MatchAnalysisMarket, MatchAnalysisResult
+        from src.api.schemas import MatchAnalysisMarket, MatchAnalysisResult, DrawAnalysis
         
         sources = SourceProbabilities(
             poisson_over_25=poisson.over_25,
@@ -497,7 +505,18 @@ class MatchAnalyzer:
                 probability=market.final_probability,
                 probability_pct=f"{int(market.final_probability * 100)}%",
                 confidence=market.confidence.value,
-                verdict=market.verdict.value,
+                qualified=market.qualified,
+                qualification_reason=None
+            )
+
+        def to_draw_api(market) -> DrawAnalysis:
+            return DrawAnalysis(
+                probability=market.final_probability,
+                probability_pct=f"{int(market.final_probability * 100)}%",
+                confidence=market.confidence.value,
+                qualified=market.qualified, # Will be overwritten by DGS
+                draw_gravity_score=0,    # Will be overwritten by DGS
+                reason=None
             )
 
         return MatchAnalysisResult(
@@ -506,7 +525,7 @@ class MatchAnalyzer:
             goals_2_3=to_api(result.goals_2_3),
             home_win=to_api(result.home_win),
             away_win=to_api(result.away_win),
-            draw=to_api(result.draw),
+            draw=to_draw_api(result.draw),
             confidence_index=result.overall_confidence_index,
         )
     
@@ -567,6 +586,7 @@ class AnalyzeMatchesUseCase:
     - Handle pagination
     - Enrich with AI analysis if requested
     - Verify AI predictions for past dates
+    - Calculate deterministic qualification flags
 
     All dependencies are injected for testability.
     """
@@ -579,6 +599,8 @@ class AnalyzeMatchesUseCase:
         ai_analyzer: Optional[IAIAnalyzer] = None,
         backtest_service: Optional[IBacktestService] = None,
         ai_backtest_service = None,  # AIPredictionBacktestService
+        qualification_calculator = None, # QualificationCalculator
+        statistical_backtest_service = None, # StatisticalBacktestService (NEW)
     ):
         self._upcoming_repo = upcoming_repository
         self._historical_repo = historical_repository
@@ -586,9 +608,21 @@ class AnalyzeMatchesUseCase:
         self._ai_analyzer = ai_analyzer
         self._backtest_service = backtest_service
         self._ai_backtest_service = ai_backtest_service
+        self._qualification_calculator = qualification_calculator
+        self._statistical_backtest_service = statistical_backtest_service
     
-    def execute(self, request: AnalyzeMatchesRequest) -> AnalyzeMatchesResult:
-        """Execute the analyze matches use case."""
+    def execute(
+        self, 
+        request: AnalyzeMatchesRequest, 
+        historical_override: Optional[List[dict]] = None
+    ) -> AnalyzeMatchesResult:
+        """
+        Execute the analyze matches use case.
+        
+        Args:
+            request: analysis request
+            historical_override: optional historical data to use (Time Travel)
+        """
         logger.info(f"Analyzing matches: date={request.date}, page={request.page}")
         
         # 1. Load matches - check if we should use daily CSV for past dates
@@ -612,8 +646,9 @@ class AnalyzeMatchesUseCase:
         offset = (request.page - 1) * request.limit
         paginated = upcoming_matches[offset:offset + request.limit]
         
-        # 3. Load historical data once
-        historical = self._historical_repo.get_all()
+        # 3. Load historical data
+        # If override provided, use it (Time Travel). Else default repo.
+        historical = historical_override if historical_override is not None else self._historical_repo.get_all()
         
         # 4. Analyze each match
         analyses = []
@@ -641,40 +676,93 @@ class AnalyzeMatchesUseCase:
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
 
-        # 6. Verify AI predictions for past dates
-        if self._ai_backtest_service and request.date:
+        # 6. Qualification Flags (NEW)
+        # Must run AFTER AI enrichment (because it checks for traps)
+        if self._qualification_calculator:
+            for analysis in analyses:
+                results = self._qualification_calculator.calculate(analysis)
+                if analysis.match_analysis:
+                    # BTTS
+                    analysis.match_analysis.btts.qualified = results.qualified_btts
+                    analysis.match_analysis.btts.qualification_reason = results.reason_btts
+                    
+                    # Over 2.5
+                    analysis.match_analysis.over_25.qualified = results.qualified_over25
+                    analysis.match_analysis.over_25.qualification_reason = results.reason_over25
+                    
+                    # Classic Draw Profile (New)
+                    if hasattr(results, "classic_draw_profile") and results.classic_draw_profile:
+                        from src.api.schemas import ClassicDrawProfile
+                        cd_data = results.classic_draw_profile
+                        analysis.match_analysis.classic_draw_profile = ClassicDrawProfile(
+                            classic_draw_score=cd_data.get("classic_draw_score", 0),
+                            classic_draw_detected=cd_data.get("classic_draw_detected", False),
+                            reason=cd_data.get("reason", "")
+                        )
+
+                    # Draw Gravity Score
+                    draw_res = self._qualification_calculator.calculate_draw_qualification(analysis, cd=results.classic_draw_profile)
+                    analysis.draw_analysis = draw_res
+                    
+                    # Update draw market (DrawAnalysis object)
+                    analysis.match_analysis.draw.qualified = draw_res.get("qualified", False)
+                    analysis.match_analysis.draw.reason = draw_res.get("reason", "")
+                    analysis.match_analysis.draw.draw_gravity_score = draw_res.get("draw_gravity_score", 0)
+                    
+                    # Align confidence with DGS
+                    if analysis.match_analysis.draw.qualified:
+                         analysis.match_analysis.draw.confidence = "HIGH"
+                    else:
+                         analysis.match_analysis.draw.confidence = "LOW"
+
+
+
+        # 7. Verify AI predictions for past dates
+        if request.date:
             from datetime import datetime as dt
             is_past = request.date < dt.now().date()
             logger.info(f"Backtest check: request.date={request.date}, today={dt.now().date()}, is_past={is_past}")
 
             if is_past:
-                logger.info(f"Running AI prediction backtest for {request.date}")
-                ai_backtest_results = []
+                # 7.1 AI Backtest
+                if self._ai_backtest_service:
+                    logger.info(f"Running AI prediction backtest for {request.date}")
+                    ai_backtest_results = []
 
-                for analysis in analyses:
-                    if analysis.ai_analysis:
-                        # Handle both dict (from cache) and object
-                        best_pred = None
-                        if isinstance(analysis.ai_analysis, dict):
-                            best_pred = analysis.ai_analysis.get("best_prediction")
-                        else:
-                            best_pred = getattr(analysis.ai_analysis, "best_prediction", None)
+                    for analysis in analyses:
+                        if analysis.ai_analysis:
+                            # Handle both dict (from cache) and object
+                            best_pred = None
+                            if isinstance(analysis.ai_analysis, dict):
+                                best_pred = analysis.ai_analysis.get("best_prediction")
+                            else:
+                                best_pred = getattr(analysis.ai_analysis, "best_prediction", None)
 
-                        if best_pred:
-                            backtest_result = self._ai_backtest_service.verify_prediction(
-                                home_team=analysis.home_team,
-                                away_team=analysis.away_team,
-                                match_date=request.date,
-                                ai_best_prediction=best_pred,
-                            )
+                            if best_pred:
+                                backtest_result = self._ai_backtest_service.verify_prediction(
+                                    home_team=analysis.home_team,
+                                    away_team=analysis.away_team,
+                                    match_date=request.date,
+                                    ai_best_prediction=best_pred,
+                                )
 
-                            if backtest_result:
-                                analysis.backtest_result = backtest_result
-                                ai_backtest_results.append(backtest_result)
+                                if backtest_result:
+                                    analysis.backtest_result = backtest_result
+                                    ai_backtest_results.append(backtest_result)
+                                    
+                # 7.2 Statistical Backtest (NEW) - Runs regardless of AI
+                if self._statistical_backtest_service:
+                    logger.info(f"Running Statistical backtest for {request.date}")
+                    for analysis in analyses:
+                        stat_result = self._statistical_backtest_service.calculate_match_backtest(analysis)
+                        if stat_result:
+                            # Merge or Set
+                            if analysis.backtest_result:
+                                analysis.backtest_result.update(stat_result)
+                            else:
+                                analysis.backtest_result = stat_result
 
-                logger.info(f"Backtested {len(ai_backtest_results)} AI predictions")
-
-        # 7. Calculate backtest stats (if service available)
+        # 8. Calculate backtest stats (if service available)
         backtest_stats = {}
         if self._backtest_service:
             try:
@@ -691,6 +779,7 @@ class AnalyzeMatchesUseCase:
             if is_past:
                 ai_results = [a.backtest_result for a in analyses if a.backtest_result]
                 if ai_results:
+                     # This might overwrite previous stats but AI stats are usually priority if AI is active
                     backtest_stats = self._ai_backtest_service.calculate_daily_stats(ai_results)
 
         return AnalyzeMatchesResult(

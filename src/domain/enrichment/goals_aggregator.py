@@ -22,6 +22,16 @@ class GoalsAggregator:
     - Away-only totals
     """
     
+    
+    def __init__(self, team_matcher=None):
+        """
+        Initialize calculator.
+        
+        Args:
+            team_matcher: Optional TeamNameMatcher for fuzzy matching
+        """
+        self.matcher = team_matcher
+
     def calculate_goals_stats(
         self,
         team: str,
@@ -77,13 +87,24 @@ class GoalsAggregator:
             if home_goals is None or away_goals is None:
                 continue
             
-            if home_team == team_lower:
+            # Check team match
+            is_home = False
+            is_away = False
+            
+            if self.matcher:
+                is_home = self.matcher.matches(home_team, team)
+                is_away = self.matcher.matches(away_team, team)
+            else:
+                is_home = home_team == team_lower
+                is_away = away_team == team_lower
+            
+            if is_home:
                 total_scored += home_goals
                 total_conceded += away_goals
                 home_scored += home_goals
                 home_conceded += away_goals
                 home_matches += 1
-            elif away_team == team_lower:
+            elif is_away:
                 total_scored += away_goals
                 total_conceded += home_goals
                 away_scored += away_goals

@@ -5,52 +5,96 @@ ALL MATCHES ARE PRE-ANALYZED.
 DO NOT re-analyze.
 DO NOT invent data.
 DO NOT reuse matches.
+DO NOT duplicate matches across tickets or days.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ABSOLUTE OUTPUT GUARANTEE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 If ANY rule below is violated → OUTPUT ERROR JSON.
-DO NOT attempt “best effort”.
+NO best effort.
+NO partial compliance.
 STRUCTURAL CORRECTNESS IS MORE IMPORTANT THAN OUTPUT.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MATCH EVENT IDENTITY LOCK (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each football match is uniquely identified by the tuple:
+
+(event_key) = (home_team, away_team, datetime)
+
+RULES:
+- event_key MUST be treated as the true unique identifier
+- Two matches with the same:
+  - home_team AND
+  - away_team AND
+  - datetime
+  → represent the SAME MATCH EVENT
+
+EVENT CONSUMPTION:
+- Define USED_EVENT_KEYS = empty set
+- Before selecting any match:
+  - Compute event_key
+  - If event_key exists in USED_EVENT_KEYS → FORBIDDEN
+- When a match is selected:
+  - Add event_key to USED_EVENT_KEYS
+  - Add match_id to USED_MATCH_IDS
+  - Remove match permanently from UNUSED_MATCH_POOL
+
+REUSE VIOLATIONS:
+- Reusing a match_id OR
+- Reusing an event_key OR
+- Reusing the same teams at the same datetime
+→ INVALID OUTPUT
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MATCH POOL DEFINITION (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You are given ONE immutable input list of matches.
+
+Define:
+- UNUSED_MATCH_POOL = all qualified matches
+- USED_MATCH_IDS = empty set
+
+RULES:
+- A match can be selected ONLY if its match_id is NOT in USED_MATCH_IDS
+- When a match is selected:
+  - Add match_id to USED_MATCH_IDS
+  - Remove it permanently from UNUSED_MATCH_POOL
+- A match_id may appear ONLY ONCE in the entire output
+- Reusing a match_id = INVALID OUTPUT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DYNAMIC TICKET LOGIC (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Ticket size (FIXED):
+Ticket size:
 - EXACTLY 3 selections per ticket
 
-Ticket count (DYNAMIC):
-- ticket_count = floor(qualified_matches / 3)
+Ticket count:
+- ticket_count = floor(len(UNUSED_MATCH_POOL) / 3)
 - Minimum tickets = 1
 - Unused matches are allowed
-- If qualified_matches < 3 → RETURN ERROR JSON
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MATCH CONSUMPTION RULE (CRITICAL)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-- Each match_id may appear EXACTLY ONCE in the entire output
-- Once used → REMOVE from pool permanently
-- Reusing a match_id = INVALID OUTPUT
+- If len(UNUSED_MATCH_POOL) < 3 → OUTPUT ERROR JSON
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MARKET DISTRIBUTION RULES (HARD)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-GLOBAL LIMITS:
-- Over 2.5 + BTTS combined = MAX 85% of ALL selections (wins and draw qualified if not then the limit doesnt exists)
+GLOBAL LIMIT:
+- Over 2.5 + BTTS ≤ 85% of ALL selections
+- This limit is ACTIVE ONLY IF at least one RESULT-BASED bet qualifies
+- If ZERO result-based bets qualify → goal-only tickets are ALLOWED with NO LIMIT
 
 PER-TICKET GUIDELINES:
-- Goal-based markets (Over 2.5 / BTTS): UNRESTRICTED
-- Result-based markets (Home / Away / Draw): OPTIONAL
+- Goal-based markets: UNRESTRICTED
+- Result-based markets: OPTIONAL
 
 MARKET PRIORITY:
-1. If high-confidence result-based bets (≥ 60%) exist → include up to 1 per ticket
-2. If NONE exist → construct tickets using ONLY goal-based markets
-
-Goal-only tickets are VALID if result-based confidence is insufficient.
+1. If result-based bets ≥ 60% exist → include UP TO 1 per ticket
+2. Otherwise → build goal-only tickets
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ALLOWED MARKETS
@@ -66,7 +110,9 @@ ALLOWED MARKETS
 CONFIDENCE & ODDS RULES (HARD)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Minimum percentage from match_analysis:
+Use ONLY match_analysis percentages.
+
+Minimum confidence:
 - Over 2.5 / BTTS ≥ 55%
 - Home / Away / Draw ≥ 60%
 
@@ -74,39 +120,35 @@ Minimum odds:
 - Over 2.5 ≥ 1.60
 - Home / Away / Draw ≥ 2.00
 
-SPECIAL RULE — MISSING BTTS ODDS:
-- If BTTS odds are 0.0 or missing:
-  - YOU MUST ESTIMATE realistic odds using football market knowledge
-  - Typical expected range: 1.70 – 1.90
-  - Do NOT exclude high-quality BTTS selections due to missing odds
+BTTS ODDS RULE:
+- If BTTS odds are missing or 0.0:
+  - Estimate realistic odds (1.70–1.90)
+  - Do NOT exclude the match
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SELECTION PROCEDURE (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1 — QUALIFIED POOL
-- Remove matches failing confidence OR odds rules
+1. Build UNUSED_MATCH_POOL using confidence & odds rules
+2. Tag each match as GOAL_BASED or RESULT_BASED
+3. Build tickets SEQUENTIALLY:
+   - Select ONLY from UNUSED_MATCH_POOL
+   - EXACTLY 3 matches per ticket
+   - Prefer 1 RESULT_BASED if available
+   - Remove matches immediately after selection
+4. Stop when UNUSED_MATCH_POOL has < 3 matches
 
-STEP 2 — MARKET TAGGING
-- Tag each match as:
-  - GOAL_BASED (Over 2.5 / BTTS)
-  - RESULT_BASED (Home / Away / Draw)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINAL VALIDATION (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 3 — TICKET CONSTRUCTION
-- Build tickets sequentially
-- For each ticket:
-  - Select EXACTLY 3 matches
-  - Prefer 1 RESULT_BASED match IF AVAILABLE
-  - Fill remaining slots with GOAL_BASED matches
-  - If no RESULT_BASED matches exist → use 3 GOAL_BASED matches
-  - Consume matches immediately after assignment
-
-STEP 4 — FINAL VALIDATION (MANDATORY)
-Verify ALL:
-✔ Exactly 3 selections per ticket  
-✔ No reused match_id  
-✔ qualified_matches ≥ 3  
-✔ Global goal-market percentage ≤ 85% if wins and draws qualified otherwise no limit
+Before output, VERIFY:
+✔ Each match_id appears EXACTLY ONCE
+✔ No reused matches
+✔ EXACTLY 3 selections per ticket
+✔ ticket_count = floor(unique_matches / 3)
+✔ datetime matches match_id date EXACTLY
+✔ Global goal-market rule respected
 
 If ANY check fails → OUTPUT ERROR JSON
 
@@ -116,28 +158,20 @@ DATA INTEGRITY RULES
 
 - match_id, match_name, odds, datetime MUST match input EXACTLY
 - datetime = date + time EXACTLY
-- If date OR time missing → OMIT the match entirely
-- Use ONLY provided match objects
-- Do NOT modify or enrich input data
+- If date OR time missing → OMIT the match
+- Use ONLY provided data
+- NO enrichment, NO modification
+- match_id MUST be consistent with (home_team, away_team, datetime)
+- match_id variation does NOT create a new match
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REASONING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- 2–3 concise sentences per selection
-- Football logic ONLY:
-  - recent form
-  - attacking trends
-  - defensive weaknesses
-  - motivation / schedule pressure
-
-DO NOT mention:
-- ML
-- AI
-- Poisson
-- Monte Carlo
-- probabilities
-- algorithms
+- 2–3 concise sentences
+- Football logic ONLY
+- NO mention of AI, models, probabilities, algorithms
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STAKE & PAYOUT
@@ -174,7 +208,6 @@ OUTPUT FORMAT (JSON ONLY)
 NO TEXT.
 NO COMMENTS.
 JSON ONLY.
-
 """
 
 GEMINI_ANALYSIS_PROMPT = """

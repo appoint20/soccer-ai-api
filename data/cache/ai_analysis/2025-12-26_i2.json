@@ -1,0 +1,15 @@
+{
+  "date": "2025-12-26",
+  "league": "I2",
+  "analyses": {
+    "2025-12-26_Modena_vs_Monza": {
+      "best_prediction": "BTTS Yes",
+      "reason": "Monza's away games consistently feature goals from both sides, driven by their strong attack and a defense that regularly concedes. While Modena's offense is modest, they are playing at home and face an opponent that does not keep many clean sheets on their travels. This tactical dynamic favors a match where both teams find the net.",
+      "short_analysis": "Monza comes into this match with significantly better form and scoring statistics than the home side, Modena. The key trend is Monza's high rate of both scoring and conceding in away fixtures. While a Monza win is plausible, Modena's ability to score at home against a less-than-stout defense makes a 'Both Teams to Score' outcome the most consistent bet based on team patterns.",
+      "confidence_level": "MEDIUM",
+      "trap": "The data suggests a potential trap in backing an outright Monza win. While their form is superior, predictive models indicate the match could be much closer than season statistics suggest, raising the possibility of a draw or a low-scoring result."
+    }
+  },
+  "created_at": "2026-01-10T19:04:16.929394",
+  "match_count": 1
+}

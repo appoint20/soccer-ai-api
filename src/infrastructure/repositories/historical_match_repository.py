@@ -65,6 +65,11 @@ class CSVHistoricalMatchRepository:
                 return match
         
         return None
+
+    def get_matches_before(self, target_date: date) -> List[Match]:
+        """Get all historical matches played before the target date."""
+        all_matches = self.get_all()
+        return [m for m in all_matches if m.match_date < target_date]
     
     def _load_from_csv(self) -> List[Match]:
         """Load all matches from CSV files."""

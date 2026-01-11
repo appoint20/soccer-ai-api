@@ -55,6 +55,16 @@ class FormCalculator:
     so "WWDLL" means: last match W, 2nd last W, etc.
     """
     
+    def __init__(self, team_matcher=None):
+        """
+        Initialize calculator.
+        
+        Args:
+            team_matcher: Optional TeamNameMatcher for fuzzy matching
+        """
+        self.matcher = team_matcher
+
+    
     def calculate_form(
         self,
         team: str,
@@ -139,7 +149,15 @@ class FormCalculator:
             home = (match.get("home_team") or match.get("HomeTeam") or "").lower()
             away = (match.get("away_team") or match.get("AwayTeam") or "").lower()
             
-            if team_lower not in (home, away):
+            # Check team match
+            if self.matcher:
+                is_home = self.matcher.matches(home, team)
+                is_away = self.matcher.matches(away, team)
+            else:
+                is_home = home == team_lower
+                is_away = away == team_lower
+            
+            if not is_home and not is_away:
                 continue
             
             # Check date filter
@@ -167,8 +185,11 @@ class FormCalculator:
         if home_goals is None or away_goals is None:
             return None
         
-        team_lower = team.lower()
-        is_home = home_team.lower() == team_lower
+        # Determine perspective
+        if self.matcher:
+            is_home = self.matcher.matches(home_team, team)
+        else:
+            is_home = home_team.lower() == team.lower()
         
         if is_home:
             goals_for = home_goals

@@ -6,7 +6,6 @@ from src.domain.aggregation.models import (
     SourceProbabilities,
     MarketType,
     ConfidenceLevel,
-    MarketVerdict,
 )
 from src.domain.aggregation.probability_aggregator import ProbabilityAggregator
 from src.domain.aggregation.confidence_evaluator import ConfidenceEvaluator
@@ -18,7 +17,6 @@ __all__ = [
     "SourceProbabilities",
     "MarketType",
     "ConfidenceLevel",
-    "MarketVerdict",
     "ProbabilityAggregator",
     "ConfidenceEvaluator",
 ]
