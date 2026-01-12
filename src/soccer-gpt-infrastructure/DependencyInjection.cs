@@ -3,7 +3,9 @@ using soccer_gpt_application.Interfaces;
 using soccer_gpt_infrastructure.Services;
 using soccer_gpt_infrastructure.Repositories;
 using soccer_gpt_infrastructure.Services.Sync;
-using soccer_gpt_infrastructure.BackgroundServices;
+using Microsoft.EntityFrameworkCore;
+using soccer_gpt_infrastructure.DataMigrations;
+using soccer_gpt_infrastructure.Persistence;
 
 namespace soccer_gpt_infrastructure;
 
@@ -14,13 +16,10 @@ public static class DependencyInjection
         services.AddHttpClient<IScheduledJobService, ScheduledJobService>();
         services.AddHttpClient<IFootballApiService, FootballApiService>();
         services.AddScoped<ILeagueService, LeagueService>();
-        services.AddScoped<ILeaguesRepository, JsonFileLeaguesRepository>();
+        services.AddSingleton<ILeaguesRepository, JsonFileLeaguesRepository>();
         services.AddScoped<IFixtureRepository, FixtureService>();
         services.AddScoped<ILocalTeamStatsRepository, JsonFileLocalTeamStatsRepository>();
         services.AddScoped<IPredictionRepository, JsonFilePredictionRepository>();
-        services.AddSingleton<InMemoryHistoricalDataService>();
-        services.AddSingleton<IHistoricalDataRepository>(sp => sp.GetRequiredService<InMemoryHistoricalDataService>());
-        services.AddHostedService(sp => sp.GetRequiredService<InMemoryHistoricalDataService>());
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IAdvancedStatsService, AdvancedStatsService>();
         services.AddScoped<IPoissonGoalModelService, PoissonGoalModelService>();
@@ -45,7 +44,6 @@ public static class DependencyInjection
         // Filter Services
         services.AddScoped<IH2HFilterService, Services.Filters.H2HFilterService>();
         services.AddScoped<IH2HReliabilityService, Services.H2H.H2HReliabilityService>();
-        services.AddScoped<IEuropeanFatigueService, EuropeanFatigueService>();
         services.AddScoped<IRecentFormService, RecentFormService>();
         services.AddScoped<IPoissonFailureFilters, Services.Filters.PoissonFailureFilters>();
         
@@ -54,15 +52,24 @@ public static class DependencyInjection
         services.AddScoped<ITeamMappingService, TeamMappingService>();
         services.AddScoped<IFixtureGenerationService, FixtureGenerationService>();
         
-        // Background Workers
-        services.AddHostedService<NightlySyncWorker>();
-        services.AddHostedService<EuropeanFixturesUpdateService>();
         
         services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
         
         // Advanced Feature Services
         services.AddScoped<Services.Analysis.RefereeAnalysisService>();
         services.AddScoped<Services.Analysis.CongestionAnalysisService>();
+
+        // Database
+        services.AddDbContext<ApplicationDbContext>(options => 
+        {
+             // For simplicity, hardcoded path or use IConfiguration
+             var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "soccer-gpt.db");
+            options.UseSqlite($"Data Source={dbPath}");
+        });
+        
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+
+        services.AddScoped<IExcelToSqliteMigrationService, ExcelToSqliteMigrationService>();
 
         return services;
     }
