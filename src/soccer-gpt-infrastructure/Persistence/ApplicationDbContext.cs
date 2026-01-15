@@ -6,8 +6,9 @@ namespace soccer_gpt_infrastructure.Persistence;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options), IApplicationDbContext
 {
-    public DbSet<Team> Teams { get; init; }
-    public DbSet<Match> Matches { get; init; }
+    public DbSet<Team> Teams { get; set; }
+    public DbSet<Match> Matches { get; set; }
+    public DbSet<Fixture> Fixtures { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,6 +20,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<Match>()
             .HasIndex(m => new { m.Date, m.Time, m.LeagueName, m.HomeTeamId, m.AwayTeamId })
+            .IsUnique();
+            
+        modelBuilder.Entity<Fixture>()
+            .HasIndex(f => f.Signature)
             .IsUnique();
 
         modelBuilder.Entity<Match>()

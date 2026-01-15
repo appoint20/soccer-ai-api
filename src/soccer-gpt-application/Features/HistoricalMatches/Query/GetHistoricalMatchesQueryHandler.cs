@@ -1,10 +1,11 @@
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using soccer_gpt_application.Interfaces;
 using soccer_gpt_application.Models;
 
-namespace soccer_gpt_application.Features.Matches.Queries;
+namespace soccer_gpt_application.Features.HistoricalMatches.Query;
 
 public class GetHistoricalMatchesQueryHandler(IApplicationDbContext dbContext) 
     : IRequestHandler<GetHistoricalMatchesQuery, GetHistoricalMatchesResponse>

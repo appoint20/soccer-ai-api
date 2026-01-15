@@ -1,7 +1,7 @@
 using Mediator.Net.Contracts;
 using soccer_gpt_application.Models;
 
-namespace soccer_gpt_application.Features.Matches.Queries;
+namespace soccer_gpt_application.Features.HistoricalMatches.Query;
 
 public class GetHistoricalMatchesQuery : IRequest
 {

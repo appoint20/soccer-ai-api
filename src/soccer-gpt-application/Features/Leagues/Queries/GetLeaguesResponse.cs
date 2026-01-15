@@ -5,5 +5,5 @@ namespace soccer_gpt_application.Features.Leagues.Queries;
 
 public class GetLeaguesResponse : IResponse
 {
-    public PagedResponse<LeagueDto> Data { get; init; } = new();
+    public PagedResponse<string> Data { get; init; } = new();
 }

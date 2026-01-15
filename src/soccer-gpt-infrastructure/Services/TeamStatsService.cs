@@ -1,106 +1,144 @@
+using soccer_gpt_application.Entities;
 using soccer_gpt_application.Interfaces;
 using soccer_gpt_application.Models;
 
 namespace soccer_gpt_infrastructure.Services;
 
-public class TeamStatsService : ITeamStatsService
+public sealed class TeamStatsService : ITeamStatsService
 {
-    private const int StatSampleBox = 10; // Use last 10 games for general stats
-
-    public Task<RichTeamStatsDto> CalculateStatsAsync(string teamName, List<HistoricalMatchDto> history)
+    public Task<TeamAggregatedStats> CalculateAsync(string team, List<Match> matches, TeamStatsOptions options)
     {
-        // 1. Filter matches where team played (sanity check)
-        // History is usually passed pre-filtered for H2H, but for Team Stats we need THE TEAM'S history vs ANYONE.
-        // The calling code (Controller) must ensure it passes the *Full* history of the team, not just H2H.
-        // Assuming 'history' is chronological (Old -> New) or New -> Old. We'll sort to be safe.
-        
-        var recentMatches = history
-            .Where(m => MatchIsRelevant(m, teamName))
-            .OrderByDescending(m => m.Date) // Newest first
-            .Take(StatSampleBox)
-            .ToList();
+        var filtered = ApplyFilters(team, matches, options);
 
-        if (recentMatches.Count == 0)
-        {
-            return Task.FromResult(new RichTeamStatsDto { TeamName = teamName });
-        }
+        if (filtered.Count == 0)
+            return Task.FromResult(new TeamAggregatedStats());
 
-        double totalGF = 0;
-        double totalGA = 0;
-        int bttsCount = 0;
-        int over25Count = 0;
-        int cleanSheets = 0;
-        int failedToScore = 0;
-        int wins = 0;
-
-        foreach (var m in recentMatches)
-        {
-            bool isHome = IsMatch(m.HomeTeam, teamName);
-            int gf = isHome ? m.FTHG : m.FTAG;
-            int ga = isHome ? m.FTAG : m.FTHG;
-            
-            // Accumulate
-            totalGF += gf;
-            totalGA += ga;
-            
-            if (gf > 0 && ga > 0) bttsCount++;
-            if ((gf + ga) > 2.5) over25Count++;
-            if (ga == 0) cleanSheets++;
-            if (gf == 0) failedToScore++;
-            
-            // Win check
-            if (isHome && m.FTR == "H") wins++;
-            else if (!isHome && m.FTR == "A") wins++;
-        }
-
-        double count = recentMatches.Count;
-
-        var stats = new RichTeamStatsDto
-        {
-            TeamName = teamName,
-            AvgGoalsFor = totalGF / count,
-            AvgGoalsAgainst = totalGA / count,
-            
-            WinRateLast10 = (double)wins / count,
-            BTTSPercentage = (double)bttsCount / count,
-            Over25Percentage = (double)over25Count / count,
-            CleanSheetPercentage = (double)cleanSheets / count,
-            FailedToScorePercentage = (double)failedToScore / count,
-            FormLast5 = GetFormString(recentMatches.Take(5).ToList(), teamName)
-        };
-
-        return Task.FromResult(stats);
+        var acc = Aggregate(team, filtered);
+        return Task.FromResult(BuildStats(acc, filtered, team));
     }
 
-    private string GetFormString(List<HistoricalMatchDto> matches, string team)
+    private static List<Match> ApplyFilters(
+        string team,
+        List<Match> matches,
+        TeamStatsOptions options)
     {
-        // Matches are Newest -> Oldest
-        // Form string usually Left=Recent
-        var form = "";
+        var query = matches;
+        
+        if (options.HomeOnly.HasValue)
+        {
+            query = options.HomeOnly.Value
+                ? query.Where(m => IsMatch(m.HomeTeam.Name, team)).ToList()
+                : query.Where(m => IsMatch(m.AwayTeam.Name, team)).ToList();
+        }
+
+        return options.LastMatches == 0 ? query : query.Take(options.LastMatches).ToList();
+    }
+
+    private static TeamStatAccumulator Aggregate(string team, IReadOnlyList<Match> matches)
+    {
+        var acc = new TeamStatAccumulator();
+
         foreach (var m in matches)
         {
-            if (m.FTR == "D")
+            var isHome = IsMatch(m.HomeTeam.Name, team);
+            var gf = isHome ? m.FullTimeHomeGoal : m.FullTimeAwayGoal;
+            var ga = isHome ? m.FullTimeAwayGoal : m.FullTimeHomeGoal;
+
+            acc.Played++;
+            acc.GoalsFor += gf;
+            acc.GoalsAgainst += ga;
+
+            if (gf == ga) acc.Draws++;
+            if (gf > 0 && ga > 0) acc.BTTS++;
+            if (gf + ga > 2) acc.Over25++;
+            if (gf + ga is 2 or 3) acc.Goals23++;
+            if (ga == 0) acc.CleanSheets++;
+            if (gf == 0) acc.FailedToScore++;
+
+            if ((isHome && m.FullTimeResult == "H") || (!isHome && m.FullTimeResult == "A"))
+                acc.Wins++;
+        }
+
+        return acc;
+    }
+
+    private static TeamAggregatedStats BuildStats(
+        TeamStatAccumulator a,
+        IEnumerable<Match> matches,
+        string team)
+    {
+        return new TeamAggregatedStats
+        {
+            MatchesPlayed = a.Played,
+
+            GoalsScored = a.GoalsFor,
+            GoalsConceded = a.GoalsAgainst,
+
+            GoalsScoredAvg = SafeDivide(a.GoalsFor, a.Played),
+            GoalsConcededAvg = SafeDivide(a.GoalsAgainst, a.Played),
+
+            Wins = SafeDivide(a.Wins, a.Played),
+            Draws = SafeDivide(a.Draws, a.Played),
+            Losses = SafeDivide(a.Played - a.Wins - a.Draws, a.Played),
+
+            BothTeamsScoredAvg = SafeDivide(a.BTTS, a.Played),
+            Over25Avg = SafeDivide(a.Over25, a.Played),
+            TwoToThreeGoalsAvg = SafeDivide(a.Goals23, a.Played),
+
+            CleanSheetAvg = SafeDivide(a.CleanSheets, a.Played),
+            FailedToScoreAvg = SafeDivide(a.FailedToScore, a.Played),
+
+            Form = BuildForm(matches, team)
+        };
+    }
+
+    private static string BuildForm(IEnumerable<Match> matches, string team)
+    {
+        var form = "";
+
+        foreach (var m in matches)
+        {
+            if (m.FullTimeResult == "D")
             {
                 form += "D";
                 continue;
             }
-            bool isHome = IsMatch(m.HomeTeam, team);
-            if (isHome) form += (m.FTR == "H") ? "W" : "L";
-            else form += (m.FTR == "A") ? "W" : "L";
+
+            bool isHome = IsMatch(m.HomeTeam.Name, team);
+            form += (isHome && m.FullTimeResult == "H") || (!isHome && m.FullTimeResult == "A")
+                ? "W"
+                : "L";
         }
+
         return form;
     }
 
-    private bool MatchIsRelevant(HistoricalMatchDto m, string team)
+    private static bool IsMatch(string a, string b)
     {
-        return IsMatch(m.HomeTeam, team) || IsMatch(m.AwayTeam, team);
+        if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b))
+            return false;
+
+        if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return a.Contains(b, StringComparison.OrdinalIgnoreCase)
+            || b.Contains(a, StringComparison.OrdinalIgnoreCase);
     }
 
-    private bool IsMatch(string s1, string s2)
+    private static double SafeDivide(int value, int total)
+        => total == 0 ? 0 : Math.Round((double)value / total, 2);
+
+    private sealed class TeamStatAccumulator
     {
-         if (string.IsNullOrWhiteSpace(s1) || string.IsNullOrWhiteSpace(s2)) return false;
-        // Basic check, relying on Repository for deeper alias logic if needed, but local check is good
-        if (s1.Equals(s2, StringComparison.OrdinalIgnoreCase)) return true;
-        return s1.Contains(s2, StringComparison.OrdinalIgnoreCase) || s2.Contains(s1, StringComparison.OrdinalIgnoreCase);
+        public int Played;
+        public int GoalsFor;
+        public int GoalsAgainst;
+        public int Wins;
+        public int Draws;
+        public int BTTS;
+        public int Over25;
+        public int Goals23;
+        public int CleanSheets;
+        public int FailedToScore;
     }
 }

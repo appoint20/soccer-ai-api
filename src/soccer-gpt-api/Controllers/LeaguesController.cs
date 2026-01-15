@@ -10,7 +10,7 @@ namespace soccer_gpt_api.Controllers;
 public class LeaguesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(PagedResponse<LeagueDto>), 200)]
+    [ProducesResponseType(typeof(PagedResponse<GetLeaguesResponse>), 200)]
     public async Task<IActionResult> GetLeagues(CancellationToken cancellationToken)
     {
         var response = await mediator.RequestAsync<GetLeaguesQuery, GetLeaguesResponse>(
