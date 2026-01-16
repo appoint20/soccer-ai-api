@@ -45,7 +45,6 @@ public class AnalyzeService(
         var homeTeam = fixture.HomeName;
         var awayTeam = fixture.AwayName;
 
-        // Get league matches BEFORE the fixture date (historical)
         var leagueMatches = GetHistoricalLeagueMatchesBy(leagueName, fixture.Date);
         var homeHistoricalMatches = GetHistoricalMatchesBy(homeTeam, leagueMatches);
         var awayHistoricalMatches = GetHistoricalMatchesBy(awayTeam, leagueMatches);
@@ -61,17 +60,17 @@ public class AnalyzeService(
             awayTeam, awayHistoricalMatches, new TeamStatsOptions());
 
         // Poisson probabilities
-        PoissonProbabilities poisson;
-        try
-        {
-            var strengthFactors = poissonService.Build(homeCurrentSeasonStats, awayCurrentSeasonStats, leagueGoalAverages);
-            poisson = poissonService.CalculateProbabilities(strengthFactors);
-        }
-        catch
-        {
-            poisson = new PoissonProbabilities(); // Safe default
-        }
+        var strengthFactors = poissonService.Build(homeCurrentSeasonStats, awayCurrentSeasonStats, leagueGoalAverages);
+        var poisson = poissonService.CalculateProbabilities(strengthFactors);
+        
+        
+        var homeLast7Home = await statsService.CalculateAsync(
+            homeTeam, homeHistoricalMatches, new TeamStatsOptions { LastMatches = 7, HomeOnly = null });
 
+        var awayLast7Away = await statsService.CalculateAsync(
+            awayTeam, awayHistoricalMatches, new TeamStatsOptions { LastMatches = 7, HomeOnly = null });
+
+        
         // Last 3 Home/Away specific stats
         var homeLast3Home = await statsService.CalculateAsync(
             homeTeam, homeHistoricalMatches, new TeamStatsOptions { LastMatches = 3, HomeOnly = true });
@@ -86,9 +85,9 @@ public class AnalyzeService(
             LeagueName = leagueName,
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
-            HomeLastNine = homeCurrentSeasonStats,
+            HomeLastSeven = homeLast7Home,
             HomeLastThreeAtHome = homeLast3Home,
-            AwayLastNine = awayCurrentSeasonStats,
+            AwayLastSeven = awayLast7Away,
             AwayLastThreeAtAway = awayLast3Away,
             AdvancedAnalytics = poisson
         };

@@ -8,9 +8,9 @@ public record AnalysisDto
     public string HomeTeam { get; set; } = string.Empty;
     public string AwayTeam { get; set; } = string.Empty;
 
-    public TeamAggregatedStats HomeLastNine { get; set; } = new();
+    public TeamAggregatedStats HomeLastSeven { get; set; } = new();
     public TeamAggregatedStats HomeLastThreeAtHome { get; set; } = new();
-    public TeamAggregatedStats AwayLastNine { get; set; } = new();
+    public TeamAggregatedStats AwayLastSeven { get; set; } = new();
     public TeamAggregatedStats AwayLastThreeAtAway { get; set; } = new();
 
     public PoissonProbabilities AdvancedAnalytics { get; set; } = new();
