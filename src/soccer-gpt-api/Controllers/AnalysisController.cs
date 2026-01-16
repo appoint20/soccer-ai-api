@@ -15,7 +15,7 @@ public class AnalysisController(IMediator mediator) : ControllerBase
         [FromQuery] int limit = 50,
         CancellationToken cancellationToken = default)
     {
-        DateTime? filterDate = null;
+        var filterDate = DateTime.Now;
         if (!string.IsNullOrEmpty(date))
         {
             if (!DateTime.TryParse(date, out var parsed))

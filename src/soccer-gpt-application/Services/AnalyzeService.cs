@@ -9,100 +9,109 @@ public class AnalyzeService(
     IApplicationDbContext dbContext, 
     ITeamStatsService statsService, 
     ILeagueStatsService leagueStatsService, 
-    IPoissonService poissonService): IAnalyzeService
+    IPoissonService poissonService) : IAnalyzeService
 {
-    public async Task<object> AnalyzeBy()
+    public async Task<List<AnalysisDto>> AnalyzeUpcomingAsync(DateTime date, int offset = 0, int limit = 50)
     {
+        // Compare using Date only (SQLite stores as yyyy-MM-dd HH:mm:ss)
+        var targetDate = date.Date;
+        
         var fixtures = await dbContext.Fixtures
             .AsNoTracking()
-            .Where(x => x.Date >= DateTime.Today)
+            .Where(x => x.Date.Date == targetDate)
             .ToListAsync();
-        
-        foreach (var fixture in fixtures)
-        {
-            var leagueName = fixture.LeagueName;
-            var homeTeam = fixture.HomeName;
-            var awayTeam = fixture.AwayName;
-            var leagueMatches = GetHistoricalLeagueMatchesBy(leagueName, fixture.Date);
-            var homeHistoricalMatches =  GetHistoricalMatchesBy(homeTeam, leagueMatches);
-            var awayHistoricalMatches = GetHistoricalMatchesBy(awayTeam, leagueMatches);
 
-            var leagueGoalAverages = await leagueStatsService.CalculateLeagueAveragesAsync(leagueName, leagueMatches);
-                        
-            var homeCurrentSeasonStats = await statsService.CalculateAsync(
-                homeTeam,
-                homeHistoricalMatches, 
-                new TeamStatsOptions()
-            );
-            
-            var awayCurrentSeasonStats = await statsService.CalculateAsync(
-                awayTeam,
-                awayHistoricalMatches, 
-                new TeamStatsOptions()
-            );
-
-            var strengthFactors = poissonService.Build(
-                homeCurrentSeasonStats, 
-                awayCurrentSeasonStats, 
-                leagueGoalAverages
-            );
-
-            var poisson = poissonService.CalculateProbabilities(strengthFactors);
-
-            var homeStats = await statsService.CalculateAsync(
-                homeTeam,
-                homeHistoricalMatches, 
-                new TeamStatsOptions()
-            );
-            
-            var awayStats = await statsService.CalculateAsync(
-                awayTeam,
-                awayHistoricalMatches, 
-                new TeamStatsOptions()
-            );
-            
-            var homeHomeStats = await statsService.CalculateAsync(
-                homeTeam,
-                homeHistoricalMatches, 
-                new TeamStatsOptions
-                {
-                    LastMatches = 3,
-                    HomeOnly = true
-                }
-            );
-            
-            var awayAwayStats = await statsService.CalculateAsync(
-                awayTeam,
-                awayHistoricalMatches, 
-                new TeamStatsOptions
-                {
-                    LastMatches = 3,
-                    HomeOnly = false
-                }
-            );
-
-        }
-        throw new NotImplementedException();
-    }
-
-
-    private static List<Match> GetHistoricalMatchesBy(string teamName, IOrderedQueryable<Match> historicalLeagueMatches)
-    {
-        var matches = historicalLeagueMatches
-            .Where(m => m.AwayTeam.Name == teamName || m.HomeTeam.Name == teamName)
-            .OrderByDescending(m => m.Date)
+        // Order client-side (SQLite doesn't support TimeSpan in ORDER BY)
+        var orderedFixtures = fixtures
+            .OrderBy(x => x.Time)
+            .Skip(offset)
+            .Take(limit)
             .ToList();
 
-        return matches;
-    }
-    
-    private IOrderedQueryable<Match> GetHistoricalLeagueMatchesBy(string leagueName, DateTime date)
-    {
-        var matches = dbContext.Matches
-            .AsNoTracking()
-            .Where(m => m.Date > date && m.LeagueName == leagueName && m.CurrentSeason)
-            .OrderByDescending(m => m.Date);
+        var results = new List<AnalysisDto>();
 
-        return matches;
+        foreach (var fixture in orderedFixtures)
+        {
+            var analysis = await AnalyzeFixture(fixture);
+            results.Add(analysis);
+        }
+
+        return results;
+    }
+
+    private async Task<AnalysisDto> AnalyzeFixture(Fixture fixture)
+    {
+        var leagueName = fixture.LeagueName;
+        var homeTeam = fixture.HomeName;
+        var awayTeam = fixture.AwayName;
+
+        // Get league matches BEFORE the fixture date (historical)
+        var leagueMatches = GetHistoricalLeagueMatchesBy(leagueName, fixture.Date);
+        var homeHistoricalMatches = GetHistoricalMatchesBy(homeTeam, leagueMatches);
+        var awayHistoricalMatches = GetHistoricalMatchesBy(awayTeam, leagueMatches);
+
+        // League averages for Poisson
+        var leagueGoalAverages = await leagueStatsService.CalculateLeagueAveragesAsync(leagueName, leagueMatches);
+
+        // Current season stats for Poisson strength calculation
+        var homeCurrentSeasonStats = await statsService.CalculateAsync(
+            homeTeam, homeHistoricalMatches, new TeamStatsOptions());
+
+        var awayCurrentSeasonStats = await statsService.CalculateAsync(
+            awayTeam, awayHistoricalMatches, new TeamStatsOptions());
+
+        // Poisson probabilities
+        PoissonProbabilities poisson;
+        try
+        {
+            var strengthFactors = poissonService.Build(homeCurrentSeasonStats, awayCurrentSeasonStats, leagueGoalAverages);
+            poisson = poissonService.CalculateProbabilities(strengthFactors);
+        }
+        catch
+        {
+            poisson = new PoissonProbabilities(); // Safe default
+        }
+
+        // Last 3 Home/Away specific stats
+        var homeLast3Home = await statsService.CalculateAsync(
+            homeTeam, homeHistoricalMatches, new TeamStatsOptions { LastMatches = 3, HomeOnly = true });
+
+        var awayLast3Away = await statsService.CalculateAsync(
+            awayTeam, awayHistoricalMatches, new TeamStatsOptions { LastMatches = 3, HomeOnly = false });
+
+        return new AnalysisDto
+        {
+            Date = fixture.Date,
+            Time = fixture.Time,
+            LeagueName = leagueName,
+            HomeTeam = homeTeam,
+            AwayTeam = awayTeam,
+            HomeLastNine = homeCurrentSeasonStats,
+            HomeLastThreeAtHome = homeLast3Home,
+            AwayLastNine = awayCurrentSeasonStats,
+            AwayLastThreeAtAway = awayLast3Away,
+            AdvancedAnalytics = poisson
+        };
+    }
+
+    private static List<Match> GetHistoricalMatchesBy(string teamName, IQueryable<Match> historicalLeagueMatches)
+    {
+        return historicalLeagueMatches
+            .Where(m => m.AwayTeam.Name == teamName || m.HomeTeam.Name == teamName)
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
+            .OrderByDescending(m => m.Date)
+            .ToList();
+    }
+
+    private IOrderedQueryable<Match> GetHistoricalLeagueMatchesBy(string leagueName, DateTime fixtureDate)
+    {
+        // Get matches BEFORE the fixture date (not after)
+        return dbContext.Matches
+            .AsNoTracking()
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
+            .Where(m => m.Date < fixtureDate && m.LeagueName == leagueName && m.CurrentSeason)
+            .OrderByDescending(m => m.Date);
     }
 }

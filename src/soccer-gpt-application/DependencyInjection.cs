@@ -1,6 +1,6 @@
-
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+using soccer_gpt_application.Interfaces;
+using soccer_gpt_application.Services;
 
 namespace soccer_gpt_application;
 
@@ -8,8 +8,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Mediator.Net is usually configured in the entry point (API), 
-        // effectively registering handlers there.
+        // Business Logic Services
+        services.AddScoped<ITeamStatsService, TeamStatsService>();
+        services.AddScoped<ILeagueStatsService, LeagueStatsService>();
+        services.AddScoped<IPoissonService, PoissonService>();
+        services.AddScoped<IAnalyzeService, AnalyzeService>();
+        
         return services;
     }
 }

@@ -5,5 +5,5 @@ namespace soccer_gpt_application.Features.Analysis.Queries;
 
 public class GetUpcomingMatchesResponse : IResponse
 {
-    public PagedResponse<UpcomingMatchDto> Data { get; init; } = new();
+    public PagedResponse<AnalysisDto> Data { get; init; } = new();
 }

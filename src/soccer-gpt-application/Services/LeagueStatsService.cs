@@ -2,7 +2,7 @@ using soccer_gpt_application.Entities;
 using soccer_gpt_application.Interfaces;
 using soccer_gpt_application.Models;
 
-namespace soccer_gpt_infrastructure.Services;
+namespace soccer_gpt_application.Services;
 
 public sealed class LeagueStatsService : ILeagueStatsService
 {

@@ -128,9 +128,6 @@ public sealed class UploadUpcomingFixturesCommandHandler(
             string.IsNullOrWhiteSpace(away))
             return null;
 
-        home = NormalizeName(home);
-        away = NormalizeName(away);
-
         if (home == away)
             return null;
 
@@ -237,9 +234,6 @@ public sealed class UploadUpcomingFixturesCommandHandler(
         };
 
     // -------------------- Helpers --------------------
-
-    private static string NormalizeName(string value) =>
-        value.Trim().ToUpperInvariant();
 
     private static bool TryParseDate(string input, out DateTime date)
     {

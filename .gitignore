@@ -13,6 +13,7 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.DotSettings.user
 
 # Data (large files)
 data/historical/*.xlsx
@@ -24,3 +25,19 @@ Thumbs.db
 
 # Logs
 *.log
+
+# .NET Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# Coverage
+coverage/
+
+# SQLite Database
+*.db
+
+# Test results
+TestResults/

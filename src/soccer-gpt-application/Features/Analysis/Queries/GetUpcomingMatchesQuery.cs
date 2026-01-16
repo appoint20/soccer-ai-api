@@ -6,5 +6,5 @@ public class GetUpcomingMatchesQuery : IRequest
 {
     public int Offset { get; init; } = 0;
     public int Limit { get; init; } = 50;
-    public DateTime? Date { get; init; }
+    public DateTime Date { get; init; }
 }
