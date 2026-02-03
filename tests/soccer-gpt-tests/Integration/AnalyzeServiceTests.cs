@@ -53,9 +53,20 @@ public class AnalyzeServiceTests
         var teamStatsService = new TeamStatsService();
         var leagueStatsService = new LeagueStatsService();
         var poissonService = new PoissonService();
+        var h2hService = new HeadToHeadService();
+        var monteCarloService = new MonteCarloService();
+        var qualificationService = new QualificationService();
+        var decisionBuilderService = new DecisionBuilderService();
 
         var analyzeService = new AnalyzeService(
-            dbContext, teamStatsService, leagueStatsService, poissonService);
+            dbContext, 
+            teamStatsService, 
+            leagueStatsService, 
+            poissonService,
+            h2hService,
+            monteCarloService,
+            qualificationService,
+            decisionBuilderService);
 
         return (dbContext, analyzeService);
     }
@@ -67,14 +78,12 @@ public class AnalyzeServiceTests
 
         db.Teams.AddRange(arsenal, chelsea);
 
-        // Historical matches (before fixture date)
         db.Matches.AddRange(
             TestDataFactory.CreateMatch(1, arsenal, chelsea, 2, 1, fixtureDate.AddDays(-7)),
             TestDataFactory.CreateMatch(2, chelsea, arsenal, 1, 1, fixtureDate.AddDays(-14)),
             TestDataFactory.CreateMatch(3, arsenal, chelsea, 3, 0, fixtureDate.AddDays(-21))
         );
 
-        // Future fixture on the target date
         db.Fixtures.Add(new Fixture
         {
             Id = 1,

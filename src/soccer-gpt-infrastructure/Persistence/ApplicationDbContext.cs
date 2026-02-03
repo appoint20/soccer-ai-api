@@ -7,7 +7,6 @@ namespace soccer_gpt_infrastructure.Persistence;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options), IApplicationDbContext
 {
     public DbSet<Team> Teams { get; set; }
-    public DbSet<Match> Matches { get; set; }
     public DbSet<Fixture> Fixtures { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -15,27 +14,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Team>()
-            .HasIndex(t => t.Name)
+            .HasIndex(t => t.ApiId)
             .IsUnique();
 
-        modelBuilder.Entity<Match>()
-            .HasIndex(m => new { m.Date, m.Time, m.LeagueName, m.HomeTeamId, m.AwayTeamId })
-            .IsUnique();
-            
         modelBuilder.Entity<Fixture>()
-            .HasIndex(f => f.Signature)
+            .HasIndex(f => f.ApiId)
             .IsUnique();
-
-        modelBuilder.Entity<Match>()
-            .HasOne(m => m.HomeTeam)
-            .WithMany(t => t.HomeMatches)
-            .HasForeignKey(m => m.HomeTeamId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Match>()
-            .HasOne(m => m.AwayTeam)
-            .WithMany(t => t.AwayMatches)
-            .HasForeignKey(m => m.AwayTeamId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
+

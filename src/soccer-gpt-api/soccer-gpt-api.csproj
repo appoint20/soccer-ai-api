@@ -27,4 +27,10 @@
     <_ContentIncludedByDefault Remove="Data\european_fixtures\uel_fixtures.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

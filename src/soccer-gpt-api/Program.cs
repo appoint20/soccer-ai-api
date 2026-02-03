@@ -2,7 +2,6 @@ using Mediator.Net;
 using Mediator.Net.MicrosoftDependencyInjection;
 using Scalar.AspNetCore;
 using soccer_gpt_application;
-using soccer_gpt_application.Features.HistoricalMatches.Query;
 using soccer_gpt_infrastructure;
 using soccer_gpt_infrastructure.Persistence;
 
@@ -12,16 +11,20 @@ System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Inst
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
+    });
 builder.Services.AddOpenApi("v1");
 
 // Clean Architecture Layers
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Mediator.Net Configuration
 var mediaBuilder = new MediatorBuilder();
-mediaBuilder.RegisterHandlers(typeof(GetHistoricalMatchesQuery).Assembly);
+mediaBuilder.RegisterHandlers(typeof(soccer_gpt_application.Features.Predictions.GetFixturePredictionsHandler).Assembly);
 builder.Services.RegisterMediator(mediaBuilder);
 
 var app = builder.Build();
@@ -39,6 +42,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
+
+// Global Exception Handler
+app.UseMiddleware<soccer_gpt_api.Middleware.GlobalExceptionMiddleware>();
+
 app.MapControllers();
 
 // Ensure Database Created
@@ -49,3 +56,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
