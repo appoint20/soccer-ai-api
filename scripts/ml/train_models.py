@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 import joblib
 import json
+import onnxmltools
+from onnxmltools.convert.common.data_types import FloatTensorType
 
 # Configuration
 DATA_PATH = Path(__file__).parent / "training_data.parquet"
@@ -24,12 +26,26 @@ FEATURE_COLS = [
     'home_goals_scored_avg', 'home_goals_conceded_avg', 'home_xg_avg',
     'home_shots_avg', 'home_shots_on_target_avg', 'home_btts_rate',
     'home_over25_rate', 'home_clean_sheet_rate', 'home_failed_to_score_rate',
+    # New Overall Home + Reversion + Streaks
+    'home_overall_goals_scored_avg', 'home_overall_goals_conceded_avg',
+    'home_overall_xg_avg', 'home_overall_btts_rate', 'home_overall_over25_rate',
+    'home_overall_scored_diff', 'home_overall_xg_diff',
+    'home_overall_under_streak', 'home_overall_over_streak', 'home_overall_btts_streak',
+    
     'away_goals_scored_avg', 'away_goals_conceded_avg', 'away_xg_avg',
     'away_shots_avg', 'away_shots_on_target_avg', 'away_btts_rate',
     'away_over25_rate', 'away_clean_sheet_rate', 'away_failed_to_score_rate',
+    # New Overall Away + Reversion + Streaks
+    'away_overall_goals_scored_avg', 'away_overall_goals_conceded_avg',
+    'away_overall_xg_avg', 'away_overall_btts_rate', 'away_overall_over25_rate',
+    'away_overall_scored_diff', 'away_overall_xg_diff',
+    'away_overall_under_streak', 'away_overall_over_streak', 'away_overall_btts_streak',
+    
     'h2h_total_goals_avg', 'h2h_btts_rate', 'h2h_over25_rate',
     'league_avg_goals', 'league_btts_rate', 'league_over25_rate',
     'is_derby',
+    # Temporal & Seasonality
+    'is_weekend', 'day_of_week', 'month', 'season_month_idx',
     # Odds-implied probabilities (if available)
     'home_win_implied_prob', 'draw_implied_prob', 'away_win_implied_prob',
     'over25_implied_prob', 'btts_implied_prob'
@@ -86,11 +102,12 @@ def train_binary_model(X: pd.DataFrame, y: pd.Series, model_name: str) -> dict:
     }
     
     model = xgb.XGBClassifier(**params)
-    model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+    # Train on numpy arrays to avoid feature name issues in ONNX conversion
+    model.fit(X_train.values, y_train, eval_set=[(X_test.values, y_test)], verbose=False)
     
     # Predictions
-    y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1]
+    y_pred = model.predict(X_test.values)
+    y_prob = model.predict_proba(X_test.values)[:, 1]
     
     # Metrics
     metrics = {
@@ -117,6 +134,20 @@ def train_binary_model(X: pd.DataFrame, y: pd.Series, model_name: str) -> dict:
     model_path = MODELS_DIR / f"{model_name}.json"
     model.save_model(model_path)
     print(f"  Saved to: {model_path}")
+    
+    # Export to ONNX
+    try:
+        onnx_path = str(MODELS_DIR / f"{model_name}.onnx")
+        initial_types = [('input', FloatTensorType([None, len(FEATURE_COLS)]))]
+        onnx_model = onnxmltools.convert_xgboost(
+            model, 
+            initial_types=initial_types,
+            target_opset=12
+        )
+        onnxmltools.utils.save_model(onnx_model, onnx_path)
+        print(f"  Saved ONNX to: {onnx_path}")
+    except Exception as e:
+        print(f"  Failed to save ONNX: {e}")
     
     # Feature importance
     importance = dict(zip(FEATURE_COLS, model.feature_importances_))
@@ -158,10 +189,11 @@ def train_multiclass_model(X: pd.DataFrame, y: pd.Series, model_name: str) -> di
     }
     
     model = xgb.XGBClassifier(**params)
-    model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+    # Train on numpy arrays
+    model.fit(X_train.values, y_train, eval_set=[(X_test.values, y_test)], verbose=False)
     
     # Predictions
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test.values)
     
     # Metrics
     metrics = {
@@ -191,6 +223,20 @@ def train_multiclass_model(X: pd.DataFrame, y: pd.Series, model_name: str) -> di
     model.save_model(model_path)
     print(f"  Saved to: {model_path}")
     
+    # Export to ONNX
+    try:
+        onnx_path = str(MODELS_DIR / f"{model_name}.onnx")
+        initial_types = [('input', FloatTensorType([None, len(FEATURE_COLS)]))]
+        onnx_model = onnxmltools.convert_xgboost(
+            model, 
+            initial_types=initial_types,
+            target_opset=12
+        )
+        onnxmltools.utils.save_model(onnx_model, onnx_path)
+        print(f"  Saved ONNX to: {onnx_path}")
+    except Exception as e:
+        print(f"  Failed to save ONNX: {e}")
+        
     return {
         'model': model,
         'metrics': metrics

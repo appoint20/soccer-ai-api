@@ -1,0 +1,22 @@
+Starting Backtest from 2025-12-06 to 2026-02-14
+------------------------------------------------------------
+[2025-12-06] Win/Mix Combo 4: LOST (-100.00) | Details: Over 2.5 Goals (Win), 2-3 Goals (Unknown Market), Over 2.5 Goals (Win)
+[2025-12-06] Win/Mix Combo 5: LOST (-100.00) | Details: Over 2.5 Goals (Loss), Over 2.5 Goals (Win), Over 2.5 Goals (Loss)
+[2025-12-09] Win/Mix Combo 4: LOST (-100.00) | Details: Over 2.5 Goals (Loss), Over 2.5 Goals (Win), Over 2.5 Goals (Loss)
+[2025-12-09] Win/Mix Combo 5: LOST (-100.00) | Details: Over 2.5 Goals (Loss), Over 2.5 Goals (Win), Over 2.5 Goals (Win)
+------------------------------------------------------------
+BACKTEST SUMMARY (10 Weeks)
+------------------------------------------------------------
+Total Combinations: 55
+Total Won: 16 (Win Rate: 29.1%)
+Total Staked: 5500.00
+Total Returned: 7728.43
+Net Profit: 2228.43
+ROI: 40.52%
+------------------------------------------------------------
+BY COMBINATION TYPE:
+Win/Mix Combo 4: ROI 4.1% | WR 18.2% | Profit 91
+Win/Mix Combo 5: ROI 63.5% | WR 30.8% | Profit 826
+Goal Combo 1: ROI 40.7% | WR 33.3% | Profit 488
+Goal Combo 2: ROI 61.9% | WR 40.0% | Profit 310
+Goal Combo 3: ROI 171.4% | WR 66.7% | Profit 514

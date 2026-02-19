@@ -11,7 +11,7 @@ public class DataSyncBackgroundService(
     IServiceProvider serviceProvider,
     ILogger<DataSyncBackgroundService> logger) : BackgroundService
 {
-    private static readonly TimeSpan SyncTime = new(03, 00, 0); // 03:00 AM
+    private static readonly TimeSpan SyncTime = new(23, 02, 00); // 03:00 AM
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

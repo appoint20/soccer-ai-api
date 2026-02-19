@@ -1,23 +1,0 @@
-* Host localhost:5165 was resolved.
-* IPv6: ::1
-* IPv4: 127.0.0.1
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:5165...
-* Connected to localhost (::1) port 5165
-> GET /api/analysis/upcoming?date=2025-12-26 HTTP/1.1
-> Host: localhost:5165
-> User-Agent: curl/8.7.1
-> Accept: */*
-> 
-* Request completely sent off
-< HTTP/1.1 200 OK
-< Content-Type: application/json; charset=utf-8
-< Date: Mon, 12 Jan 2026 20:38:42 GMT
-< Server: Kestrel
-< Transfer-Encoding: chunked
-< 
-{ [3533 bytes data]
-100  3526    0  3526    0     0  17823      0 --:--:-- --:--:-- --:--:-- 17898
-* Connection #0 to host localhost left intact
-[{"date":"2025-12-26T00:00:00","time":"15:00","league":"Premier League","homeTeam":"Manchester City","awayTeam":"Liverpool","homeLastNine":{"matchesPlayed":9,"wins":7,"draws":0,"losses":2,"avgGoalsScored":2.6666666666666665,"avgGoalsConceded":1.1111111111111112,"over25Rate":88.88888888888889,"under25Rate":11.11111111111111,"bttsRate":44.44444444444444,"twoToThreeGoalsRate":55.55555555555556},"homeLastThreeAtHome":{"matchesPlayed":3,"wins":3,"draws":0,"losses":0,"avgGoalsScored":3,"avgGoalsConceded":0.6666666666666666,"over25Rate":100,"under25Rate":0,"bttsRate":33.33333333333333,"twoToThreeGoalsRate":66.66666666666666},"awayLastNine":{"matchesPlayed":9,"wins":4,"draws":2,"losses":3,"avgGoalsScored":1.5555555555555556,"avgGoalsConceded":1.5555555555555556,"over25Rate":55.55555555555556,"under25Rate":44.44444444444444,"bttsRate":44.44444444444444,"twoToThreeGoalsRate":77.77777777777779},"awayLastThreeAtAway":{"matchesPlayed":3,"wins":2,"draws":1,"losses":0,"avgGoalsScored":2.3333333333333335,"avgGoalsConceded":1.3333333333333333,"over25Rate":66.66666666666666,"under25Rate":33.33333333333333,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":66.66666666666666}},{"date":"2025-12-26T00:00:00","time":"15:00","league":"Premier League","homeTeam":"Arsenal","awayTeam":"Chelsea","homeLastNine":{"matchesPlayed":9,"wins":6,"draws":2,"losses":1,"avgGoalsScored":1.7777777777777777,"avgGoalsConceded":0.7777777777777778,"over25Rate":44.44444444444444,"under25Rate":55.55555555555556,"bttsRate":55.55555555555556,"twoToThreeGoalsRate":55.55555555555556},"homeLastThreeAtHome":{"matchesPlayed":3,"wins":3,"draws":0,"losses":0,"avgGoalsScored":2.6666666666666665,"avgGoalsConceded":0.6666666666666666,"over25Rate":66.66666666666666,"under25Rate":33.33333333333333,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":66.66666666666666},"awayLastNine":{"matchesPlayed":9,"wins":4,"draws":3,"losses":2,"avgGoalsScored":1.4444444444444444,"avgGoalsConceded":0.8888888888888888,"over25Rate":44.44444444444444,"under25Rate":55.55555555555556,"bttsRate":44.44444444444444,"twoToThreeGoalsRate":55.55555555555556},"awayLastThreeAtAway":{"matchesPlayed":3,"wins":0,"draws":2,"losses":1,"avgGoalsScored":1,"avgGoalsConceded":1.6666666666666667,"over25Rate":66.66666666666666,"under25Rate":33.33333333333333,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":0}},{"date":"2025-12-26T00:00:00","time":"18:00","league":"Serie A","homeTeam":"Juventus","awayTeam":"Milan","homeLastNine":{"matchesPlayed":9,"wins":5,"draws":2,"losses":2,"avgGoalsScored":1.3333333333333333,"avgGoalsConceded":0.8888888888888888,"over25Rate":55.55555555555556,"under25Rate":44.44444444444444,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":55.55555555555556},"homeLastThreeAtHome":{"matchesPlayed":3,"wins":2,"draws":1,"losses":0,"avgGoalsScored":1.3333333333333333,"avgGoalsConceded":0.6666666666666666,"over25Rate":66.66666666666666,"under25Rate":33.33333333333333,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":66.66666666666666},"awayLastNine":{"matchesPlayed":9,"wins":5,"draws":4,"losses":0,"avgGoalsScored":1.6666666666666667,"avgGoalsConceded":1.1111111111111112,"over25Rate":55.55555555555556,"under25Rate":44.44444444444444,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":22.22222222222222},"awayLastThreeAtAway":{"matchesPlayed":3,"wins":2,"draws":1,"losses":0,"avgGoalsScored":2,"avgGoalsConceded":1.3333333333333333,"over25Rate":66.66666666666666,"under25Rate":33.33333333333333,"bttsRate":66.66666666666666,"twoToThreeGoalsRate":0}}]

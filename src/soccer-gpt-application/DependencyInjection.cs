@@ -8,12 +8,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Business Logic Services
         services.AddScoped<ITeamStatsService, TeamStatsService>();
-        services.AddScoped<ILeagueStatsService, LeagueStatsService>();
-        services.AddScoped<IPoissonService, PoissonService>();
-        services.AddScoped<IAnalyzeService, AnalyzeService>();
-        
+        services.AddScoped<IMonteCarloService, MonteCarloService>();
+        services.AddScoped<IPoissonCalculationService, PoissonCalculationService>();
+
         return services;
     }
 }

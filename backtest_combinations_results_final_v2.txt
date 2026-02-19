@@ -1,0 +1,37 @@
+Starting Combination Backtest for last 10 weeks...
+Dates to check: ['2025-11-22', '2025-11-23', '2025-11-29', '2025-11-30', '2025-12-06', '2025-12-07', '2025-12-13', '2025-12-14', '2025-12-20', '2025-12-21', '2025-12-27', '2025-12-28', '2026-01-03', '2026-01-04', '2026-01-10', '2026-01-11', '2026-01-17', '2026-01-18', '2026-01-24', '2026-01-25']
+Processing 2025-11-22... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-11-22&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-11-23... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-11-23&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-11-29... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-11-29&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-11-30... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-11-30&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-06... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-06&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-07... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-07&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-13... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-13&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-14... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-14&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-20... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-20&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-21... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-21&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-27... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-27&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2025-12-28... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2025-12-28&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-03... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-03&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-04... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-04&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-10... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-10&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-11... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-11&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-17... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-17&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-18... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-18&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-24... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-24&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+Processing 2026-01-25... Error: HTTPConnectionPool(host='localhost', port=5165): Max retries exceeded with url: /api/combinations?date=2026-01-25&language=en (Caused by NewConnectionError("HTTPConnection(host='localhost', port=5165): Failed to establish a new connection: [Errno 61] Connection refused"))
+
+==================================================
+COMBINATION BACKTEST RESULTS
+==================================================
+Total Weeks: 10
+Total Combinations: 0
+Wins: 0
+Losses: 0
+Strike Rate: 0.0%
+------------------------------
+Total Invested: €0.00
+Total Returned: €0.00
+Net Profit:     €0.00
+ROI:            0.00%
+==================================================

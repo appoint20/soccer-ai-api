@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using soccer_gpt_application.Entities;
 using soccer_gpt_application.Interfaces;
 
 namespace soccer_gpt_infrastructure.Services;
@@ -10,12 +9,10 @@ namespace soccer_gpt_infrastructure.Services;
 /// Updates Team records.
 /// </summary>
 public class TeamSyncService(
-    IApiFootballService apiService,
-    IApplicationDbContext dbContext,
-    ILogger<TeamSyncService> logger)
+    IApiFootballService apiService, IApplicationDbContext dbContext, ILogger<TeamSyncService> logger)
 {
     // Supported English leagues
-    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 135, 136, 61, 62, 140, 78, 79, 141 ];
+    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 61, 62, 78, 79, 135, 136, 140, 141 ];
     
     /// <summary>
     /// Sync standings for all supported leagues for the current season
@@ -54,7 +51,7 @@ public class TeamSyncService(
     /// <summary>
     /// Sync standings for a specific league
     /// </summary>
-    private async Task<SyncResult> SyncLeagueStandingsAsync(int leagueId, int season, CancellationToken ct)
+    public async Task<SyncResult> SyncLeagueStandingsAsync(int leagueId, int season, CancellationToken ct)
     {
         var result = new SyncResult();
         
@@ -74,7 +71,6 @@ public class TeamSyncService(
 
             if (existingTeam != null)
             {
-                // Update existing team - EF tracks changes automatically
                 existingTeam.LeagueId = standingData.LeagueId;
                 existingTeam.Rank = standingData.Rank;
                 existingTeam.Points = standingData.Points;
@@ -92,7 +88,6 @@ public class TeamSyncService(
             }
             else
             {
-                // New team - add to context
                 dbContext.Teams.Add(standingData);
                 result.Created++;
             }

@@ -36,7 +36,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         logger.LogInformation("Starting multi-season sync for {Count} seasons (from {From} to {To})", 
             numberOfSeasons, currentSeason - numberOfSeasons + 1, currentSeason);
 
-        for (int i = 0; i < numberOfSeasons; i++)
+        for (var i = 0; i < numberOfSeasons; i++)
         {
             var season = currentSeason - i;
             var seasonResult = await SyncAllLeaguesAsync(season, ct);

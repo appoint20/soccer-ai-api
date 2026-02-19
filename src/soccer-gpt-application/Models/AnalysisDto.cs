@@ -8,10 +8,18 @@ public record AnalysisDto
     public string HomeTeam { get; set; } = string.Empty;
     public string AwayTeam { get; set; } = string.Empty;
 
-    public TeamAggregatedStats HomeLastSeven { get; set; } = new();
+    public TeamAggregatedStats HomeLastFive { get; set; } = new();
     public TeamAggregatedStats HomeLastThreeAtHome { get; set; } = new();
-    public TeamAggregatedStats AwayLastSeven { get; set; } = new();
+    public TeamAggregatedStats AwayLastFive { get; set; } = new();
     public TeamAggregatedStats AwayLastThreeAtAway { get; set; } = new();
 
-    public PoissonProbabilities AdvancedAnalytics { get; set; } = new();
+    public PoissonProbabilities Poisson { get; set; } = new();
+    public MonteCarloResult MonteCarlo { get; set; } = new();
+    public H2HStats HeadToHead { get; set; } = H2HStats.Insufficient;
+    public MarketQualifications Qualifications { get; set; } = new();
+    
+    /// <summary>
+    /// DecisionBuilder output - stricter qualification criteria
+    /// </summary>
+    public QualificationDecisions Decisions { get; set; } = new();
 }

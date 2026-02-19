@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using Mediator.Net;
-using soccer_gpt_application.Features.Analysis.Queries;
+using Microsoft.AspNetCore.Mvc;
+using soccer_gpt_application.Features.Analysis;
 
 namespace soccer_gpt_api.Controllers;
 
@@ -8,31 +8,17 @@ namespace soccer_gpt_api.Controllers;
 [Route("api/[controller]")]
 public class AnalysisController(IMediator mediator) : ControllerBase
 {
-    [HttpGet("upcoming")]
-    public async Task<IActionResult> GetUpcomingAnalysis(
-        [FromQuery] string? date, 
-        [FromQuery] int offset = 0, 
-        [FromQuery] int limit = 50,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Get detailed match analysis including stats, form, H2H, Poisson, and ML predictions.
+    /// </summary>
+    /// <param name="date">Date to analyze (YYYY-MM-DD)</param>
+    /// <param name="language">Language code</param>
+    /// <param name="ct">Cancellation token</param>
+    [HttpGet]
+    [ProducesResponseType<GetMatchAnalysisResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Get([FromQuery] GetMatchAnalysisQuery query, CancellationToken ct = default)
     {
-        var filterDate = DateTime.Now;
-        if (!string.IsNullOrEmpty(date))
-        {
-            if (!DateTime.TryParse(date, out var parsed))
-                return BadRequest("Invalid date format. Use YYYY-MM-DD.");
-
-            filterDate = parsed;
-        }
-
-        var response = await mediator.RequestAsync<GetUpcomingMatchesQuery, GetUpcomingMatchesResponse>(
-            new GetUpcomingMatchesQuery 
-            { 
-                Date = filterDate,
-                Offset = offset,
-                Limit = limit
-            }, 
-            cancellationToken);
-
-        return Ok(response.Data.Items);
+        var response = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(query, ct);
+        return Ok(response);
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using soccer_gpt_application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using soccer_gpt_application.Services;
 using soccer_gpt_infrastructure.Options;
 using soccer_gpt_infrastructure.Persistence;
 using soccer_gpt_infrastructure.Services;
@@ -29,12 +30,25 @@ public static class DependencyInjection
         // Sync services
         services.AddScoped<TeamSyncService>();
         services.AddScoped<FixtureSyncService>();
-        services.AddScoped<IPoissonCalculationService, PoissonCalculationService>();
         services.AddHostedService<DataSyncBackgroundService>();
         
         // ML Prediction service
         services.AddSingleton<IMlPredictionService, MlPredictionService>();
         services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
+        
+        // Decision + detection services
+        services.AddScoped<IDecisionService, DecisionService>();
+        services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
+        services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
+        services.AddScoped<ITrapDetectionService, TrapDetectionService>();
+
+        // Analysis pipeline services
+        services.AddScoped<IMatchDataProvider, MatchDataProvider>();
+        services.AddScoped<IProbabilityPipeline, ProbabilityPipeline>();
+        services.AddScoped<IProbabilityConsensusEngine, ProbabilityConsensusEngine>();
+        
+        // Shared analysis orchestrator (both analysis + combination endpoints)
+        services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
 
         return services;
     }

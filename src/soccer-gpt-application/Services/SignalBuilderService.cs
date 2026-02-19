@@ -27,9 +27,9 @@ public sealed class SignalBuilderService : ISignalBuilderService
     public AnalyticalSignals Build(PoissonModel poisson, MonteCarloModel monteCarlo, HeadToHeadModel h2h)
     {
         // Draw signals
-        var poissonDrawSignal = Normalize(poisson.DrawDC, DrawMinThreshold, DrawMaxThreshold);
+        var poissonDrawSignal = Normalize(poisson.Draw, DrawMinThreshold, DrawMaxThreshold);
         var mcDrawSignal = Normalize(monteCarlo.Draw, DrawMinThreshold, DrawMaxThreshold);
-        var goalBalanceSignal = CalculateGoalBalanceSignal(poisson.LambdaDifference);
+        var goalBalanceSignal = CalculateGoalBalanceSignal(poisson.ExpectedScoreDifference);
         var scoringDrawSignal = Normalize(poisson.ScoringDrawProb, ScoringDrawMinThreshold, ScoringDrawMaxThreshold);
         var h2hDrawSignal = h2h.IsValid ? Normalize(h2h.DrawRate, 0.20, 0.50) : 0.5;
         
@@ -56,7 +56,7 @@ public sealed class SignalBuilderService : ISignalBuilderService
             GoalBalanceSignal = Round(goalBalanceSignal),
             ScoringDrawProfileSignal = Round(scoringDrawSignal),
             H2HDrawSignal = Round(h2hDrawSignal),
-            LambdaDifference = Round(poisson.LambdaDifference),
+            LambdaDifference = Round(poisson.ExpectedScoreDifference),
             HighScoringDrawProbability = Round(poisson.ScoringDrawProb),
             
             // BTTS signals

@@ -1,177 +1,156 @@
-
-import requests
+import urllib.request
 import json
 from datetime import datetime, timedelta
 
-# Configuration
-API_URL = "http://localhost:5166/api/combinations"
-WEEKS_BACK = 10
-STAKE = 100  # Currency unit per combination
+def get_combinations(date_str):
+    url = f"http://localhost:5165/api/combinations?date={date_str}&language=en"
+    try:
+        with urllib.request.urlopen(url) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode('utf-8'))
+                return data.get('combinations', [])
+    except Exception as e:
+        print(f"Error fetching {date_str}: {e}")
+    return []
 
-def get_weekend_dates(weeks_back=10):
-    """Get Saturday and Sunday dates for the last N weeks."""
-    dates = []
-    today = datetime.now()
-    # Find last Saturday
-    idx = (today.weekday() + 2) % 7
-    saturday = today - timedelta(days=idx)
-    
-    # If today is Saturday/Sunday, might want to include it, 
-    # but for backtest we focus on past finished matches mostly.
-    # Start from last week to ensure we have results.
-    current = saturday - timedelta(weeks=1) 
-    
-    for _ in range(weeks_back):
-        dates.append(current.strftime('%Y-%m-%d')) # Saturday
-        dates.append((current + timedelta(days=1)).strftime('%Y-%m-%d')) # Sunday
-        current -= timedelta(weeks=1)
-        
-    return sorted(dates)
-
-def check_win(match):
-    """Determine if a single leg won based on prediction and actual results."""
-    status = match.get('status')
-    if status != 'FT':
-        return False # Treated as void/loss for simplicity if not finished, but here assuming loss for rigor
-    
-    home_goals = match.get('actual_home_goals')
-    away_goals = match.get('actual_away_goals')
-    
+def check_result(market, prediction, home_goals, away_goals):
     if home_goals is None or away_goals is None:
-        return False
-
-    prediction = match.get('prediction')
-    market = match.get('market')
+        return "Pending"
     
-    # Over 2.5
-    if market == "Over 2.5 Goals" and prediction == "Over":
-        return (home_goals + away_goals) > 2.5
-        
-    # BTTS
-    if market == "Both Teams To Score" and prediction == "Yes":
-        return (home_goals > 0) and (away_goals > 0)
-        
-    # Match Winner
-    if market == "Match Winner":
+    total_goals = home_goals + away_goals
+    
+    if market == "Over 2.5 Goals":
+        return "Win" if total_goals > 2.5 else "Loss"
+    elif market == "Under 2.5 Goals":
+        return "Win" if total_goals < 2.5 else "Loss"
+    elif market == "Both Teams To Score":
+        if prediction == "Yes":
+            return "Win" if home_goals > 0 and away_goals > 0 else "Loss"
+        else: # "No"
+            return "Win" if home_goals == 0 or away_goals == 0 else "Loss"
+    elif market == "Match Winner":
         if prediction == "Home":
-            return home_goals > away_goals
-        elif prediction == "Draw":
-            return home_goals == away_goals
+            return "Win" if home_goals > away_goals else "Loss"
         elif prediction == "Away":
-            return away_goals > home_goals
+            return "Win" if away_goals > home_goals else "Loss"
+        elif prediction == "Draw":
+            return "Win" if home_goals == away_goals else "Loss"
             
-    return False
+    return "Unknown Market"
 
-def run_backtest():
-    dates = get_weekend_dates(WEEKS_BACK)
-    print(f"Starting Combination Backtest for last {WEEKS_BACK} weeks...")
-    print(f"Dates to check: {dates}")
+def run_backtest(weeks=10):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(weeks=weeks)
+    current_date = start_date
     
-    total_invested = 0
+    total_combos = 0
+    total_won = 0
+    total_staked = 0
     total_returned = 0
-    wins = 0
-    losses = 0
-    voids = 0 # No combo found
     
-    history = []
+    print(f"Starting Backtest from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
+    print("-" * 60)
+    
+    results_by_type = {} # Track ROI per combo type (e.g., Goal Combo 1)
 
-    for date_str in dates:
-        print(f"Processing {date_str}...", end=" ", flush=True)
-        try:
-            response = requests.get(f"{API_URL}?date={date_str}&language=en")
-            if response.status_code != 200:
-                print(f"Error {response.status_code}")
-                continue
-                
-            data = response.json()
-            matches = data.get('matches', [])
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        # print(f"Processing {date_str}...") 
+        
+        combos = get_combinations(date_str)
+        
+        for combo in combos:
+            combo_name = combo.get('name', 'Unknown')
+            matches = combo.get('matches', [])
             
-            if len(matches) < 3:
-                print("Not enough matches for combo.")
-                voids += 1
+            if not matches:
                 continue
                 
-            # Check if all 3 matches are finished
-            if any(m.get('status') != 'FT' for m in matches):
-                print("Skipping (Matches not finished)")
-                continue
-
-            # Check individual legs
-            legs_won = 0
-            combo_odds = 1.0
-            details = []
+            # Verify Combination Result
+            all_won = True
+            pending = False
+            combined_odds = 1.0
+            
+            match_details = []
             
             for m in matches:
-                won = check_win(m)
-                if won:
-                    legs_won += 1
+                market = m.get('market')
+                prediction = m.get('prediction')
                 
-                # Use odds from API, default to 1.5 if missing/zero for conservative estimate
-                # Note: Odds comes as e.g. 1.85 or 185? API returns decimal? 
-                # Checking controller: "Odds ?? 0". Python sees e.g. 1.5. 
-                # Wait, DB stores 1.5 or 150? Need to check. Db usually decimal.
-                # Assuming decimal.
-                # EDIT: Previous check showed "odds": 127 etc. Looks like integer (1.27 -> 127 or similar?)
-                # API Football standard is decimal. If 127 means 1.27? Or 127.0? 
-                # Let's check raw JSON again. "odds": 127 might be 1.27? 
-                # Actually, standard betting odds are ~1.5 to 3.0. 
-                # If values are > 10, likely need division by 100? Or just weird?
-                # Actually, API-Football usually returns decimal. Maybe database has standard decimal?
-                # Let's assume standard decimal first. If > 10, divide by 100? No, 127 odds is huge.
-                # Looking at previous output: "odds": 127. That's likely 1.27 if integer, or 127 if huge.
-                # Ah, let's assume it is decimal. If > 50, likely missing decimal point?
-                # Wait, 127.0 for Home Win is unlikely. 1.27 is very likely for strong home team.
-                # Let's apply a heuristic: if odds > 20, divide by 100.
+                # Correct keys are snake_case
+                home_goals = m.get('actual_home_goals')
+                away_goals = m.get('actual_away_goals')
+                status = m.get('status') # FT, NS, etc.
                 
-                raw_odds = m.get('odds', 0)
-                if raw_odds > 50: 
-                    raw_odds = raw_odds / 100.0 # Just a safe heuristic for now
-                if raw_odds < 1.01:
-                     raw_odds = 1.6 # Default fallback for ROI calculation if missing
-                     
-                combo_odds *= raw_odds
-                details.append(f"{m['home_team']} vs {m['away_team']} ({m['market']}={m['prediction']}) Odds:{raw_odds:.2f} [{'WON' if won else 'LOST'}]")
-
-            total_invested += STAKE
+                odds = m.get('odds', 0.0)
+                # Normalize odds (API might return 162.00 or 1.62)
+                if odds > 50: odds /= 100.0
+                if odds < 1.01: odds = 1.0 # If 0 or missing, treat as 1.0 (Refund/No Profit)
+                if odds > 50: odds /= 100.0
+                if odds < 1.0: odds = 1.0
+                
+                combined_odds *= odds
+                
+                if status not in ['FT', 'AET', 'PEN']:
+                    pending = True
+                    break
+                
+                res = check_result(market, prediction, home_goals, away_goals)
+                match_details.append(f"{market} ({res})")
+                
+                if res != "Win":
+                    all_won = False
             
-            if legs_won == 3:
-                payout = STAKE * combo_odds
+            if pending:
+                continue
+
+            stake = 100
+            total_staked += stake
+            total_combos += 1
+            
+            if all_won:
+                total_won += 1
+                payout = stake * combined_odds
                 total_returned += payout
-                wins += 1
-                print(f"WON! Odds: {combo_odds:.2f} Return: {payout:.2f}")
+                profit = payout - stake
             else:
-                losses += 1
-                print(f"LOST. ({legs_won}/3 legs won)")
-                for d in details:
-                    print(f"  - {d}")
+                profit = -stake
+                if total_combos < 5: # Debug first 5 failures
+                     print(f"[{date_str}] {combo_name}: LOST ({profit:.2f}) | Details: {', '.join(match_details)}")
+            
+            # Type Tracking
+            if combo_name not in results_by_type:
+                results_by_type[combo_name] = {'staked': 0, 'returned': 0, 'won': 0, 'total': 0}
+            
+            results_by_type[combo_name]['staked'] += stake
+            results_by_type[combo_name]['returned'] += (payout if all_won else 0)
+            results_by_type[combo_name]['total'] += 1
+            if all_won: results_by_type[combo_name]['won'] += 1
 
-            history.append({
-                'date': date_str,
-                'result': 'WON' if legs_won == 3 else 'LOST',
-                'payout': STAKE * combo_odds if legs_won == 3 else 0,
-                'details': details
-            })
+        current_date += timedelta(days=1)
 
-        except Exception as e:
-            print(f"Error: {e}")
-
-    profit = total_returned - total_invested
-    roi = (profit / total_invested * 100) if total_invested > 0 else 0
-
-    print("\n" + "="*50)
-    print("COMBINATION BACKTEST RESULTS")
-    print("="*50)
-    print(f"Total Weekends: {WEEKS_BACK}")
-    print(f"Total Combinations Placed: {wins + losses}")
-    print(f"Wins: {wins}")
-    print(f"Losses: {losses}")
-    print(f"Strike Rate: {(wins / (wins+losses) * 100) if (wins+losses) > 0 else 0:.1f}%")
-    print("-" * 30)
-    print(f"Total Invested: €{total_invested:.2f}")
-    print(f"Total Returned: €{total_returned:.2f}")
-    print(f"Net Profit:     €{profit:.2f}")
-    print(f"ROI:            {roi:.2f}%")
-    print("="*50)
+    print("-" * 60)
+    print("BACKTEST SUMMARY (10 Weeks)")
+    print("-" * 60)
+    print(f"Total Combinations: {total_combos}")
+    print(f"Total Won: {total_won} (Win Rate: {total_won/total_combos*100:.1f}%)" if total_combos > 0 else "Total Won: 0")
+    print(f"Total Staked: {total_staked:.2f}")
+    print(f"Total Returned: {total_returned:.2f}")
+    
+    net_profit = total_returned - total_staked
+    roi = (net_profit / total_staked * 100) if total_staked > 0 else 0
+    
+    print(f"Net Profit: {net_profit:.2f}")
+    print(f"ROI: {roi:.2f}%")
+    print("-" * 60)
+    print("BY COMBINATION TYPE:")
+    for name, stats in results_by_type.items():
+        s = stats['staked']
+        r = stats['returned']
+        p = r - s
+        roi_type = (p / s * 100) if s > 0 else 0
+        wr = (stats['won'] / stats['total'] * 100) if stats['total'] > 0 else 0
+        print(f"{name}: ROI {roi_type:.1f}% | WR {wr:.1f}% | Profit {p:.0f}")
 
 if __name__ == "__main__":
-    run_backtest()
+    run_backtest(weeks=10)

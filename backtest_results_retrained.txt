@@ -1,0 +1,43 @@
+Starting Analysis Backtest for last 10 weeks...
+Dates to check (20 days): ['2025-12-06', '2025-12-07', '2025-12-13', '2025-12-14', '2025-12-20', '2025-12-21', '2025-12-27', '2025-12-28', '2026-01-03', '2026-01-04', '2026-01-10', '2026-01-11', '2026-01-17', '2026-01-18', '2026-01-24', '2026-01-25', '2026-01-31', '2026-02-01', '2026-02-07', '2026-02-08']
+Fetching 2025-12-06...Connection error for 2025-12-06: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-07...Connection error for 2025-12-07: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-13...Connection error for 2025-12-13: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-14...Connection error for 2025-12-14: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-20...Connection error for 2025-12-20: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-21...Connection error for 2025-12-21: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-27...Connection error for 2025-12-27: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2025-12-28...Connection error for 2025-12-28: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-03...Connection error for 2026-01-03: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-04...Connection error for 2026-01-04: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-10...Connection error for 2026-01-10: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-11...Connection error for 2026-01-11: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-17...Connection error for 2026-01-17: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-18...Connection error for 2026-01-18: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-24...Connection error for 2026-01-24: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-25...Connection error for 2026-01-25: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-01-31...Connection error for 2026-01-31: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-02-01...Connection error for 2026-02-01: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-02-07...Connection error for 2026-02-07: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+Fetching 2026-02-08...Connection error for 2026-02-08: HTTP Error 404: Not Found
+ Found 0 matches. No data.
+No finished matches found with predictions.
