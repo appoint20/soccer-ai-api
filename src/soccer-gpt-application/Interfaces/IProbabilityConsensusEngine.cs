@@ -9,4 +9,5 @@ namespace soccer_gpt_application.Interfaces;
 public interface IProbabilityConsensusEngine
 {
     WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats);
+    WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId);
 }

@@ -35,5 +35,7 @@ public record CombinationMatchDto(
     bool IsTrap,
     bool IsConsensus,
     bool IsFallback,
-    string? TrapReason
+    string? TrapReason,
+    double ExpectedValue = 0,
+    string Decision = "NoBet"
 );

@@ -26,8 +26,8 @@ public sealed class MatchAnalysisService(
         // 2. Run models (Poisson → Monte Carlo → ML)
         var bundle = await pipeline.RunAsync(fixture, data.TeamStats, ct);
 
-        // 3. Consensus — weighted combination of all models
-        var prediction = consensus.Combine(bundle, data.TeamStats);
+        // 3. Consensus — weighted combination of all models + league volatility
+        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId);
 
         // 4. Decision layer
         var odds = BuildMatchContext(fixture);

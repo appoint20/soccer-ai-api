@@ -1,21 +1,36 @@
 using soccer_gpt_application.Interfaces;
 using soccer_gpt_application.Models;
+using soccer_gpt_application.Services;
 
 namespace soccer_gpt_infrastructure.Services;
 
 /// <summary>
 /// Combines all model outputs into a single weighted prediction.
-/// 4-source consensus: 35% Poisson / 40% Monte Carlo / 15% ML / 10% Market calibrated
+/// Uses per-market weights + league volatility adjustment + goal correlation.
+///   BTTS/Over25:  25P / 25MC / 40ML / 10Mkt  (ML-heavy)
+///   Winner/HDA:   35P / 40MC / 15ML / 10Mkt  (MC-heavy)
 /// </summary>
-public sealed class ProbabilityConsensusEngine : IProbabilityConsensusEngine
+public sealed class ProbabilityConsensusEngine(
+    ILeagueVolatilityService volatility) : IProbabilityConsensusEngine
 {
-    // ── Model weights (4-source) ──────────────────────────────────
-    private const double WPoisson = 0.35;
-    private const double WMonteCarlo = 0.40;
-    private const double WMl = 0.15;
-    private const double WMarket = 0.10;
+    // ── BTTS / Over 2.5 weights ──
+    private const double BttsPoisson = 0.35;
+    private const double BttsMc = 0.35;
+    private const double BttsMl = 0.25;
+    private const double BttsMarket = 0.05;
+
+    // ── Winner / HDA weights ──
+    private const double WinPoisson = 0.35;
+    private const double WinMc = 0.35;
+    private const double WinMl = 0.25;
+    private const double WinMarket = 0.05;
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats)
+    {
+        return Combine(bundle, stats, 0);
+    }
+
+    public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId)
     {
         if (bundle.MlPrediction == null)
             return null;
@@ -23,48 +38,64 @@ public sealed class ProbabilityConsensusEngine : IProbabilityConsensusEngine
         var ml = bundle.MlPrediction;
         var hasMarket = bundle.MarketCalibrated != null;
 
-        // Effective weights: redistribute market weight if no odds available
-        var effPoisson = hasMarket ? WPoisson : WPoisson + WMarket * 0.50;
-        var effMc = hasMarket ? WMonteCarlo : WMonteCarlo + WMarket * 0.30;
-        var effMl = hasMarket ? WMl : WMl + WMarket * 0.20;
-        var effMarket = hasMarket ? WMarket : 0;
+        // ── Over 2.5 (ML-heavy) ──
+        var (ep, emc, eml, emkt) = Effective(BttsPoisson, BttsMc, BttsMl, BttsMarket, hasMarket);
+        var pOver = bundle.Poisson.Over25 * ep +
+                    bundle.MonteCarlo.Over25 * emc +
+                    GetYes(ml.Over25) * eml +
+                    (bundle.MarketCalibrated?.Over25 ?? 0) * emkt;
 
-        // ── Over 2.5 ──
-        var pOver = bundle.Poisson.Over25 * effPoisson +
-                    bundle.MonteCarlo.Over25 * effMc +
-                    GetYes(ml.Over25) * effMl +
-                    (bundle.MarketCalibrated?.Over25 ?? 0) * effMarket;
+        // ── BTTS (ML-heavy + goal correlation) ──
+        var pBtts = bundle.Poisson.BTTS * ep +
+                    bundle.MonteCarlo.BTTS * emc +
+                    GetYes(ml.Btts) * eml +
+                    (bundle.MarketCalibrated?.Btts ?? 0) * emkt;
 
-        // ── BTTS ──
-        var pBtts = bundle.Poisson.BTTS * effPoisson +
-                    bundle.MonteCarlo.BTTS * effMc +
-                    GetYes(ml.Btts) * effMl +
-                    (bundle.MarketCalibrated?.Btts ?? 0) * effMarket;
+        // Apply goal correlation adjustment (momentum effect)
+        if (bundle.Poisson.IsValid)
+        {
+            pBtts = GoalCorrelation.AdjustBTTS(
+                pBtts,
+                bundle.Poisson.ExpectedHomeGoals,
+                bundle.Poisson.ExpectedAwayGoals);
+        }
 
-        // ── 2-3 Goals ──
-        var p23 = bundle.Poisson.TwoToThreeGoals * effPoisson +
-                  bundle.MonteCarlo.TwoToThreeGoals * effMc +
-                  GetYes(ml.Goals2To3) * effMl;
+        // ── 2-3 Goals (ML-heavy) ──
+        var p23 = bundle.Poisson.TwoToThreeGoals * ep +
+                  bundle.MonteCarlo.TwoToThreeGoals * emc +
+                  GetYes(ml.Goals2To3) * eml;
 
-        // ── Match Winner (HDA) ──
+        // ── Match Winner / HDA (MC-heavy) ──
+        var (wp, wmc, wml, wmkt) = Effective(WinPoisson, WinMc, WinMl, WinMarket, hasMarket);
+
         var mlHda = ml.Hda.Probabilities;
         if (mlHda.Length < 3) mlHda = [0.33, 0.33, 0.33];
 
-        var pHome = bundle.Poisson.HomeWin * effPoisson +
-                    bundle.MonteCarlo.HomeWin * effMc +
-                    mlHda[0] * effMl;
+        var pHome = bundle.Poisson.HomeWin * wp +
+                    bundle.MonteCarlo.HomeWin * wmc +
+                    mlHda[0] * wml;
 
-        var pDraw = bundle.Poisson.Draw * effPoisson +
-                    bundle.MonteCarlo.Draw * effMc +
-                    mlHda[1] * effMl;
+        var pDraw = bundle.Poisson.Draw * wp +
+                    bundle.MonteCarlo.Draw * wmc +
+                    mlHda[1] * wml;
 
-        var pAway = bundle.Poisson.AwayWin * effPoisson +
-                    bundle.MonteCarlo.AwayWin * effMc +
-                    mlHda[2] * effMl;
+        var pAway = bundle.Poisson.AwayWin * wp +
+                    bundle.MonteCarlo.AwayWin * wmc +
+                    mlHda[2] * wml;
 
         // Normalize HDA
         var total = pHome + pDraw + pAway;
         if (total > 0) { pHome /= total; pDraw /= total; pAway /= total; }
+
+        // ── League volatility adjustment ──
+        // Shrink probabilities toward 0.5 in unpredictable leagues
+        if (leagueId > 0)
+        {
+            pOver = volatility.AdjustProbability(leagueId, pOver);
+            pBtts = volatility.AdjustProbability(leagueId, pBtts);
+            p23 = volatility.AdjustProbability(leagueId, p23);
+            // Don't adjust HDA since it's already normalized
+        }
 
         var winner = "home";
         var confidence = pHome;
@@ -74,9 +105,9 @@ public sealed class ProbabilityConsensusEngine : IProbabilityConsensusEngine
 
         return new WeightedPrediction
         {
-            Over25 = pOver > 0.55,
+            Over25 = pOver > 0.50,
             Over25Prob = Math.Clamp(pOver, 0, 1),
-            BTTS = pBtts > 0.57,
+            BTTS = pBtts > 0.50,
             BTTSProb = Math.Clamp(pBtts, 0, 1),
             TwoToThreeGoals = p23 > 0.5,
             TwoToThreeGoalsProb = Math.Clamp(p23, 0, 1),
@@ -86,6 +117,18 @@ public sealed class ProbabilityConsensusEngine : IProbabilityConsensusEngine
     }
 
     // ── Helpers ───────────────────────────────────────────────────
+
+    private static (double p, double mc, double ml, double mkt) Effective(
+        double wP, double wMc, double wMl, double wMkt, bool hasMarket)
+    {
+        if (hasMarket) return (wP, wMc, wMl, wMkt);
+        var redistrib = wMkt;
+        var nonMarket = wP + wMc + wMl;
+        return (wP + redistrib * wP / nonMarket,
+                wMc + redistrib * wMc / nonMarket,
+                wMl + redistrib * wMl / nonMarket,
+                0);
+    }
 
     private static double GetYes(MarketPrediction mp)
     {

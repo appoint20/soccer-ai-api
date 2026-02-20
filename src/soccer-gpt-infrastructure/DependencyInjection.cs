@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
         services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
         services.AddScoped<ITrapDetectionService, TrapDetectionService>();
+        services.AddSingleton<ILeagueVolatilityService, LeagueVolatilityService>();
 
         // Analysis pipeline services
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();

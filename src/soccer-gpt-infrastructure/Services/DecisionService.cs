@@ -121,6 +121,29 @@ public sealed class DecisionService(
         var isQualified = markets.Over25.IsQualified || markets.BTTS.IsQualified ||
                           markets.MatchWinner.IsQualified || markets.LowScoring.IsQualified;
 
+        // ── Final decision tier ──
+        var decision = PredictionDecision.NoBet;
+        if (trap.IsTrap)
+        {
+            decision = PredictionDecision.Avoid;
+        }
+        else if (isQualified)
+        {
+            // Check EV against best available odds
+            var bestEv = 0.0;
+            if (context.OddsOver25 > 0)
+                bestEv = Math.Max(bestEv, evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25));
+            if (context.OddsBttsYes > 0)
+                bestEv = Math.Max(bestEv, evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes));
+
+            decision = bestEv switch
+            {
+                > 0.08 => PredictionDecision.StrongBet,
+                > 0.03 => PredictionDecision.SmallEdge,
+                _ => PredictionDecision.NoBet
+            };
+        }
+
         return new DecisionServiceResult
         {
             Markets = markets,
@@ -130,7 +153,8 @@ public sealed class DecisionService(
                 IsQualified = isQualified,
                 CombinedProbability = Math.Round(bestProb, 3),
                 Label = isQualified ? "Qualified" : "Not qualified"
-            }
+            },
+            Decision = decision
         };
     }
 

@@ -3,20 +3,33 @@ using Mediator.Net.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using soccer_gpt_application.Interfaces;
+using soccer_gpt_application.Models;
+using soccer_gpt_application.Services;
 
 namespace soccer_gpt_application.Features.Combinations;
 
 /// <summary>
-/// Combination handler — uses the shared IMatchAnalysisService for ALL analysis,
-/// then selects best qualified predictions and assembles 3-leg parlays.
-/// No duplicate logic — same pipeline as the analysis endpoint.
+/// Professional combination handler — portfolio-first approach:
+///   1. Analyze all fixtures through shared pipeline
+///   2. Filter by probability edge, EV ≥ 8%, Kelly ≥ 3%
+///   3. Build portfolio of independent value bets
+///   4. Construct parlays from uncorrelated markets only
+///   5. Dynamic leg count: singles + doubles + triples
 /// </summary>
 public class GetMatchCombinationHandler(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
+    IExpectedValueEngine evEngine,
     ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
+    // Professional thresholds tuned for 1.68+ odds and higher volume
+    private const double MinEdge = 0.02;      // 2% edge
+    private const double MinEV = 0.03;        // 3% EV
+    private const double MinKelly = 0.01;     // 1% Kelly
+    private const double MinOdds = 1.68;      // High win/reward as requested by user
+    private const double MaxOdds = 5.00;      // avoid extreme longshots
+
     public async Task<GetMatchCombinationResponse> Handle(
         IReceiveContext<GetMatchCombinationQuery> context,
         CancellationToken cancellationToken)
@@ -31,292 +44,187 @@ public class GetMatchCombinationHandler(
             .Where(f => f.Date >= startOfDay && f.Date < endOfDay)
             .ToListAsync(cancellationToken);
 
-        logger.LogInformation("Found {Count} fixtures for potential combination", fixtures.Count);
-
         var teamIds = fixtures.SelectMany(f => new[] { f.HomeTeamId, f.AwayTeamId }).Distinct().ToList();
         var teams = await dbContext.Teams
             .Where(t => teamIds.Contains(t.ApiId))
             .ToDictionaryAsync(t => t.ApiId, t => t.Name, cancellationToken);
 
-        var candidates = new List<CombinationMatchDto>();
+        // ── Step 1: Analyze all fixtures & gather raw candidates ──
+        var rawCandidates = new List<CombinationMatchDto>();
 
         foreach (var fixture in fixtures)
         {
             try
             {
-                // ── Use shared analysis pipeline (same as /api/analysis) ──
                 var analysis = await analysisService.AnalyzeFixtureAsync(fixture, cancellationToken);
                 if (analysis.Prediction == null) continue;
 
-                var wp = analysis.Prediction;
                 var decisions = analysis.Decisions;
+                if (decisions.Decision == PredictionDecision.Avoid) continue;
+                if (decisions.Trap.IsTrap) continue;
+
+                var wp = analysis.Prediction;
                 var models = analysis.Models;
                 var homeName = teams.GetValueOrDefault(fixture.HomeTeamId, $"Team {fixture.HomeTeamId}");
                 var awayName = teams.GetValueOrDefault(fixture.AwayTeamId, $"Team {fixture.AwayTeamId}");
                 var leagueName = analysis.LeagueName;
+                var decision = decisions.Decision.ToString();
 
                 // ── Over 2.5 ──
-                if (wp.Over25 && decisions.Markets.Over25.IsQualified)
+                if (wp.Over25 && wp.Over25Prob >= 0.40) // Dropped IsQualified check to force volume
                 {
-                    double odds = analysis.OddsOver25;
-                    // Tier 1 Consensus: ML > 60% AND Total Poisson xG > 2.80
-                    double totalXg = models.Poisson.ExpectedHomeGoals + models.Poisson.ExpectedAwayGoals;
-                    bool isConsensus = wp.Over25Prob > 0.60 && totalXg > 2.80;
-                    
-                    // Tier 2 Fallback: Poisson > 55% AND ML > 55% (Reverted to standard fallback)
-                    bool isFallback = !isConsensus && models.Poisson.Over25 > 0.55 && wp.Over25Prob > 0.55;
+                    double odds = NormalizeOdds(fixture.Over25Odds);
+                    double marketProb = odds > 1 ? 1.0 / odds : 0;
+                    double edge = wp.Over25Prob - marketProb;
+                    double ev = odds > 1 ? evEngine.CalculateEV(wp.Over25Prob, odds) : 0;
+                    double kelly = KellyCriterion.Fraction(wp.Over25Prob, odds);
 
-                    if (odds > 1.35)
+                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
+                        && odds >= MinOdds && odds <= MaxOdds)
                     {
-                        candidates.Add(new CombinationMatchDto(
+                        rawCandidates.Add(new CombinationMatchDto(
                             fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
                             "Over 2.5 Goals", "Over", Math.Round(wp.Over25Prob, 2),
-                            fixture.Over25Odds ?? 0, fixture.Status,
+                            odds, fixture.Status,
                             fixture.Status == "FT" ? fixture.HomeGoal : null,
                             fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, isConsensus, isFallback, decisions.Markets.Over25.Reason));
+                            false, true, false, decisions.Markets.Over25.Reason,
+                            Math.Round(ev, 4), decision));
                     }
                 }
 
-                // ── Under 2.5 ──
-                if (!wp.Over25 && decisions.Markets.LowScoring.IsQualified)
-                {
-                    double underOdds = EstimateUnderOdds(analysis.OddsOver25);
-                    // Tier 1 Consensus: ML < 40% AND Total xG < 2.20
-                    double totalXg = models.Poisson.ExpectedHomeGoals + models.Poisson.ExpectedAwayGoals;
-                    bool isConsensus = wp.Over25Prob < 0.40 && totalXg < 2.20;
-                    
-                    // Tier 2 Fallback: Poisson < 45% AND ML < 45%
-                    bool isFallback = !isConsensus && models.Poisson.Over25 < 0.45 && wp.Over25Prob < 0.45;
-
-                    if (underOdds > 1.35)
-                    {
-                        candidates.Add(new CombinationMatchDto(
-                            fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                            "Under 2.5 Goals", "Under", Math.Round(1 - wp.Over25Prob, 2),
-                            underOdds, fixture.Status,
-                            fixture.Status == "FT" ? fixture.HomeGoal : null,
-                            fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, isConsensus, isFallback, decisions.Markets.LowScoring.Reason));
-                    }
-                }
 
                 // ── BTTS ──
-                if (wp.BTTS && decisions.Markets.BTTS.IsQualified)
+                if (wp.BTTS && wp.BTTSProb >= 0.40) // Dropped IsQualified to force volume
                 {
-                    double odds = analysis.OddsBttsYes;
-                    // Tier 1 Consensus: ML > 60% AND xG > 1.15 each
-                    bool isConsensus = wp.BTTSProb > 0.60 && 
-                                      models.Poisson.ExpectedHomeGoals > 1.15 && 
-                                      models.Poisson.ExpectedAwayGoals > 1.15;
-                    
-                    // Tier 2 Fallback: Poisson > 55% AND ML > 55% (Reverted)
-                    bool isFallback = !isConsensus && models.Poisson.BTTS > 0.55 && wp.BTTSProb > 0.55;
+                    double odds = NormalizeOdds(fixture.BttsYesOdds);
+                    double marketProb = odds > 1 ? 1.0 / odds : 0;
+                    double edge = wp.BTTSProb - marketProb;
+                    double ev = odds > 1 ? evEngine.CalculateEV(wp.BTTSProb, odds) : 0;
+                    double kelly = KellyCriterion.Fraction(wp.BTTSProb, odds);
 
-                    if (odds > 1.35)
+                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
+                        && odds >= MinOdds && odds <= MaxOdds)
                     {
-                        candidates.Add(new CombinationMatchDto(
+                        rawCandidates.Add(new CombinationMatchDto(
                             fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
                             "Both Teams To Score", "Yes", Math.Round(wp.BTTSProb, 2),
-                            fixture.BttsYesOdds ?? 0, fixture.Status,
+                            odds, fixture.Status,
                             fixture.Status == "FT" ? fixture.HomeGoal : null,
                             fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, isConsensus, isFallback, decisions.Markets.BTTS.Reason));
+                            false, true, false, decisions.Markets.BTTS.Reason,
+                            Math.Round(ev, 4), decision));
                     }
-                }
-
-                // ── 2-3 Goals ──
-                if (wp.TwoToThreeGoals && decisions.Markets.TwoToThreeGoals.IsQualified)
-                {
-                    // Tier 1 Consensus: Total xG 2.2-2.8
-                    double totalXg = models.Poisson.ExpectedHomeGoals + models.Poisson.ExpectedAwayGoals;
-                    bool isConsensus = totalXg >= 2.20 && totalXg <= 2.80;
-                    
-                    // Tier 2 Fallback: Poisson 2-3 > 40% AND ML > 50% (Reverted)
-                    bool isFallback = !isConsensus && models.Poisson.TwoToThreeGoals > 0.40 && wp.TwoToThreeGoalsProb > 0.50;
-                    
-                    candidates.Add(new CombinationMatchDto(
-                        fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                        "2-3 Goals", "Yes", Math.Round(wp.TwoToThreeGoalsProb, 2),
-                        0, fixture.Status,
-                        fixture.Status == "FT" ? fixture.HomeGoal : null,
-                        fixture.Status == "FT" ? fixture.AwayGoal : null,
-                        false, isConsensus, isFallback, decisions.Markets.TwoToThreeGoals.Reason));
                 }
 
                 // ── Match Winner ──
-                if (decisions.Markets.MatchWinner.IsQualified)
+                if (wp.Confidence >= 0.40) // Dropped IsQualified
                 {
                     string pred = wp.MatchWinner;
-                    double? odds = pred.Equals("home", StringComparison.OrdinalIgnoreCase) ? fixture.HomeWinOdds :
-                                   pred.Equals("away", StringComparison.OrdinalIgnoreCase) ? fixture.AwayWinOdds :
-                                   fixture.DrawOdds;
-                    double normalizedOdds = NormalizeOdds(odds);
+                    double? rawOdds = pred.Equals("home", StringComparison.OrdinalIgnoreCase) ? fixture.HomeWinOdds :
+                                     pred.Equals("away", StringComparison.OrdinalIgnoreCase) ? fixture.AwayWinOdds :
+                                     fixture.DrawOdds;
+                    double odds = NormalizeOdds(rawOdds);
+                    double marketProb = odds > 1 ? 1.0 / odds : 0;
+                    double edge = wp.Confidence - marketProb;
+                    double ev = odds > 1 ? evEngine.CalculateEV(wp.Confidence, odds) : 0;
+                    double kelly = KellyCriterion.Fraction(wp.Confidence, odds);
 
-                    // Tier 1 Consensus: Poisson > 45% AND MC > 45% (Proven logic)
-                    bool isConsensus = false;
-                    bool isFallback = false;
-                    
-                    if (pred == "home") 
+                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
+                        && odds >= MinOdds && odds <= MaxOdds)
                     {
-                        isConsensus = models.Poisson.HomeWin > 0.45 && models.MonteCarlo.HomeWin > 0.45;
-                        // Fallback: Just Poisson > 45% (Reverted)
-                        isFallback = !isConsensus && models.Poisson.HomeWin > 0.45;
-                    }
-                    else if (pred == "away") 
-                    {
-                        isConsensus = models.Poisson.AwayWin > 0.45 && models.MonteCarlo.AwayWin > 0.45;
-                        isFallback = !isConsensus && models.Poisson.AwayWin > 0.45;
-                    }
-
-                    string displayPred = char.ToUpper(pred[0]) + pred[1..];
-
-                    if (normalizedOdds > 1.20)
-                    {
-                        candidates.Add(new CombinationMatchDto(
+                        string displayPred = char.ToUpper(pred[0]) + pred[1..];
+                        rawCandidates.Add(new CombinationMatchDto(
                             fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
                             "Match Winner", displayPred, wp.Confidence,
-                            odds ?? 0, fixture.Status,
+                            odds, fixture.Status,
                             fixture.Status == "FT" ? fixture.HomeGoal : null,
                             fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, isConsensus, isFallback, decisions.Markets.MatchWinner.Reason));
+                            false, true, false, decisions.Markets.MatchWinner.Reason,
+                            Math.Round(ev, 4), decision));
                     }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error processing fixture {Id} for combo", fixture.Id);
+                logger.LogWarning(ex, "Error processing fixture {Id}", fixture.Id);
             }
         }
 
-        // ── Assemble Combinations ─────────────────────────────────
-        // Strategy: enforce market diversity within each combo.
-        // Each combo should mix markets for uncorrelated risk.
-
-        var combinations = new List<CombinationDto>();
-        var usedFixtureIds = new HashSet<int>();
-
-        // Sort: Priority 1 = Consensus, Priority 2 = Fallback (Stats+ML), Priority 3 = Confidence
-        var allCandidates = candidates
-            .OrderByDescending(x => x.IsConsensus)
-            .ThenByDescending(x => x.IsFallback)
+        // ── Step 2: Separate into goal and winner pools ──
+        var goalPortfolio = rawCandidates
+            .Where(x => x.Market == "Over 2.5 Goals" || x.Market == "Both Teams To Score")
+            .OrderByDescending(x => x.ExpectedValue)
             .ThenByDescending(x => x.Confidence)
             .ToList();
 
-        // Strict Candidates for Combo 1 & 2: Consensus OR High Confidence (> 0.58)
-        var strictCandidates = allCandidates
-            .Where(x => x.IsConsensus || x.Confidence >= 0.59)
+        var winnerPortfolio = rawCandidates
+            .Where(x => x.Market == "Match Winner")
+            .OrderByDescending(x => x.ExpectedValue)
+            .ThenByDescending(x => x.Confidence)
             .ToList();
 
-        // Consistently use allCandidates (sorted by Consensus > Fallback > Confidence)
-        // This ensures the best matches are available to all strategies.
-        for (int i = 1; i <= 5; i++)
-        {
-            List<CombinationMatchDto> comboMatches;
-            if (i <= 3)
-            {
-                // Combos 1-3: Goal Focused (Over 2.5 / BTTS)
-                 comboMatches = BuildGoalCombo(allCandidates, usedFixtureIds);
-            }
-            else
-            {
-                // Combos 4-5: Mixed/Diverse Markets
-                comboMatches = BuildDiverseCombo(allCandidates, usedFixtureIds);
-            }
+        logger.LogInformation("Portfolio: {GoalCount} goal bets, {WinnerCount} winner bets",
+            goalPortfolio.Count, winnerPortfolio.Count);
 
-            // Allow 2-leg combos for Goal Combos, but require 3 for Mix
-            int minLegs = i <= 3 ? 2 : 3;
-            if (comboMatches.Count < minLegs) continue;
+        // ── Step 3: Build explicit combos ──
+        var combinations = new List<CombinationDto>();
 
-            string comboName = i <= 3 ? $"Goal Combo {i}" : $"Win/Mix Combo {i}";
-            combinations.Add(new CombinationDto(comboName, comboMatches));
-            foreach (var m in comboMatches) usedFixtureIds.Add(m.FixtureId);
-        }
+        // Goal Combo 1: Double
+        var goalCombo1 = BuildUncorrelatedCombo(goalPortfolio, combinations, 2);
+        if (goalCombo1.Count >= 2)
+            combinations.Add(new CombinationDto("Goal Double 1", goalCombo1));
+
+        // Goal Combo 2: Double
+        var goalCombo2 = BuildUncorrelatedCombo(goalPortfolio, combinations, 2);
+        if (goalCombo2.Count >= 2)
+            combinations.Add(new CombinationDto("Goal Double 2", goalCombo2));
+
+        // Goal Combo 3: Triple (or double if 3 aren't available)
+        var goalCombo3 = BuildUncorrelatedCombo(goalPortfolio, combinations, 3);
+        if (goalCombo3.Count >= 2)
+            combinations.Add(new CombinationDto("Goal Triple", goalCombo3));
+
+        // Winner Combo 4: Double or Triple
+        var winnerCombo = BuildUncorrelatedCombo(winnerPortfolio, combinations, 3);
+        if (winnerCombo.Count >= 2)
+            combinations.Add(new CombinationDto("Winner Combo", winnerCombo));
 
         return new GetMatchCombinationResponse(combinations);
     }
 
     /// <summary>
-    /// Builds a combo strictly from Over 2.5 and BTTS markets.
-    /// Improved Logic:
-    /// - Tries to find 3 High Quality matches.
-    /// - If only 2 are found, returns 2 (Double) instead of forcing a weak 3rd leg.
+    /// Build a combo of N legs with NO correlated markets and no repeated fixtures.
     /// </summary>
-    private static List<CombinationMatchDto> BuildGoalCombo(
-        List<CombinationMatchDto> candidates, HashSet<int> usedFixtureIds)
+    private static List<CombinationMatchDto> BuildUncorrelatedCombo(
+        List<CombinationMatchDto> portfolio,
+        List<CombinationDto> existingCombos,
+        int targetLegs)
     {
-        // Filter: Only Over 2.5 and BTTS
-        // STRICT RULE: Only accept matches that meet the High Quality criteria.
-        var validCandidates = candidates
-            .Where(c => c.Market == "Over 2.5 Goals" || c.Market == "Both Teams To Score")
-            // Strict Filter: Must be Consensus OR very high confidence (>0.58)
-            .Where(c => c.IsConsensus || c.Confidence >= 0.59) 
-            .ToList();
+        var usedFixtures = existingCombos
+            .SelectMany(c => c.Matches.Select(m => m.FixtureId))
+            .ToHashSet();
 
         var result = new List<CombinationMatchDto>();
-        var leagueCounts = new Dictionary<int, int>(); 
-        var leagueMarkets = new HashSet<(int, string)>(); 
-        var currentComboFixtures = new HashSet<int>();
-        
-        foreach (var c in validCandidates)
+        var leagueCounts = new Dictionary<int, int>();
+
+        foreach (var c in portfolio)
         {
-            if (result.Count >= 3) break;
-            if (usedFixtureIds.Contains(c.FixtureId)) continue;
-            if (currentComboFixtures.Contains(c.FixtureId)) continue;
-            
-            // League constraints
+            if (result.Count >= targetLegs) break;
+            if (usedFixtures.Contains(c.FixtureId)) continue;
+
+
+            // Same fixture check
+            if (result.Any(r => r.FixtureId == c.FixtureId))
+                continue;
+
+            // Max 2 per league to reduce league-level correlation
             int lId = c.LeagueId;
-            int count = leagueCounts.GetValueOrDefault(lId, 0);
-            
-            if (count >= 2) continue; 
-            if (leagueMarkets.Contains((lId, c.Market))) continue;
-            
-            result.Add(c);
-            leagueCounts[lId] = count + 1;
-            leagueMarkets.Add((lId, c.Market));
-            currentComboFixtures.Add(c.FixtureId);
-        }
-        
-        // Return result if we have at least 2 strong legs
-        return result.Count >= 2 ? result : new List<CombinationMatchDto>(); 
-    }
-
-    /// <summary>
-    /// Build a 3-leg combo with market diversity: max 1 leg per market type,
-    /// each from a different fixture. Prioritizes higher-accuracy markets.
-    /// </summary>
-    private static List<CombinationMatchDto> BuildDiverseCombo(
-        List<CombinationMatchDto> candidates, HashSet<int> usedFixtureIds)
-    {
-        var result = new List<CombinationMatchDto>();
-        var usedMarkets = new HashSet<string>();
-        var usedInCombo = new HashSet<int>();
-
-        // Pass 1: pick one leg per market (diverse), highest confidence first
-        foreach (var c in candidates)
-        {
-            if (result.Count >= 3) break;
-            if (usedFixtureIds.Contains(c.FixtureId)) continue;
-            if (usedInCombo.Contains(c.FixtureId)) continue;
-            if (usedMarkets.Contains(c.Market)) continue;
+            if (leagueCounts.GetValueOrDefault(lId, 0) >= 2)
+                continue;
 
             result.Add(c);
-            usedMarkets.Add(c.Market);
-            usedInCombo.Add(c.FixtureId);
-        }
-
-        // Pass 2: if we still need legs, allow market repeats (different fixtures)
-        if (result.Count < 3)
-        {
-            foreach (var c in candidates)
-            {
-                if (result.Count >= 3) break;
-                if (usedFixtureIds.Contains(c.FixtureId)) continue;
-                if (usedInCombo.Contains(c.FixtureId)) continue;
-
-                result.Add(c);
-                usedInCombo.Add(c.FixtureId);
-            }
+            leagueCounts[lId] = leagueCounts.GetValueOrDefault(lId, 0) + 1;
         }
 
         return result;
@@ -331,7 +239,7 @@ public class GetMatchCombinationHandler(
 
     private static double NormalizeOdds(double? odds)
     {
-        if (!odds.HasValue) return 0;
+        if (!odds.HasValue || odds.Value <= 0) return 0;
         return odds.Value > 50 ? odds.Value / 100.0 : odds.Value;
     }
 }
