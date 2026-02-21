@@ -6,6 +6,7 @@ using soccer_gpt_application.Services;
 using soccer_gpt_infrastructure.Options;
 using soccer_gpt_infrastructure.Persistence;
 using soccer_gpt_infrastructure.Services;
+using soccer_gpt_infrastructure.Configuration;
 
 namespace soccer_gpt_infrastructure;
 
@@ -22,6 +23,11 @@ public static class DependencyInjection
         
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+        services.AddMemoryCache();
+
+        services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>();
+
         InitApiFootballService(services, configuration);
 
         // Services
@@ -31,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<TeamSyncService>();
         services.AddScoped<FixtureSyncService>();
         services.AddHostedService<DataSyncBackgroundService>();
+        services.AddHostedService<GeminiSyncBackgroundService>();
         
         // ML Prediction service
         services.AddSingleton<IMlPredictionService, MlPredictionService>();
@@ -41,6 +48,8 @@ public static class DependencyInjection
         services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
         services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
         services.AddScoped<ITrapDetectionService, TrapDetectionService>();
+        services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
+        services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
         services.AddSingleton<ILeagueVolatilityService, LeagueVolatilityService>();
 
         // Analysis pipeline services

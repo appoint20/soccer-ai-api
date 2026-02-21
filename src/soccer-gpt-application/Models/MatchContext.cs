@@ -12,14 +12,14 @@ public sealed class MatchContext
 {
     public DateTime Date { get; init; }
     public TimeSpan Time { get; init; }
-    public string League { get; init; } = string.Empty;
+    public string LeagueName { get; init; } = string.Empty;
     public string HomeTeam { get; init; } = string.Empty;
     public string AwayTeam { get; init; } = string.Empty;
     public MatchResult? Result { get; init; }
     
-    public double OddsHomeWin { get; init; }
+    public double OddsHome { get; init; }
     public double OddsDraw { get; init; }
-    public double OddsAwayWin { get; init; }
+    public double OddsAway { get; init; }
     public double OddsOver25 { get; init; }
     public double OddsBttsYes { get; init; }
 }

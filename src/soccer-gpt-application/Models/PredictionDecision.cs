@@ -9,6 +9,9 @@ public enum PredictionDecision
     /// <summary>No edge found — skip this bet.</summary>
     NoBet,
 
+    /// <summary>Lean edge (EV 1-3%). Smallest stake / tracking only.</summary>
+    LeanBet,
+
     /// <summary>Small edge detected (EV 3-8%). Low stake recommended.</summary>
     SmallEdge,
 

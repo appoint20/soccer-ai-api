@@ -15,15 +15,19 @@ public interface ITrapDetectionService
 }
 
 /// <summary>
-/// Detailed trap analysis result with individual flags.
+/// Detailed trap analysis result with individual flags and progressive penalties.
 /// </summary>
 public sealed class TrapResult
 {
     public bool LowScoreTrap { get; init; }
     public bool MarketMismatch { get; init; }
     public bool DefensiveMatch { get; init; }
-    public bool IsTrap => LowScoreTrap || MarketMismatch || DefensiveMatch;
+    
+    /// <summary>Points to deduct from the final 100-point feature score.</summary>
+    public double PenaltyScore { get; init; }
+    
+    public bool IsTrap => PenaltyScore <= -15; // Hard avoid if penalty is massive
     public string Reason { get; init; } = string.Empty;
 
-    public static TrapResult Safe => new() { Reason = string.Empty };
+    public static TrapResult Safe => new() { Reason = string.Empty, PenaltyScore = 0 };
 }

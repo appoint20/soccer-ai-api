@@ -1,0 +1,174 @@
+Starting Combination ROI Backtest (10 weeks)
+Stake: €25.00 per combo
+======================================================================
+
+📅 2025-12-13 | Goal Double 1 | Total Odds: 4.26 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] League Two | Walsall vs Shrewsbury | Over 2.5 Goals (Over) @ 2.05
+    [LOST] League One | Huddersfield vs Wigan | Over 2.5 Goals (Over) @ 2.08
+
+📅 2025-12-13 | Goal Double 2 | Total Odds: 3.09 | Stake: €25.00 | 🟢 WON  (+€52.24)
+    [WON ] League Two | Salford City vs Colchester | Over 2.5 Goals (Over) @ 1.85
+    [WON ] League One | Barnsley vs Leyton Orient | Over 2.5 Goals (Over) @ 1.67
+
+📅 2025-12-13 | Goal Triple | Total Odds: 8.82 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] League One | AFC Wimbledon vs Mansfield Town | Over 2.5 Goals (Over) @ 2.10
+    [WON ] League Two | Gillingham vs Barrow | Over 2.5 Goals (Over) @ 2.10
+    [LOST] Championship | Birmingham vs Charlton | Over 2.5 Goals (Over) @ 2.00
+
+📅 2025-12-14 | Goal Double 1 | Total Odds: 3.86 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Premier League | Nottingham Forest vs Tottenham | Over 2.5 Goals (Over) @ 2.03
+    [LOST] Premier League | Brentford vs Leeds | Over 2.5 Goals (Over) @ 1.90
+
+📅 2025-12-14 | Goal Double 2 | Total Odds: 3.19 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Premier League | Crystal Palace vs Manchester City | Over 2.5 Goals (Over) @ 1.67
+    [LOST] Premier League | Sunderland vs Newcastle | Over 2.5 Goals (Over) @ 1.91
+
+📅 2025-12-20 | Goal Double 1 | Total Odds: 4.10 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] League Two | Notts County vs Walsall | Over 2.5 Goals (Over) @ 2.05
+    [WON ] Championship | QPR vs Leicester | Over 2.5 Goals (Over) @ 2.00
+
+📅 2025-12-20 | Goal Double 2 | Total Odds: 4.62 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Championship | Charlton vs Oxford United | Over 2.5 Goals (Over) @ 2.20
+    [WON ] Premier League | Leeds vs Crystal Palace | Over 2.5 Goals (Over) @ 2.10
+
+📅 2025-12-20 | Goal Triple | Total Odds: 5.72 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Premier League | Tottenham vs Liverpool | Over 2.5 Goals (Over) @ 1.67
+    [WON ] League Two | Harrogate Town vs Milton Keynes Dons | Over 2.5 Goals (Over) @ 1.85
+    [LOST] Championship | Bristol City vs Middlesbrough | Over 2.5 Goals (Over) @ 1.85
+
+📅 2025-12-27 | Goal Double 1 | Total Odds: 3.01 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Premier League | Brentford vs Bournemouth | Over 2.5 Goals (Over) @ 1.67
+    [LOST] Premier League | West Ham vs Fulham | Over 2.5 Goals (Over) @ 1.80
+
+📅 2025-12-28 | Goal Double 1 | Total Odds: 4.40 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Premier League | Sunderland vs Leeds | Over 2.5 Goals (Over) @ 2.20
+    [LOST] Premier League | Crystal Palace vs Tottenham | Over 2.5 Goals (Over) @ 2.00
+
+📅 2026-01-04 | Goal Double 1 | Total Odds: 3.29 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Premier League | Leeds vs Manchester United | Over 2.5 Goals (Over) @ 1.83
+    [WON ] Premier League | Fulham vs Liverpool | Over 2.5 Goals (Over) @ 1.80
+
+📅 2026-01-04 | Goal Double 2 | Total Odds: 3.42 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Premier League | Newcastle vs Crystal Palace | Over 2.5 Goals (Over) @ 1.80
+    [WON ] League One | Plymouth vs Burton Albion | Over 2.5 Goals (Over) @ 1.90
+
+📅 2026-01-31 | Goal Double 1 | Total Odds: 4.01 | Stake: €25.00 | 🟢 WON  (+€75.28)
+    [WON ] La Liga | Osasuna vs Villarreal | Over 2.5 Goals (Over) @ 1.91
+    [WON ] Bundesliga | FC Augsburg vs FC St. Pauli | Both Teams To Score (Yes) @ 2.10
+
+📅 2026-01-31 | Goal Double 2 | Total Odds: 3.59 | Stake: €25.00 | 🟢 WON  (+€64.76)
+    [WON ] Championship | QPR vs Coventry | Both Teams To Score (Yes) @ 1.67
+    [WON ] League One | Barnsley vs Stevenage | Over 2.5 Goals (Over) @ 2.15
+
+📅 2026-01-31 | Goal Triple | Total Odds: 7.56 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Serie A | Napoli vs Fiorentina | Over 2.5 Goals (Over) @ 2.20
+    [LOST] League Two | Tranmere vs Salford City | Over 2.5 Goals (Over) @ 1.80
+    [LOST] League One | Luton vs Blackpool | Both Teams To Score (Yes) @ 1.91
+
+📅 2026-01-31 | Winner Combo | Total Odds: 9.19 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] League One | Leyton Orient vs Port Vale | Match Winner (Home) @ 2.15
+    [WON ] La Liga 2 | Cultural Leonesa vs Deportivo La Coruna | Match Winner (Away) @ 2.25
+    [LOST] League One | Exeter City vs Rotherham | Match Winner (Home) @ 1.90
+
+📅 2026-02-01 | Goal Double 1 | Total Odds: 5.50 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Ligue 1 | Angers vs Metz | Over 2.5 Goals (Over) @ 2.20
+    [LOST] Serie B | Reggiana vs Juve Stabia | Over 2.5 Goals (Over) @ 2.50
+
+📅 2026-02-01 | Goal Double 2 | Total Odds: 3.60 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] La Liga 2 | Eibar vs Sporting Gijon | Both Teams To Score (Yes) @ 2.00
+    [WON ] La Liga | Real Betis vs Valencia | Over 2.5 Goals (Over) @ 1.80
+
+📅 2026-02-01 | Goal Triple | Total Odds: 4.38 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] Ligue 1 | Strasbourg vs Paris Saint Germain | Both Teams To Score (Yes) @ 1.62
+    [WON ] Ligue 1 | Nice vs Stade Brestois 29 | Both Teams To Score (Yes) @ 1.62
+    [LOST] Bundesliga | VfB Stuttgart vs SC Freiburg | Both Teams To Score (Yes) @ 1.67
+
+📅 2026-02-07 | Goal Double 1 | Total Odds: 4.72 | Stake: €25.00 | 🟢 WON  (+€92.90)
+    [WON ] Serie A | Genoa vs Napoli | Over 2.5 Goals (Over) @ 2.62
+    [WON ] League Two | Gillingham vs Tranmere | Both Teams To Score (Yes) @ 1.80
+
+📅 2026-02-07 | Goal Double 2 | Total Odds: 3.60 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [WON ] League One | Peterborough vs Wigan | Over 2.5 Goals (Over) @ 2.00
+    [LOST] League One | Stockport County vs Leyton Orient | Over 2.5 Goals (Over) @ 1.80
+
+📅 2026-02-07 | Goal Triple | Total Odds: 5.41 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Premier League | Burnley vs West Ham | Both Teams To Score (Yes) @ 1.75
+    [LOST] Ligue 1 | Nantes vs Lyon | Both Teams To Score (Yes) @ 1.91
+    [WON ] Premier League | Newcastle vs Brentford | Both Teams To Score (Yes) @ 1.62
+
+📅 2026-02-07 | Winner Combo | Total Odds: 7.35 | Stake: €25.00 | 🟢 WON  (+€158.75)
+    [WON ] League One | Luton vs Bradford | Match Winner (Home) @ 2.00
+    [WON ] League Two | Fleetwood Town vs Bromley | Match Winner (Away) @ 2.10
+    [WON ] Ligue 1 | Lens vs Rennes | Match Winner (Home) @ 1.75
+
+📅 2026-02-08 | Goal Double 1 | Total Odds: 4.06 | Stake: €25.00 | 🟢 WON  (+€76.40)
+    [WON ] La Liga 2 | Malaga vs Cultural Leonesa | Over 2.5 Goals (Over) @ 2.08
+    [WON ] 2. Bundesliga | Arminia Bielefeld vs Eintracht Braunschweig | Over 2.5 Goals (Over) @ 1.95
+
+📅 2026-02-08 | Goal Double 2 | Total Odds: 4.83 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Ligue 1 | Auxerre vs Paris FC | Over 2.5 Goals (Over) @ 2.10
+    [LOST] Ligue 1 | Angers vs Toulouse | Over 2.5 Goals (Over) @ 2.30
+
+📅 2026-02-14 | Goal Double 1 | Total Odds: 3.86 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] La Liga | Sevilla vs Alaves | Over 2.5 Goals (Over) @ 2.38
+    [LOST] Bundesliga | 1899 Hoffenheim vs SC Freiburg | Both Teams To Score (Yes) @ 1.62
+
+📅 2026-02-14 | Goal Double 2 | Total Odds: 3.82 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Ligue 1 | Lille vs Stade Brestois 29 | Over 2.5 Goals (Over) @ 1.91
+    [LOST] Championship | Derby vs Swansea | Both Teams To Score (Yes) @ 2.00
+
+📅 2026-02-14 | Goal Triple | Total Odds: 5.35 | Stake: €25.00 | 🟢 WON  (+€108.70)
+    [WON ] Serie A | Inter vs Juventus | Both Teams To Score (Yes) @ 1.75
+    [WON ] Ligue 2 | Guingamp vs Saint Etienne | Both Teams To Score (Yes) @ 1.67
+    [WON ] Bundesliga | Bayer Leverkusen vs FC St. Pauli | Over 2.5 Goals (Over) @ 1.83
+
+📅 2026-02-14 | Winner Combo | Total Odds: 7.53 | Stake: €25.00 | 🔴 LOST (-€25.00)
+    [LOST] Championship | QPR vs Blackburn | Match Winner (Home) @ 2.20
+    [LOST] League One | Exeter City vs Northampton | Match Winner (Home) @ 2.05
+    [WON ] 2. Bundesliga | 1. FC Kaiserslautern vs SpVgg Greuther Fürth | Match Winner (Home) @ 1.67
+
+======================================================================
+COMBINATION ROI BACKTEST RESULTS
+(Poisson 35% + MC 40% + ML 15% + Market 10% + EV filter)
+======================================================================
+
+  Total Staked:    €725.00
+  Total Returned:  €804.03
+  Profit/Loss:     €+79.03
+  ROI:             +10.9%
+
+  Combos Settled:  29
+  Combos Won:      7
+  Combos Lost:     22
+  Combo Win Rate:  24.1%
+  Combos Pending:  4
+
+  Individual Legs: 69
+  Legs Won:        35
+  Legs Lost:       34
+  Leg Hit Rate:    50.7%
+
+──────────────────────────────────────────────────────────────────────
+PER-MARKET LEG ACCURACY:
+──────────────────────────────────────────────────────────────────────
+  Both Teams To Score     8/16   (50.0%)
+  Match Winner            5/9    (55.6%)
+  Over 2.5 Goals         22/44   (50.0%)
+
+──────────────────────────────────────────────────────────────────────
+DAILY P&L:
+──────────────────────────────────────────────────────────────────────
+  Date          Combos   Won    Staked    Return       P&L     ROI
+  2025-12-13       3     1  €  75.00  €  77.24  €  +2.24   +3.0%
+  2025-12-14       2     0  €  50.00  €   0.00  € -50.00  -100.0%
+  2025-12-20       3     0  €  75.00  €   0.00  € -75.00  -100.0%
+  2025-12-27       1     0  €  25.00  €   0.00  € -25.00  -100.0%
+  2025-12-28       1     0  €  25.00  €   0.00  € -25.00  -100.0%
+  2026-01-04       2     0  €  50.00  €   0.00  € -50.00  -100.0%
+  2026-01-31       4     2  € 100.00  € 190.04  € +90.04  +90.0%
+  2026-02-01       3     0  €  75.00  €   0.00  € -75.00  -100.0%
+  2026-02-07       4     2  € 100.00  € 301.65  €+201.65  +201.6%
+  2026-02-08       2     1  €  50.00  € 101.40  € +51.40  +102.8%
+  2026-02-14       4     1  € 100.00  € 133.70  € +33.70  +33.7%
+  ────────────  ──────  ────  ────────  ────────  ────────
+  TOTAL             29     7  € 725.00  € 804.03  € +79.03  +10.9%

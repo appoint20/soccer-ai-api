@@ -125,4 +125,21 @@ public class Fixture
 
     /// <summary>Last update timestamp</summary>
     public DateTime? UpdatedAt { get; set; }
+
+    // ========== GEMINI AI ANALYSIS ==========
+
+    /// <summary>AI Final Recommendation from Gemini</summary>
+    public string? GeminiRecommendation { get; set; }
+
+    /// <summary>AI Confidence score from Gemini</summary>
+    public double? GeminiConfidence { get; set; }
+
+    /// <summary>AI reasoning text</summary>
+    public string? GeminiReasoning { get; set; }
+
+    /// <summary>General Match Analysis text from Gemini (Deep analysis)</summary>
+    public string? GeminiAnalysis { get; set; }
+
+    /// <summary>Whether Gemini flagged the match as a trap</summary>
+    public bool? GeminiIsTrap { get; set; }
 }

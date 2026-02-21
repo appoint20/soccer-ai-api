@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Mediator.Net;
+using soccer_gpt_application.Features.Analysis;
+using soccer_gpt_application.Features.Combinations;
 
 namespace soccer_gpt_infrastructure.Services;
 
@@ -17,6 +20,7 @@ public class DataSyncBackgroundService(
     {
         logger.LogInformation("Standings sync background service started. Will sync at {Time} daily", SyncTime);
 
+        // Background sync loop
         while (!stoppingToken.IsCancellationRequested)
         {
             try

@@ -8,8 +8,7 @@ namespace soccer_gpt_api.Controllers;
 [ApiController]
 [Route("api/verify")]
 public class VerificationController(
-    IApplicationDbContext db,
-    FixtureSyncService fixtureSyncService) : ControllerBase
+    IApplicationDbContext db) : ControllerBase
 {
     [HttpGet("fixtures")]
     public async Task<IActionResult> GetFixtures([FromQuery] int limit = 50, [FromQuery] int offset = 0)
@@ -59,70 +58,5 @@ public class VerificationController(
             .ToListAsync();
             
         return Ok(new { Count = teams.Count, Data = teams });
-    }
-
-    [HttpGet("team/{id}")]
-    public async Task<IActionResult> GetTeam(int id)
-    {
-        var team = await db.Teams
-            .FirstOrDefaultAsync(t => t.ApiId == id);
-            
-        if (team == null) return NotFound($"Team with API ID {id} not found.");
-        
-        return Ok(team);
-    }
-
-    [HttpGet("stats")]
-    public async Task<IActionResult> GetStats()
-    {
-        var teamCount = await db.Teams.CountAsync();
-        var fixtureCount = await db.Fixtures.CountAsync();
-        
-        return Ok(new {
-            Teams = teamCount,
-            Fixtures = fixtureCount
-        });
-    }
-
-    [HttpPost("sync/fixtures/{leagueId}")]
-    public async Task<IActionResult> SyncFixtures(int leagueId, [FromQuery] int season = 2024, CancellationToken ct = default)
-    {
-        var result = await fixtureSyncService.SyncLeagueFixturesAsync(leagueId, season, ct);
-        return Ok(result);
-    }
-
-    [HttpGet("sync/fixtures")]
-    public async Task<IActionResult> SyncAllFixtures([FromQuery] int season = 2024, CancellationToken ct = default)
-    {
-        var result = await fixtureSyncService.SyncAllLeaguesAsync(season, ct);
-        return Ok(result);
-    }
-
-    [HttpGet("excel-stats")]
-    public async Task<IActionResult> GetExcelStats([FromServices] IHistoricalDataService historicalDataService)
-    {
-        var stats = await historicalDataService.GetAvailableDivisionsAsync();
-        return Ok(stats);
-    }
-
-    [HttpPost("sync/standings/{leagueId}")]
-    public async Task<IActionResult> SyncStandings(
-        [FromServices] TeamSyncService teamSyncService,
-        int leagueId, 
-        [FromQuery] int season = 2024, 
-        CancellationToken ct = default)
-    {
-        var result = await teamSyncService.SyncLeagueStandingsAsync(leagueId, season, ct);
-        return Ok(result);
-    }
-
-    [HttpGet("sync/standings")]
-    public async Task<IActionResult> SyncAllStandings(
-        [FromServices] TeamSyncService teamSyncService,
-        [FromQuery] int season = 2024, 
-        CancellationToken ct = default)
-    {
-        var result = await teamSyncService.SyncAllLeaguesAsync(season, ct);
-        return Ok(result);
     }
 }

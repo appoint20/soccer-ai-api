@@ -75,11 +75,11 @@ public sealed class DrawDecision
 /// </summary>
 public sealed class MarketDecision
 {
-    public bool IsQualified { get; init; }
+    public bool IsQualified { get; set; }
     public double Confidence { get; init; }
     public bool Warning { get; init; }
     public string? WarningReason { get; init; }
-    public string Reason { get; init; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
 
     public static MarketDecision NotQualified => new() 
     { 

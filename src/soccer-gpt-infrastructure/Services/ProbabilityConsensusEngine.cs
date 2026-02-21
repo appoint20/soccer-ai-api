@@ -6,9 +6,8 @@ namespace soccer_gpt_infrastructure.Services;
 
 /// <summary>
 /// Combines all model outputs into a single weighted prediction.
-/// Uses per-market weights + league volatility adjustment + goal correlation.
-///   BTTS/Over25:  25P / 25MC / 40ML / 10Mkt  (ML-heavy)
-///   Winner/HDA:   35P / 40MC / 15ML / 10Mkt  (MC-heavy)
+/// Uses per-market weights + league volatility adjustment + goal correlation
+/// + H2H divergence boost + form momentum detection.
 /// </summary>
 public sealed class ProbabilityConsensusEngine(
     ILeagueVolatilityService volatility) : IProbabilityConsensusEngine
@@ -27,10 +26,15 @@ public sealed class ProbabilityConsensusEngine(
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats)
     {
-        return Combine(bundle, stats, 0);
+        return Combine(bundle, stats, 0, null);
     }
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId)
+    {
+        return Combine(bundle, stats, leagueId, null);
+    }
+
+    public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h)
     {
         if (bundle.MlPrediction == null)
             return null;
@@ -88,14 +92,28 @@ public sealed class ProbabilityConsensusEngine(
         if (total > 0) { pHome /= total; pDraw /= total; pAway /= total; }
 
         // ── League volatility adjustment ──
-        // Shrink probabilities toward 0.5 in unpredictable leagues
         if (leagueId > 0)
         {
             pOver = volatility.AdjustProbability(leagueId, pOver);
             pBtts = volatility.AdjustProbability(leagueId, pBtts);
             p23 = volatility.AdjustProbability(leagueId, p23);
-            // Don't adjust HDA since it's already normalized
         }
+
+        // ── H2H Divergence Boost (unlock missed value from fixture-specific patterns) ──
+        if (h2h != null && h2h.IsValid)
+        {
+            pOver += H2HDivergenceBoost.Over25Boost(h2h, stats);
+            pBtts += H2HDivergenceBoost.BTTSBoost(h2h, stats);
+        }
+
+        // ── Form Momentum Detection (catch teams trending in a new direction) ──
+        pOver += FormMomentumDetector.Over25MomentumBoost(stats);
+        pBtts += FormMomentumDetector.BTTSMomentumBoost(stats);
+        
+        // Attack momentum boosts both goal markets slightly
+        var attackBoost = FormMomentumDetector.AttackMomentumBoost(stats);
+        pOver += attackBoost * 0.5;
+        pBtts += attackBoost * 0.3;
 
         var winner = "home";
         var confidence = pHome;

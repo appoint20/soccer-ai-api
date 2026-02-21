@@ -38,21 +38,33 @@ public sealed class TrapDetectionService : ITrapDetectionService
         bool defensiveMatch = bundle.Poisson.IsValid &&
                               lambdaHome < 1.0 && lambdaAway < 1.0;
 
-        // Build reason string
+        // Build reason string and accumulate penalty
         var reasons = new List<string>();
+        double penaltyScore = 0;
+        
         if (lowScoreTrap)
         {
             var p00 = LowScoreDetector.Probability00(lambdaHome, lambdaAway);
-            reasons.Add($"P(0-0) = {p00:P0}");
+            reasons.Add($"P(0-0) = {p00:P0} (-15 pts)");
+            penaltyScore -= 15.0;
         }
-        if (marketMismatch) reasons.Add("Model vs market disagreement");
-        if (defensiveMatch) reasons.Add($"Ultra-defensive (λH={lambdaHome:F2}, λA={lambdaAway:F2})");
+        if (marketMismatch) 
+        {
+            reasons.Add("Model vs market disagreement (-10 pts)");
+            penaltyScore -= 10.0;
+        }
+        if (defensiveMatch) 
+        {
+            reasons.Add($"Ultra-defensive (λH={lambdaHome:F2}, λA={lambdaAway:F2}) (-10 pts)");
+            penaltyScore -= 10.0;
+        }
 
         return new TrapResult
         {
             LowScoreTrap = lowScoreTrap,
             MarketMismatch = marketMismatch,
             DefensiveMatch = defensiveMatch,
+            PenaltyScore = penaltyScore,
             Reason = string.Join("; ", reasons)
         };
     }

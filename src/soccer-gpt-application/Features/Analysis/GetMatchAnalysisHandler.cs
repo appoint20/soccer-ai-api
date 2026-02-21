@@ -115,7 +115,16 @@ public class GetMatchAnalysisHandler(
                     };
                 }
 
-                analysisList.Add(new MatchAnalysis
+                var aiRes = fixture.GeminiRecommendation != null ? new GeminiAnalysis
+                {
+                    Recommendation = fixture.GeminiRecommendation,
+                    Confidence = fixture.GeminiConfidence ?? 0,
+                    Reasoning = fixture.GeminiReasoning ?? "",
+                    Analysis = fixture.GeminiAnalysis ?? "",
+                    IsTrap = fixture.GeminiIsTrap ?? false
+                } : null;
+
+                var ma = new MatchAnalysis
                 {
                     Date = fixture.Date,
                     Time = fixture.Date.TimeOfDay,
@@ -132,8 +141,12 @@ public class GetMatchAnalysisHandler(
                     AwayStats = analysis.TeamStats.Away,
                     Models = analysis.Models,
                     Prediction = predictionResponse,
-                    Trap = analysis.Decisions.Trap
-                });
+                    Trap = analysis.Decisions.Trap,
+                    H2H = analysis.H2H,
+                    Gemini = aiRes
+                };
+                
+                analysisList.Add(ma);
             }
             catch (Exception ex)
             {

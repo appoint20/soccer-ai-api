@@ -1,0 +1,28 @@
+Starting Combination ROI Backtest (10 weeks)
+Stake: €25.00 per combo
+======================================================================
+
+======================================================================
+COMBINATION ROI BACKTEST RESULTS
+(Poisson 35% + MC 40% + ML 15% + Market 10% + EV filter)
+======================================================================
+
+  Total Staked:    €0.00
+  Total Returned:  €0.00
+  Profit/Loss:     €+0.00
+  ROI:             +0.0%
+
+  Combos Settled:  0
+  Combos Won:      0
+  Combos Lost:     0
+  No data
+  Combos Pending:  0
+
+  Individual Legs: 0
+  Legs Won:        0
+  Legs Lost:       0
+  No data
+
+──────────────────────────────────────────────────────────────────────
+PER-MARKET LEG ACCURACY:
+──────────────────────────────────────────────────────────────────────

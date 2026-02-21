@@ -10,6 +10,8 @@ namespace soccer_gpt_infrastructure.Services;
 /// </summary>
 public sealed class DecisionService(
     ITrapDetectionService trapDetection,
+    IFeatureScoringEngine scoringEngine,
+    ILeagueAdjustmentService leagueAdjuster,
     IExpectedValueEngine evEngine) : IDecisionService
 {
     public DecisionServiceResult Evaluate(
@@ -41,15 +43,32 @@ public sealed class DecisionService(
         // Over 2.5
         string? over25Warning = null;
         var avgTotalScored = teamStats.Home.AvgGoalsScoredLast7 + teamStats.Away.AvgGoalsScoredLast7;
+        
+        double over25Score = scoringEngine.CalculateGoalScore(prediction.Over25Prob, teamStats, context.OddsOver25);
+        
         if (avgTotalScored < 2.0)
             over25Warning = $"Low combined scoring ({avgTotalScored:F1} avg total goals)";
-        markets.Over25 = MarketDecision.Create(prediction.Over25Prob, over25Warning);
+        
+        markets.Over25 = new MarketDecision
+        {
+            IsQualified = over25Score > 50,
+            Confidence = Math.Round(over25Score / 100.0, 3), // Store the score as a pseudo-probability for compatibility
+            Reason = $"Score: {over25Score}/100" + (over25Warning != null ? $" | {over25Warning}" : "")
+        };
 
         // BTTS
         string? bttsWarning = null;
+        double bttsScore = scoringEngine.CalculateGoalScore(prediction.BTTSProb, teamStats, context.OddsBttsYes);
+        
         if (teamStats.Home.CleanSheetRate > 0.60 || teamStats.Away.CleanSheetRate > 0.60)
             bttsWarning = "High clean sheet rate detected";
-        markets.BTTS = MarketDecision.Create(prediction.BTTSProb, bttsWarning);
+            
+        markets.BTTS = new MarketDecision
+        {
+            IsQualified = bttsScore > 50,
+            Confidence = Math.Round(bttsScore / 100.0, 3), // Store the score as a pseudo-probability for compatibility
+            Reason = $"Score: {bttsScore}/100" + (bttsWarning != null ? $" | {bttsWarning}" : "")
+        };
 
         // 2-3 Goals
         markets.TwoToThreeGoals = MarketDecision.Create(prediction.TwoToThreeGoalsProb);
@@ -94,27 +113,54 @@ public sealed class DecisionService(
         var drawScore = CalculateDrawScore(stats, h2h, teamStats);
         markets.Draw = DrawDecision.Create(drawScore);
 
-        // ── EV check (add warning if negative EV) ──
-        if (markets.Over25.IsQualified && context.OddsOver25 > 0)
-        {
-            var ev = evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25);
-            if (ev < 0) markets.Over25 = MarketDecision.Create(prediction.Over25Prob,
-                $"Negative EV ({ev:+0.0%;-0.0%})");
-        }
-        if (markets.BTTS.IsQualified && context.OddsBttsYes > 0)
-        {
-            var ev = evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes);
-            if (ev < 0) markets.BTTS = MarketDecision.Create(prediction.BTTSProb,
-                $"Negative EV ({ev:+0.0%;-0.0%})");
-        }
-
-        // ── Trap (inline conversion to existing TrapDecision model) ──
+        // ── EV check and Trap Integration ──
+        
+        var bundle = new ProbabilityBundle 
+        { 
+            Poisson = stats.Poisson, 
+            MonteCarlo = stats.MonteCarlo,
+            MarketCalibrated = null // Calibrated markets not strictly required for trap detection at this stage
+        };
+        var trapResult = trapDetection.Detect(bundle, prediction, context);
         var trap = new TrapDecision
         {
-            IsTrap = stats.Poisson.IsValid && LowScoreDetector.IsLowScoringTrap(lambdaH, lambdaA),
-            Reason = stats.Poisson.IsValid && LowScoreDetector.IsLowScoringTrap(lambdaH, lambdaA)
-                ? $"P(0-0)={p00:P0}" : string.Empty
+            IsTrap = trapResult.IsTrap,
+            Reason = trapResult.Reason
         };
+
+        double leagueModifier = leagueAdjuster.GetGoalThresholdModifier(context.LeagueName ?? "");
+
+        if (markets.Over25.IsQualified)
+        {
+            double finalScore = over25Score + trapResult.PenaltyScore;
+            double threshold = 65.0 + leagueModifier;
+            if (finalScore < threshold) 
+            {
+                markets.Over25.IsQualified = false;
+                markets.Over25.Reason += $" | Failed adjusted threshold {threshold}";
+            }
+            if (context.OddsOver25 > 0 && evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25) < 0)
+            {
+                markets.Over25.IsQualified = false;
+                markets.Over25.Reason += " | Negative EV";
+            }
+        }
+        
+        if (markets.BTTS.IsQualified)
+        {
+            double finalScore = bttsScore + trapResult.PenaltyScore;
+            double threshold = 65.0 + leagueModifier;
+            if (finalScore < threshold) 
+            {
+                markets.BTTS.IsQualified = false;
+                markets.BTTS.Reason += $" | Failed adjusted threshold {threshold}";
+            }
+            if (context.OddsBttsYes > 0 && evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes) < 0)
+            {
+                markets.BTTS.IsQualified = false;
+                markets.BTTS.Reason += " | Negative EV";
+            }
+        }
 
         // ── Overall qualification ──
         var bestProb = Math.Max(prediction.Over25Prob, Math.Max(prediction.BTTSProb, prediction.Confidence));
@@ -129,19 +175,37 @@ public sealed class DecisionService(
         }
         else if (isQualified)
         {
-            // Check EV against best available odds
-            var bestEv = 0.0;
-            if (context.OddsOver25 > 0)
-                bestEv = Math.Max(bestEv, evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25));
-            if (context.OddsBttsYes > 0)
-                bestEv = Math.Max(bestEv, evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes));
-
-            decision = bestEv switch
+            // First pass: tier by final feature score if the market qualified
+            double maxScore = 0;
+            if (markets.Over25.IsQualified) maxScore = Math.Max(maxScore, over25Score + trapResult.PenaltyScore);
+            if (markets.BTTS.IsQualified) maxScore = Math.Max(maxScore, bttsScore + trapResult.PenaltyScore);
+            
+            // Map the score to a tier
+            var scoreDecision = maxScore switch
             {
-                > 0.08 => PredictionDecision.StrongBet,
-                > 0.03 => PredictionDecision.SmallEdge,
+                >= 85 => PredictionDecision.StrongBet,
+                >= 75 => PredictionDecision.SmallEdge, // Standard
+                >= 65 => PredictionDecision.LeanBet,
                 _ => PredictionDecision.NoBet
             };
+            
+            // Match Winner logic (hasn't been converted to Scoring Engine yet) relies on pure EV tiering
+            var bestEv = 0.0;
+            if (markets.MatchWinner.IsQualified)
+            {
+                double odds = prediction.MatchWinner == "home" ? context.OddsHome : prediction.MatchWinner == "away" ? context.OddsAway : context.OddsDraw;
+                if (odds > 0) bestEv = evEngine.CalculateEV(prediction.Confidence, odds);
+            }
+
+            var evDecision = bestEv switch
+            {
+                >= 0.10 => PredictionDecision.StrongBet,
+                >= 0.06 => PredictionDecision.SmallEdge,
+                _ => PredictionDecision.NoBet
+            };
+            
+            // Take the strongest conviction
+            decision = (PredictionDecision)Math.Max((int)scoreDecision, (int)evDecision);
         }
 
         return new DecisionServiceResult

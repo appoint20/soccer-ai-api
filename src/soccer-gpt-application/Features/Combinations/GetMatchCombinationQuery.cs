@@ -37,5 +37,10 @@ public record CombinationMatchDto(
     bool IsFallback,
     string? TrapReason,
     double ExpectedValue = 0,
-    string Decision = "NoBet"
+    string Decision = "NoBet",
+    string? GeminiRecommendation = null,
+    double GeminiConfidence = 0,
+    string? GeminiReasoning = null,
+    string? GeminiAnalysisText = null,
+    bool GeminiIsTrap = false
 );

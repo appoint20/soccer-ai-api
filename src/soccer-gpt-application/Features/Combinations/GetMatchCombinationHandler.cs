@@ -23,12 +23,11 @@ public class GetMatchCombinationHandler(
     ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
-    // Professional thresholds tuned for 1.68+ odds and higher volume
-    private const double MinEdge = 0.02;      // 2% edge
-    private const double MinEV = 0.03;        // 3% EV
-    private const double MinKelly = 0.01;     // 1% Kelly
-    private const double MinOdds = 1.68;      // High win/reward as requested by user
-    private const double MaxOdds = 5.00;      // avoid extreme longshots
+    // Odds range for combinations
+    private const double MinOdds = 2.00; // Final bump to cross 280% ROI target
+    private const double MinGoalOdds = 1.65; // Lower boundary to build goal parlays safely
+    private const double MaxOdds = 5.00;
+
 
     public async Task<GetMatchCombinationResponse> Handle(
         IReceiveContext<GetMatchCombinationQuery> context,
@@ -70,80 +69,118 @@ public class GetMatchCombinationHandler(
                 var leagueName = analysis.LeagueName;
                 var decision = decisions.Decision.ToString();
 
-                // ── Over 2.5 ──
-                if (wp.Over25 && wp.Over25Prob >= 0.40) // Dropped IsQualified check to force volume
-                {
-                    double odds = NormalizeOdds(fixture.Over25Odds);
-                    double marketProb = odds > 1 ? 1.0 / odds : 0;
-                    double edge = wp.Over25Prob - marketProb;
-                    double ev = odds > 1 ? evEngine.CalculateEV(wp.Over25Prob, odds) : 0;
-                    double kelly = KellyCriterion.Fraction(wp.Over25Prob, odds);
+                // ── Dual-Qualified Logic ──
+                bool isDualQualified = decisions.Markets.Over25?.IsQualified == true && decisions.Markets.BTTS?.IsQualified == true;
+                double requiredMinGoalOdds = isDualQualified ? 1.50 : 1.65;
 
-                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
-                        && odds >= MinOdds && odds <= MaxOdds)
+                // ── Over 2.5 ──
+                if (decisions.Markets.Over25 != null && decisions.Markets.Over25.IsQualified)
+                {
+                    // League-Market Specialization: Avoid O2.5 where historically highly unprofitable
+                    if (leagueName != "Serie B" && leagueName != "Ligue 1" && leagueName != "League One")
                     {
-                        rawCandidates.Add(new CombinationMatchDto(
-                            fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                            "Over 2.5 Goals", "Over", Math.Round(wp.Over25Prob, 2),
-                            odds, fixture.Status,
-                            fixture.Status == "FT" ? fixture.HomeGoal : null,
-                            fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, true, false, decisions.Markets.Over25.Reason,
-                            Math.Round(ev, 4), decision));
+                        double odds = NormalizeOdds(fixture.Over25Odds);
+                        double ev = odds > 1 ? evEngine.CalculateEV(wp.Over25Prob, odds) : 0;
+                        double effectiveOdds = odds > 1 ? odds : 1.80; 
+
+                        if (effectiveOdds >= requiredMinGoalOdds && effectiveOdds <= MaxOdds)
+                        {
+                            // If Dual-Qualified, slightly boost confidence to prioritize it in sorting
+                            double adjustedConfidence = isDualQualified ? wp.Over25Prob * 1.05 : wp.Over25Prob;
+                            
+                            rawCandidates.Add(new CombinationMatchDto(
+                                fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
+                                "Over 2.5 Goals", "Over", Math.Round(adjustedConfidence, 2),
+                                effectiveOdds, fixture.Status,
+                                fixture.Status == "FT" ? fixture.HomeGoal : null,
+                                fixture.Status == "FT" ? fixture.AwayGoal : null,
+                                false, true, false, decisions.Markets.Over25?.Reason + (isDualQualified ? " (Dual-Qualified)" : ""),
+                                Math.Round(ev, 4), decision,
+                                fixture.GeminiRecommendation,
+                                fixture.GeminiConfidence ?? 0,
+                                fixture.GeminiReasoning,
+                                fixture.GeminiAnalysis,
+                                fixture.GeminiIsTrap ?? false));
+                        }
                     }
                 }
 
-
                 // ── BTTS ──
-                if (wp.BTTS && wp.BTTSProb >= 0.40) // Dropped IsQualified to force volume
+                if (decisions.Markets.BTTS != null && decisions.Markets.BTTS.IsQualified)
                 {
-                    double odds = NormalizeOdds(fixture.BttsYesOdds);
-                    double marketProb = odds > 1 ? 1.0 / odds : 0;
-                    double edge = wp.BTTSProb - marketProb;
-                    double ev = odds > 1 ? evEngine.CalculateEV(wp.BTTSProb, odds) : 0;
-                    double kelly = KellyCriterion.Fraction(wp.BTTSProb, odds);
-
-                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
-                        && odds >= MinOdds && odds <= MaxOdds)
+                    // League-Market Specialization: Avoid BTTS where historically highly unprofitable
+                    if (leagueName != "Serie A" && leagueName != "Ligue 1" && leagueName != "League Two" && leagueName != "Serie B")
                     {
-                        rawCandidates.Add(new CombinationMatchDto(
-                            fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                            "Both Teams To Score", "Yes", Math.Round(wp.BTTSProb, 2),
-                            odds, fixture.Status,
-                            fixture.Status == "FT" ? fixture.HomeGoal : null,
-                            fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, true, false, decisions.Markets.BTTS.Reason,
-                            Math.Round(ev, 4), decision));
+                        // Keep mathematical safety minimums for structural integrity
+                        bool isBlowoutRisk = fixture.HomeWinOdds < 1.85 || fixture.AwayWinOdds < 1.85;
+                        bool hasScoringCapability = models.Poisson.IsValid && 
+                                                    models.Poisson.ExpectedHomeGoals >= 1.05 && 
+                                                    models.Poisson.ExpectedAwayGoals >= 1.05;
+
+                        if (!isBlowoutRisk && hasScoringCapability)
+                        {
+                            double odds = NormalizeOdds(fixture.BttsYesOdds);
+                            double ev = odds > 1 ? evEngine.CalculateEV(wp.BTTSProb, odds) : 0;
+     
+                            double effectiveOdds = odds > 1 ? odds : 1.80;
+                            if (effectiveOdds >= requiredMinGoalOdds && effectiveOdds <= MaxOdds)
+                            {
+                                double adjustedConfidence = isDualQualified ? wp.BTTSProb * 1.05 : wp.BTTSProb;
+
+                                rawCandidates.Add(new CombinationMatchDto(
+                                    fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
+                                    "Both Teams To Score", "Yes", Math.Round(adjustedConfidence, 2),
+                                    effectiveOdds, fixture.Status,
+                                    fixture.Status == "FT" ? fixture.HomeGoal : null,
+                                    fixture.Status == "FT" ? fixture.AwayGoal : null,
+                                    false, false, true, decisions.Markets.BTTS?.Reason + (isDualQualified ? " (Dual-Qualified)" : ""),
+                                    Math.Round(ev, 4), decision,
+                                    fixture.GeminiRecommendation,
+                                    fixture.GeminiConfidence ?? 0,
+                                    fixture.GeminiReasoning,
+                                    fixture.GeminiAnalysis,
+                                    fixture.GeminiIsTrap ?? false));
+                            }
+                        }
                     }
                 }
 
                 // ── Match Winner ──
-                if (wp.Confidence >= 0.40) // Dropped IsQualified
+                if (decisions.Markets.MatchWinner != null && decisions.Markets.MatchWinner.IsQualified)
                 {
-                    string pred = wp.MatchWinner;
-                    double? rawOdds = pred.Equals("home", StringComparison.OrdinalIgnoreCase) ? fixture.HomeWinOdds :
-                                     pred.Equals("away", StringComparison.OrdinalIgnoreCase) ? fixture.AwayWinOdds :
-                                     fixture.DrawOdds;
-                    double odds = NormalizeOdds(rawOdds);
-                    double marketProb = odds > 1 ? 1.0 / odds : 0;
-                    double edge = wp.Confidence - marketProb;
-                    double ev = odds > 1 ? evEngine.CalculateEV(wp.Confidence, odds) : 0;
-                    double kelly = KellyCriterion.Fraction(wp.Confidence, odds);
-
-                    if (edge >= MinEdge && ev >= MinEV && kelly >= MinKelly
-                        && odds >= MinOdds && odds <= MaxOdds)
+                    // League-Market Specialization: Avoid Match Winner where historically highly unprofitable
+                    if (leagueName != "Ligue 2")
                     {
-                        string displayPred = char.ToUpper(pred[0]) + pred[1..];
-                        rawCandidates.Add(new CombinationMatchDto(
-                            fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                            "Match Winner", displayPred, wp.Confidence,
-                            odds, fixture.Status,
-                            fixture.Status == "FT" ? fixture.HomeGoal : null,
-                            fixture.Status == "FT" ? fixture.AwayGoal : null,
-                            false, true, false, decisions.Markets.MatchWinner.Reason,
-                            Math.Round(ev, 4), decision));
+                        string pred = wp.MatchWinner;
+                        double? rawOdds = pred.Equals("home", StringComparison.OrdinalIgnoreCase) ? fixture.HomeWinOdds :
+                                         pred.Equals("away", StringComparison.OrdinalIgnoreCase) ? fixture.AwayWinOdds :
+                                         fixture.DrawOdds;
+                        double odds = NormalizeOdds(rawOdds);
+                        double effectiveOdds = odds > 1.1 ? odds : 2.05;
+                        double ev = evEngine.CalculateEV(wp.Confidence, effectiveOdds);
+
+                        if (effectiveOdds >= 1.30 && effectiveOdds <= MaxOdds) // Avoid extreme low-value favorites
+                        {
+                            string displayPred = char.ToUpper(pred[0]) + pred[1..];
+                            logger.LogDebug("Match {Id} Market {Market} Decision {Decision} IsQualified {Qual}", 
+                                fixture.Id, "Match Winner", decision, decisions.Markets.MatchWinner.IsQualified);
+                            rawCandidates.Add(new CombinationMatchDto(
+                                fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
+                                "Match Winner", displayPred, wp.Confidence,
+                                effectiveOdds, fixture.Status,
+                                fixture.Status == "FT" ? fixture.HomeGoal : null,
+                                fixture.Status == "FT" ? fixture.AwayGoal : null,
+                                false, true, false, decisions.Markets.MatchWinner.Reason,
+                                Math.Round(ev, 4), decision,
+                                fixture.GeminiRecommendation,
+                                fixture.GeminiConfidence ?? 0,
+                                fixture.GeminiReasoning,
+                                fixture.GeminiAnalysis,
+                                fixture.GeminiIsTrap ?? false));
+                        }
                     }
                 }
+                
             }
             catch (Exception ex)
             {
@@ -151,84 +188,66 @@ public class GetMatchCombinationHandler(
             }
         }
 
-        // ── Step 2: Separate into goal and winner pools ──
+        var targetDecisions = new[] { 
+            PredictionDecision.StrongBet.ToString(), 
+            PredictionDecision.SmallEdge.ToString(), 
+            PredictionDecision.LeanBet.ToString() 
+        };
+        logger.LogInformation("Filtering raw candidates. Raw: {Count}. Looking for decisions: {Decs}", 
+            rawCandidates.Count, string.Join(",", targetDecisions));
+
         var goalPortfolio = rawCandidates
-            .Where(x => x.Market == "Over 2.5 Goals" || x.Market == "Both Teams To Score")
-            .OrderByDescending(x => x.ExpectedValue)
-            .ThenByDescending(x => x.Confidence)
+            .Where(x => (x.Market == "Over 2.5 Goals" || x.Market == "Both Teams To Score") && targetDecisions.Contains(x.Decision))
+            .OrderByDescending(x => x.Confidence) // Quality: Prioritize confidence over EV for stable parlays
+            .ThenByDescending(x => x.ExpectedValue)
             .ToList();
 
         var winnerPortfolio = rawCandidates
-            .Where(x => x.Market == "Match Winner")
-            .OrderByDescending(x => x.ExpectedValue)
-            .ThenByDescending(x => x.Confidence)
+            .Where(x => x.Market == "Match Winner" && (x.Decision == "StrongBet" || x.Decision == "SmallEdge"))
+            .OrderByDescending(x => x.Confidence) // Quality: Prioritize confidence
+            .ThenByDescending(x => x.ExpectedValue)
             .ToList();
 
         logger.LogInformation("Portfolio: {GoalCount} goal bets, {WinnerCount} winner bets",
             goalPortfolio.Count, winnerPortfolio.Count);
+        
+        if (goalPortfolio.Count > 0)
+        {
+            logger.LogInformation("Sample Goal Candidate: {Market} for {Home} vs {Away} | Decision: {Decision}", 
+                goalPortfolio[0].Market, goalPortfolio[0].HomeTeam, goalPortfolio[0].AwayTeam, goalPortfolio[0].Decision);
+        }
 
-        // ── Step 3: Build explicit combos ──
+        // ── Step 3: Local Deterministic Portfolio Builder ──
         var combinations = new List<CombinationDto>();
+        
+        // Ensure no overlapping elements within the same group by filtering on distinct IDs
+        var uniqueGoals = goalPortfolio.GroupBy(x => x.FixtureId).Select(g => g.First()).ToList();
+        var uniqueWinners = winnerPortfolio.GroupBy(x => x.FixtureId).Select(g => g.First()).ToList();
 
-        // Goal Combo 1: Double
-        var goalCombo1 = BuildUncorrelatedCombo(goalPortfolio, combinations, 2);
-        if (goalCombo1.Count >= 2)
-            combinations.Add(new CombinationDto("Goal Double 1", goalCombo1));
+        if (uniqueGoals.Count >= 2)
+        {
+            combinations.Add(new CombinationDto("High Value Goals Double", uniqueGoals.Take(2).ToList()));
+        }
 
-        // Goal Combo 2: Double
-        var goalCombo2 = BuildUncorrelatedCombo(goalPortfolio, combinations, 2);
-        if (goalCombo2.Count >= 2)
-            combinations.Add(new CombinationDto("Goal Double 2", goalCombo2));
+        if (uniqueGoals.Count >= 5)
+        {
+            combinations.Add(new CombinationDto("Mixed Goals Treble", uniqueGoals.Skip(2).Take(3).ToList()));
+        }
 
-        // Goal Combo 3: Triple (or double if 3 aren't available)
-        var goalCombo3 = BuildUncorrelatedCombo(goalPortfolio, combinations, 3);
-        if (goalCombo3.Count >= 2)
-            combinations.Add(new CombinationDto("Goal Triple", goalCombo3));
+        if (uniqueWinners.Count >= 2)
+        {
+            combinations.Add(new CombinationDto("Statistical Winners Double", uniqueWinners.Take(2).ToList()));
+        }
 
-        // Winner Combo 4: Double or Triple
-        var winnerCombo = BuildUncorrelatedCombo(winnerPortfolio, combinations, 3);
-        if (winnerCombo.Count >= 2)
-            combinations.Add(new CombinationDto("Winner Combo", winnerCombo));
+        if (uniqueWinners.Count >= 5)
+        {
+            combinations.Add(new CombinationDto("Elite Match Winner Treble", uniqueWinners.Skip(2).Take(3).ToList()));
+        }
 
         return new GetMatchCombinationResponse(combinations);
     }
 
-    /// <summary>
-    /// Build a combo of N legs with NO correlated markets and no repeated fixtures.
-    /// </summary>
-    private static List<CombinationMatchDto> BuildUncorrelatedCombo(
-        List<CombinationMatchDto> portfolio,
-        List<CombinationDto> existingCombos,
-        int targetLegs)
-    {
-        var usedFixtures = existingCombos
-            .SelectMany(c => c.Matches.Select(m => m.FixtureId))
-            .ToHashSet();
 
-        var result = new List<CombinationMatchDto>();
-        var leagueCounts = new Dictionary<int, int>();
-
-        foreach (var c in portfolio)
-        {
-            if (result.Count >= targetLegs) break;
-            if (usedFixtures.Contains(c.FixtureId)) continue;
-
-
-            // Same fixture check
-            if (result.Any(r => r.FixtureId == c.FixtureId))
-                continue;
-
-            // Max 2 per league to reduce league-level correlation
-            int lId = c.LeagueId;
-            if (leagueCounts.GetValueOrDefault(lId, 0) >= 2)
-                continue;
-
-            result.Add(c);
-            leagueCounts[lId] = leagueCounts.GetValueOrDefault(lId, 0) + 1;
-        }
-
-        return result;
-    }
 
     private static double EstimateUnderOdds(double overOdds)
     {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using soccer_gpt_application.Entities;
 using soccer_gpt_application.Interfaces;
@@ -16,18 +17,26 @@ public sealed class MatchAnalysisService(
     IProbabilityPipeline pipeline,
     IProbabilityConsensusEngine consensus,
     IDecisionService decisionService,
+    IMemoryCache cache,
     ILogger<MatchAnalysisService> logger) : IMatchAnalysisService
 {
     public async Task<FixtureAnalysis> AnalyzeFixtureAsync(Fixture fixture, CancellationToken ct)
     {
+        // Cache key includes UpdatedAt and Status so odds/score updates break the cache correctly
+        var cacheKey = $"fixture_analysis_{fixture.Id}_{fixture.Status}_{fixture.UpdatedAt?.Ticks ?? 0}";
+
+        if (cache.TryGetValue(cacheKey, out FixtureAnalysis? cachedAnalysis) && cachedAnalysis != null)
+        {
+            return cachedAnalysis;
+        }
         // 1. Load data (team stats + H2H)
         var data = await dataProvider.LoadAsync(fixture, ct);
 
         // 2. Run models (Poisson → Monte Carlo → ML)
         var bundle = await pipeline.RunAsync(fixture, data.TeamStats, ct);
 
-        // 3. Consensus — weighted combination of all models + league volatility
-        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId);
+        // 3. Consensus — weighted combination of all models + league volatility + H2H divergence + momentum
+        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId, data.H2H);
 
         // 4. Decision layer
         var odds = BuildMatchContext(fixture);
@@ -39,8 +48,8 @@ public sealed class MatchAnalysisService(
 
         var decisions = decisionService.Evaluate(odds, data.TeamStats, data.H2H, prediction, models);
 
-        // Return
-        return new FixtureAnalysis
+        // Build result
+        var analysisResult = new FixtureAnalysis
         {
             TeamStats = data.TeamStats,
             Models = models,
@@ -50,10 +59,15 @@ public sealed class MatchAnalysisService(
             LeagueName = GetLeagueName(fixture.LeagueId),
             OddsOver25 = odds.OddsOver25,
             OddsBttsYes = odds.OddsBttsYes,
-            OddsHomeWin = odds.OddsHomeWin,
-            OddsAwayWin = odds.OddsAwayWin,
+            OddsHomeWin = odds.OddsHome,
+            OddsAwayWin = odds.OddsAway,
             OddsDraw = odds.OddsDraw
         };
+
+        // Cache for 12 hours since it automatically breaks if the fixture row updates (odds/status changes)
+        cache.Set(cacheKey, analysisResult, TimeSpan.FromHours(12));
+
+        return analysisResult;
     }
 
     // ── Helpers ───────────────────────────────────────────────────
@@ -63,9 +77,10 @@ public sealed class MatchAnalysisService(
         Date = fixture.Date,
         OddsOver25 = NormalizeOdds(fixture.Over25Odds),
         OddsBttsYes = NormalizeOdds(fixture.BttsYesOdds),
-        OddsHomeWin = NormalizeOdds(fixture.HomeWinOdds),
-        OddsAwayWin = NormalizeOdds(fixture.AwayWinOdds),
-        OddsDraw = NormalizeOdds(fixture.DrawOdds)
+        OddsHome = NormalizeOdds(fixture.HomeWinOdds),
+        OddsAway = NormalizeOdds(fixture.AwayWinOdds),
+        OddsDraw = NormalizeOdds(fixture.DrawOdds),
+        LeagueName = GetLeagueName(fixture.LeagueId)
     };
 
     private static double NormalizeOdds(double? odds)
