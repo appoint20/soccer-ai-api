@@ -1,22 +1,23 @@
-FROM python:3.10-slim
-
-# Install system dependencies required for LightGBM/XGBoost
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
 WORKDIR /app
 
-# Copy requirements first for cache layer
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the entire solution/project structure
+COPY . ./
 
-# Copy application code
-COPY . .
+# Restore dependencies
+RUN dotnet restore src/soccer-gpt-api/soccer-gpt-api.csproj
+
+# Build and publish a release
+RUN dotnet publish src/soccer-gpt-api/soccer-gpt-api.csproj -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+COPY --from=build-env /app/out .
 
 # Expose port (Cloud Run defaults to 8080)
 ENV PORT=8080
+ENV ASPNETCORE_URLS=http://+:${PORT}
 EXPOSE 8080
 
-# Run the web service on container startup
-CMD uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT}
+ENTRYPOINT ["dotnet", "soccer-gpt-api.dll"]

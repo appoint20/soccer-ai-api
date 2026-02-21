@@ -1,42 +1,7 @@
 {
-  "status": "success",
-  "message": "Successfully retrained tier1 in 182.98s",
-  "timestamp": "2026-01-06T09:37:27.155341",
+  "status": "failed",
+  "message": "No matches found for training",
+  "timestamp": "2026-01-13T21:55:19.224561",
   "tier": "tier1",
-  "details": {
-    "over25": {
-      "train_accuracy": 0.7555797495917257,
-      "train_samples": 3674,
-      "val_accuracy": 0.5673469387755102,
-      "val_samples": 1225,
-      "class_distribution": {
-        "positive": 0.5321175830157866,
-        "negative": 0.4678824169842134
-      },
-      "test_accuracy": 0.5755102040816327
-    },
-    "btts": {
-      "train_accuracy": 0.700870985302123,
-      "train_samples": 3674,
-      "val_accuracy": 0.5265306122448979,
-      "val_samples": 1225,
-      "class_distribution": {
-        "positive": 0.5432770821992379,
-        "negative": 0.45672291780076213
-      },
-      "test_accuracy": 0.5371428571428571
-    },
-    "result": {
-      "train_accuracy": 0.658138268916712,
-      "train_samples": 3674,
-      "val_accuracy": 0.5330612244897959,
-      "val_samples": 1225,
-      "class_distribution": {
-        "H": 0.3102885138813283,
-        "D": 0.2501360914534567,
-        "A": 0.439575394665215
-      },
-      "test_accuracy": 0.5257142857142857
-    }
-  }
+  "details": null
 }

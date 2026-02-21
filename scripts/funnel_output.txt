@@ -1,0 +1,12 @@
+Starting Funnel Analysis for last 10 weeks...
+
+==================================================
+FUNNEL ANALYSIS (Last 10 Weeks)
+==================================================
+Days Checked: 20
+Estimated Total Matches (12 Leagues): ~1200
+Matches Qualified by Filters (>1.68 Odds): 96
+Total Combinations Generated: 32
+------------------------------
+Filter Acceptance Rate: 8.00% (Approx)
+==================================================

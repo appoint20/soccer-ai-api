@@ -1,108 +1,43 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Environments
-.env
-.venv
-env/
 venv/
 ENV/
-env.bak/
-venv.bak/
+.env
 
-# IDEs
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
+*.DotSettings.user
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Data (large files)
+data/historical/*.xlsx
+data/upcoming/*.csv
 
-# pyenv
-.python-version
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Logs
-logs/
-*.log
-
-# Data files (keep structure, ignore actual data)
-data/raw/historical/*.xlsx
-data/raw/historical/*.xls
-data/raw/upcoming/*.csv
-data/processed/*.json
-data/predictions/*.json
-
-# But keep important files in data directories
-!data/raw/historical/.gitkeep
-!data/raw/upcoming/.gitkeep
-!data/raw/upcoming/fixtures_clean.csv
-!data/processed/.gitkeep
-!data/processed/matches.json
-!data/predictions/.gitkeep
-
-# Models
-models/**/*.pkl
-models/**/*.joblib
-
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Backup files
-*.bak
+# Logs
+*.log
+
+# .NET Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# Coverage
+coverage/
+
+# SQLite Database
+*.db
+
+# Test results
+TestResults/
