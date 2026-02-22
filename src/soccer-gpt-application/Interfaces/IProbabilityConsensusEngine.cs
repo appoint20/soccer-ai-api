@@ -11,5 +11,6 @@ public interface IProbabilityConsensusEngine
     WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats);
     WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId);
     WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h);
+    WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h, string? geminiRecommendation, double? geminiConfidence);
 }
 

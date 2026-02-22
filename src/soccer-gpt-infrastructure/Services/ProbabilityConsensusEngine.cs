@@ -26,15 +26,20 @@ public sealed class ProbabilityConsensusEngine(
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats)
     {
-        return Combine(bundle, stats, 0, null);
+        return Combine(bundle, stats, 0, null, null, null);
     }
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId)
     {
-        return Combine(bundle, stats, leagueId, null);
+        return Combine(bundle, stats, leagueId, null, null, null);
     }
 
     public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h)
+    {
+        return Combine(bundle, stats, leagueId, h2h, null, null);
+    }
+
+    public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h, string? geminiRecommendation, double? geminiConfidence)
     {
         if (bundle.MlPrediction == null)
             return null;
@@ -90,6 +95,44 @@ public sealed class ProbabilityConsensusEngine(
         // Normalize HDA
         var total = pHome + pDraw + pAway;
         if (total > 0) { pHome /= total; pDraw /= total; pAway /= total; }
+
+        // ── Gemini 40% Consensus Weighting ──
+        if (!string.IsNullOrEmpty(geminiRecommendation) && geminiConfidence > 0)
+        {
+            double gConf = Math.Clamp(geminiConfidence.Value / 100.0, 0, 1);
+            string rec = geminiRecommendation.Trim().ToLowerInvariant();
+
+            if (rec.Contains("btts"))
+            {
+                pBtts = (pBtts * 0.6) + (gConf * 0.4);
+            }
+            else if (rec.Contains("over 2.5"))
+            {
+                pOver = (pOver * 0.6) + (gConf * 0.4);
+            }
+            else if (rec.Contains("under 2.5"))
+            {
+                pOver = (pOver * 0.6) + ((1.0 - gConf) * 0.4);
+            }
+            else if (rec.Contains("home"))
+            {
+                pHome = (pHome * 0.6) + (gConf * 0.4);
+                pDraw *= 0.6;
+                pAway *= 0.6;
+                // Re-normalize HDA
+                var hdaTotal = pHome + pDraw + pAway;
+                if (hdaTotal > 0) { pHome /= hdaTotal; pDraw /= hdaTotal; pAway /= hdaTotal; }
+            }
+            else if (rec.Contains("away"))
+            {
+                pHome *= 0.6;
+                pDraw *= 0.6;
+                pAway = (pAway * 0.6) + (gConf * 0.4);
+                // Re-normalize HDA
+                var hdaTotal = pHome + pDraw + pAway;
+                if (hdaTotal > 0) { pHome /= hdaTotal; pDraw /= hdaTotal; pAway /= hdaTotal; }
+            }
+        }
 
         // ── League volatility adjustment ──
         if (leagueId > 0)

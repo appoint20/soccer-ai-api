@@ -36,7 +36,7 @@ public sealed class MatchAnalysisService(
         var bundle = await pipeline.RunAsync(fixture, data.TeamStats, ct);
 
         // 3. Consensus — weighted combination of all models + league volatility + H2H divergence + momentum
-        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId, data.H2H);
+        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId, data.H2H, fixture.GeminiRecommendation, fixture.GeminiConfidence);
 
         // 4. Decision layer
         var odds = BuildMatchContext(fixture);
