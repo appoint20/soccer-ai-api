@@ -9,9 +9,54 @@ import datetime
 import pandas as pd
 from tabulate import tabulate
 import time
+import os
 
 # Configuration
 API_URL = "http://localhost:5165/api/analysis" 
+
+# --- EXCEL FALLBACK LOGIC ---
+EXCEL_DIR = "src/soccer-gpt-infrastructure/Data/historical"
+FALLBACK_DF = None
+
+def load_excel_fallback():
+    global FALLBACK_DF
+    try:
+        files = [f for f in os.listdir(EXCEL_DIR) if f.endswith('.xlsx')]
+        dfs = []
+        for file in files:
+            path = os.path.join(EXCEL_DIR, file)
+            df = pd.read_excel(path, engine='openpyxl')
+            dfs.append(df)
+        
+        if dfs:
+            FALLBACK_DF = pd.concat(dfs, ignore_index=True)
+            FALLBACK_DF['DateStr'] = pd.to_datetime(FALLBACK_DF['Date'], dayfirst=True, errors='coerce').dt.strftime('%Y-%m-%d')
+            print(f"✅ Loaded historical Excel fallback ({len(FALLBACK_DF)} matches) to recover missing API scores.")
+    except Exception as e:
+        print(f"⚠️ Excel fallback disabled: {e}")
+
+def lookup_excel_result(date_str, home_team, away_team):
+    if FALLBACK_DF is None or FALLBACK_DF.empty or not date_str:
+        return None
+        
+    date_part = date_str.split('T')[0]
+    
+    # Fuzzy match on the primary first 5 characters due to naming inconsistencies
+    h_prefix = home_team[:5].lower()
+    a_prefix = away_team[:5].lower()
+    
+    matches = FALLBACK_DF[
+        (FALLBACK_DF['DateStr'] == date_part) & 
+        (FALLBACK_DF['HomeTeam'].str.lower().str.contains(h_prefix, na=False)) &
+        (FALLBACK_DF['AwayTeam'].str.lower().str.contains(a_prefix, na=False))
+    ]
+    
+    if not matches.empty:
+        row = matches.iloc[0]
+        if pd.notna(row.get('FTHG')) and pd.notna(row.get('FTAG')):
+            return f"{int(row['FTHG'])}:{int(row['FTAG'])}"
+    return None
+# -----------------------------
 # Filter for major leagues to keep it manageable and relevant
 LEAGUES = {
     39: "Premier League",
@@ -86,6 +131,9 @@ def evaluate_predictions(matches):
             # It's a dict
             score_str = result_obj.get('actual_score') or result_obj.get('actualScore')
             
+        if not score_str:
+            score_str = lookup_excel_result(m.get('date'), m.get('home_team', ''), m.get('away_team', ''))
+
         if not score_str:
             continue
 
@@ -179,6 +227,8 @@ def evaluate_predictions(matches):
     return results
 
 def main():
+    print("Initializing Database Fallbacks...")
+    load_excel_fallback()
     print(f"Starting Analysis Backtest for last {WEEKS_BACK} weeks...")
     dates = get_weekend_dates(WEEKS_BACK)
     print(f"Dates to check ({len(dates)} days): {[d.isoformat() for d in dates]}")

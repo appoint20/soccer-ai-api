@@ -131,6 +131,20 @@ public class GetMatchAnalysisHandler(
                     League = analysis.LeagueName,
                     HomeTeam = homeTeam.Name,
                     AwayTeam = awayTeam.Name,
+                    HomeInfo = new TeamInfo
+                    {
+                        Rank = homeTeam.Rank,
+                        Points = homeTeam.Points,
+                        Form = homeTeam.Form,
+                        FormPercentage = CalculateFormPercentage(homeTeam.Form)
+                    },
+                    AwayInfo = new TeamInfo
+                    {
+                        Rank = awayTeam.Rank,
+                        Points = awayTeam.Points,
+                        Form = awayTeam.Form,
+                        FormPercentage = CalculateFormPercentage(awayTeam.Form)
+                    },
                     Result = matchResult,
                     OddsHomeWin = analysis.OddsHomeWin,
                     OddsDraw = analysis.OddsDraw,
@@ -155,5 +169,17 @@ public class GetMatchAnalysisHandler(
         }
 
         return new GetMatchAnalysisResponse { Matches = analysisList };
+    }
+
+    private static int CalculateFormPercentage(string form)
+    {
+        if (string.IsNullOrWhiteSpace(form)) return 0;
+        int points = 0;
+        foreach (var c in form.ToUpperInvariant())
+        {
+            if (c == 'W') points += 3;
+            else if (c == 'D') points += 1;
+        }
+        return (int)Math.Round((points / (double)(form.Length * 3)) * 100);
     }
 }
