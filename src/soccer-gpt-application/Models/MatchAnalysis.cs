@@ -11,6 +11,7 @@ namespace soccer_gpt_application.Models;
 /// </summary>
 public sealed class MatchAnalysis
 {
+    public int Id { get; init; }
     public DateTime Date { get; init; }
     public TimeSpan Time { get; init; }
     public string League { get; init; } = string.Empty;

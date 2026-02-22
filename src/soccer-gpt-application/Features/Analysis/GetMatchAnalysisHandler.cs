@@ -136,6 +136,7 @@ public class GetMatchAnalysisHandler(
 
                 var ma = new MatchAnalysis
                 {
+                    Id = fixture.Id,
                     Date = fixture.Date,
                     Time = fixture.Date.TimeOfDay,
                     League = analysis.LeagueName,
