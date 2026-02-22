@@ -32,6 +32,12 @@ public sealed class MatchResult
 
 public sealed class TeamStats
 {
+    // ---------- TEAM INFO ----------
+    public int Rank { get; set; }
+    public int Points { get; set; }
+    public string Form { get; set; } = "";
+    public int FormPercentage { get; set; }
+
     // ---------- LAST 3 (HOME OR AWAY ONLY) ----------
     public double AvgGoalsScoredLast3 { get; set; }
     public double AvgGoalsConcededLast3 { get; set; }

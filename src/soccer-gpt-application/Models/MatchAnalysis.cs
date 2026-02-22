@@ -9,14 +9,6 @@ namespace soccer_gpt_application.Models;
 /// - signals: normalized 0-1 indicators
 /// - decisions: final qualifications only
 /// </summary>
-public class TeamInfo
-{
-    public int Rank { get; init; }
-    public int Points { get; init; }
-    public string Form { get; init; } = "";
-    public int FormPercentage { get; init; }
-}
-
 public sealed class MatchAnalysis
 {
     public DateTime Date { get; init; }
@@ -25,8 +17,6 @@ public sealed class MatchAnalysis
     public string HomeTeam { get; init; } = string.Empty;
     public string AwayTeam { get; init; } = string.Empty;
     public MatchResult? Result { get; init; }
-    public TeamInfo? HomeInfo { get; init; }
-    public TeamInfo? AwayInfo { get; init; }
     
     public double OddsHomeWin { get; init; }
     public double OddsDraw { get; init; }

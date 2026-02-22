@@ -124,6 +124,16 @@ public class GetMatchAnalysisHandler(
                     IsTrap = fixture.GeminiIsTrap ?? false
                 } : null;
 
+                analysis.TeamStats.Home.Rank = homeTeam.Rank;
+                analysis.TeamStats.Home.Points = homeTeam.Points;
+                analysis.TeamStats.Home.Form = homeTeam.Form;
+                analysis.TeamStats.Home.FormPercentage = CalculateFormPercentage(homeTeam.Form);
+
+                analysis.TeamStats.Away.Rank = awayTeam.Rank;
+                analysis.TeamStats.Away.Points = awayTeam.Points;
+                analysis.TeamStats.Away.Form = awayTeam.Form;
+                analysis.TeamStats.Away.FormPercentage = CalculateFormPercentage(awayTeam.Form);
+
                 var ma = new MatchAnalysis
                 {
                     Date = fixture.Date,
@@ -131,20 +141,6 @@ public class GetMatchAnalysisHandler(
                     League = analysis.LeagueName,
                     HomeTeam = homeTeam.Name,
                     AwayTeam = awayTeam.Name,
-                    HomeInfo = new TeamInfo
-                    {
-                        Rank = homeTeam.Rank,
-                        Points = homeTeam.Points,
-                        Form = homeTeam.Form,
-                        FormPercentage = CalculateFormPercentage(homeTeam.Form)
-                    },
-                    AwayInfo = new TeamInfo
-                    {
-                        Rank = awayTeam.Rank,
-                        Points = awayTeam.Points,
-                        Form = awayTeam.Form,
-                        FormPercentage = CalculateFormPercentage(awayTeam.Form)
-                    },
                     Result = matchResult,
                     OddsHomeWin = analysis.OddsHomeWin,
                     OddsDraw = analysis.OddsDraw,
