@@ -17,7 +17,7 @@ public static class DependencyInjection
         // Database context - disable FK to allow fixtures with teams not in Teams table
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            const string dbPath = "/Users/shivm/Workspace/soccer-gpt-api/soccer.db";
+            var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "/Users/shivm/Workspace/soccer-gpt-api/soccer.db";
             options.UseSqlite($"Data Source={dbPath};Foreign Keys=False");
         });
         

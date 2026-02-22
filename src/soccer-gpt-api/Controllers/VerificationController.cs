@@ -57,6 +57,6 @@ public class VerificationController(
             })
             .ToListAsync();
             
-        return Ok(new { Count = teams.Count, Data = teams });
+            return Ok(new { Count = teams.Count, Data = teams });
+        }
     }
-}

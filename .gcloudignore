@@ -1,11 +1,48 @@
-.git
-.gitignore
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 venv/
+.venv/
+**/.venv/
+ENV/
 .env
-.gemini/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# .NET Build output
+**/bin/
+**/obj/
+*.dll
+*.pdb
+
+# Git
+.git/
+.gitignore
+
+# Tests and docs (not needed in container)
 tests/
-scripts/
-*.md
-docker-compose.yml
+docs/
+
+# IMPORTANT: Force include data files (override .gitignore)
+# Even though they're gitignored, we NEED them in Docker
+!data/
+!data/upcoming/
+!data/upcoming/*.csv
+!data/predictions/
+!data/predictions/**/*.json
+!data/historical/
+!data/historical/*.xlsx
