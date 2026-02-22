@@ -24,4 +24,16 @@ public class CombinationsController(IMediator mediator) : ControllerBase
         var response = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(query, ct);
         return Ok(response);
     }
+
+    [HttpPost("combinations/custom")]
+    public async Task<IActionResult> CreateCustomCombination(
+        [FromBody] CreateUserCombinationCommand command,
+        CancellationToken ct = default)
+    {
+        var response = await mediator.SendAsync<CreateUserCombinationCommand, CreateUserCombinationResponse>(command, ct);
+        if (!response.Success)
+            return BadRequest(response);
+            
+        return Ok(response);
+    }
 }

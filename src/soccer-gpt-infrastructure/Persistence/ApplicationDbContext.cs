@@ -8,6 +8,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Team> Teams { get; set; }
     public DbSet<Fixture> Fixtures { get; set; }
+    public DbSet<UserCombination> UserCombinations { get; set; }
+    public DbSet<UserCombinationMatch> UserCombinationMatches { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +22,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<Fixture>()
             .HasIndex(f => f.ApiId)
             .IsUnique();
+
+        modelBuilder.Entity<UserCombination>()
+            .HasMany(uc => uc.Matches)
+            .WithOne(m => m.UserCombination)
+            .HasForeignKey(m => m.UserCombinationId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
