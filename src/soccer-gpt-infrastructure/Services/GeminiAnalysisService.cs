@@ -334,7 +334,7 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         sb.AppendLine("Your goal is to construct exactly 4 distinctly different professional parlay combinations from this list.");
         sb.AppendLine("Rules:");
         sb.AppendLine("1. Build logical groupings with names like 'Safe Double', 'High Value Treble', 'Mixed Goals Portfolio', 'Elite Triple'.");
-        sb.AppendLine("2. Ensure complete variety: Do NOT output combinations that look identical or share too many of the exact same matches.");
+        sb.AppendLine("2. STRICT RULE: A single match (Fixture ID) can ONLY appear in ONE combination. DO NOT reuse the same match across multiple combinations.");
         sb.AppendLine("3. Each combination MUST have either exactly 2 or 3 legs. (Give at least one 3-leg combination).");
         sb.AppendLine("4. Avoid correlating matches from the same league if possible.");
         sb.AppendLine("5. Output ONLY the valid JSON structure matching the schema.");
