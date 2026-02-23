@@ -264,6 +264,7 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                - inflated model probability
                - defensive teams
                - inconsistent form
+               *IMPORTANT: If a trap is detected, you MUST explicitly state the exact cause of the trap and explain why it is misleading early in your Analysis.*
 
                LOW SCORING SIGNALS:
                - both teams scoring < 1.2 avg
@@ -278,10 +279,10 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                0–100 based on data clarity.
 
                REASONING:
-               2-3 short sentence only.
+               Must contain at least 2 to 4 key factors for each match. Keep it concise but detailed.
                
                ANALYSIS
-               3-5 analysis on upcoming match dont use prediction ml or poisson or technical words simple straightforward sentence which give a deep analysis on goals and wins
+               6-8 sentences of deep dive analysis on the upcoming match. Do not use prediction ml or poisson or technical words. Simple straightforward sentences which give a deep and thorough analysis on goals and wins. If a trap is detected, the exact cause must be explained clearly.
 
                Return ONLY valid JSON.
                """;
