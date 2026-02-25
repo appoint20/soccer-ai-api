@@ -46,3 +46,4 @@ docs/
 !data/predictions/**/*.json
 !data/historical/
 !data/historical/*.xlsx
+!seed.db

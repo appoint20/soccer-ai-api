@@ -89,18 +89,33 @@ public class GetMatchCombinationHandler(
                             double adjustedConfidence = isDualQualified ? wp.Over25Prob * 1.05 : wp.Over25Prob;
                             
                             rawCandidates.Add(new CombinationMatchDto(
-                                fixture.Id, fixture.LeagueId, leagueName, fixture.Date, homeName, awayName,
-                                "Over 2.5 Goals", "Over", Math.Round(adjustedConfidence, 2),
-                                effectiveOdds, fixture.Status,
-                                fixture.Status == "FT" ? fixture.HomeGoal : null,
-                                fixture.Status == "FT" ? fixture.AwayGoal : null,
-                                false, true, false, decisions.Markets.Over25?.Reason + (isDualQualified ? " (Dual-Qualified)" : ""),
-                                Math.Round(ev, 4), decision,
-                                fixture.GeminiRecommendation,
-                                fixture.GeminiConfidence ?? 0,
-                                fixture.GeminiReasoning,
-                                fixture.GeminiAnalysis,
-                                fixture.GeminiIsTrap ?? false));
+                                fixture.Id,             // 1
+                                fixture.LeagueId,       // 2
+                                leagueName,             // 3
+                                fixture.Date,           // 4
+                                homeName,               // 5
+                                awayName,               // 6
+                                "Over 2.5 Goals",       // 7
+                                "Over",                 // 8
+                                Math.Round(adjustedConfidence, 2), // 9
+                                effectiveOdds,          // 10
+                                fixture.Status,         // 11
+                                fixture.Status == "FT" ? fixture.HomeGoal : null, // 12
+                                fixture.Status == "FT" ? fixture.AwayGoal : null, // 13
+                                false,                  // 14: IsTrap
+                                true,                   // 15: IsConsensus
+                                false,                  // 16: IsFallback
+                                decisions.Markets.Over25?.Reason + (isDualQualified ? " (Dual-Qualified)" : ""), // 17: TrapReason
+                                Math.Round(ev, 4),      // 18: ExpectedValue
+                                decision,               // 19: Decision
+                                fixture.GeminiRecommendation, // 20
+                                fixture.GeminiConfidence ?? 0, // 21
+                                fixture.GeminiIsTrap ?? false, // 22
+                                fixture.GeminiTrapReason,     // 23
+                                fixture.GeminiOneLineSummary, // 24
+                                fixture.GeminiOver25Summary,  // 25: GeminiReasoning
+                                fixture.GeminiAnalysis        // 26: GeminiAnalysisText
+                                ));
                         }
                     }
                 }
@@ -137,9 +152,12 @@ public class GetMatchCombinationHandler(
                                     Math.Round(ev, 4), decision,
                                     fixture.GeminiRecommendation,
                                     fixture.GeminiConfidence ?? 0,
-                                    fixture.GeminiReasoning,
-                                    fixture.GeminiAnalysis,
-                                    fixture.GeminiIsTrap ?? false));
+                                    fixture.GeminiIsTrap ?? false,
+                                    fixture.GeminiTrapReason,
+                                    fixture.GeminiOneLineSummary,
+                                    fixture.GeminiBttsSummary,   // 25: GeminiReasoning
+                                    fixture.GeminiAnalysis       // 26: GeminiAnalysisText
+                                    ));
                             }
                         }
                     }
@@ -174,9 +192,12 @@ public class GetMatchCombinationHandler(
                                 Math.Round(ev, 4), decision,
                                 fixture.GeminiRecommendation,
                                 fixture.GeminiConfidence ?? 0,
-                                fixture.GeminiReasoning,
-                                fixture.GeminiAnalysis,
-                                fixture.GeminiIsTrap ?? false));
+                                fixture.GeminiIsTrap ?? false,
+                                fixture.GeminiTrapReason,
+                                fixture.GeminiOneLineSummary,
+                                pred.ToLowerInvariant() == "home" ? (fixture.GeminiHomeWinSummary ?? "") : (fixture.GeminiAwayWinSummary ?? ""), // 25: GeminiReasoning
+                                fixture.GeminiAnalysis        // 26: GeminiAnalysisText
+                                ));
                         }
                     }
                 }

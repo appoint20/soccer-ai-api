@@ -97,7 +97,14 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                         Confidence = r.Confidence,
                         Reasoning = r.Reasoning,
                         IsTrap = r.IsTrap,
-                        Analysis = r.Analysis
+                        TrapReason = r.TrapReason,
+                        OneLineSummary = r.OneLineSummary,
+                        Analysis = r.Analysis,
+                        BttsSummary = r.BttsSummary,
+                        Over25Summary = r.Over25Summary,
+                        Under25Summary = r.Under25Summary,
+                        HomeWinSummary = r.HomeWinSummary,
+                        AwayWinSummary = r.AwayWinSummary
                     };
                     result[r.FixtureId] = analysis;
                     _cache.Set($"gemini_analysis_{r.FixtureId}", analysis, TimeSpan.FromHours(24));
@@ -227,8 +234,6 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         };
     }
     
-    
-    
     private string BuildSystemPrompt()
     {
         return """
@@ -284,7 +289,15 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                ANALYSIS
                6-8 sentences of deep dive analysis on the upcoming match. Do not use prediction ml or poisson or technical words. Simple straightforward sentences which give a deep and thorough analysis on goals and wins. If a trap is detected, the exact cause must be explained clearly.
 
-               Return ONLY valid JSON.
+               ONE-LINE SUMMARIES:
+               Provide user-friendly, one-line sentences that summarize the outlook for EACH of these specific markets, regardless of the final recommendation. These will be used for tooltip-style insights in the UI:
+               - BTTS Summary: (e.g., "Both teams possess high-scoring forwards, suggesting a likely exchange of goals.")
+               - Over 2.5 Summary: (e.g., "Historical high-scoring trends for these sides point toward a 3+ goal outcome.")
+               - Under 2.5 Summary: (e.g., "Strong defensive setups on both sides often lead to low-scoring affairs.")
+               - Home Win Summary: (e.g., "Home advantage and superior squad depth favor a solid home result.")
+               - Away Win Summary: (e.g., "A clinical away counter-attacking style could catch the hosts off-guard.")
+
+               Return ONLY valid JSON matching the schema.
                """;
     }
     
@@ -347,7 +360,7 @@ public class GeminiAnalysisService : IGeminiAnalysisService
             sb.AppendLine($"  League: {c.LeagueName}");
             sb.AppendLine($"  Selection: {c.Market} ({c.Prediction}) @ Odds: {c.Odds:F2}");
             sb.AppendLine($"  Confidence: {c.Confidence}% | Expected Value: {c.ExpectedValue:F3}");
-            sb.AppendLine($"  Gemini Input Analysis: {c.GeminiRecommendation} | {c.GeminiReasoning}");
+            sb.AppendLine($"  Gemini Input Analysis: {c.GeminiRecommendation} | {c.GeminiOneLineSummary}");
             sb.AppendLine("---");
         }
         
@@ -369,6 +382,13 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                     confidence = new { type = "NUMBER" },
                     reasoning = new { type = "STRING" },
                     isTrap = new { type = "BOOLEAN" },
+                    trapReason = new { type = "STRING", description = "The explicit reason why this match is a trap (if any). Leave empty if not a trap." },
+                    oneLineSummary = new { type = "STRING", description = "A general one-line user-friendly summary of the overall recommendation." },
+                    bttsSummary = new { type = "STRING", description = "One-line analysis specifically for the BTTS market." },
+                    over25Summary = new { type = "STRING", description = "One-line analysis specifically for the Over 2.5 goals market." },
+                    under25Summary = new { type = "STRING", description = "One-line analysis specifically for the Under 2.5 goals market." },
+                    homeWinSummary = new { type = "STRING", description = "One-line analysis specifically for a Home Win outcome." },
+                    awayWinSummary = new { type = "STRING", description = "One-line analysis specifically for an Away Win outcome." },
                     analysis = new { type = "STRING" }
                 },
                 required = new[]
@@ -378,6 +398,13 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                     "confidence",
                     "reasoning",
                     "isTrap",
+                    "trapReason",
+                    "oneLineSummary",
+                    "bttsSummary",
+                    "over25Summary",
+                    "under25Summary",
+                    "homeWinSummary",
+                    "awayWinSummary",
                     "analysis"
                 }
             }
@@ -416,6 +443,13 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         public string Reasoning { get; set; } = "";
         public string Analysis { get; set; } = "";
         public bool IsTrap { get; set; }
+        public string TrapReason { get; set; } = "";
+        public string OneLineSummary { get; set; } = "";
+        public string BttsSummary { get; set; } = "";
+        public string Over25Summary { get; set; } = "";
+        public string Under25Summary { get; set; } = "";
+        public string HomeWinSummary { get; set; } = "";
+        public string AwayWinSummary { get; set; } = "";
     }
 
     private class GeminiCombinationResponse

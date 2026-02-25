@@ -57,6 +57,20 @@ public class VerificationController(
             })
             .ToListAsync();
             
-            return Ok(new { Count = teams.Count, Data = teams });
-        }
+        return Ok(new { Count = teams.Count, Data = teams });
     }
+
+    [HttpPost("sync/fixtures/{leagueId}")]
+    public async Task<IActionResult> SyncFixtures(int leagueId, [FromQuery] int season, [FromServices] FixtureSyncService syncService)
+    {
+        var result = await syncService.SyncLeagueFixturesAsync(leagueId, season, CancellationToken.None);
+        return Ok(new { Created = result.Created, Updated = result.Updated, Errors = result.Errors });
+    }
+
+    [HttpPost("sync/standings/{leagueId}")]
+    public async Task<IActionResult> SyncStandings(int leagueId, [FromQuery] int season, [FromServices] TeamSyncService syncService)
+    {
+        var result = await syncService.SyncLeagueStandingsAsync(leagueId, season, CancellationToken.None);
+        return Ok(new { Created = result.Created, Updated = result.Updated, Errors = result.Errors });
+    }
+}

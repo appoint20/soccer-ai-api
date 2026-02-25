@@ -120,6 +120,13 @@ public class GeminiSyncBackgroundService(
                         entity.GeminiReasoning = aiRes.Reasoning;
                         entity.GeminiAnalysis = aiRes.Analysis;
                         entity.GeminiIsTrap = aiRes.IsTrap;
+                        entity.GeminiTrapReason = aiRes.TrapReason;
+                        entity.GeminiOneLineSummary = aiRes.OneLineSummary;
+                        entity.GeminiBttsSummary = aiRes.BttsSummary;
+                        entity.GeminiOver25Summary = aiRes.Over25Summary;
+                        entity.GeminiUnder25Summary = aiRes.Under25Summary;
+                        entity.GeminiHomeWinSummary = aiRes.HomeWinSummary;
+                        entity.GeminiAwayWinSummary = aiRes.AwayWinSummary;
                         entity.UpdatedAt = DateTime.UtcNow;
                         updated = true;
                     }

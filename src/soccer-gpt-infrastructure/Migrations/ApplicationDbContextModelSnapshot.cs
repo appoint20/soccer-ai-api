@@ -68,16 +68,37 @@ namespace soccer_gpt_infrastructure.Migrations
                     b.Property<string>("GeminiAnalysis")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("GeminiAwayWinSummary")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GeminiBttsSummary")
+                        .HasColumnType("TEXT");
+
                     b.Property<double?>("GeminiConfidence")
                         .HasColumnType("REAL");
 
+                    b.Property<string>("GeminiHomeWinSummary")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool?>("GeminiIsTrap")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("GeminiOneLineSummary")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GeminiOver25Summary")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("GeminiReasoning")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GeminiRecommendation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GeminiTrapReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GeminiUnder25Summary")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("HomeBallPossession")

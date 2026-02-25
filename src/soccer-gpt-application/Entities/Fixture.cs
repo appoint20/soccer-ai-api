@@ -142,4 +142,16 @@ public class Fixture
 
     /// <summary>Whether Gemini flagged the match as a trap</summary>
     public bool? GeminiIsTrap { get; set; }
+
+    /// <summary>Explicit reason why Gemini flagged the match as a trap, if applicable</summary>
+    public string? GeminiTrapReason { get; set; }
+
+    /// <summary>One-line user friendly prediction summary from Gemini</summary>
+    public string? GeminiOneLineSummary { get; set; }
+
+    public string? GeminiBttsSummary { get; set; }
+    public string? GeminiOver25Summary { get; set; }
+    public string? GeminiUnder25Summary { get; set; }
+    public string? GeminiHomeWinSummary { get; set; }
+    public string? GeminiAwayWinSummary { get; set; }
 }

@@ -44,8 +44,10 @@ public sealed class MatchDataProvider(
     {
         if (matches == null || matches.Count == 0) return HeadToHeadModel.Empty;
 
-        double homeGoals = 0, awayGoals = 0;
-        int btts = 0, over25 = 0;
+        double homeGoals = 0, awayGoals = 0, totalGoals = 0;
+        int btts = 0, over25 = 0, twoToThree = 0;
+        int homeWins = 0, awayWins = 0, draws = 0;
+        DateTime? lastMatchDate = null;
 
         foreach (var m in matches)
         {
@@ -53,8 +55,19 @@ public sealed class MatchDataProvider(
             var ag = m.HomeTeamId == homeId ? m.AwayGoal : m.HomeGoal;
             homeGoals += hg;
             awayGoals += ag;
+            var matchTotal = hg + ag;
+            totalGoals += matchTotal;
+
+            if (hg > ag) homeWins++;
+            else if (ag > hg) awayWins++;
+            else draws++;
+
             if (hg > 0 && ag > 0) btts++;
-            if (hg + ag > 2.5) over25++;
+            if (matchTotal > 2.5) over25++;
+            if (matchTotal >= 2 && matchTotal <= 3) twoToThree++;
+
+            if (lastMatchDate == null || m.Date > lastMatchDate)
+                lastMatchDate = m.Date;
         }
 
         return new HeadToHeadModel
@@ -62,8 +75,14 @@ public sealed class MatchDataProvider(
             MatchesAnalyzed = matches.Count,
             AvgGoalsHome = Math.Round(homeGoals / matches.Count, 2),
             AvgGoalsAway = Math.Round(awayGoals / matches.Count, 2),
+            AvgTotalGoals = Math.Round(totalGoals / matches.Count, 2),
             BTTSRate = Math.Round((double)btts / matches.Count, 2),
-            Over25Rate = Math.Round((double)over25 / matches.Count, 2)
+            Over25Rate = Math.Round((double)over25 / matches.Count, 2),
+            TwoToThreeGoalsRate = Math.Round((double)twoToThree / matches.Count, 2),
+            HomeWinRate = Math.Round((double)homeWins / matches.Count, 2),
+            AwayWinRate = Math.Round((double)awayWins / matches.Count, 2),
+            DrawRate = Math.Round((double)draws / matches.Count, 2),
+            LastMatchDate = lastMatchDate
         };
     }
 

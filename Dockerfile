@@ -19,7 +19,7 @@ COPY --from=build-env /app/out .
 COPY --from=build-env /app/scripts/ml/models /scripts/ml/models
 
 # Copy the SQLite database to the working directory
-COPY --from=build-env /app/soccer.db .
+COPY --from=build-env /app/seed.db ./soccer.db
 
 # Copy the Data folder containing historical spreadsheets/JSONs
 COPY --from=build-env /app/src/soccer-gpt-infrastructure/Data /app/src/soccer-gpt-infrastructure/Data

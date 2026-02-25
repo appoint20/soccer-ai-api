@@ -36,8 +36,7 @@ public static class DependencyInjection
         // Sync services
         services.AddScoped<TeamSyncService>();
         services.AddScoped<FixtureSyncService>();
-        services.AddHostedService<DataSyncBackgroundService>();
-        services.AddHostedService<GeminiSyncBackgroundService>();
+        services.AddHostedService<NightlySyncBackgroundService>(); // Orchestrates: standings@04:00, fixtures@04:15, ML@04:45, Gemini@05:00
         
         // ML Prediction service
         services.AddSingleton<IMlPredictionService, MlPredictionService>();

@@ -25,10 +25,10 @@ public record CombinationMatchDto(
     DateTime MatchDate,
     string HomeTeam,
     string AwayTeam,
-    string Market, // "Over 2.5", "BTTS", "Home Win", etc.
-    string Prediction, // "Yes", "Home", etc.
+    string Market, 
+    string Prediction, 
     double Confidence,
-    double Odds, // Implied odds or actual if available
+    double Odds, 
     string? Status,
     int? ActualHomeGoals,
     int? ActualAwayGoals,
@@ -40,7 +40,9 @@ public record CombinationMatchDto(
     string Decision = "NoBet",
     string? GeminiRecommendation = null,
     double GeminiConfidence = 0,
-    string? GeminiReasoning = null,
-    string? GeminiAnalysisText = null,
-    bool GeminiIsTrap = false
+    bool GeminiIsTrap = false,
+    string? GeminiTrapReason = null,
+    string? GeminiOneLineSummary = null,
+    string? GeminiReasoning = null,   // Maps to frontend m.gemini_reasoning
+    string? GeminiAnalysisText = null // Maps to frontend m.gemini_analysis_text
 );

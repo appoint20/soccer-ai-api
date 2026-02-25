@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using soccer_gpt_application;
 using soccer_gpt_infrastructure;
 using soccer_gpt_infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 // Register Encoding Provider for ExcelDataReader
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
@@ -61,7 +62,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
+    context.Database.Migrate();
 }
 
 app.Run();

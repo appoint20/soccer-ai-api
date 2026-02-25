@@ -57,14 +57,14 @@ public class GetMatchAnalysisHandler(
                             Prediction = wp.Over25,
                             Probability = Math.Round(wp.Over25Prob, 2),
                             IsQualified = d.Markets.Over25.IsQualified,
-                            Reason = d.Markets.Over25.Reason
+                            Reason = !string.IsNullOrWhiteSpace(fixture.GeminiOver25Summary) ? fixture.GeminiOver25Summary : d.Markets.Over25.Reason
                         },
                         BTTS = new BoolPrediction
                         {
                             Prediction = wp.BTTS,
                             Probability = Math.Round(wp.BTTSProb, 2),
                             IsQualified = d.Markets.BTTS.IsQualified,
-                            Reason = d.Markets.BTTS.Reason
+                            Reason = !string.IsNullOrWhiteSpace(fixture.GeminiBttsSummary) ? fixture.GeminiBttsSummary : d.Markets.BTTS.Reason
                         },
                         TwoToThreeGoals = new BoolPrediction
                         {
@@ -78,14 +78,14 @@ public class GetMatchAnalysisHandler(
                             Prediction = d.Markets.LowScoring.IsQualified,
                             Probability = d.Markets.LowScoring.Confidence,
                             IsQualified = d.Markets.LowScoring.IsQualified,
-                            Reason = d.Markets.LowScoring.Reason
+                            Reason = !string.IsNullOrWhiteSpace(fixture.GeminiUnder25Summary) ? fixture.GeminiUnder25Summary : d.Markets.LowScoring.Reason
                         },
                         MatchWinner = new StringPrediction
                         {
                             Prediction = wp.MatchWinner,
                             Confidence = wp.Confidence,
                             IsQualified = d.Markets.MatchWinner.IsQualified,
-                            Reason = d.Markets.MatchWinner.Reason
+                            Reason = GetWinnerReason(fixture, wp.MatchWinner, d.Markets.MatchWinner.Reason)
                         }
                     };
                 }
@@ -121,14 +121,23 @@ public class GetMatchAnalysisHandler(
                     Confidence = fixture.GeminiConfidence ?? 0,
                     Reasoning = fixture.GeminiReasoning ?? "",
                     Analysis = fixture.GeminiAnalysis ?? "",
-                    IsTrap = fixture.GeminiIsTrap ?? false
+                    IsTrap = fixture.GeminiIsTrap ?? false,
+                    TrapReason = fixture.GeminiTrapReason ?? "",
+                    OneLineSummary = fixture.GeminiOneLineSummary ?? "",
+                    BttsSummary = fixture.GeminiBttsSummary ?? "",
+                    Over25Summary = fixture.GeminiOver25Summary ?? "",
+                    Under25Summary = fixture.GeminiUnder25Summary ?? "",
+                    HomeWinSummary = fixture.GeminiHomeWinSummary ?? "",
+                    AwayWinSummary = fixture.GeminiAwayWinSummary ?? ""
                 } : null;
 
+                analysis.TeamStats.Home.Name = homeTeam.Name;
                 analysis.TeamStats.Home.Rank = homeTeam.Rank;
                 analysis.TeamStats.Home.Points = homeTeam.Points;
                 analysis.TeamStats.Home.Form = homeTeam.Form;
                 analysis.TeamStats.Home.FormPercentage = CalculateFormPercentage(homeTeam.Form);
 
+                analysis.TeamStats.Away.Name = awayTeam.Name;
                 analysis.TeamStats.Away.Rank = awayTeam.Rank;
                 analysis.TeamStats.Away.Points = awayTeam.Points;
                 analysis.TeamStats.Away.Form = awayTeam.Form;
@@ -165,7 +174,27 @@ public class GetMatchAnalysisHandler(
             }
         }
 
-        return new GetMatchAnalysisResponse { Matches = analysisList };
+        var finished = analysisList.Where(m => m.Result != null).ToList();
+        var summary = finished.Any() ? new AnalysisSummary
+        {
+            TotalMatches = finished.Count,
+            CorrectMatches = finished.Count(m => m.Result!.IsCorrect),
+            AccuracyRate = Math.Round((double)finished.Count(m => m.Result!.IsCorrect) / finished.Count * 100, 2)
+        } : null;
+
+        return new GetMatchAnalysisResponse 
+        { 
+            Matches = analysisList,
+            Summary = summary
+        };
+    }
+
+    private static string GetWinnerReason(Fixture fixture, string winner, string defaultReason)
+    {
+        var w = winner.ToLowerInvariant();
+        if (w == "home" && !string.IsNullOrWhiteSpace(fixture.GeminiHomeWinSummary)) return fixture.GeminiHomeWinSummary;
+        if (w == "away" && !string.IsNullOrWhiteSpace(fixture.GeminiAwayWinSummary)) return fixture.GeminiAwayWinSummary;
+        return defaultReason;
     }
 
     private static int CalculateFormPercentage(string form)
