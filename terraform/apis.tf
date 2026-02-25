@@ -1,12 +1,14 @@
 resource "google_project_service" "required_apis" {
   for_each = toset([
-    "secretmanager.googleapis.com",
     "artifactregistry.googleapis.com",
-    "compute.googleapis.com",
+    "secretmanager.googleapis.com",
+    "run.googleapis.com",
     "iam.googleapis.com"
   ])
 
-  project            = var.project_id
-  service            = each.key
+  project = var.project_id
+  service = each.key
+
+  # Do not disable the API if you delete the terraform resource
   disable_on_destroy = false
 }
