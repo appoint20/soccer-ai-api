@@ -3,11 +3,8 @@ name: 'Soccer AI Infrastructure'
 on:
   push:
     branches: [ "main", "master" ]
-    paths:
-      - 'terraform/**'
   pull_request:
-    paths:
-      - 'terraform/**'
+  workflow_dispatch:
 
 jobs:
   terraform:
