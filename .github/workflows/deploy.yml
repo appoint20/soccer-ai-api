@@ -1,9 +1,15 @@
-name: 'Soccer AI CI/CD Pipeline'
+name: 'Soccer AI App Deployment'
 
 on:
   push:
     branches: [ "main", "master" ]
-  pull_request:
+    paths-ignore:
+      - 'terraform/**'
+  workflow_run:
+    workflows: ["Soccer AI Infrastructure"]
+    types:
+      - completed
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -12,41 +18,10 @@ env:
   IMAGE: soccer-ai-api
 
 jobs:
-  terraform:
-    name: 'Infrastructure (Terraform)'
-    runs-on: ubuntu-latest
-    env:
-      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Google Auth
-      id: auth
-      uses: 'google-github-actions/auth@v2'
-      with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform Init
-      working-directory: ./terraform
-      run: terraform init
-
-    - name: Terraform Plan
-      working-directory: ./terraform
-      run: terraform plan -input=false
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' && github.event_name == 'push'
-      working-directory: ./terraform
-      run: terraform apply -auto-approve -input=false
-
   build-test-push:
     name: 'Build, Test, and Push'
-    needs: terraform
+    # Only run on push OR if the infrastructure workflow finished successfully
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
     permissions:
