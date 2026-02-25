@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using soccer_gpt_application.Interfaces;
-using soccer_gpt_infrastructure.Services;
 
 namespace soccer_gpt_api.Controllers;
 
@@ -61,14 +60,14 @@ public class VerificationController(
     }
 
     [HttpPost("sync/fixtures/{leagueId}")]
-    public async Task<IActionResult> SyncFixtures(int leagueId, [FromQuery] int season, [FromServices] FixtureSyncService syncService)
+    public async Task<IActionResult> SyncFixtures(int leagueId, [FromQuery] int season, [FromServices] IFixtureSyncService syncService)
     {
         var result = await syncService.SyncLeagueFixturesAsync(leagueId, season, CancellationToken.None);
         return Ok(new { Created = result.Created, Updated = result.Updated, Errors = result.Errors });
     }
 
     [HttpPost("sync/standings/{leagueId}")]
-    public async Task<IActionResult> SyncStandings(int leagueId, [FromQuery] int season, [FromServices] TeamSyncService syncService)
+    public async Task<IActionResult> SyncStandings(int leagueId, [FromQuery] int season, [FromServices] ITeamSyncService syncService)
     {
         var result = await syncService.SyncLeagueStandingsAsync(leagueId, season, CancellationToken.None);
         return Ok(new { Created = result.Created, Updated = result.Updated, Errors = result.Errors });

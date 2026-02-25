@@ -18,9 +18,11 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         
         try
         {
-            var response = await client.GetFromJsonAsync<JsonElement>($"/fixtures?league={leagueId}&season={season}");
+            var response = await GetApiResponseAsync($"/fixtures?league={leagueId}&season={season}");
+            if (response is null)
+                return fixtures;
             
-            if (!response.TryGetProperty("response", out var data))
+            if (!response.Value.TryGetProperty("response", out var data))
                 return fixtures;
 
             foreach (var item in data.EnumerateArray())
@@ -72,9 +74,11 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
     {
         try
         {
-            var response = await client.GetFromJsonAsync<JsonElement>($"/fixtures/statistics?fixture={fixtureId}");
+            var response = await GetApiResponseAsync($"/fixtures/statistics?fixture={fixtureId}");
+            if (response is null)
+                return (null, null);
             
-            if (!response.TryGetProperty("response", out var data) || data.GetArrayLength() < 2)
+            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() < 2)
                 return (null, null);
 
             var homeStats = ParseTeamStats(data[0]);
@@ -146,9 +150,11 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
     {
         try
         {
-            var response = await client.GetFromJsonAsync<JsonElement>($"/odds?fixture={fixtureId}");
+            var response = await GetApiResponseAsync($"/odds?fixture={fixtureId}");
+            if (response is null)
+                return null;
             
-            if (!response.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
                 return null;
 
             var bookmakers = data[0].GetProperty("bookmakers");
@@ -226,10 +232,13 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         
         try
         {
-            var response = await client.GetFromJsonAsync<JsonElement>(
-                $"/standings?league={leagueId}&season={season}", cancellationToken);
+            var response = await GetApiResponseAsync(
+                $"/standings?league={leagueId}&season={season}",
+                cancellationToken);
+            if (response is null)
+                return teams;
             
-            if (!response.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
             {
                 logger.LogWarning("No standings data for league {LeagueId} season {Season}", leagueId, season);
                 return teams;
@@ -284,9 +293,17 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
     {
         try
         {
-            var response = await client.GetFromJsonAsync<JsonElement>("/status");
+            var response = await GetApiResponseAsync("/status");
+            if (response is null)
+            {
+                return new Dictionary<string, object>
+                {
+                    ["status"] = "error",
+                    ["message"] = "No response or non-success status from API-Football."
+                };
+            }
             
-            if (response.TryGetProperty("response", out var data))
+            if (response.Value.TryGetProperty("response", out var data))
             {
                 var account = data.GetProperty("account");
                 var subscription = data.GetProperty("subscription");
@@ -312,5 +329,41 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         }
         
         return new Dictionary<string, object> { ["status"] = "unknown" };
+    }
+
+    private async Task<JsonElement?> GetApiResponseAsync(string relativeUrl, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await client.GetAsync(relativeUrl, ct);
+            var body = await response.Content.ReadAsStringAsync(ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning(
+                    "API-Football request failed. Url: {Url}, Status: {Status}, Body: {Body}",
+                    relativeUrl,
+                    (int)response.StatusCode,
+                    TrimForLog(body));
+                return null;
+            }
+
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement.Clone();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API-Football request failed for {Url}", relativeUrl);
+            return null;
+        }
+    }
+
+    private static string TrimForLog(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        const int max = 500;
+        return value.Length <= max ? value : value[..max];
     }
 }

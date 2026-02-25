@@ -1,7 +1,7 @@
 namespace soccer_gpt_application.Models;
 
 /// <summary>
-/// Represents a single match record from historical Excel data (football-data.co.uk format)
+/// Represents a single historical match record used for calculations.
 /// </summary>
 public record HistoricalMatchData
 {
@@ -41,7 +41,7 @@ public record HistoricalMatchData
     /// <summary>Division code (E0=PL, E1=Champ, E2=L1, E3=L2)</summary>
     public string Division { get; init; } = string.Empty;
 
-    // ========== BETTING ODDS (from Excel columns) ==========
+    // ========== BETTING ODDS ==========
     
     /// <summary>Bet365 home win odds (Column: B365H)</summary>
     public double? HomeWinOdds { get; init; }

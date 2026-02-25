@@ -31,6 +31,10 @@ public class GeminiAnalysisService : IGeminiAnalysisService
     {
         _httpClient = httpClient;
         _options = options.Value;
+        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        {
+            _options.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty;
+        }
         _logger = logger;
         _cache = cache;
     }
@@ -69,16 +73,21 @@ public class GeminiAnalysisService : IGeminiAnalysisService
             try
             {
                 var payload = BuildRequestPayload(chunk.ToList());
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key={_options.ApiKey}";
-
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key={_options.ApiKey}";
+                _logger.LogInformation("Sending batch of {Count} fixtures to Gemini 3.1 Pro", chunk.Count());
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                
                 using var response = await _httpClient.PostAsJsonAsync(url, payload);
+                stopwatch.Stop();
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("Gemini API error: {Error}", error);
+                    _logger.LogError("Gemini API error (took {Elapsed}ms): {Error}", stopwatch.ElapsedMilliseconds, error);
                     continue; // Continue to next chunk instead of returning
                 }
+
+                _logger.LogInformation("Gemini API success (took {Elapsed}ms)", stopwatch.ElapsedMilliseconds);
 
                 var geminiResponse = await response.Content.ReadFromJsonAsync<GeminiResponseDto>(JsonOptions);
                 var jsonString = geminiResponse?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
@@ -136,14 +145,20 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         try
         {
             var prompt = BuildCombinationsPrompt(candidates);
-            var payload = new
+            var payload = new GeminiRequest
             {
-                contents = new[] { new { parts = new[] { new { text = prompt } } } },
-                generationConfig = new
+                Contents = new[]
                 {
-                    temperature = 0.2,
-                    responseMimeType = "application/json",
-                    responseSchema = new
+                    new GeminiContent
+                    {
+                        Parts = new[] { new GeminiPart { Text = prompt } }
+                    }
+                },
+                GenerationConfig = new GeminiGenerationConfig
+                {
+                    Temperature = 0.2f,
+                    ResponseMimeType = "application/json",
+                    ResponseSchema = new
                     {
                         type = "ARRAY",
                         items = new
@@ -152,15 +167,15 @@ public class GeminiAnalysisService : IGeminiAnalysisService
                             properties = new
                             {
                                 name = new { type = "STRING", description = "Name of the parlay combination, e.g. 'High Conf Goal Double'" },
-                                fixtureIds = new { type = "ARRAY", items = new { type = "INTEGER" } }
+                                fixture_ids = new { type = "ARRAY", items = new { type = "INTEGER" } }
                             },
-                            required = new[] { "name", "fixtureIds" }
+                            required = new[] { "name", "fixture_ids" }
                         }
                     }
                 }
             };
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key={_options.ApiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key={_options.ApiKey}";
 
             using var response = await _httpClient.PostAsJsonAsync(url, payload);
 
@@ -209,27 +224,27 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         return result;
     }
 
-    private object BuildRequestPayload(List<GeminiBatchItem> items)
+    private GeminiRequest BuildRequestPayload(List<GeminiBatchItem> items)
     {
-        return new
+        return new GeminiRequest
         {
-            contents = new[]
+            Contents = new[]
             {
-                new
+                new GeminiContent
                 {
-                    role = "user",
-                    parts = new[]
+                    Role = "user",
+                    Parts = new[]
                     {
-                        new { text = BuildSystemPrompt() },
-                        new { text = BuildMatchPrompt(items) }
+                        new GeminiPart { Text = BuildSystemPrompt() },
+                        new GeminiPart { Text = BuildMatchPrompt(items) }
                     }
                 }
             },
-            generationConfig = new
+            GenerationConfig = new GeminiGenerationConfig
             {
-                temperature = 0.05,
-                responseMimeType = "application/json",
-                responseSchema = GetResponseSchema()
+                Temperature = 0.05f,
+                ResponseMimeType = "application/json",
+                ResponseSchema = GetResponseSchema()
             }
         };
     }
@@ -411,6 +426,42 @@ public class GeminiAnalysisService : IGeminiAnalysisService
         };
     }
     
+    private class GeminiRequest
+    {
+        [JsonPropertyName("contents")]
+        public GeminiContent[] Contents { get; set; } = Array.Empty<GeminiContent>();
+
+        [JsonPropertyName("generationConfig")]
+        public GeminiGenerationConfig? GenerationConfig { get; set; }
+    }
+
+    private class GeminiContent
+    {
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+
+        [JsonPropertyName("parts")]
+        public GeminiPart[] Parts { get; set; } = Array.Empty<GeminiPart>();
+    }
+
+    private class GeminiPart
+    {
+        [JsonPropertyName("text")]
+        public string? Text { get; set; }
+    }
+
+    private class GeminiGenerationConfig
+    {
+        [JsonPropertyName("temperature")]
+        public float? Temperature { get; set; }
+
+        [JsonPropertyName("responseMimeType")]
+        public string? ResponseMimeType { get; set; }
+
+        [JsonPropertyName("responseSchema")]
+        public object? ResponseSchema { get; set; }
+    }
+
     private class GeminiResponseDto
     {
         [JsonPropertyName("candidates")]
@@ -420,7 +471,7 @@ public class GeminiAnalysisService : IGeminiAnalysisService
     private class Candidate
     {
         [JsonPropertyName("content")]
-        public Content? Content { get; set; }
+        public Content Content { get; set; } = new();
     }
 
     private class Content
@@ -432,7 +483,7 @@ public class GeminiAnalysisService : IGeminiAnalysisService
     private class Part
     {
         [JsonPropertyName("text")]
-        public string Text { get; set; } = "";
+        public string Text { get; set; } = string.Empty;
     }
 
     private class GeminiMatchResponse

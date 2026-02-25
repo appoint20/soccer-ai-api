@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace soccer_gpt_infrastructure.Configuration;
@@ -101,17 +100,6 @@ public class DecisionThresholdsConfig
 
     public static DecisionThresholdsConfig CreateBalanced() => new();
 
-    public static DecisionThresholdsConfig LoadFromJson(string jsonPath)
-    {
-        var json = File.ReadAllText(jsonPath);
-        return JsonSerializer.Deserialize<DecisionThresholdsConfig>(json) ?? CreateBalanced();
-    }
-
-    public void SaveToJson(string jsonPath)
-    {
-        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(jsonPath, json);
-    }
 }
 
 public static class DecisionConfigurationExtensions

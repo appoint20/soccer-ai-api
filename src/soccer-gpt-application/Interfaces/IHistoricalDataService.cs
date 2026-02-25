@@ -3,7 +3,7 @@ using soccer_gpt_application.Models;
 namespace soccer_gpt_application.Interfaces;
 
 /// <summary>
-/// Service for accessing historical match data from Excel files
+/// Service for accessing historical match data from the persisted database
 /// </summary>
 public interface IHistoricalDataService
 {
@@ -18,12 +18,12 @@ public interface IHistoricalDataService
     Task<List<HistoricalMatchData>> GetTeamHistoryAsync(string teamName, int leagueId, DateTime beforeDate, int limit = 6);
 
     /// <summary>
-    /// Map API league ID to Excel division code
+    /// Map API league ID to canonical division code
     /// </summary>
     string GetDivisionCode(int leagueId);
 
     /// <summary>
-    /// Get list of available divisions in Excel data with counts
+    /// Get list of available divisions with record counts
     /// </summary>
     Task<Dictionary<string, int>> GetAvailableDivisionsAsync();
 }

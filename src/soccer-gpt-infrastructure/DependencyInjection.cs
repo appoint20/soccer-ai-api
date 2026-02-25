@@ -14,11 +14,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database context - disable FK to allow fixtures with teams not in Teams table
+        // Database context
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "/Users/shivm/Workspace/soccer-gpt-api/soccer.db";
-            options.UseSqlite($"Data Source={dbPath};Foreign Keys=False");
+            options.UseSqlite($"Data Source={dbPath};Foreign Keys=True");
         });
         
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -26,17 +26,20 @@ public static class DependencyInjection
         services.AddMemoryCache();
 
         services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
-        services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>();
+        services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
 
         InitApiFootballService(services, configuration);
 
         // Services
-        services.AddSingleton<IHistoricalDataService, HistoricalDataService>();
+        services.AddScoped<IHistoricalDataService, HistoricalDataService>();
 
         // Sync services
-        services.AddScoped<TeamSyncService>();
-        services.AddScoped<FixtureSyncService>();
-        services.AddHostedService<NightlySyncBackgroundService>(); // Orchestrates: standings@04:00, fixtures@04:15, ML@04:45, Gemini@05:00
+        services.AddScoped<ITeamSyncService, TeamSyncService>();
+        services.AddScoped<IFixtureSyncService, FixtureSyncService>();
+        services.AddScoped<ISyncJobRunner, SyncJobRunner>();
         
         // ML Prediction service
         services.AddSingleton<IMlPredictionService, MlPredictionService>();
@@ -68,12 +71,24 @@ public static class DependencyInjection
         
         if (apiConfig is null)
             throw new ApplicationException("API-Football configurations are missing!");
+        if (string.IsNullOrWhiteSpace(apiConfig.BaseUrl))
+            throw new ApplicationException("API-Football BaseUrl is missing.");
+
+        var apiKey = apiConfig.ApiKey;
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            // Backward compatibility for environments still using a flat env var name.
+            apiKey = Environment.GetEnvironmentVariable("APIFOOTBALL_API_KEY");
+        }
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ApplicationException(
+                "API-Football ApiKey is missing. Use ApiFootball__ApiKey (or APIFOOTBALL_API_KEY).");
         
         services.AddHttpClient<IApiFootballService, ApiFootballService>(client =>
         {
             client.BaseAddress = new Uri(apiConfig.BaseUrl);
-            client.DefaultRequestHeaders.Add("x-apisports-key", apiConfig.ApiKey);
+            client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
         });
     }
 }
-

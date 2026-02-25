@@ -18,6 +18,63 @@ public sealed class GetBacktestReportResponse : IResponse
 
     [JsonPropertyName("league_markets")]
     public List<LeagueMarketAccuracy> LeagueMarkets { get; init; } = [];
+
+    [JsonPropertyName("matches")]
+    public List<MatchBacktestDetail> Matches { get; init; } = [];
+
+    [JsonPropertyName("trap_stats")]
+    public AccuracyStats TrapStats { get; init; } = new();
+
+    [JsonPropertyName("gemini_stats")]
+    public AccuracyStats GeminiStats { get; init; } = new();
+}
+
+public sealed class AccuracyStats
+{
+    [JsonPropertyName("total_count")]
+    public int TotalCount { get; init; }
+
+    [JsonPropertyName("correct_count")]
+    public int CorrectCount { get; init; }
+
+    [JsonPropertyName("accuracy_percent")]
+    public double AccuracyPercent => TotalCount > 0 ? Math.Round((double)CorrectCount / TotalCount * 100, 1) : 0;
+}
+
+public sealed class MatchBacktestDetail
+{
+    [JsonPropertyName("date")]
+    public DateTime Date { get; init; }
+
+    [JsonPropertyName("league")]
+    public string League { get; init; } = "";
+
+    [JsonPropertyName("match")]
+    public string MatchName { get; init; } = "";
+
+    [JsonPropertyName("score")]
+    public string Score { get; init; } = "";
+
+    [JsonPropertyName("prediction")]
+    public string Prediction { get; init; } = "";
+
+    [JsonPropertyName("is_correct")]
+    public bool IsCorrect { get; init; }
+
+    [JsonPropertyName("decision")]
+    public string Decision { get; init; } = "";
+
+    [JsonPropertyName("is_trap")]
+    public bool IsTrap { get; init; }
+
+    [JsonPropertyName("trap_reason")]
+    public string TrapReason { get; init; } = "";
+
+    [JsonPropertyName("gemini_recommendation")]
+    public string GeminiRecommendation { get; init; } = "";
+
+    [JsonPropertyName("gemini_is_trap")]
+    public bool GeminiIsTrap { get; init; }
 }
 
 public sealed class BacktestSummary

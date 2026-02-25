@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using soccer_gpt_application.Interfaces;
+using soccer_gpt_application.Models;
 
 namespace soccer_gpt_infrastructure.Services;
 
@@ -10,6 +11,7 @@ namespace soccer_gpt_infrastructure.Services;
 /// </summary>
 public class TeamSyncService(
     IApiFootballService apiService, IApplicationDbContext dbContext, ILogger<TeamSyncService> logger)
+    : ITeamSyncService
 {
     // Supported English leagues
     private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 61, 62, 78, 79, 135, 136, 140, 141 ];
@@ -101,15 +103,4 @@ public class TeamSyncService(
         
         return result;
     }
-}
-
-/// <summary>
-/// Result of standings sync operation
-/// </summary>
-public class SyncResult
-{
-    public int LeaguesSynced { get; set; }
-    public int Created { get; set; }
-    public int Updated { get; set; }
-    public int Errors { get; set; }
 }

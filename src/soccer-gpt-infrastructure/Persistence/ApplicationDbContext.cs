@@ -23,6 +23,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasIndex(f => f.ApiId)
             .IsUnique();
 
+        modelBuilder.Entity<Fixture>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(f => f.HomeTeamId)
+            .HasPrincipalKey(t => t.ApiId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Fixture>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(f => f.AwayTeamId)
+            .HasPrincipalKey(t => t.ApiId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Fixture>()
+            .ToTable(t => t.HasCheckConstraint("CK_Fixtures_HomeAwayDifferent", "\"HomeTeamId\" <> \"AwayTeamId\""));
+
         modelBuilder.Entity<UserCombination>()
             .HasMany(uc => uc.Matches)
             .WithOne(m => m.UserCombination)
@@ -30,4 +47,3 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
-

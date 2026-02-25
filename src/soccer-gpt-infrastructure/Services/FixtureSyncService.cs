@@ -12,6 +12,7 @@ namespace soccer_gpt_infrastructure.Services;
 /// </summary>
 public class FixtureSyncService(IApiFootballService apiService, 
     IHistoricalDataService historicalService, IApplicationDbContext dbContext, ILogger<FixtureSyncService> logger)
+    : IFixtureSyncService
 {
     private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 135, 136, 61, 62, 140, 78, 79, 141 ];
 
@@ -105,8 +106,17 @@ public class FixtureSyncService(IApiFootballService apiService,
             .Where(f => f.StatusShort == "NS" && f.Date > DateTime.UtcNow && f.Date <= DateTime.UtcNow.AddDays(14))
             .ToList();
 
+        // Pre-fetch existing team IDs for this league to avoid repeated DB hits
+        var existingTeamIdsPhase1 = await dbContext.Teams
+            .Where(t => t.LeagueId == leagueId)
+            .Select(t => t.ApiId)
+            .ToHashSetAsync(ct);
+
         foreach (var apiFixture in upcomingFixtures)
         {
+            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIdsPhase1, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIdsPhase1, ct);
+
             var existingFixture = await dbContext.Fixtures
                 .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
 
@@ -132,8 +142,18 @@ public class FixtureSyncService(IApiFootballService apiService,
         // For recently completed (within 7 days), API still has odds - capture them!
         var completedFixtures = apiFixtures.Where(f => f.StatusShort == "FT").ToList();
 
+        // Pre-fetch existing team IDs for this league to avoid repeated DB hits
+        var existingTeamIds = await dbContext.Teams
+            .Where(t => t.LeagueId == leagueId)
+            .Select(t => t.ApiId)
+            .ToHashSetAsync(ct);
+
         foreach (var apiFixture in completedFixtures)
         {
+            // Ensure teams exist using local set for speed
+            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIds, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIds, ct);
+
             var existingFixture = await dbContext.Fixtures
                 .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
 
@@ -143,7 +163,6 @@ public class FixtureSyncService(IApiFootballService apiService,
             if (existingFixture == null)
             {
                 // Completed fixture we never captured - create with full enrichment
-                // If within 7 days, we can still get odds from API
                 var fixture = await CreateEnrichedFixtureAsync(apiFixture, leagueId, season, ct, fetchOdds: isWithinOddsWindow);
                 if (fixture != null)
                 {
@@ -164,8 +183,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                 result.Updated++;
             }
 
-            // Rate limit mitigation (avoid 429)
-            await Task.Delay(300, ct);
+            // Reduced delay (300ms -> 50ms) to maintain some rate limiting but improve speed
+            await Task.Delay(50, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -397,5 +416,34 @@ public class FixtureSyncService(IApiFootballService apiService,
         public double AwayGoalAvg { get; set; }
         public double HtHomeGoalAvg { get; set; }
         public double HtAwayGoalAvg { get; set; }
+    }
+
+
+
+    private async Task EnsureTeamExistsOptimizedAsync(int teamApiId, string teamName, int leagueId, HashSet<int> existingTeamIds, CancellationToken ct)
+    {
+        if (existingTeamIds.Contains(teamApiId))
+            return;
+
+        dbContext.Teams.Add(new Team
+        {
+            ApiId = teamApiId,
+            Name = string.IsNullOrWhiteSpace(teamName) ? $"Team {teamApiId}" : teamName,
+            LeagueId = leagueId,
+            Rank = 0,
+            Points = 0,
+            GoalsFor = 0,
+            GoalsAgainst = 0,
+            GoalsDiff = 0,
+            Played = 0,
+            Win = 0,
+            Draw = 0,
+            Lose = 0,
+            Form = string.Empty,
+            UpdatedAt = DateTime.UtcNow
+        });
+        
+        // Add to local set to avoid adding twice in the same batch
+        existingTeamIds.Add(teamApiId);
     }
 }

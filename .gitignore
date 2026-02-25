@@ -7,6 +7,7 @@ __pycache__/
 venv/
 ENV/
 .env
+.venv/
 
 # IDE
 .idea/
@@ -15,9 +16,16 @@ ENV/
 *.swo
 *.DotSettings.user
 
-# Data (large files)
-data/historical/*.xlsx
-data/upcoming/*.csv
+# Runtime/generated data artifacts
+out/
+src/soccer-gpt-api/api_cache/
+data/cache/
+data/raw/
+analysis*.json
+backtest_*.json
+combinations_*.json
+verify_poisson*.json
+sync_result.json
 
 # OS
 .DS_Store
@@ -38,6 +46,8 @@ coverage/
 
 # SQLite Database
 *.db
+*.db-shm
+*.db-wal
 
 # Test results
 TestResults/

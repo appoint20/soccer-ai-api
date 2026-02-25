@@ -39,6 +39,11 @@ public class GetBacktestReportHandler(
 
         // 1. Analyze all fixtures in parallel
         var evaluatedLegs = new ConcurrentBag<EvaluatedLeg>();
+        var matchDetails = new ConcurrentBag<MatchBacktestDetail>();
+        var geminiCorrectBag = new ConcurrentBag<bool>();
+        var geminiTotalBag = new ConcurrentBag<bool>();
+        var trapCorrectBag = new ConcurrentBag<bool>();
+        var trapTotalBag = new ConcurrentBag<bool>();
 
         await Parallel.ForEachAsync(fixtures, new ParallelOptions { MaxDegreeOfParallelism = 10, CancellationToken = cancellationToken }, async (fixture, ct) =>
         {
@@ -50,24 +55,93 @@ public class GetBacktestReportHandler(
                 if (analysis.Prediction == null) return;
 
                 var decisions = analysis.Decisions;
-                if (decisions.Decision == PredictionDecision.Avoid || decisions.Trap.IsTrap) return;
-
                 var homeName = teams.GetValueOrDefault(fixture.HomeTeamId, "Unknown");
                 var awayName = teams.GetValueOrDefault(fixture.AwayTeamId, "Unknown");
                 var actualHome = fixture.HomeGoal;
                 var actualAway = fixture.AwayGoal;
+                int totalGoals = actualHome + actualAway;
+                string score = $"{actualHome}-{actualAway}";
+
+                // --- Gemini Stats ---
+                if (!string.IsNullOrWhiteSpace(fixture.GeminiRecommendation))
+                {
+                    bool isGeminiCorrect = false;
+                    bool relevantGemini = true;
+                    switch (fixture.GeminiRecommendation)
+                    {
+                        case "Over 2.5 Goals": isGeminiCorrect = totalGoals > 2; break;
+                        case "Under 2.5 Goals": isGeminiCorrect = totalGoals < 3; break;
+                        case "BTTS": isGeminiCorrect = actualHome > 0 && actualAway > 0; break;
+                        case "Match Winner (Home)": isGeminiCorrect = actualHome > actualAway; break;
+                        case "Match Winner (Away)": isGeminiCorrect = actualAway > actualHome; break;
+                        default: relevantGemini = false; break;
+                    }
+                    if (relevantGemini)
+                    {
+                        geminiTotalBag.Add(true);
+                        if (isGeminiCorrect) geminiCorrectBag.Add(true);
+                    }
+                }
+
+                // --- Trap Stats (Was the trap detection correct?) ---
+                // Incorporate both System Traps and Gemini Traps
+                bool isSystemTrap = decisions.Trap.IsTrap;
+                bool isGeminiTrap = fixture.GeminiIsTrap ?? false;
+
+                if (isSystemTrap || isGeminiTrap)
+                {
+                    trapTotalBag.Add(true);
+                    
+                    // A trap detection is "correct" if the model's primary prediction failed
+                    bool modelCorrect = false;
+                    if (analysis.Prediction.Over25Prob > 0.6) modelCorrect = totalGoals > 2;
+                    else if (analysis.Prediction.BTTSProb > 0.6) modelCorrect = actualHome > 0 && actualAway > 0;
+                    else if (analysis.Prediction.Confidence > 0.6)
+                    {
+                        string winner = actualHome > actualAway ? "home" : actualHome == actualAway ? "draw" : "away";
+                        modelCorrect = analysis.Prediction.MatchWinner.Equals(winner, StringComparison.OrdinalIgnoreCase);
+                    }
+                    
+                    if (!modelCorrect) trapCorrectBag.Add(true);
+                }
+
+                // Add Match Detail
+                string bestPred = analysis.Prediction.Over25Prob > analysis.Prediction.BTTSProb ? 
+                    $"Over 2.5 ({analysis.Prediction.Over25Prob:P0})" : 
+                    $"BTTS ({analysis.Prediction.BTTSProb:P0})";
+                
+                bool isBestCorrect = analysis.Prediction.Over25Prob > analysis.Prediction.BTTSProb ?
+                    totalGoals > 2 : (actualHome > 0 && actualAway > 0);
+
+                matchDetails.Add(new MatchBacktestDetail
+                {
+                    Date = fixture.Date,
+                    League = analysis.LeagueName,
+                    MatchName = $"{homeName} vs {awayName}",
+                    Score = score,
+                    Prediction = bestPred,
+                    IsCorrect = isBestCorrect,
+                    Decision = decisions.Decision.ToString(),
+                    IsTrap = isSystemTrap,
+                    TrapReason = decisions.Trap.Reason,
+                    GeminiRecommendation = fixture.GeminiRecommendation ?? "None",
+                    GeminiIsTrap = isGeminiTrap
+                });
+
+                // Skip legs for combinations if Avoid/Trap (original logic preserved for ROI)
+                if (decisions.Decision == PredictionDecision.Avoid || isSystemTrap || isGeminiTrap) return;
 
                 // Over 2.5
-                if (decisions.Markets.Over25?.IsQualified == true && (analysis.LeagueName != "Serie B" && analysis.LeagueName != "Ligue 1" && analysis.LeagueName != "League One"))
+                if (decisions.Markets.Over25?.IsQualified == true)
                 {
-                    bool isCorrect = (actualHome + actualAway) > 2;
+                    bool isCorrect = totalGoals > 2;
                     double odds = NormalizeOdds(fixture.Over25Odds);
                     if (odds >= 1.50)
                         evaluatedLegs.Add(new EvaluatedLeg(fixture.Date.Date, analysis.LeagueName, "Over 2.5 Goals", analysis.Prediction.Over25Prob, odds, isCorrect, decisions.Decision.ToString()));
                 }
 
                 // BTTS
-                if (decisions.Markets.BTTS?.IsQualified == true && (analysis.LeagueName != "Serie A" && analysis.LeagueName != "Ligue 1" && analysis.LeagueName != "League Two" && analysis.LeagueName != "Serie B"))
+                if (decisions.Markets.BTTS?.IsQualified == true)
                 {
                     bool isCorrect = (actualHome > 0 && actualAway > 0);
                     double odds = NormalizeOdds(fixture.BttsYesOdds);
@@ -76,7 +150,7 @@ public class GetBacktestReportHandler(
                 }
 
                 // Winner
-                if (decisions.Markets.MatchWinner?.IsQualified == true && analysis.LeagueName != "Ligue 2")
+                if (decisions.Markets.MatchWinner?.IsQualified == true)
                 {
                     string pred = analysis.Prediction.MatchWinner;
                     string actualWinner = actualHome > actualAway ? "home" : actualHome == actualAway ? "draw" : "away";
@@ -164,14 +238,17 @@ public class GetBacktestReportHandler(
                 CombosWon = dailyCombos.Count(c => c.IsWon),
                 TotalStakedUnits = dailyCombos.Count, // Base 1 unit
                 TotalReturnedUnits = Math.Round(totalReturned / query.Stake, 2),
-            PlUnits = Math.Round(profit / query.Stake, 2),
+                PlUnits = Math.Round(profit / query.Stake, 2),
                 RoiPercent = Math.Round(roi, 2),
                 WinRate = Math.Round(comboWinRate, 1),
                 LegHitRate = Math.Round(baseHitRate, 1)
             },
             Markets = markets.OrderByDescending(x => x.Accuracy).ToList(),
             Leagues = leagues.OrderByDescending(x => x.Accuracy).ToList(),
-            LeagueMarkets = leagueMarkets.OrderByDescending(x => x.Accuracy).ToList()
+            LeagueMarkets = leagueMarkets.OrderByDescending(x => x.Accuracy).ToList(),
+            Matches = matchDetails.OrderByDescending(x => x.Date).ToList(),
+            GeminiStats = new AccuracyStats { TotalCount = geminiTotalBag.Count, CorrectCount = geminiCorrectBag.Count },
+            TrapStats = new AccuracyStats { TotalCount = trapTotalBag.Count, CorrectCount = trapCorrectBag.Count }
         };
     }
 

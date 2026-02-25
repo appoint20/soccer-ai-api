@@ -5,9 +5,9 @@ using soccer_gpt_application;
 using soccer_gpt_infrastructure;
 using soccer_gpt_infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-
-// Register Encoding Provider for ExcelDataReader
-System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+using Microsoft.AspNetCore.Authentication;
+using soccer_gpt_api.Configuration;
+using soccer_gpt_api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +34,22 @@ builder.Services.AddOpenApi("v1");
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddOptions<AdminApiKeyOptions>()
+    .Bind(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
+
+builder.Services.AddAuthentication(AdminApiKeyAuthenticationDefaults.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, AdminApiKeyAuthenticationHandler>(
+        AdminApiKeyAuthenticationDefaults.SchemeName, _ => { });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AdminApiKeyAuthenticationDefaults.PolicyName, policy =>
+    {
+        policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationDefaults.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
+});
+
 // Mediator.Net Configuration
 var mediaBuilder = new MediatorBuilder();
 mediaBuilder.RegisterHandlers(typeof(soccer_gpt_application.Features.Predictions.GetFixturePredictionsHandler).Assembly);
@@ -50,11 +66,11 @@ app.MapScalarApiReference(options =>
         .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 });
 
-app.UseCors("AllowAll");
-app.UseAuthorization();
-
-// Global Exception Handler
+// Global exception middleware should run before auth handlers
 app.UseMiddleware<soccer_gpt_api.Middleware.GlobalExceptionMiddleware>();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
@@ -66,4 +82,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
