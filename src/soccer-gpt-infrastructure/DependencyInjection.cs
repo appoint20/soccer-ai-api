@@ -17,15 +17,32 @@ public static class DependencyInjection
         // Database context
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "/Users/shivm/Workspace/soccer-gpt-api/soccer.db";
-            options.UseSqlite($"Data Source={dbPath};Foreign Keys=True");
+            var pgConn = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") 
+                         ?? configuration.GetConnectionString("DefaultConnection");
+
+            if (!string.IsNullOrWhiteSpace(pgConn))
+            {
+                options.UseNpgsql(pgConn);
+            }
+            else
+            {
+                var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "/Users/shivm/Workspace/soccer-gpt-api/soccer.db";
+                options.UseSqlite($"Data Source={dbPath};Foreign Keys=True");
+            }
         });
         
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         services.AddMemoryCache();
 
-        services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.Configure<GeminiOptions>(options =>
+        {
+            var section = configuration.GetSection(GeminiOptions.SectionName);
+            options.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") 
+                             ?? section["ApiKey"] 
+                             ?? string.Empty;
+        });
+
         services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>(client =>
         {
             client.Timeout = TimeSpan.FromMinutes(5);

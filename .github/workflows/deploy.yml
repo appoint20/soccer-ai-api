@@ -1,57 +1,81 @@
-name: Deploy to Google Cloud Run
+name: Build and Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main", "master" ]
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  SERVICE_NAME: "soccer-ai"
-  REGION: "europe-west1"
-  IMAGE_NAME: "gcr.io/${{ secrets.GCP_PROJECT_ID }}/soccer-ai"
+  GAR_LOCATION: ${{ secrets.GCP_GAR_LOCATION }} # e.g. europe-west3
+  REPOSITORY: ${{ secrets.GCP_GAR_REPOSITORY }} # e.g. soccer-gpt
+  IMAGE: soccer-gpt-api
 
 jobs:
-  deploy:
+  build-test-push:
+    name: Build, Test, and Push
     runs-on: ubuntu-latest
-
+    
     permissions:
       contents: 'read'
       id-token: 'write'
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Add authentication via Service Account JSON key stored in secrets
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+          dotnet-version: 10.0.x
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Restore dependencies
+        run: dotnet restore soccer-gpt-api.sln
 
-      - name: Build and Push Image
-        run: |
-          gcloud builds submit --tag ${{ env.IMAGE_NAME }} .
+      - name: Build
+        run: dotnet build soccer-gpt-api.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test soccer-gpt-api.sln --no-build -c Release --verbosity normal
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Docker Auth
+        uses: 'docker/login-action@v3'
+        with:
+          registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
+          username: '_json_key'
+          password: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Build and Push Container
+        run: |-
+          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" .
+          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: build-test-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
       - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.IMAGE_NAME }} \
-            --platform managed \
-            --allow-unauthenticated \
-            --region ${{ env.REGION }} \
-            --memory 2Gi \
-            --cpu 1 \
-            --min-instances 0 \
-            --max-instances 1 \
-            --set-env-vars GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-
-      - name: Output Service URL
-        run: |
-          echo "✅ Deployment Complete!"
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)')
-          echo "🌍 Service URL: $SERVICE_URL"
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: 'soccer-gpt-api'
+          region: '${{ env.GAR_LOCATION }}'
+          image: '${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}'
+          flags: '--allow-unauthenticated'
+          env_vars: |
+            ASPNETCORE_ENVIRONMENT=Production
+          secret_envs: |
+            POSTGRES_CONNECTION_STRING=POSTGRES_CONNECTION_STRING:latest
+            APIFOOTBALL_API_KEY=APIFOOTBALL_API_KEY:latest
+            GEMINI_API_KEY=GEMINI_API_KEY:latest
