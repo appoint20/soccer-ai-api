@@ -4,6 +4,8 @@ resource "google_artifact_registry_repository" "soccer_ai_repo" {
   repository_id = var.repository_id
   description   = "Docker repository for Soccer AI API"
   format        = "DOCKER"
+
+  depends_on = [google_project_service.required_apis]
 }
 
 # Secret Manager for Connection Strings and API Keys
@@ -16,6 +18,8 @@ resource "google_secret_manager_secret" "postgres_connection_string" {
       }
     }
   }
+
+  depends_on = [google_project_service.required_apis]
 }
 
 resource "google_secret_manager_secret" "api_football_key" {
@@ -27,6 +31,8 @@ resource "google_secret_manager_secret" "api_football_key" {
       }
     }
   }
+
+  depends_on = [google_project_service.required_apis]
 }
 
 resource "google_secret_manager_secret" "gemini_api_key" {
@@ -38,4 +44,6 @@ resource "google_secret_manager_secret" "gemini_api_key" {
       }
     }
   }
+
+  depends_on = [google_project_service.required_apis]
 }
