@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "soccer-ai-tf-state" # Ensure this bucket is created manually or via a separate bootstrap step
+    bucket = "soccer_ai_state" # Ensure this bucket is created manually or via a separate bootstrap step
     prefix = "terraform/state"
   }
 }
