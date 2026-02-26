@@ -14,3 +14,20 @@ variable "repository_id" {
   type        = string
   default     = "soccer-ai"
 }
+
+variable "supabase_access_token" {
+  description = "Supabase Access Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "supabase_org_id" {
+  description = "Supabase Organization ID"
+  type        = string
+}
+
+variable "supabase_db_password" {
+  description = "Supabase Database Password"
+  type        = string
+  sensitive   = true
+}

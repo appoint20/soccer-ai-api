@@ -78,13 +78,13 @@ jobs:
       - name: Deploy to Cloud Run
         uses: 'google-github-actions/deploy-cloudrun@v2'
         with:
-          service: 'soccer-gpt-api'
+          service: 'soccer-ai-api'
           region: '${{ env.GAR_LOCATION }}'
           image: '${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}'
           flags: '--allow-unauthenticated'
           env_vars: |
             ASPNETCORE_ENVIRONMENT=Production
-          secret_envs: |
+          secrets: |
             POSTGRES_CONNECTION_STRING=POSTGRES_CONNECTION_STRING:latest
             APIFOOTBALL_API_KEY=APIFOOTBALL_API_KEY:latest
             GEMINI_API_KEY=GEMINI_API_KEY:latest
