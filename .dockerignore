@@ -1,48 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-.venv/
-**/.venv/
-ENV/
-.env
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
+**/.git
+**/.github
+**/.idea
+**/.vscode
+**/.qodo
+**/bin
+**/obj
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.csv
+**/*.log
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# .NET Build output
-**/bin/
-**/obj/
-*.dll
-*.pdb
-
-# Git
-.git/
-.gitignore
-
-# Tests and docs (not needed in container)
+terraform/
+iac/
 tests/
-docs/
-
-# IMPORTANT: Force include data files (override .gitignore)
-# Even though they're gitignored, we NEED them in Docker
-!data/
-!data/upcoming/
-!data/upcoming/*.csv
-!data/predictions/
-!data/predictions/**/*.json
-!data/historical/
-!data/historical/*.xlsx
+out/
+publish/

@@ -1,0 +1,116 @@
+Using launch settings from /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/Properties/launchSettings.json...
+Building...
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsLock' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT OR IGNORE INTO "__EFMigrationsLock"("Id", "Timestamp") VALUES(1, '2026-03-03 13:18:05.484767+00:00');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+          "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
+          "ProductVersion" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsHistory' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DELETE FROM "__EFMigrationsLock";
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5165
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Starting native C# ML.NET Training Pipeline (with AutoML tuning)...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (28ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "f"."Id", "f"."ApiId", "f"."AwayBallPossession", "f"."AwayElo", "f"."AwayGoal", "f"."AwayGoalAvg", "f"."AwayPassesAccurate", "f"."AwayShots", "f"."AwayShotsOnTarget", "f"."AwayTeamId", "f"."AwayWinOdds", "f"."AwayXg", "f"."BttsYesOdds", "f"."CreatedAt", "f"."Date", "f"."DrawOdds", "f"."HomeBallPossession", "f"."HomeElo", "f"."HomeGoal", "f"."HomeGoalAvg", "f"."HomePassesAccurate", "f"."HomeShots", "f"."HomeShotsOnTarget", "f"."HomeTeamId", "f"."HomeWinOdds", "f"."HomeXg", "f"."HtAwayGoal", "f"."HtAwayGoalAvg", "f"."HtHomeGoal", "f"."HtHomeGoalAvg", "f"."IsCurrentSeason", "f"."IsDerby", "f"."LeagueId", "f"."Over25Odds", "f"."Status", "f"."Under25Odds", "f"."UpdatedAt"
+      FROM "Fixtures" AS "f"
+      WHERE "f"."Status" = 'FT'
+      ORDER BY "f"."Date"
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Loaded 21559 finished fixtures from DB for AutoML
+info: SoccerAi.Infrastructure.MlNet.MlTrainingDataBuilder[0]
+      Starting fast in-memory ML feature extraction for 21559 fixtures...
+info: SoccerAi.Infrastructure.MlNet.MlTrainingDataBuilder[0]
+      Built 20563 ML training rows in 484ms
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Models will be saved to: /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/data/models
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Starting AutoML sweep for TargetOver25 (15 seconds)...
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetOver25 Best AutoML Model ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Algorithm: ReplaceMissingValues=>ConvertType=>OneHotEncoding=>Concatenate=>FastTreeBinary
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Val ROC-AUC: 96.20 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetOver25 Final Unseen Test Metrics ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test Accuracy: 90.06 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test F1 Score: 89.29 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Starting AutoML sweep for TargetBtts (15 seconds)...
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetBtts Best AutoML Model ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Algorithm: ReplaceMissingValues=>ConvertType=>OneHotHashEncoding=>Concatenate=>FastTreeBinary
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Val ROC-AUC: 95.29 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetBtts Final Unseen Test Metrics ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test Accuracy: 90.08 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test F1 Score: 91.42 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Starting AutoML sweep for TargetGoals23 (15 seconds)...
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetGoals23 Best AutoML Model ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Algorithm: ReplaceMissingValues=>ConvertType=>OneHotEncoding=>Concatenate=>FastTreeBinary
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Val ROC-AUC: 78.64 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetGoals23 Final Unseen Test Metrics ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test Accuracy: 69.60 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Test F1 Score: 65.09 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Starting AutoML sweep for TargetResult Multiclass (15 seconds)...
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetResult Best AutoML Model ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Algorithm: ReplaceMissingValues=>ConvertType=>Concatenate=>Unknown=>FastTreeOva=>Unknown
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Val MacroAccuracy: 57.28 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      --- TargetResult Metrics (Multiclass) ---
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Micro Accuracy: 60.00 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Macro Accuracy: 56.82 %
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      Log Loss:       0.7733472479719586
+info: SoccerAi.Infrastructure.MlNet.MlTrainingService[0]
+      All ML.NET models trained successfully.
+info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...

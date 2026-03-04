@@ -1,11 +1,10 @@
-# soccer-gpt-api
+# soccer-ai-api
 
 ## Architecture
 
-- `src/soccer-gpt-api`: ASP.NET Core API (presentation layer).
-- `src/soccer-gpt-application`: application contracts and core use-case logic.
-- `src/soccer-gpt-infrastructure`: EF Core persistence, API-Football adapter, Gemini adapter, sync orchestration.
-- `src/soccer-gpt-worker`: command-driven worker for Cloud Scheduler / Cloud Run Jobs.
+- `src/soccer-ai-api`: ASP.NET Core API (presentation layer).
+- `src/soccer-ai-application`: application contracts and core use-case logic.
+- `src/soccer-ai-infrastructure`: EF Core persistence, API-Football adapter, Gemini adapter, sync orchestration.
 
 The runtime source of truth is the SQLite database. Excel/CSV runtime ingestion has been removed.
 
@@ -32,18 +31,13 @@ echo -n "11111111-2222-3333-4444-555555555555" | shasum -a 256 | awk '{print $1}
 ## Build and Test
 
 ```bash
-dotnet build soccer-gpt-api.sln
-dotnet test tests/soccer-gpt-tests/soccer-gpt-tests.csproj
+dotnet build soccer-ai-api.sln
+dotnet test tests/soccer-ai-tests/soccer-ai-tests.csproj
 ```
 
 ## Worker Jobs
 
 ```bash
-dotnet run --project src/soccer-gpt-worker/soccer-gpt-worker.csproj -- --job standings --season 2025
-dotnet run --project src/soccer-gpt-worker/soccer-gpt-worker.csproj -- --job fixtures --season 2025
-dotnet run --project src/soccer-gpt-worker/soccer-gpt-worker.csproj -- --job gemini
-dotnet run --project src/soccer-gpt-worker/soccer-gpt-worker.csproj -- --job ml
-dotnet run --project src/soccer-gpt-worker/soccer-gpt-worker.csproj -- --job nightly --season 2025
 ```
 
 ## Cloud Run Deploy (API)

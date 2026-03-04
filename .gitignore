@@ -1,53 +1,31 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-ENV/
-.env
-.venv/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*.DotSettings.user
-
-# Runtime/generated data artifacts
-out/
-src/soccer-gpt-api/api_cache/
-data/cache/
-data/raw/
-analysis*.json
-backtest_*.json
-combinations_*.json
-verify_poisson*.json
-sync_result.json
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# .NET Build artifacts
+## .NET
 bin/
 obj/
-*.dll
-*.pdb
-*.exe
+*.user
+*.userosscache
+*.sln.docstates
 
-# Coverage
-coverage/
+## Visual Studio Code
+.vscode/
+.history/
 
-# SQLite Database
+## SQLite
 *.db
 *.db-shm
 *.db-wal
 
-# Test results
-TestResults/
+## Logs
+logs/
+*.log
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json

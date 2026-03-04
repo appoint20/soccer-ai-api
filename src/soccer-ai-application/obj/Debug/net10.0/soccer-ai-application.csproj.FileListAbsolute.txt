@@ -1,0 +1,13 @@
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.deps.json
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.dll
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.pdb
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.csproj.AssemblyReference.cache
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfoInputs.cache
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfo.cs
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.csproj.CoreCompileInputs.cache
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/refint/soccer-ai-application.dll
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/obj/Debug/net10.0/ref/soccer-ai-application.dll

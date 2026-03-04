@@ -1,86 +1,71 @@
-name: 'Soccer AI App Deployment'
+name: Build and Deploy to Google Cloud
 
 on:
-  workflow_run:
-    workflows: ["Soccer AI Infrastructure"]
-    types:
-      - completed
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GAR_LOCATION: ${{ secrets.GCP_GAR_LOCATION || 'europe-west3' }}
-  REPOSITORY: ${{ secrets.GCP_GAR_REPOSITORY || 'soccer-ai' }}
-  IMAGE: soccer-ai-api
+  PROJECT_ID: "soccer-ai-250226" # Replace with your actual GCP Project ID if different
+  REGION: "europe-west3" # Your specified TF region
+  IMAGE_NAME: "soccer-ai-api"
 
 jobs:
-  build-test-push:
-    name: 'Build, Test, and Push'
-    # Only run on push OR if the infrastructure workflow finished successfully
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+  deploy:
     runs-on: ubuntu-latest
-    
+
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore dependencies
-        run: dotnet restore soccer-gpt-api.sln
-
-      - name: Build
-        run: dotnet build soccer-gpt-api.sln --no-restore -c Release
-
-      - name: Test
-        run: dotnet test soccer-gpt-api.sln --no-build -c Release --verbosity normal
-
-      - name: Google Auth
+      - name: Authenticate to Google Cloud
         id: auth
-        uses: 'google-github-actions/auth@v2'
+        uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+          # Alternatively, use Workload Identity Federation:
+          # workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+          # service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-      - name: Docker Auth
-        uses: 'docker/login-action@v3'
-        with:
-          registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
-          username: '_json_key'
-          password: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Build and Push Container
-        run: |-
-          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" .
-          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
-  deploy:
-    name: 'Deploy to Cloud Run'
-    needs: build-test-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Google Auth
-        id: auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Extract DB Hash for Cache Busting
+        id: dbhash
+        run: |
+          echo "hash=$(sha256sum src/soccer-ai-api/data/soccer.db | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 
-      - name: Deploy to Cloud Run
-        uses: 'google-github-actions/deploy-cloudrun@v2'
-        with:
-          service: 'soccer-ai-api'
-          region: '${{ env.GAR_LOCATION }}'
-          image: '${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}'
-          flags: '--allow-unauthenticated'
-          env_vars: |
-            ASPNETCORE_ENVIRONMENT=Production
-          secrets: |
-            POSTGRES_CONNECTION_STRING=POSTGRES_CONNECTION_STRING:latest
-            APIFOOTBALL_API_KEY=APIFOOTBALL_API_KEY:latest
-            GEMINI_API_KEY=GEMINI_API_KEY:latest
+      - name: Build and Push Docker Image
+        run: |
+          # Build relative to the dockerfile but context in the root directory
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }} -f src/soccer-ai-api/Dockerfile .
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }}
+
+      - name: Upload SQLite Database to GCS
+        run: |
+          # Assuming you have a bucket setup via TF mapping (e.g. soccer-data-[project])
+          # Replace 'soccer-ai-db-bucket' with your actual bucket name
+          gsutil cp src/soccer-ai-api/data/soccer.db gs://soccer-ai-db-bucket/soccer.db
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: iac/terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: iac/terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="project_id=${PROJECT_ID}" \
+            -var="region=${REGION}" \
+            -var="docker_image_api=${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }}"
