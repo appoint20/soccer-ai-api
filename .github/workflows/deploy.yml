@@ -46,7 +46,7 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           # Build relative to the dockerfile but context in the root directory
-          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }} -f src/soccer-ai-api/Dockerfile .
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }} -f Dockerfile .
           docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }}
 
       - name: Upload SQLite Database to GCS
@@ -59,11 +59,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: iac/terraform
+        working-directory: terraform
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: iac/terraform
+        working-directory: terraform
         run: |
           terraform apply -auto-approve \
             -var="project_id=${PROJECT_ID}" \
