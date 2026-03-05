@@ -39,10 +39,10 @@ public class LoginHandler(IApplicationDbContext dbContext, IJwtService jwtServic
     {
         var users = new List<User>
         {
-            new() { Id = 1, Username = "wk", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Wk_S0ccer_2024!_#Safe") },
-            new() { Id = 2, Username = "rajev", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rajev_Sc0re_99!_@Sec") },
-            new() { Id = 3, Username = "sahil", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sahil_G0al_Kpr!_#2024") },
-            new() { Id = 4, Username = "shivm", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Shivm_Adm1n_!Soccer#Gpt") }
+            new() { Id = 1, Username = "wk", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunlocked") },
+            new() { Id = 2, Username = "rajev", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunderdog") },
+            new() { Id = 3, Username = "sahil", PasswordHash = BCrypt.Net.BCrypt.HashPassword("mastermind") },
+            new() { Id = 4, Username = "shivm", PasswordHash = BCrypt.Net.BCrypt.HashPassword("destroyer") }
         };
 
         dbContext.Users.AddRange(users);
