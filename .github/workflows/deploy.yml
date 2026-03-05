@@ -56,17 +56,4 @@ jobs:
           # Upload local database snapshot to the dedicated Cloud Storage Bucket
           gsutil cp src/soccer-ai-api/data/soccer.db gs://soccer-ai-db-${PROJECT_ID}/soccer.db
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        working-directory: terraform
-        run: terraform init
-
-      - name: Terraform Apply
-        working-directory: terraform
-        run: |
-          terraform apply -auto-approve \
-            -var="project_id=${PROJECT_ID}" \
-            -var="region=${REGION}" \
-            -var="docker_image_api=${REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${IMAGE_NAME}:${{ github.sha }}"
