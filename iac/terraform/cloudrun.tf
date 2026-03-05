@@ -33,15 +33,7 @@ resource "google_cloud_run_v2_service" "api_service" {
         }
       }
 
-      env {
-        name = "ConnectionStrings__PostgresConnection"
-        value_source {
-          secret_key_ref {
-            secret  = "POSTGRES_CONNECTION_STRING"
-            version = "latest"
-          }
-        }
-      }
+
 
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
@@ -70,8 +62,8 @@ resource "google_cloud_run_v2_service" "api_service" {
       }
 
       volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
+        name       = "gcs-db"
+        mount_path = "/app/data"
       }
       startup_probe {
         initial_delay_seconds = 10
@@ -85,9 +77,10 @@ resource "google_cloud_run_v2_service" "api_service" {
     }
 
     volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [google_sql_database_instance.postgres.connection_name]
+      name = "gcs-db"
+      gcs {
+        bucket    = data.google_storage_bucket.database_bucket.name
+        read_only = false
       }
     }
 

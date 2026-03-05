@@ -53,9 +53,8 @@ jobs:
 
       - name: Upload SQLite Database to GCS
         run: |
-          # Assuming you have a bucket setup via TF mapping (e.g. soccer-data-[project])
-          # Replace 'soccer-ai-db-bucket' with your actual bucket name
-          gsutil cp src/soccer-ai-api/data/soccer.db gs://soccer-ai-db-bucket/soccer.db
+          # Upload local database snapshot to the dedicated Cloud Storage Bucket
+          gsutil cp src/soccer-ai-api/data/soccer.db gs://soccer-ai-db-${PROJECT_ID}/soccer.db
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

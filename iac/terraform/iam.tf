@@ -16,3 +16,10 @@ resource "google_project_iam_member" "appoint_secret_accessor" {
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:appoint@soccer-ai-250226.iam.gserviceaccount.com"
 }
+
+# Grant Cloud Storage access for SQLite GCS FUSE mapping
+resource "google_storage_bucket_iam_member" "appoint_storage_admin" {
+  bucket = data.google_storage_bucket.database_bucket.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:appoint@soccer-ai-250226.iam.gserviceaccount.com"
+}
