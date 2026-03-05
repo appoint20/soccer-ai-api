@@ -1,4 +1,3 @@
-using SoccerAi.Application.Features.Predictions;
 using SoccerAi.Application.Models;
 
 namespace SoccerAi.Application.Interfaces;

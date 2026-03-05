@@ -10,148 +10,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/ApiBaseOption.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/FootballApiOptions.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/GeminiOptions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DOTNET_INTEGRATION_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/DOTNET_INTEGRATION_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile.worker" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/EXECUTIVE_SUMMARY.md" beforeDir="false" afterPath="$PROJECT_DIR$/EXECUTIVE_SUMMARY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PROJECT_STRUCTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/PROJECT_STRUCTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PYTHON_SETUP_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/PYTHON_SETUP_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VERIFICATION_REPORT.md" beforeDir="false" afterPath="$PROJECT_DIR$/VERIFICATION_REPORT.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VISUAL_REFERENCE.md" beforeDir="false" afterPath="$PROJECT_DIR$/VISUAL_REFERENCE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/.terraform.lock.hcl" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/.terraform.lock.hcl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/cloudrun.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/cloudrun.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/iam.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/iam.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/outputs.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/outputs.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/scheduler.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/scheduler.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/secrets.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/secrets.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iac/terraform/variables.tf" beforeDir="false" afterPath="$PROJECT_DIR$/iac/terraform/variables.tf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/export_onnx.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/extract_features.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/btts_model.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/btts_model.onnx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/feature_columns.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/goals_2_3_model.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/goals_2_3_model.onnx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/hda_model.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/hda_model.onnx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/over25_model.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/over25_model.onnx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/models/training_summary.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/train_models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ml/training_data.parquet" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/soccer-ai-api.sln" beforeDir="false" afterPath="$PROJECT_DIR$/soccer-ai-api.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/AdminController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/LeagueController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/LeagueController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.csproj.FileListAbsolute.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/project.packagespec.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/project.packagespec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/soccer-ai-api.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/soccer-ai-api.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Entities/Fixture.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Entities/Fixture.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Entities/FixtureGeminiAnalysis.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Entities/FixtureGeminiAnalysis.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Entities/UserCombination.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Backtesting/GetBacktestReportHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Backtesting/GetBacktestReportHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/CreateUserCombinationHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/CreateUserCombinationHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IApplicationDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IApplicationDbContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IEnrichedFixtureIngestionService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IGeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IGeminiAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IHistoricalDataService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMatchAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IProbabilityConsensusEngine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IProbabilityConsensusEngine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/ISyncJobRunner.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/ColumnMappings.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/GeminiAnalysis.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Models/GeminiAnalysis.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/GeminiBatchItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Models/GeminiBatchItem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/HistoricalMatchDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/IngestionResult.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/PredictionResult.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Models/PredictionResult.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Services/Combinations/CombinationPortfolioBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Services/Combinations/CombinationPortfolioBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/ref/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/ref/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/refint/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/refint/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.csproj.CoreCompileInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.csproj.CoreCompileInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Configuration/GeminiOptions.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/ApiFootballConfiguration.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Persistence/ApplicationDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Persistence/ApplicationDbContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FeatureExtractionService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FeatureExtractionService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/HistoricalDataService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchDataProvider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchDataProvider.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MlPredictionService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MlPredictionService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/SyncJobRunner.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/TeamSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/TeamSyncService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.deps.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.deps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/ref/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/ref/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/refint/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/refint/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.assets.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.CoreCompileInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.CoreCompileInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.sourcelink.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.assets.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.assets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.nuget.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.nuget.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.packagespec.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/project.packagespec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/rider.project.model.nuget.info" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/rider.project.restore.info" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.dgspec.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.dgspec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.g.props" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.g.props" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.g.targets" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/soccer-ai-infrastructure.csproj.nuget.g.targets" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/Program.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/appsettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/Debug/net10.0/.NETCoreApp,Version=v10.0.AssemblyAttributes.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/Debug/net10.0/apphost" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/Debug/net10.0/soccer-ai-worker.GlobalUsings.g.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/Debug/net10.0/soccer-ai-worker.assets.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/Debug/net10.0/soccer-ai-worker.csproj.FileListAbsolute.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/project.assets.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/project.nuget.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/project.packagespec.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/rider.project.model.nuget.info" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/rider.project.restore.info" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/soccer-ai-worker.csproj.nuget.dgspec.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/soccer-ai-worker.csproj.nuget.g.props" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/obj/soccer-ai-worker.csproj.nuget.g.targets" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-worker/soccer-ai-worker.csproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/SyncIntegrationTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/SyncIntegrationTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/bin/Debug/net10.0/soccer-ai-infrastructure.deps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/bin/Debug/net10.0/soccer-ai-infrastructure.deps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/Debug/net10.0/soccer-ai-integration-tests.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/Debug/net10.0/soccer-ai-integration-tests.assets.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/project.assets.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/project.assets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/project.nuget.cache" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/project.nuget.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/rider.project.model.nuget.info" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/rider.project.restore.info" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.dgspec.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.dgspec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.g.props" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.g.props" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.g.targets" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/obj/soccer-ai-integration-tests.csproj.nuget.g.targets" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Predictions/GetFixturePredictionsHandler.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Predictions/GetFixturePredictionsQuery.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMlPredictionService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMlPredictionService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/QueryIntegrationTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/tests/soccer-ai-integration-tests/QueryIntegrationTests.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -277,10 +139,10 @@
           <line>169</line>
           <properties documentPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs" containingFunctionPresentation="Method 'UpsertAnalysisAsync'">
             <startOffsets>
-              <option value="7329" />
+              <option value="7335" />
             </startOffsets>
             <endOffsets>
-              <option value="7330" />
+              <option value="7336" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="8" />

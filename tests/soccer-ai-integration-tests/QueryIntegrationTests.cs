@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Mediator.Net;
 using Microsoft.Extensions.DependencyInjection;
-using SoccerAi.Application.Features.Predictions;
 using SoccerAi.Application.Features.Combinations;
 using SoccerAi.Application.Features.Backtesting;
 using SoccerAi.Application.Features.Analysis;
@@ -9,26 +8,11 @@ using SoccerAi.Application.Features.Analysis;
 namespace SoccerAi.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class QueryIntegrationTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class QueryIntegrationTests(CustomWebApplicationFactory<Program> factory)
+    : IClassFixture<CustomWebApplicationFactory<Program>>
 {
-    private readonly IServiceProvider _services;
+    private readonly IServiceProvider _services = factory.Services;
 
-    public QueryIntegrationTests(CustomWebApplicationFactory<Program> factory)
-    {
-        _services = factory.Services;
-    }
-
-    [Fact]
-    public async Task GetFixturePredictionsQuery_ReturnsValidResponse()
-    {
-        using var scope = _services.CreateScope();
-        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-
-        var query = new GetFixturePredictionsQuery { Date = DateTimeOffset.Parse("2025-01-01"), LeagueId = 39, Language = "en" };
-        var result = await mediator.RequestAsync<GetFixturePredictionsQuery, GetFixturePredictionsResponse>(query, CancellationToken.None);
-        result.Should().NotBeNull();
-    }
-    
     [Fact]
     public async Task GetMatchCombinationQuery_ReturnsValidResponse()
     {
