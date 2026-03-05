@@ -93,7 +93,7 @@ builder.Services.AddAuthorization(options =>
 
 // Mediator.Net Configuration
 var mediaBuilder = new MediatorBuilder();
-mediaBuilder.RegisterHandlers(typeof(SoccerAi.Application.Features.Predictions.GetFixturePredictionsHandler).Assembly);
+mediaBuilder.RegisterHandlers(typeof(SoccerAi.Application.Features.Analysis.GetMatchAnalysisHandler).Assembly);
 builder.Services.RegisterMediator(mediaBuilder);
 
 var app = builder.Build();
