@@ -60,7 +60,7 @@ public class GetMatchAnalysisHandler(
         {
             try 
             {
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, cancellationToken);
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, lang, cancellationToken);
                 fixtureAnalysisMap[fixture.Id] = analysis;
                 analysisCount++;
             }

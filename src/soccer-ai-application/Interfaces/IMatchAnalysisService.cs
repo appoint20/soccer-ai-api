@@ -13,7 +13,7 @@ public interface IMatchAnalysisService
     /// Run full analysis pipeline for a single fixture:
     /// Team stats → Poisson → Monte Carlo → ML → Weighted prediction → Decisions
     /// </summary>
-    Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, CancellationToken ct);
+    Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct);
 
     Task<List<FixtureAnalysisResult>> AnalyzeLatestFixtureByAsync(DateTime now);
 }

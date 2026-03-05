@@ -129,7 +129,7 @@ public class GeminiSyncService(
             return;
         }
 
-        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, cancellationToken);
+        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", cancellationToken);
         var item = new GeminiBatchItem
         {
             FixtureId = fixture.Id,

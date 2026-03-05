@@ -50,7 +50,7 @@ public class GetMatchCombinationHandler(
         var analysisMap = new Dictionary<int, FixtureAnalysisResult>();
         foreach (var fixture in fixtures)
         {
-            var analysis = await analysisService.AnalyzeFixtureAsync(fixture, cancellationToken);
+            var analysis = await analysisService.AnalyzeFixtureAsync(fixture, query.Language, cancellationToken);
             analysisMap[fixture.Id] = analysis;
         }
 

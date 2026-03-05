@@ -34,7 +34,7 @@ public sealed class MatchAnalysisService(
         {
             try
             {
-                var result = await AnalyzeFixtureAsync(fixture, CancellationToken.None);
+                var result = await AnalyzeFixtureAsync(fixture, "en", CancellationToken.None);
                 results.Add(result);
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ public sealed class MatchAnalysisService(
         return results;
     }
 
-    public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, CancellationToken ct)
+    public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct)
     {
         // 1. Load data (team stats + H2H)
         var data = await dataProvider.LoadAsync(fixture, ct);
@@ -69,7 +69,7 @@ public sealed class MatchAnalysisService(
         var decisions = decisionService.Evaluate(odds, data.TeamStats, data.H2H, prediction, models);
 
         var geminiEntity = await dbContext.FixtureAnalyses
-            .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id, ct);
+            .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
 
         var gemini = geminiEntity != null ? new GeminiAnalysis
         {

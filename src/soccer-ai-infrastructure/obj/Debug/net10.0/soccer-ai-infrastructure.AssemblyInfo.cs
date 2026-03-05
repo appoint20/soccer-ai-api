@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("soccer-ai-infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d1b7f41f13dd160d3d88baee73d90639b6dcd248")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51ccb555662edb7f1bd7111681ef5852c470f699")]
 [assembly: System.Reflection.AssemblyProductAttribute("soccer-ai-infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("soccer-ai-infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

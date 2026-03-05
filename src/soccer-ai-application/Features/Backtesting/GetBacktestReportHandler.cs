@@ -62,7 +62,7 @@ public class GetBacktestReportHandler(
             {
                 using var scope = serviceProvider.CreateScope();
                 var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, ct);
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", ct);
                 if (analysis.Prediction == null) return;
 
                 var decisions = analysis.Decisions;
