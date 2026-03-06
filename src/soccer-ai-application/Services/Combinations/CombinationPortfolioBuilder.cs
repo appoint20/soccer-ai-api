@@ -20,6 +20,7 @@ namespace SoccerAi.Application.Services.Combinations;
 /// </summary>
 public class CombinationPortfolioBuilder(
     IExpectedValueEngine evEngine,
+    IGeminiAnalysisService geminiAnalysisService,
     ILogger<CombinationPortfolioBuilder> logger)
 {
     // Odds configuration for combination building
@@ -64,22 +65,28 @@ public class CombinationPortfolioBuilder(
 
         logger.LogInformation("Raw candidates gathered: {Count}", rawCandidates.Count);
 
-        // Step 2: Filter by decision quality
-        var targetDecisions = new[]
+        // Step 2: Order by confidence and segment into dynamic batches of 10
+        var orderedCandidates = rawCandidates
+            .OrderByDescending(x => x.Confidence)
+            .ThenByDescending(x => x.ExpectedValue)
+            .ToList();
+
+        var combinations = new List<CombinationDto>();
+
+        foreach (var batch in orderedCandidates.Chunk(10))
         {
-            PredictionDecision.StrongBet.ToString(),
-            PredictionDecision.SmallEdge.ToString(),
-            PredictionDecision.LeanBet.ToString()
-        };
+            logger.LogInformation("Requesting Gemini to build combinations for batch of {Count}", batch.Length);
+            var batchCombinations = await geminiAnalysisService.BuildCombinationsAsync(batch.ToList());
+            
+            if (batchCombinations != null && batchCombinations.Any())
+            {
+                combinations.AddRange(batchCombinations);
+            }
+        }
 
-        var goalPortfolio = FilterGoalBets(rawCandidates, targetDecisions);
-        var winnerPortfolio = FilterWinnerBets(rawCandidates);
+        logger.LogInformation("Successfully generated {Count} combinations dynamically via Gemini.", combinations.Count);
 
-        logger.LogInformation("Portfolios: {GoalCount} goal, {WinnerCount} winner",
-            goalPortfolio.Count, winnerPortfolio.Count);
-
-        // Step 3: Build combinations from unique fixtures
-        return BuildCombinations(goalPortfolio, winnerPortfolio);
+        return combinations;
     }
 
     /// <summary>
@@ -304,65 +311,6 @@ public class CombinationPortfolioBuilder(
             analysis.Gemini?.Reasoning ?? "",
             analysis.Gemini?.Analysis ?? ""
         );
-    }
-
-    /// <summary>
-    /// Filters goal-based bets by decision quality and confidence.
-    /// </summary>
-    private List<CombinationMatchDto> FilterGoalBets(
-        List<CombinationMatchDto> candidates,
-        string[] targetDecisions)
-    {
-        return candidates
-            .Where(x => (x.Market == "Over 2.5 Goals" || x.Market == "Both Teams To Score") &&
-                       targetDecisions.Contains(x.Decision))
-            .OrderByDescending(x => x.Confidence)
-            .ThenByDescending(x => x.ExpectedValue)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Filters winner bets by decision quality.
-    /// </summary>
-    private List<CombinationMatchDto> FilterWinnerBets(
-        List<CombinationMatchDto> candidates)
-    {
-        return candidates
-            .Where(x => x.Market == "Match Winner" &&
-                       (x.Decision == "StrongBet" || x.Decision == "SmallEdge"))
-            .OrderByDescending(x => x.Confidence)
-            .ThenByDescending(x => x.ExpectedValue)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Builds parlays from uncorrelated markets (distinct fixtures).
-    /// </summary>
-    private List<CombinationDto> BuildCombinations(
-        List<CombinationMatchDto> goalPortfolio,
-        List<CombinationMatchDto> winnerPortfolio)
-    {
-        var combinations = new List<CombinationDto>();
-
-        // Ensure no overlapping fixtures within portfolios
-        var uniqueGoals = goalPortfolio.GroupBy(x => x.FixtureId).Select(g => g.First()).ToList();
-        var uniqueWinners = winnerPortfolio.GroupBy(x => x.FixtureId).Select(g => g.First()).ToList();
-
-        // Build doubles and triples from goal bets
-        if (uniqueGoals.Count >= 2)
-            combinations.Add(new CombinationDto("High Value Goals Double", uniqueGoals.Take(2).ToList()));
-
-        if (uniqueGoals.Count >= 5)
-            combinations.Add(new CombinationDto("Mixed Goals Treble", uniqueGoals.Skip(2).Take(3).ToList()));
-
-        // Build doubles and triples from winner bets
-        if (uniqueWinners.Count >= 2)
-            combinations.Add(new CombinationDto("Statistical Winners Double", uniqueWinners.Take(2).ToList()));
-
-        if (uniqueWinners.Count >= 5)
-            combinations.Add(new CombinationDto("Elite Match Winner Treble", uniqueWinners.Skip(2).Take(3).ToList()));
-
-        return combinations;
     }
 
     /// <summary>

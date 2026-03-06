@@ -86,7 +86,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
             return new();
 
         var parsed = await ExecuteGeminiRequest<List<GeminiCombinationResponse>>(
-            BuildCombinationsPrompt(candidates), null); // Combinations don't have a defined schema yet or use default
+            BuildCombinationsPrompt(candidates), GetCombinationsSchema());
 
         if (parsed == null)
             return new();
@@ -207,29 +207,28 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
     private static string BuildCombinationsPrompt(List<CombinationMatchDto> candidates)
     {
         var sb = new StringBuilder();
-
         sb.AppendLine("""
 You are a professional betting portfolio optimizer.
 
 GOAL:
-Create EXACTLY 9 unique betting combinations.
+Analyze the provided batch of matches and construct high-quality accumulators (parlays).
 
 STRICT RULES (MUST FOLLOW):
-1. Create:
-   - 4 DOUBLE combinations (2 matches each)
-   - 5 TREBLE combinations (3 matches each)
+1. Create ONLY:
+   - DOUBLE combinations (2 matches each)
+   - TREBLE combinations (3 matches each)
 
-2. A fixture can appear ONLY ONCE across ALL combinations.
+2. A fixture can appear ONLY ONCE across ALL combinations in this batch.
    NEVER reuse a match.
 
-3. Prioritize:
-   - highest confidence
-   - highest expected value
-   - low risk correlation
+3. Selection Criteria:
+   - High confidence and high expected value.
+   - Low risk correlation.
+   - Prefer different leagues inside the same combo. If not possible, use a maximum of two matches from the same league.
 
-4. Prefer different leagues inside same combo. if not possible then use max two matches from sane league
-
-5. If uniqueness cannot be satisfied → return fewer combinations.
+4. DYNAMIC GENERATION:
+   - Do NOT force combinations!
+   - If it is not mathematically/logically possible to create high-quality, uncorrelated combinations from this batch, return fewer combinations, or an empty list.
 
 Return only JSON.
 """);
@@ -524,4 +523,33 @@ Do NOT include explanations outside JSON.
         public string Name { get; set; } = "";
         public List<int> FixtureIds { get; set; } = new();
     }
+
+    private static object GetCombinationsSchema() => new
+    {
+        type = "ARRAY",
+        description = "List of generated combinations.",
+        items = new
+        {
+            type = "OBJECT",
+            properties = new Dictionary<string, object>
+            {
+                {
+                    "name", new
+                    {
+                        type = "STRING",
+                        description = "A catchy, descriptive name for the combination (e.g., 'High Value Goals Double')."
+                    }
+                },
+                {
+                    "fixtureIds", new
+                    {
+                        type = "ARRAY",
+                        description = "Integer array of exactly 2 or 3 fixture IDs included in this combination.",
+                        items = new { type = "INTEGER" }
+                    }
+                }
+            },
+            required = new[] { "name", "fixtureIds" }
+        }
+    };
 }
