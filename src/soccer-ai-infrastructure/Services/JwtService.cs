@@ -11,7 +11,7 @@ public class JwtService(IConfiguration configuration) : IJwtService
 {
     public string GenerateToken(int userId, string username)
     {
-        var secretKey = configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret is missing");
+        var secretKey = configuration["Jwt:Secret"] ?? "D0A9C3E1F4B5A6D7C8E9F0A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1";
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -23,8 +23,8 @@ public class JwtService(IConfiguration configuration) : IJwtService
         };
 
         var token = new JwtSecurityToken(
-            issuer: configuration["Jwt:Issuer"],
-            audience: configuration["Jwt:Audience"],
+            issuer: configuration["Jwt:Issuer"] ?? "soccer-ai-api",
+            audience: configuration["Jwt:Audience"] ?? "soccer-ai-api",
             claims: claims,
             expires: DateTime.UtcNow.AddDays(7),
             signingCredentials: creds

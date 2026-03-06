@@ -23,7 +23,7 @@ public sealed class MatchAnalysisService(
     public async Task<List<FixtureAnalysisResult>> AnalyzeLatestFixtureByAsync(DateTime now)
     {
         var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
-        var endUtc = startUtc.AddDays(1);
+        var endUtc = startUtc.AddDays(5);
 
         var fixtures = await dbContext.Fixtures
             .Where(f => f.Date >= startUtc && f.Date < endUtc)

@@ -37,15 +37,18 @@ public class LoginHandler(IApplicationDbContext dbContext, IJwtService jwtServic
 
     private async Task SeedUsersAsync(CancellationToken cancellationToken)
     {
-        var users = new List<User>
-        {
-            new() { Id = 1, Username = "wk", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunlocked") },
-            new() { Id = 2, Username = "rajev", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunderdog") },
-            new() { Id = 3, Username = "sahil", PasswordHash = BCrypt.Net.BCrypt.HashPassword("mastermind") },
-            new() { Id = 4, Username = "shivm", PasswordHash = BCrypt.Net.BCrypt.HashPassword("destroyer") }
-        };
+        if (!await dbContext.Users.AnyAsync(u => u.Username == "wk", cancellationToken))
+            dbContext.Users.Add(new User { Username = "wk", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunlocked") });
 
-        dbContext.Users.AddRange(users);
+        if (!await dbContext.Users.AnyAsync(u => u.Username == "rajev", cancellationToken))
+            dbContext.Users.Add(new User { Username = "rajev", PasswordHash = BCrypt.Net.BCrypt.HashPassword("masterlockunderdog") });
+
+        if (!await dbContext.Users.AnyAsync(u => u.Username == "sahil", cancellationToken))
+            dbContext.Users.Add(new User { Username = "sahil", PasswordHash = BCrypt.Net.BCrypt.HashPassword("mastermind") });
+
+        if (!await dbContext.Users.AnyAsync(u => u.Username == "shivm", cancellationToken))
+            dbContext.Users.Add(new User { Username = "shivm", PasswordHash = BCrypt.Net.BCrypt.HashPassword("destroyer") });
+
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
