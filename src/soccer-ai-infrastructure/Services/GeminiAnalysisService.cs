@@ -80,7 +80,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
 
     // ========================= COMBINATIONS =========================
 
-    public async Task<List<CombinationDto>> BuildCombinationsAsync(List<CombinationMatchDto> candidates)
+    public async Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates)
     {
         if (candidates == null || candidates.Count == 0 || !HasApiKey())
             return new();
@@ -173,76 +173,178 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
 
     private List<CombinationDto> ValidateAndBuildCombinations(
         List<GeminiCombinationResponse> raw,
-        List<CombinationMatchDto> candidates)
+        List<MatchAnalysis> candidates)
     {
         var usedFixtures = new HashSet<int>();
         var result = new List<CombinationDto>();
+        var candidateIds = candidates.Select(c => c.Id).ToHashSet();
 
         foreach (var combo in raw)
         {
-            if (combo.FixtureIds.Count is < 2 or > 3)
+            if (combo.Matches is null || combo.Matches.Count is < 2 or > 3)
                 continue;
 
-            if (combo.FixtureIds.Any(id => usedFixtures.Contains(id)))
+            var fixtureIds = combo.Matches.Select(m => m.FixtureId).ToList();
+
+            if (fixtureIds.Any(id => usedFixtures.Contains(id)))
                 continue;
 
-            var matches = candidates
-                .Where(c => combo.FixtureIds.Contains(c.FixtureId))
-                .ToList();
-
-            if (matches.Count != combo.FixtureIds.Count)
+            // Ensure all fixture IDs exist in the original candidate batch
+            if (!fixtureIds.All(id => candidateIds.Contains(id)))
                 continue;
 
-            foreach (var id in combo.FixtureIds)
+            foreach (var id in fixtureIds)
                 usedFixtures.Add(id);
 
-            result.Add(new CombinationDto(combo.Name, matches));
+            result.Add(new CombinationDto
+            {
+                CombinationId = combo.CombinationId,
+                Type = combo.Type,
+                TotalOdds = Math.Round(combo.TotalOdds, 2),
+                Matches = combo.Matches.Select(m => new CombinationMatchDto
+                {
+                    FixtureId = m.FixtureId,
+                    League = m.League,
+                    HomeTeam = m.HomeTeam,
+                    AwayTeam = m.AwayTeam,
+                    Selection = m.Selection,
+                    Odds = m.Odds
+                }).ToList(),
+                Reason = combo.Reason
+            });
         }
 
         return result;
     }
 
     // ========================= PROMPTS =========================
+private static string BuildCombinationsPrompt(List<MatchAnalysis> candidates)
+{
+    var sb = new StringBuilder();
 
-    private static string BuildCombinationsPrompt(List<CombinationMatchDto> candidates)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("""
-You are a professional betting portfolio optimizer.
+    sb.AppendLine("""
+You are a professional football betting portfolio optimizer.
 
-GOAL:
-Analyze the provided batch of matches and construct high-quality accumulators (parlays).
+Your job is to construct SAFE accumulator combinations (parlays)
+from a batch of pre-analyzed football matches.
 
-STRICT RULES (MUST FOLLOW):
-1. Create ONLY:
-   - DOUBLE combinations (2 matches each)
-   - TREBLE combinations (3 matches each)
+------------------------------------------------
+GOAL
+------------------------------------------------
 
-2. A fixture can appear ONLY ONCE across ALL combinations in this batch.
-   NEVER reuse a match.
+Build only HIGH QUALITY betting combinations using the
+model recommendation already provided in each match.
 
-3. Selection Criteria:
-   - High confidence and high expected value.
-   - Low risk correlation.
-   - Prefer different leagues inside the same combo. If not possible, use a maximum of two matches from the same league.
+Only create combinations when the selections are strong enough.
 
-4. DYNAMIC GENERATION:
-   - Do NOT force combinations!
-   - If it is not mathematically/logically possible to create high-quality, uncorrelated combinations from this batch, return fewer combinations, or an empty list.
+Never force combinations.
+
+------------------------------------------------
+STRICT COMBINATION RULES
+------------------------------------------------
+
+1. Allowed accumulator size:
+   - DOUBLE (2 matches)
+   - TREBLE (3 matches)
+
+2. A match Id may appear ONLY ONCE globally across ALL combinations.
+   If a match has already been used in a combination, it cannot appear again.
+
+3. Maximum combinations allowed in this batch: 4
+
+4. Selection filter:
+   Ignore matches if:
+   - Confidence < 65
+   - Trap = true
+   - Recommendation = "Avoid"
+
+5. Correlation control:
+   - Prefer matches from different leagues
+   - Maximum 2 matches from same league in a combination
+
+------------------------------------------------
+ODDS RULES
+------------------------------------------------
+
+Selection odds depend on recommendation:
+
+BTTS → OddsBttsYes  
+Over 2.5 Goals → OddsOver25  
+Under 2.5 Goals → OddsUnder25  
+Match Winner (Home) → OddsHomeWin  
+Match Winner (Away) → OddsAwayWin
+
+Accumulator odds = product of all selection odds.
+
+Minimum required accumulator odds = 1.68
+
+If any odds are missing or null:
+Ignore the minimum odds rule for that combination.
+
+------------------------------------------------
+MATCH USAGE RULE
+------------------------------------------------
+
+A match Id may appear ONLY once across ALL combinations.
+
+Example (INVALID):
+
+Combo 1: Match 1001 + Match 1002  
+Combo 2: Match 1001 + Match 1003   ❌
+
+Match 1001 already used.
+
+------------------------------------------------
+DYNAMIC GENERATION
+------------------------------------------------
+
+Do NOT force combinations.
+
+If only 1 valid combination exists → return 1  
+If none are good enough → return empty array.
+
+Quality over quantity.
+
+------------------------------------------------
+OUTPUT FORMAT (STRICT JSON)
+------------------------------------------------
+
+Return ONLY valid JSON.
+
+[
+  {
+    "combinationId": 1,
+    "type": "DOUBLE | TREBLE",
+    "totalOdds": number,
+    "matches": [
+      {
+        "fixtureId": number,
+        "league": "string",
+        "homeTeam": "string",
+        "awayTeam": "string",
+        "selection": "BTTS | Over 2.5 Goals | Under 2.5 Goals | Match Winner (Home) | Match Winner (Away)",
+        "odds": number
+      }
+    ],
+    "reason": "short explanation why this accumulator is strong"
+  }
+]
 
 Return only JSON.
+Do not include explanations outside JSON.
 """);
 
-        sb.AppendLine("\nCANDIDATES:");
+    sb.AppendLine("\nMATCH BATCH DATA (JSON):");
 
-        foreach (var c in candidates.OrderByDescending(x => x.Confidence))
-        {
-            sb.AppendLine(
-                $"ID:{c.FixtureId} | {c.HomeTeam} vs {c.AwayTeam} | {c.LeagueName} | {c.Market}:{c.Prediction} | Odds:{c.Odds:F2} | Conf:{c.Confidence}% | EV:{c.ExpectedValue:F2}");
-        }
+    var json = JsonSerializer.Serialize(
+        candidates,
+        new JsonSerializerOptions { WriteIndented = true });
 
-        return sb.ToString();
-    }
+    sb.AppendLine(json);
+
+    return sb.ToString();
+}
+
 
     // ========================= PROMPTS =========================
 
@@ -520,36 +622,75 @@ Do NOT include explanations outside JSON.
 
     private class GeminiCombinationResponse
     {
-        public string Name { get; set; } = "";
-        public List<int> FixtureIds { get; set; } = new();
+        [JsonPropertyName("combinationId")]
+        public int CombinationId { get; set; }
+
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "";
+
+        [JsonPropertyName("totalOdds")]
+        public double TotalOdds { get; set; }
+
+        [JsonPropertyName("matches")]
+        public List<GeminiCombinationMatch> Matches { get; set; } = [];
+
+        [JsonPropertyName("reason")]
+        public string Reason { get; set; } = "";
+    }
+
+    private class GeminiCombinationMatch
+    {
+        [JsonPropertyName("fixtureId")]
+        public int FixtureId { get; set; }
+
+        [JsonPropertyName("league")]
+        public string League { get; set; } = "";
+
+        [JsonPropertyName("homeTeam")]
+        public string HomeTeam { get; set; } = "";
+
+        [JsonPropertyName("awayTeam")]
+        public string AwayTeam { get; set; } = "";
+
+        [JsonPropertyName("selection")]
+        public string Selection { get; set; } = "";
+
+        [JsonPropertyName("odds")]
+        public double Odds { get; set; }
     }
 
     private static object GetCombinationsSchema() => new
     {
         type = "ARRAY",
-        description = "List of generated combinations.",
+        description = "List of generated betting accumulator combinations.",
         items = new
         {
             type = "OBJECT",
             properties = new Dictionary<string, object>
             {
-                {
-                    "name", new
-                    {
-                        type = "STRING",
-                        description = "A catchy, descriptive name for the combination (e.g., 'High Value Goals Double')."
+                { "combinationId", new { type = "INTEGER", description = "Sequential ID starting from 1." } },
+                { "type", new { type = "STRING", description = "DOUBLE or TREBLE", @enum = new[] { "DOUBLE", "TREBLE" } } },
+                { "totalOdds", new { type = "NUMBER", description = "Product of all selection odds." } },
+                { "matches", new {
+                    type = "ARRAY",
+                    description = "The 2 or 3 match selections in this combination.",
+                    items = new {
+                        type = "OBJECT",
+                        properties = new Dictionary<string, object>
+                        {
+                            { "fixtureId", new { type = "INTEGER" } },
+                            { "league", new { type = "STRING" } },
+                            { "homeTeam", new { type = "STRING" } },
+                            { "awayTeam", new { type = "STRING" } },
+                            { "selection", new { type = "STRING", @enum = new[] { "BTTS", "Over 2.5 Goals", "Under 2.5 Goals", "Match Winner (Home)", "Match Winner (Away)" } } },
+                            { "odds", new { type = "NUMBER" } }
+                        },
+                        required = new[] { "fixtureId", "league", "homeTeam", "awayTeam", "selection", "odds" }
                     }
-                },
-                {
-                    "fixtureIds", new
-                    {
-                        type = "ARRAY",
-                        description = "Integer array of exactly 2 or 3 fixture IDs included in this combination.",
-                        items = new { type = "INTEGER" }
-                    }
-                }
+                }},
+                { "reason", new { type = "STRING", description = "Short explanation why this accumulator is strong." } }
             },
-            required = new[] { "name", "fixtureIds" }
+            required = new[] { "combinationId", "type", "totalOdds", "matches", "reason" }
         }
     };
 }

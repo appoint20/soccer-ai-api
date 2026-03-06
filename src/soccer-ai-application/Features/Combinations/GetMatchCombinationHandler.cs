@@ -1,29 +1,28 @@
+using Mediator.Net;
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using Microsoft.Extensions.Logging;
-using SoccerAi.Application.Helpers;
+using SoccerAi.Application.Features.Analysis;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
-using SoccerAi.Application.Services.Combinations;
 
 namespace SoccerAi.Application.Features.Combinations;
 
 /// <summary>
-/// Handles combination portfolio generation requests.
+/// Handles combination portfolio generation requests directly from JSON Analysis payloads.
 ///
 /// Orchestrates the combination pipeline:
-/// 1. Fetches fixtures and team data for the specified date
-/// 2. Analyzes all fixtures through statistical models
-/// 3. Builds portfolio from qualified market candidates
-/// 4. Returns combination recommendations with EV metrics
+/// 1. Fetches full Match Analysis JSON objects via Mediator GetMatchAnalysisQuery 
+/// 2. Ranks matches by highest overall internal confidence 
+/// 3. Batches matches in groupings of 10 and yields straight to Gemini AI
+/// 4. Returns structured combination DTOs combining the raw JSON elements
 ///
-/// Refactored for single responsibility: orchestration only.
-/// Portfolio building logic delegated to CombinationPortfolioBuilder.
-/// Data loading delegated to FixtureQueryHelper.
+/// Refactored to bypass mathematical portfolio generators.
 /// </summary>
 public class GetMatchCombinationHandler(
-    FixtureQueryHelper queryHelper, IMatchAnalysisService analysisService,
-    CombinationPortfolioBuilder portfolioBuilder, ILogger<GetMatchCombinationHandler> logger)
+    IMediator mediator,
+    IGeminiAnalysisService geminiAnalysisService,
+    ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
     public async Task<GetMatchCombinationResponse> Handle(
@@ -31,39 +30,40 @@ public class GetMatchCombinationHandler(
         CancellationToken cancellationToken)
     {
         var query = context.Message;
-        logger.LogInformation("Generating combination for {Date}", query.Date.ToString("yyyy-MM-dd"));
+        logger.LogInformation("Generating JSON combination structures for {Date}", query.Date.ToString("yyyy-MM-dd"));
 
-        // Step 1: Load fixtures and teams
-        var (fixtures, teams) = await queryHelper.GetFixturesWithTeamsAsync(
-            query.Date,
-            cancellationToken);
+        // Step 1: Request full Match Analysis payload via Mediator
+        var analysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
+        var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
 
-        logger.LogInformation("Loaded {Count} fixtures for {Date}", fixtures.Count, query.Date.ToString("yyyy-MM-dd"));
+        var matches = analysisResponse.Matches;
 
-        if (fixtures.Count == 0)
+        if (matches == null || matches.Count == 0)
         {
-            logger.LogInformation("No fixtures found for date {Date}", query.Date.ToString("yyyy-MM-dd"));
+            logger.LogInformation("No analyzed matches found for date {Date}", query.Date.ToString("yyyy-MM-dd"));
             return new GetMatchCombinationResponse([]);
         }
 
-        // Step 2: Analyze all fixtures
-        var analysisMap = new Dictionary<int, FixtureAnalysisResult>();
-        foreach (var fixture in fixtures)
+        // Step 2: Rank matches by absolute backend confidence to feed Gemini the best baseline
+        var orderedCandidates = matches
+            .OrderByDescending(x => x.Gemini?.Confidence ?? 0.0)
+            .ToList();
+
+        var combinations = new List<CombinationDto>();
+
+        // Step 3: Segment into dynamic API batches of 10 matches
+        foreach (var batch in orderedCandidates.Chunk(10))
         {
-            var analysis = await analysisService.AnalyzeFixtureAsync(fixture, query.Language, cancellationToken);
-            analysisMap[fixture.Id] = analysis;
+            logger.LogInformation("Yielding {Count} raw MatchAnalysis JSON elements to Gemini Combos.", batch.Length);
+            var batchCombinations = await geminiAnalysisService.BuildCombinationsAsync(batch.ToList());
+            
+            if (batchCombinations != null && batchCombinations.Any())
+            {
+                combinations.AddRange(batchCombinations);
+            }
         }
 
-        logger.LogInformation("Analyzed {Count} fixtures", analysisMap.Count);
-
-        // Step 3: Build portfolio combinations
-        var combinations = await portfolioBuilder.BuildPortfolioAsync(
-            fixtures,
-            teams,
-            analysisMap,
-            cancellationToken);
-
-        logger.LogInformation("Generated {Count} combinations", combinations.Count);
+        logger.LogInformation("Successfully generated {Count} dynamic combinations via Gemini JSON logic.", combinations.Count);
 
         return new GetMatchCombinationResponse(combinations);
     }

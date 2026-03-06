@@ -15,7 +15,7 @@ public static class DependencyInjection
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();
         services.AddScoped<Services.Analysis.AnalysisResponseMapper>();
-        services.AddScoped<Services.Combinations.CombinationPortfolioBuilder>();
+
 
         return services;
     }

@@ -1,4 +1,5 @@
 using Mediator.Net.Contracts;
+using System.Text.Json.Serialization;
 
 namespace SoccerAi.Application.Features.Combinations;
 
@@ -10,39 +11,45 @@ public class GetMatchCombinationQuery(DateTimeOffset date, string language = "en
 
 public class GetMatchCombinationResponse(List<CombinationDto> combinations) : IResponse
 {
+    [JsonPropertyName("combinations")]
     public List<CombinationDto> Combinations { get; } = combinations;
 }
 
-public record CombinationDto(
-    string Name,
-    List<CombinationMatchDto> Matches
-);
+public sealed class CombinationDto
+{
+    [JsonPropertyName("combination_id")]
+    public int CombinationId { get; init; }
 
-public record CombinationMatchDto(
-    int FixtureId,
-    int LeagueId,
-    string LeagueName,
-    DateTimeOffset MatchDate,
-    string HomeTeam,
-    string AwayTeam,
-    string Market, 
-    string Prediction, 
-    double Confidence,
-    double Odds, 
-    string? Status,
-    int? ActualHomeGoals,
-    int? ActualAwayGoals,
-    bool IsTrap,
-    bool IsConsensus,
-    bool IsFallback,
-    string? TrapReason,
-    double ExpectedValue = 0,
-    string Decision = "NoBet",
-    string? GeminiRecommendation = null,
-    double GeminiConfidence = 0,
-    bool GeminiIsTrap = false,
-    string? GeminiTrapReason = null,
-    string? GeminiOneLineSummary = null,
-    string? GeminiReasoning = null,   // Maps to frontend m.gemini_reasoning
-    string? GeminiAnalysisText = null // Maps to frontend m.gemini_analysis_text
-);
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = "";
+
+    [JsonPropertyName("total_odds")]
+    public double TotalOdds { get; init; }
+
+    [JsonPropertyName("matches")]
+    public List<CombinationMatchDto> Matches { get; init; } = [];
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; init; } = "";
+}
+
+public sealed class CombinationMatchDto
+{
+    [JsonPropertyName("fixture_id")]
+    public int FixtureId { get; init; }
+
+    [JsonPropertyName("league")]
+    public string League { get; init; } = "";
+
+    [JsonPropertyName("home_team")]
+    public string HomeTeam { get; init; } = "";
+
+    [JsonPropertyName("away_team")]
+    public string AwayTeam { get; init; } = "";
+
+    [JsonPropertyName("selection")]
+    public string Selection { get; init; } = "";
+
+    [JsonPropertyName("odds")]
+    public double Odds { get; init; }
+}

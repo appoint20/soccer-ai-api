@@ -19,7 +19,7 @@ public class BacktestController(IMediator mediator) : ControllerBase
     /// <returns>Backtest Summary and Accuracy Breakdown</returns>
     [HttpGet]
     [ProducesResponseType<GetBacktestReportResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Get([FromQuery] int weeksBack = 10, [FromQuery] double stake = 25.0, CancellationToken ct = default)
+    public async Task<IActionResult> Get([FromQuery] int weeksBack = 10, [FromQuery] double stake = 100.0, CancellationToken ct = default)
     {
         var response = await mediator.RequestAsync<GetBacktestReportQuery, GetBacktestReportResponse>(
             new GetBacktestReportQuery(weeksBack, stake), ct);
