@@ -7,6 +7,6 @@ namespace SoccerAi.Application.Interfaces;
 /// </summary>
 public interface IGeminiSyncService
 {
-    Task SyncUpcomingFixturesAsync(List<FixtureAnalysisResult> fixtures, CancellationToken cancellationToken = default);
+    Task SyncUpcomingFixturesAsync(DateTime now, CancellationToken cancellationToken = default);
     Task SyncSingleFixtureAsync(int fixtureId, CancellationToken cancellationToken = default);
 }

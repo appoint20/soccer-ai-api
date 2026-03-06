@@ -13,58 +13,84 @@ public class GeminiSyncService(
     ILogger<GeminiSyncService> logger)
     : IGeminiSyncService
 {
-    public async Task SyncUpcomingFixturesAsync(List<FixtureAnalysisResult> fixtures, CancellationToken cancellationToken = default)
+    public async Task SyncUpcomingFixturesAsync(DateTime now, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Running Gemini bilingual batch sync (EN + DE) for {Count} fixtures.", fixtures.Count);
+        logger.LogInformation("Starting optimized Gemini batch sync for the next 5 days.");
+
+        var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+        var endUtc = startUtc.AddDays(5);
+
+        // 1. Fetch raw fixtures from DB
+        var fixtures = await dbContext.Fixtures
+            .Where(f => f.Date >= startUtc && f.Date < endUtc)
+            .OrderBy(f => f.Date)
+            .ToListAsync(cancellationToken);
+
+        if (fixtures.Count == 0)
+        {
+            logger.LogInformation("No fixtures found in the next 5 days.");
+            return;
+        }
+
+        logger.LogInformation("Found {Count} upcoming fixtures in the database window.", fixtures.Count);
 
         var totalProcessed = 0;
         var toAnalyze = new List<GeminiBatchItem>();
 
-        foreach (var analysis in fixtures)
+        // 2. Filter BEFORE heavy ML prediction
+        foreach (var fixture in fixtures)
         {
-            // 1. Check if both EN and DE analysis already exist in the database
-            var langCount = await dbContext.FixtureAnalyses
-                .CountAsync(a => a.FixtureId == analysis.FixtureId && (a.Lang == "en" || a.Lang == "de"), cancellationToken);
+            var alreadyAnalyzedCount = await dbContext.FixtureAnalyses
+                .CountAsync(a => a.FixtureId == fixture.Id && (a.Lang == "en" || a.Lang == "de"), cancellationToken);
 
-            if (langCount >= 2)
+            if (alreadyAnalyzedCount >= 2)
             {
-                logger.LogInformation("Skipping Fixture {FixtureId} as both EN and DE analyses already exist.", analysis.FixtureId);
+                logger.LogInformation("Skipping Fixture {FixtureId}: Already analyzed completely.", fixture.Id);
                 continue;
             }
 
-            // 2. Prepare batch item
-            toAnalyze.Add(new GeminiBatchItem
+            try
             {
-                FixtureId = analysis.FixtureId,
-                League = analysis.LeagueName,
-                HomeTeam = analysis.TeamStats.Home.Name,
-                AwayTeam = analysis.TeamStats.Away.Name,
-                HomeStats = analysis.TeamStats.Home,
-                AwayStats = analysis.TeamStats.Away,
-                ModelHomeWin = analysis.Models.Poisson.HomeWin,
-                ModelDraw = analysis.Models.Poisson.Draw,
-                ModelAwayWin = analysis.Models.Poisson.AwayWin,
-                ModelOver25 = analysis.Models.Poisson.Over25,
-                ModelBTTS = analysis.Models.Poisson.BTTS,
-                OddsHomeWin = analysis.OddsHomeWin,
-                OddsDraw = analysis.OddsDraw,
-                OddsAwayWin = analysis.OddsAwayWin,
-                OddsOver25 = analysis.OddsOver25,
-                OddsBTTS = analysis.OddsBttsYes,
-                HomeElo = analysis.HomeElo,
-                AwayElo = analysis.AwayElo
-            });
+                // Run predictive ML for this unanalyzed fixture
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", cancellationToken);
+
+                toAnalyze.Add(new GeminiBatchItem
+                {
+                    FixtureId = analysis.FixtureId,
+                    League = analysis.LeagueName,
+                    HomeTeam = analysis.TeamStats.Home.Name,
+                    AwayTeam = analysis.TeamStats.Away.Name,
+                    HomeStats = analysis.TeamStats.Home,
+                    AwayStats = analysis.TeamStats.Away,
+                    ModelHomeWin = analysis.Models.Poisson.HomeWin,
+                    ModelDraw = analysis.Models.Poisson.Draw,
+                    ModelAwayWin = analysis.Models.Poisson.AwayWin,
+                    ModelOver25 = analysis.Models.Poisson.Over25,
+                    ModelBTTS = analysis.Models.Poisson.BTTS,
+                    OddsHomeWin = analysis.OddsHomeWin,
+                    OddsDraw = analysis.OddsDraw,
+                    OddsAwayWin = analysis.OddsAwayWin,
+                    OddsOver25 = analysis.OddsOver25,
+                    OddsBTTS = analysis.OddsBttsYes,
+                    HomeElo = analysis.HomeElo,
+                    AwayElo = analysis.AwayElo
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to predict stats for fixture {FixtureId} before Gemini batching.", fixture.Id);
+            }
         }
 
         if (toAnalyze.Count == 0)
         {
-            logger.LogInformation("No new fixtures need analysis.");
+            logger.LogInformation("No new fixtures need Gemini analysis.");
             return;
         }
 
-        logger.LogInformation("Found {Count} fixtures needing new Gemini analysis.", toAnalyze.Count);
+        logger.LogInformation("Prepared {Count} new matches for Gemini AI logic. Starting batch processing...", toAnalyze.Count);
 
-        // Process in batches of 5
+        // 3. Process incrementally in batches of 5 and SAVE immediately.
         for (var i = 0; i < toAnalyze.Count; i += 5)
         {
             var chunkList = toAnalyze.Skip(i).Take(5).ToList();
@@ -78,23 +104,23 @@ public class GeminiSyncService(
                 {
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", cancellationToken);
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", cancellationToken);
-
                     totalProcessed++;
                 }
 
+                // SAVE INCREMENTALLY: Prevents total data loss on Cloud Run timeout.
                 await dbContext.SaveChangesAsync(cancellationToken);
-                logger.LogInformation("Successfully processed batch of {Count} fixtures.", chunkList.Count);
+                logger.LogInformation("Successfully persisted {Count} Gemini results to SQLite database.", chunkList.Count);
                 
-                // Optional rate limiting if needed, but 10 matches per call is efficient
+                // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing batch of Gemini analysis.");
+                logger.LogError(ex, "Error processing Gemini batch.");
             }
         }
 
-        logger.LogInformation("Gemini sync completed. Total matches analyzed: {Total}", totalProcessed);
+        logger.LogInformation("Gemini optimized sync completed. Total new matches analyzed: {Total}", totalProcessed);
     }
 
     public async Task SyncSingleFixtureAsync(int fixtureId, CancellationToken cancellationToken = default)

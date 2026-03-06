@@ -179,9 +179,7 @@ if (args.Contains("--sync-gemini"))
         await geminiSyncService.SyncSingleFixtureAsync(fixtureId.Value);
     else
     {
-        var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
-        var fixtures = await analysisService.AnalyzeLatestFixtureByAsync(DateTime.Now);
-        await geminiSyncService.SyncUpcomingFixturesAsync(fixtures);
+        await geminiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow);
     }
 
     Console.WriteLine("Gemini Sync Complete!");

@@ -20,33 +20,6 @@ public sealed class MatchAnalysisService(
     IDecisionService decisionService,
     IApplicationDbContext dbContext) : IMatchAnalysisService
 {
-    public async Task<List<FixtureAnalysisResult>> AnalyzeLatestFixtureByAsync(DateTime now)
-    {
-        var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
-        var endUtc = startUtc.AddDays(5);
-
-        var fixtures = await dbContext.Fixtures
-            .Where(f => f.Date >= startUtc && f.Date < endUtc)
-            .ToListAsync();
-
-        var results = new List<FixtureAnalysisResult>();
-        foreach (var fixture in fixtures)
-        {
-            try
-            {
-                var result = await AnalyzeFixtureAsync(fixture, "en", CancellationToken.None);
-                results.Add(result);
-            }
-            catch (Exception ex)
-            {
-                // Log and continue with other fixtures
-                Console.WriteLine($"Error analyzing fixture {fixture.Id}: {ex.Message}");
-            }
-        }
-
-        return results;
-    }
-
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct)
     {
         // 1. Load data (team stats + H2H)

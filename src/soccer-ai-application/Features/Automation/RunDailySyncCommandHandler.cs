@@ -27,8 +27,7 @@ public class RunDailySyncCommandHandler(
             await mlTrainingService.TrainModelsAsync(cancellationToken);
 
             // 4. Generate Gemini AI Analysis
-            var analyzedMatches = await analyseService.AnalyzeLatestFixtureByAsync(DateTime.Now);
-            await geminiSyncService.SyncUpcomingFixturesAsync(analyzedMatches, cancellationToken);
+            await geminiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, cancellationToken);
 
             logger.LogInformation("Daily sync orchestration completed successfully.");
         }

@@ -17,7 +17,6 @@ public class RunGeminiAnalysisCommandHandler(
     public async Task Handle(IReceiveContext<RunGeminiAnalysisCommand> context, CancellationToken cancellationToken)
     {
         logger.LogInformation("Manual trigger processing via mediator for Gemini sync...");
-        var fixtures = await analysisService.AnalyzeLatestFixtureByAsync(DateTime.Now);
-        await geminiSyncService.SyncUpcomingFixturesAsync(fixtures, cancellationToken);
+        await geminiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, cancellationToken);
     }
 }

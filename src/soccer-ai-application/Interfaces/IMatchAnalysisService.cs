@@ -15,7 +15,7 @@ public interface IMatchAnalysisService
     /// </summary>
     Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct);
 
-    Task<List<FixtureAnalysisResult>> AnalyzeLatestFixtureByAsync(DateTime now);
+
 }
 
 /// <summary>
