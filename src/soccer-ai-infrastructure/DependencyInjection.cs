@@ -45,6 +45,9 @@ public static class DependencyInjection
         // Shared analysis orchestrator (both analysis + combination endpoints)
         services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
 
+        // Background Schedulers
+        services.AddHostedService<DailySyncBackgroundService>();
+
         return services;
     }
 

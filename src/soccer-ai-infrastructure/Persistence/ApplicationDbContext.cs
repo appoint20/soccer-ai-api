@@ -11,6 +11,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Fixture> Fixtures { get; init; }
     public DbSet<FixtureAnalysis> FixtureAnalyses { get; init; }
     public DbSet<Combination> Combinations { get; init; }
+    public DbSet<DailyCombination> DailyCombinations { get; init; }
     public DbSet<User> Users { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -61,6 +62,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasKey(c => c.Id);
             entity.Property(c => c.Name).HasMaxLength(100).IsRequired();
             entity.ToTable("Combinations");
+        });
+
+        // ── DailyCombination ─────────────────────────────────────────────
+        modelBuilder.Entity<DailyCombination>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Language).HasMaxLength(5).IsRequired();
+            entity.Property(c => c.Payload).IsRequired();
+
+            // One payload list per date per language
+            entity.HasIndex(c => new { c.Date, c.Language }).IsUnique();
+            
+            entity.ToTable("DailyCombinations");
         });
 
         // ── FixtureAnalysis ────────────────────────────────────────────────────

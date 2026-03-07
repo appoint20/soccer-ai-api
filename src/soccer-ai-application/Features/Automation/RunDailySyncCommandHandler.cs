@@ -8,7 +8,7 @@ namespace SoccerAi.Application.Features.Automation;
 public class RunDailySyncCommandHandler(
     ITeamSyncService teamSyncService, IFixtureSyncService fixtureSyncService,
     IMlTrainingService mlTrainingService, IGeminiSyncService geminiSyncService, 
-    IMatchAnalysisService analyseService, ILogger<RunDailySyncCommandHandler> logger) 
+    ILogger<RunDailySyncCommandHandler> logger) 
     : ICommandHandler<RunDailySyncCommand>
 {
     public async Task Handle(IReceiveContext<RunDailySyncCommand> context, CancellationToken cancellationToken)

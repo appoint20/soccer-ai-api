@@ -10,7 +10,6 @@ namespace SoccerAi.Application.Features.Automation;
 
 public class RunGeminiAnalysisCommandHandler(
     IGeminiSyncService geminiSyncService,
-    IMatchAnalysisService analysisService,
     ILogger<RunGeminiAnalysisCommandHandler> logger)
     : ICommandHandler<RunGeminiAnalysisCommand>
 {
