@@ -62,7 +62,7 @@ public class GetMatchCombinationHandler(
 
         // FILTER: Only use games that have a complete Gemini Analysis attached!
         var fullyAnalyzedMatches = matches
-            .Where(x => x.Gemini != null && !string.IsNullOrEmpty(x.Gemini.Analysis))
+            .Where(x => x.Gemini != null && !string.IsNullOrEmpty(x.Gemini.Recommendation))
             .ToList();
 
         if (fullyAnalyzedMatches.Count == 0)
