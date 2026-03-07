@@ -109,7 +109,22 @@ public class GeminiSyncService(
 
                 // SAVE INCREMENTALLY: Prevents total data loss on Cloud Run timeout.
                 await dbContext.SaveChangesAsync(cancellationToken);
-                logger.LogInformation("Successfully persisted {Count} Gemini results to SQLite database.", chunkList.Count);
+                
+                // MIRROR BACK TO GCS: Bypass FUSE SQL Lock errors by uploading the whole file explicitly
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+                {
+                    try
+                    {
+                        File.Copy("/tmp/soccer.db", "/app/data/soccer.db", true);
+                        logger.LogInformation("Database successfully mirrored back to GCS FUSE volume.");
+                    }
+                    catch (Exception ioEx)
+                    {
+                        logger.LogError(ioEx, "Failed to mirror database back to GCS. Data is safe in /tmp but will be lost if container restarts.");
+                    }
+                }
+                
+                logger.LogInformation("Successfully persisted {Count} Gemini results.", chunkList.Count);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
