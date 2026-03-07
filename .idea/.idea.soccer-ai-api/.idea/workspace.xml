@@ -10,6 +10,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetGeminiCoverageHandler.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetGeminiCoverageQuery.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/AnalysisController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/AnalysisController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" afterDir="false" />
@@ -25,6 +27,7 @@
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" afterDir="false" />
@@ -159,13 +162,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs</url>
-          <line>210</line>
+          <line>217</line>
           <properties documentPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs" containingFunctionPresentation="Method 'UpsertAnalysisAsync'">
             <startOffsets>
-              <option value="9208" />
+              <option value="9765" />
             </startOffsets>
             <endOffsets>
-              <option value="9209" />
+              <option value="9766" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="8" />

@@ -15,10 +15,12 @@ public class GeminiSyncService(
 {
     public async Task SyncUpcomingFixturesAsync(DateTime now, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting optimized Gemini batch sync for the next 5 days.");
+        logger.LogInformation("[GeminiSync] Starting batch sync. Current time: {Now}", now);
 
         var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
         var endUtc = startUtc.AddDays(5);
+
+        logger.LogInformation("[GeminiSync] Window: {Start} to {End}", startUtc, endUtc);
 
         // 1. Fetch raw fixtures from DB
         var fixtures = await dbContext.Fixtures
@@ -28,14 +30,15 @@ public class GeminiSyncService(
 
         if (fixtures.Count == 0)
         {
-            logger.LogInformation("No fixtures found in the next 5 days.");
+            logger.LogWarning("[GeminiSync] Found 0 fixtures in the 5-day window. Check your local DB sync.");
             return;
         }
 
-        logger.LogInformation("Found {Count} upcoming fixtures in the database window.", fixtures.Count);
+        logger.LogInformation("[GeminiSync] Found {Count} total fixtures in window.", fixtures.Count);
 
         var totalProcessed = 0;
         var toAnalyze = new List<GeminiBatchItem>();
+        var skippedCount = 0;
 
         // 2. Filter BEFORE heavy ML prediction
         foreach (var fixture in fixtures)
@@ -45,7 +48,7 @@ public class GeminiSyncService(
 
             if (alreadyAnalyzedCount >= 2)
             {
-                logger.LogInformation("Skipping Fixture {FixtureId}: Already analyzed completely.", fixture.Id);
+                skippedCount++;
                 continue;
             }
 
@@ -78,17 +81,19 @@ public class GeminiSyncService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to predict stats for fixture {FixtureId} before Gemini batching.", fixture.Id);
+                logger.LogError(ex, "[GeminiSync] Failed to run ML prediction for fixture {FixtureId}.", fixture.Id);
             }
         }
 
+        logger.LogInformation("[GeminiSync] Skip Summary: {Skipped} already analyzed. {Remaining} matches to process.", skippedCount, toAnalyze.Count);
+
         if (toAnalyze.Count == 0)
         {
-            logger.LogInformation("No new fixtures need Gemini analysis.");
+            logger.LogInformation("[GeminiSync] No matches remaining after filter. Sync complete.");
             return;
         }
 
-        logger.LogInformation("Prepared {Count} new matches for Gemini AI logic. Starting batch processing...", toAnalyze.Count);
+        logger.LogInformation("[GeminiSync] Prepared {Count} matches for Gemini. Starting batch processing (Chunk of 5)...", toAnalyze.Count);
 
         // 3. Process incrementally in batches of 5 and SAVE immediately.
         for (var i = 0; i < toAnalyze.Count; i += 5)
@@ -96,12 +101,13 @@ public class GeminiSyncService(
             var chunkList = toAnalyze.Skip(i).Take(5).ToList();
             try
             {
-                logger.LogInformation("Calling Gemini for batch of {Count} matches...", chunkList.Count);
+                logger.LogInformation("[GeminiSync] Attempting batch {Num} ({Count} matches)...", (i/5)+1, chunkList.Count);
                 
                 var results = await geminiService.AnalyzeBatchAsync(chunkList);
                 
                 foreach (var (fixtureId, bilingualResult) in results)
                 {
+                    logger.LogInformation("[GeminiSync] Ingesting result for Fixture {Id}: {Rec}", fixtureId, bilingualResult.Recommendation);
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", cancellationToken);
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", cancellationToken);
                     totalProcessed++;
@@ -109,6 +115,7 @@ public class GeminiSyncService(
 
                 // SAVE INCREMENTALLY: Prevents total data loss on Cloud Run timeout.
                 await dbContext.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("[GeminiSync] Successfully called SaveChangesAsync for batch.");
                 
                 // MIRROR BACK TO GCS: Bypass FUSE SQL Lock errors by uploading the whole file explicitly
                 if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
@@ -116,26 +123,26 @@ public class GeminiSyncService(
                     try
                     {
                         File.Copy("/tmp/soccer.db", "/app/data/soccer.db", true);
-                        logger.LogInformation("Database successfully mirrored back to GCS FUSE volume.");
+                        logger.LogInformation("[GeminiSync] GCS Mirror Success: /tmp/soccer.db -> /app/data/soccer.db");
                     }
                     catch (Exception ioEx)
                     {
-                        logger.LogError(ioEx, "Failed to mirror database back to GCS. Data is safe in /tmp but will be lost if container restarts.");
+                        logger.LogError(ioEx, "[GeminiSync] FATAL MIRROR ERROR: Data exists in /tmp but failed to copy to GCS volume.");
                     }
                 }
                 
-                logger.LogInformation("Successfully persisted {Count} Gemini results.", chunkList.Count);
+                logger.LogInformation("[GeminiSync] Batch {Num} fully persisted.", (i/5)+1);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing Gemini batch.");
+                logger.LogError(ex, "[GeminiSync] Error processing batch starting at index {Idx}", i);
             }
         }
 
-        logger.LogInformation("Gemini optimized sync completed. Total new matches analyzed: {Total}", totalProcessed);
+        logger.LogInformation("[GeminiSync] All batches completed. Total matches analyzed and persisted: {Total}", totalProcessed);
     }
 
     public async Task SyncSingleFixtureAsync(int fixtureId, CancellationToken cancellationToken = default)
