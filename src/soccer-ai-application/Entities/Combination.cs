@@ -10,4 +10,10 @@ public class Combination
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public string Status { get; set; } = "Pending";
     public double TotalOdds { get; set; }
+
+    // --- Caching Support ---
+    public DateTimeOffset? Date { get; set; }
+    public string? Language { get; set; }
+    public string? Payload { get; set; }
+    public bool IsDailyCache { get; set; }
 }

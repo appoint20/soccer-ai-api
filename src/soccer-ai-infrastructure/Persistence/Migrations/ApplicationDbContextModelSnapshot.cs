@@ -25,9 +25,22 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("Date")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDailyCache")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(5)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Payload")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
@@ -39,36 +52,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Date", "Language", "IsDailyCache");
+
                     b.ToTable("Combinations", (string)null);
-                });
-
-            modelBuilder.Entity("SoccerAi.Application.Entities.DailyCombination", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("CreatedAt")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("Date")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Date", "Language")
-                        .IsUnique();
-
-                    b.ToTable("DailyCombinations", (string)null);
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.Fixture", b =>

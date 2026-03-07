@@ -42,8 +42,8 @@ public class GetMatchCombinationHandler(
             
             logger.LogInformation("[Combinations] Checking cache for {Date} {Lang}", targetDate, query.Language);
             
-            var cachedCombo = await dbContext.DailyCombinations
-                .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language, cancellationToken);
+            var cachedCombo = await dbContext.Combinations
+                .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language && c.IsDailyCache, cancellationToken);
                 
             if (cachedCombo != null && !string.IsNullOrEmpty(cachedCombo.Payload))
             {
@@ -105,16 +105,19 @@ public class GetMatchCombinationHandler(
             {
                 try 
                 {
-                    var newCache = new DailyCombination
+                    var newCache = new Combination
                     {
+                        Name = $"Daily Cache {query.Date:yyyy-MM-dd}",
                         Date = targetDate,
                         Language = query.Language,
-                        Payload = System.Text.Json.JsonSerializer.Serialize(combinations)
+                        Payload = System.Text.Json.JsonSerializer.Serialize(combinations),
+                        IsDailyCache = true,
+                        Status = "Cached"
                     };
                     
-                    dbContext.DailyCombinations.Add(newCache);
+                    dbContext.Combinations.Add(newCache);
                     await dbContext.SaveChangesAsync(cancellationToken);
-                    logger.LogInformation("[Combinations] Saved to SQL Cache.");
+                    logger.LogInformation("[Combinations] Saved to SQL Cache (Combinations Table).");
                 }
                 catch (Exception cacheEx)
                 {

@@ -11,7 +11,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Fixture> Fixtures { get; init; }
     public DbSet<FixtureAnalysis> FixtureAnalyses { get; init; }
     public DbSet<Combination> Combinations { get; init; }
-    public DbSet<DailyCombination> DailyCombinations { get; init; }
     public DbSet<User> Users { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -60,21 +59,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<Combination>(entity =>
         {
             entity.HasKey(c => c.Id);
-            entity.Property(c => c.Name).HasMaxLength(100).IsRequired();
-            entity.ToTable("Combinations");
-        });
-
-        // ── DailyCombination ─────────────────────────────────────────────
-        modelBuilder.Entity<DailyCombination>(entity =>
-        {
-            entity.HasKey(c => c.Id);
-            entity.Property(c => c.Language).HasMaxLength(5).IsRequired();
-            entity.Property(c => c.Payload).IsRequired();
-
-            // One payload list per date per language
-            entity.HasIndex(c => new { c.Date, c.Language }).IsUnique();
+            entity.Property(c => c.Name).HasMaxLength(100);
             
-            entity.ToTable("DailyCombinations");
+            // Daily cache fields
+            entity.Property(c => c.Language).HasMaxLength(5);
+            
+            // Unique index for the cache part only (where IsDailyCache is true)
+            // SQLite doesn't support filtered indexes in EF Core easily via fluent API in old versions, 
+            // so we'll just allow multiple or manage it with a composite if needed.
+            // But for simplicity, we'll index Date and Language.
+            entity.HasIndex(c => new { c.Date, c.Language, c.IsDailyCache });
+            
+            entity.ToTable("Combinations");
         });
 
         // ── FixtureAnalysis ────────────────────────────────────────────────────

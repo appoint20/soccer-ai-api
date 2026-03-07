@@ -9,7 +9,6 @@ public interface IApplicationDbContext
     DbSet<Fixture> Fixtures { get; }
     DbSet<FixtureAnalysis> FixtureAnalyses { get; }
     DbSet<Combination> Combinations { get; }
-    DbSet<DailyCombination> DailyCombinations { get; }
     DbSet<User> Users { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
