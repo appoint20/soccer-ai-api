@@ -10,6 +10,7 @@ using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 using Google.GenAI.Types;
 using SoccerAi.Infrastructure.Options;
+using SoccerAi.Application.Exceptions;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -105,9 +106,9 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
 
         for (var i = 0; i < maxRetries; i++)
         {
+            Schema? geminiSchema = null;
             try
             {
-                Schema? geminiSchema = null;
                 if (schema != null)
                 {
                     // Convert anonymous object schema to the internal Schema type
@@ -122,7 +123,12 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                     ResponseSchema = geminiSchema
                 };
 
-                var modelName = GetModelFromUrl(_options.BaseUrl);
+                var modelName = _options.Model;
+                if (string.IsNullOrEmpty(modelName))
+                    modelName = GetModelFromUrl(_options.BaseUrl);
+                
+                if (string.IsNullOrEmpty(modelName)) 
+                    modelName = "gemini-1.5-flash"; // Ultimate fallback
                 
                 var response = await _client.Models.GenerateContentAsync(
                     modelName, 
@@ -156,6 +162,51 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
             }
             catch (Exception ex)
             {
+                // DETECT QUOTA EXCEEDED (HTTP 429)
+                if (ex.Message.Contains("quota") || ex.Message.Contains("429") || (ex.InnerException?.Message.Contains("429") ?? false))
+                {
+                    var currentModel = _options.Model ?? GetModelFromUrl(_options.BaseUrl) ?? "gemini-3.1-pro";
+                    
+                    if (currentModel != "gemini-1.5-flash")
+                    {
+                        _logger.LogWarning("Gemini Primary Model ({Model}) Quota Exceeded. Falling back to gemini-1.5-flash...", currentModel);
+                        
+                        // Override model for this retry loop
+                        var configFallback = new GenerateContentConfig
+                        {
+                            Temperature = 0.05f,
+                            ResponseMimeType = "application/json",
+                            ResponseSchema = geminiSchema
+                        };
+
+                        try 
+                        {
+                            var fallbackResponse = await _client.Models.GenerateContentAsync(
+                                "gemini-1.5-flash", 
+                                prompt,
+                                configFallback);
+
+                            var fallbackText = fallbackResponse.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+                            if (string.IsNullOrWhiteSpace(fallbackText)) return default;
+
+                            // Clean and deserialize just like above
+                            if (fallbackText.StartsWith("```json")) fallbackText = fallbackText.Substring(7);
+                            if (fallbackText.EndsWith("```")) fallbackText = fallbackText.Substring(0, fallbackText.Length - 3);
+                            if (fallbackText.EndsWith("```\n")) fallbackText = fallbackText.Substring(0, fallbackText.Length - 4);
+
+                            return JsonSerializer.Deserialize<T>(fallbackText, JsonOptions);
+                        }
+                        catch (Exception fallbackEx)
+                        {
+                            _logger.LogCritical(fallbackEx, "Gemini FALLBACK Model (Flash) also failed or hit quota.");
+                            throw new GeminiQuotaExceededException("Both primary and fallback Gemini models reached quota.", fallbackEx);
+                        }
+                    }
+
+                    _logger.LogCritical("Gemini Quota Exceeded! Specific error: {Msg}", ex.Message);
+                    throw new GeminiQuotaExceededException("Gemini daily quota reached. Please wait for reset or upgrade plan.", ex);
+                }
+
                 _logger.LogError(ex, "Gemini request failed (Attempt {Attempt})", i + 1);
                 if (i < maxRetries - 1)
                 {

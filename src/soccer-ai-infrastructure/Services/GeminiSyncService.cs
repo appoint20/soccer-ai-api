@@ -4,6 +4,8 @@ using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 
+using SoccerAi.Application.Exceptions;
+
 namespace SoccerAi.Infrastructure.Services;
 
 public class GeminiSyncService(
@@ -135,6 +137,11 @@ public class GeminiSyncService(
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            }
+            catch (GeminiQuotaExceededException qEx)
+            {
+                logger.LogCritical(qEx, "[GeminiSync] ABORTING SYNC: Gemini quota exceeded for the day.");
+                return; // Direct return stops the loop and the service logic.
             }
             catch (Exception ex)
             {

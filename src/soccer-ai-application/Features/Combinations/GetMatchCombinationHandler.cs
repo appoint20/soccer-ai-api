@@ -8,6 +8,8 @@ using SoccerAi.Application.Features.Analysis;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 
+using SoccerAi.Application.Exceptions;
+
 namespace SoccerAi.Application.Features.Combinations;
 
 /// <summary>
@@ -126,6 +128,12 @@ public class GetMatchCombinationHandler(
             }
 
             return new GetMatchCombinationResponse(combinations);
+        }
+        catch (GeminiQuotaExceededException qEx)
+        {
+            logger.LogWarning("[Combinations] Gemini Quota Exceeded. Cannot generate new combinations right now.");
+            // We return empty results rather than crashing with 500
+            return new GetMatchCombinationResponse([]);
         }
         catch (Exception ex)
         {
