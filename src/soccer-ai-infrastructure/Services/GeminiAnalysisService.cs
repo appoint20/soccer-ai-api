@@ -165,11 +165,11 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                 // DETECT QUOTA EXCEEDED (HTTP 429)
                 if (ex.Message.Contains("quota") || ex.Message.Contains("429") || (ex.InnerException?.Message.Contains("429") ?? false))
                 {
-                    var currentModel = _options.Model ?? GetModelFromUrl(_options.BaseUrl) ?? "gemini-3.1-pro";
+                    var currentModel = _options.Model ?? GetModelFromUrl(_options.BaseUrl);
                     
                     if (currentModel != "gemini-1.5-flash")
                     {
-                        _logger.LogWarning("Gemini Primary Model ({Model}) Quota Exceeded. Falling back to gemini-1.5-flash...", currentModel);
+                        _logger.LogWarning("Gemini Primary Model ({Model}) Quota Exceeded. Falling back to gemini-1.5-flash for resilience...", currentModel ?? "Unknown");
                         
                         // Override model for this retry loop
                         var configFallback = new GenerateContentConfig
