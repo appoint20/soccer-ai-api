@@ -29,8 +29,7 @@ jobs:
         run: dotnet build src/soccer-ai-api/soccer-ai-api.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test tests/soccer-ai-integration-tests/soccer-ai-integration-tests.csproj --configuration Release --no-build
-
+        run: dotnet test tests/soccer-ai-unit-tests/soccer-ai-unit-tests.csproj --configuration Release --no-build
   deploy:
     name: Deploy to Render
     needs: build-and-test
