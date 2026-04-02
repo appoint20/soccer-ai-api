@@ -1,25 +1,65 @@
-name: Deploy to Render
+name: CI/CD Pipeline for Render
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
-    name: Trigger Render Deployment
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Trigger Deploy Hook
-        # Usually Render connects directly to GitHub. If you are using a Deploy Hook URL:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x' # Update to latest desired version
+          
+      - name: Restore dependencies
+        run: dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
+
+      - name: Build
+        run: dotnet build src/soccer-ai-api/soccer-ai-api.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/soccer-ai-integration-tests/soccer-ai-integration-tests.csproj --configuration Release --no-build
+
+  deploy:
+    name: Deploy to Render
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Trigger Render Deployment
         env:
           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           if [ -z "$deploy_url" ]; then
-            echo "RENDER_DEPLOY_HOOK_URL secret is not set."
-            echo "If your Render service is connected directly to this repository with 'Auto-Deploy' enabled, you do not need this GitHub Action."
-            echo "Otherwise, add the Deploy Hook URL from your Render service settings to GitHub Secrets."
+            echo "::error::RENDER_DEPLOY_HOOK_URL secret is not set!"
+            echo "You must add the Deploy Hook URL from your Render service settings to GitHub Secrets."
             exit 1
           fi
           echo "Triggering Render deployment..."
           curl -s -X POST $deploy_url
+          
+      # Alternative: If you use GHCR (GitHub Container Registry) instead of Render's standard Auto-Deploy:
+      # - name: Log in to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Build and Push Docker image
+      #   run: |
+      #     IMAGE_ID=ghcr.io/${{ github.repository }}/soccer-ai-api
+      #     IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+      #     docker build -t $IMAGE_ID:latest -f Dockerfile .
+      #     docker push $IMAGE_ID:latest

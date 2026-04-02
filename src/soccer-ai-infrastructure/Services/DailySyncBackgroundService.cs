@@ -21,9 +21,9 @@ public class DailySyncBackgroundService(
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = DateTime.Now;
-            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 12, 30, 0);
+            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 3, 0, 0);
 
-            // If it's already past 12:30 PM today, schedule for 12:30 PM tomorrow.
+            // If it's already past 3:00 AM today, schedule for 3:00 AM tomorrow.
             if (now > nextRunTime)
             {
                 nextRunTime = nextRunTime.AddDays(1);
