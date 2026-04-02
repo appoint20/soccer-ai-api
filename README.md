@@ -1,57 +1,42 @@
-# soccer-ai-api
+# Soccer AI API
 
-## Architecture
+A powerful, AI-driven backend API for predicting European soccer matches, generating betting combinations, and automating ticket insights using machine learning and LLMs.
 
-- `src/soccer-ai-api`: ASP.NET Core API (presentation layer).
-- `src/soccer-ai-application`: application contracts and core use-case logic.
-- `src/soccer-ai-infrastructure`: EF Core persistence, API-Football adapter, Gemini adapter, sync orchestration.
+## Overview
 
-The runtime source of truth is the SQLite database. Excel/CSV runtime ingestion has been removed.
+- **Stack**: .NET 10, ASP.NET Core Web API
+- **Architecture**: Domain-Driven Design (Clean Architecture)
+- **Database**: SQLite (managed via EF Core Migrations)
+- **AI Integration**: Google Gemini (LLM Analysis) & ML.NET (FastTree/AutoML predictions)
+- **Data Source**: API-Football & internal historical logic
 
-## Security and Secrets
+## Project Structure
 
-Do not commit secrets in `appsettings*.json`.
+- **`src/soccer-ai-api`**: The entry point for the REST API. Handles HTTP requests, authentication, and global exception wrapping.
+- **`src/soccer-ai-application`**: The "brain" of the application. Contains all business logic (Use Cases, Commands, Queries) via Mediator, defining how match combinations are generated and analyzed.
+- **`src/soccer-ai-infrastructure`**: The data layer. Handles database persistence (SQLite), external HTTP requests to API-Football, and integrations with Google Gemini.
 
-Required runtime variables:
+## Requirements
 
-- `ApiFootball__ApiKey`
-- `Gemini__ApiKey`
-- `AdminApi__ApiKeyHashes__0` (SHA-256 hash of a GUID key)
-- `DB_PATH` (optional, default is local path)
+You must provide the following environment variables (or secrets on Render) to run the application:
+- `ApiFootball__ApiKey`: Your API-Football API key
+- `Gemini__ApiKey`: Your Google Gemini API key
+- `Jwt__Secret`: A secure random string for JWT token generation
+- `DB_PATH`: *(Optional)* Path to the SQLite database. Defaults to `data/soccer.db`.
 
-Admin endpoints require header `X-API-Key` with a GUID value.  
-The server validates it by hashing the GUID and matching against configured hashes.
-
-Example hash generation:
-
-```bash
-echo -n "11111111-2222-3333-4444-555555555555" | shasum -a 256 | awk '{print $1}'
-```
-
-## Build and Test
+## Local Development
 
 ```bash
+# Compile the application
 dotnet build soccer-ai-api.sln
-dotnet test tests/soccer-ai-tests/soccer-ai-tests.csproj
+
+# Run the API locally
+dotnet run --project src/soccer-ai-api/soccer-ai-api.csproj
 ```
 
-## Worker Jobs
+The API will be available at `http://localhost:5000`. You can test endpoints via the provided Swagger/Scalar UI.
 
-```bash
-```
+## Migrations (Database Updates)
 
-## Cloud Run Deploy (API)
-
-Use `scripts/deploy_gcloud.sh` and set:
-
-```bash
-export GEMINI_API_KEY="..."
-export APIFOOTBALL_API_KEY="..."
-export ADMIN_API_KEY_HASH="..."
-./scripts/deploy_gcloud.sh
-```
-
-## Notes
-
-- Foreign key enforcement is enabled in SQLite connection string (`Foreign Keys=True`).
-- Sync flow creates missing team placeholders before fixture inserts to keep FK constraints valid.
+The `Migrations/` folder inside the Infrastructure project contains **Entity Framework Core Migrations**. 
+Migrations are simply "version history" for your database schema. Whenever you add a new property to a C# class (like adding `TeamStrength` to the `Match` model), a new Migration file is generated. When the API starts up, it reads these files to safely alter the SQLite database to match the new code without losing existing data!

@@ -44,9 +44,11 @@ public class DailySyncBackgroundService(
                 using var scope = serviceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
+                var sw = System.Diagnostics.Stopwatch.StartNew();
                 await mediator.SendAsync(new RunDailySyncCommand(DateTime.Now.Year), stoppingToken);
+                sw.Stop();
 
-                logger.LogInformation("Daily Sync Orchestration completed successfully. Going back to sleep.");
+                logger.LogInformation("Daily Sync Orchestration completed successfully in {ElapsedMilliseconds} ms. Going back to sleep.", sw.ElapsedMilliseconds);
             }
             catch (TaskCanceledException)
             {
