@@ -1,6 +1,7 @@
 using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using SoccerAi.Application.Features.Auth;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -14,11 +15,11 @@ public class AuthController(IMediator mediator) : ControllerBase
         try
         {
             var response = await mediator.SendAsync<LoginCommand, LoginResponse>(new LoginCommand(request.Username, request.Password));
-            return Ok(new { token = response.Token });
+            return Ok(ApiResponse<object>.Ok(new { token = response.Token }));
         }
         catch (UnauthorizedAccessException)
         {
-            return Unauthorized(new { message = "Invalid username or password" });
+            return Unauthorized(ApiResponse<object>.Fail("Invalid username or password"));
         }
     }
 }

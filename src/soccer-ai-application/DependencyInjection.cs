@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Services;
@@ -16,7 +17,10 @@ public static class DependencyInjection
         services.AddScoped<Helpers.FixtureQueryHelper>();
         services.AddScoped<Services.Analysis.AnalysisResponseMapper>();
 
+        // FluentValidation — auto-register all validators in this assembly
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         return services;
     }
 }
+

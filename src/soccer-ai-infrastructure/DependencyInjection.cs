@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using SoccerAi.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Polly;
 using SoccerAi.Infrastructure.Options;
 using SoccerAi.Infrastructure.Persistence;
 using SoccerAi.Infrastructure.Services;
@@ -57,6 +59,10 @@ public static class DependencyInjection
         {
             var defaultConn = configuration.GetConnectionString("DefaultConnection");
             options.UseSqlite(defaultConn);
+            
+            // Default to no-tracking for read-heavy workloads.
+            // Write operations should use explicit .AsTracking() or attach entities.
+            options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -79,6 +85,21 @@ public static class DependencyInjection
 
                 client.BaseAddress = new Uri(options.BaseUrl);
                 client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
+            })
+            .AddResilienceHandler("football-api", builder =>
+            {
+                builder.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    BackoffType = DelayBackoffType.Exponential,
+                    Delay = TimeSpan.FromSeconds(2),
+                    ShouldHandle = args => ValueTask.FromResult(
+                        args.Outcome.Result?.StatusCode is System.Net.HttpStatusCode.TooManyRequests
+                        or System.Net.HttpStatusCode.ServiceUnavailable
+                        or System.Net.HttpStatusCode.GatewayTimeout
+                        || args.Outcome.Exception is HttpRequestException or TaskCanceledException)
+                });
+                builder.AddTimeout(TimeSpan.FromSeconds(30));
             });
     }
     
@@ -97,7 +118,20 @@ public static class DependencyInjection
 
             client.BaseAddress = new Uri(options.BaseUrl);
             client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
-            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .AddResilienceHandler("gemini-api", builder =>
+        {
+            builder.AddRetry(new HttpRetryStrategyOptions
+            {
+                MaxRetryAttempts = 2,
+                BackoffType = DelayBackoffType.Exponential,
+                Delay = TimeSpan.FromSeconds(5),
+                ShouldHandle = args => ValueTask.FromResult(
+                    args.Outcome.Result?.StatusCode is System.Net.HttpStatusCode.TooManyRequests
+                    or System.Net.HttpStatusCode.ServiceUnavailable
+                    || args.Outcome.Exception is HttpRequestException or TaskCanceledException)
+            });
+            builder.AddTimeout(TimeSpan.FromMinutes(5));
         });
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using SoccerAi.Application.Features.Automation;
 using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -28,15 +29,15 @@ public class AutomationController(IMediator mediator, ILogger<AutomationControll
         try
         {
             await mediator.SendAsync(new RunDailySyncCommand(season), ct);
-            return Ok(new { message = "Daily sync completed successfully", timestamp = DateTime.UtcNow });
+            return Ok(ApiResponse<object>.Ok(
+                new { message = "Daily sync completed successfully", timestamp = DateTime.UtcNow }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[AutomationSync] Daily sync failed");
-            return StatusCode(500, new { error = "Sync failed", details = ex.Message });
+            return StatusCode(500, ApiResponse<object>.Fail($"Sync failed: {ex.Message}"));
         }
     }
-
 
     /// <summary>
     /// Lightweight health check specifically for the automation subsystem.
@@ -46,12 +47,12 @@ public class AutomationController(IMediator mediator, ILogger<AutomationControll
     public async Task<IActionResult> SyncMlOnly([FromServices] IMlTrainingService mlService)
     {
         await mlService.TrainModelsAsync();
-        return Ok("ML Training Completed");
+        return Ok(ApiResponse<object>.Ok(new { message = "ML Training Completed" }));
     }
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {
-        return Ok(new { status = "healthy", subsystem = "automation" });
+        return Ok(ApiResponse<object>.Ok(new { status = "healthy", subsystem = "automation" }));
     }
 }

@@ -2,6 +2,7 @@ using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using SoccerAi.Application.Features.Combinations;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -24,7 +25,7 @@ public class CombinationsController(IMediator mediator) : ControllerBase
     {
         var query = new GetMatchCombinationQuery(date, language);
         var response = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(query, ct);
-        return Ok(response);
+        return Ok(ApiResponse<GetMatchCombinationResponse>.Ok(response));
     }
 
     [HttpPost("combinations/custom")]
@@ -34,8 +35,8 @@ public class CombinationsController(IMediator mediator) : ControllerBase
     {
         var response = await mediator.SendAsync<CreateUserCombinationCommand, CreateUserCombinationResponse>(command, ct);
         if (!response.Success)
-            return BadRequest(response);
+            return BadRequest(ApiResponse<CreateUserCombinationResponse>.Fail(response.Message ?? "Failed to create combination"));
             
-        return Ok(response);
+        return Ok(ApiResponse<CreateUserCombinationResponse>.Ok(response));
     }
 }

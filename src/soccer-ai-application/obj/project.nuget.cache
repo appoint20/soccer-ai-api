@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "l6HMwWMYFpk=",
+  "dgSpecHash": "205WXNZ+4PE=",
   "success": true,
   "projectFilePath": "/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-application/soccer-ai-application.csproj",
   "expectedPackageFiles": [
     "/Users/shivm/.nuget/packages/bcrypt.net-next/4.1.0/bcrypt.net-next.4.1.0.nupkg.sha512",
+    "/Users/shivm/.nuget/packages/fluentvalidation/11.11.0/fluentvalidation.11.11.0.nupkg.sha512",
+    "/Users/shivm/.nuget/packages/fluentvalidation.dependencyinjectionextensions/11.11.0/fluentvalidation.dependencyinjectionextensions.11.11.0.nupkg.sha512",
     "/Users/shivm/.nuget/packages/mediator.net/4.9.0/mediator.net.4.9.0.nupkg.sha512",
     "/Users/shivm/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "/Users/shivm/.nuget/packages/microsoft.entityframeworkcore/10.0.0/microsoft.entityframeworkcore.10.0.0.nupkg.sha512",

@@ -1,10 +1,12 @@
 using System.Net;
 using System.Text.Json;
+using SoccerAi.Application.Exceptions;
 
 namespace SoccerAi.Api.Middleware;
 
 /// <summary>
 /// Global exception handling middleware.
+/// Maps domain exceptions to appropriate HTTP status codes and consistent response shapes.
 /// </summary>
 public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {
@@ -23,6 +25,22 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         {
             logger.LogWarning(ex, "Not found: {Message}", ex.Message);
             await HandleExceptionAsync(context, HttpStatusCode.NotFound, ex.Message);
+        }
+        catch (ExternalApiException ex)
+        {
+            logger.LogError(ex, "External API error ({Service}): {Message}", ex.ServiceName, ex.Message);
+            var statusCode = ex.StatusCode switch
+            {
+                HttpStatusCode.TooManyRequests => HttpStatusCode.ServiceUnavailable,
+                HttpStatusCode.GatewayTimeout => HttpStatusCode.GatewayTimeout,
+                _ => HttpStatusCode.BadGateway
+            };
+            await HandleExceptionAsync(context, statusCode, ex.Message);
+        }
+        catch (GeminiQuotaExceededException ex)
+        {
+            logger.LogWarning(ex, "Gemini quota exceeded: {Message}", ex.Message);
+            await HandleExceptionAsync(context, HttpStatusCode.ServiceUnavailable, ex.Message);
         }
         catch (Exception ex)
         {
@@ -56,29 +74,6 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 }
-
-/// <summary>
-/// Validation exception for request validation errors.
-/// </summary>
-public class ValidationException : Exception
-{
-    public Dictionary<string, string[]> Errors { get; }
-
-    public ValidationException(string message) : base(message)
-    {
-        Errors = new Dictionary<string, string[]>();
-    }
-
-    public ValidationException(string message, Dictionary<string, string[]> errors) : base(message)
-    {
-        Errors = errors;
-    }
-}
-
-/// <summary>
-/// Not found exception.
-/// </summary>
-public class NotFoundException(string message) : Exception(message);
 
 /// <summary>
 /// Extension methods for middleware registration.

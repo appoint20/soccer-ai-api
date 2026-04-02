@@ -357,12 +357,20 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         try
         {
             using var response = await client.GetAsync(relativeUrl, ct);
+
+            // Rate-limit detection
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                logger.LogWarning("API-Football rate limit exceeded for {Url}", relativeUrl);
+                throw Application.Exceptions.ExternalApiException.RateLimited("API-Football");
+            }
+
             var body = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
-                    "API-Football request failed. Url: {Url}, Status: {Status}, Body: {Body}",
+                    "API-Football HTTP error. Url: {Url}, Status: {Status}, Body: {Body}",
                     relativeUrl,
                     (int)response.StatusCode,
                     TrimForLog(body));
@@ -372,9 +380,28 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
             using var doc = JsonDocument.Parse(body);
             return doc.RootElement.Clone();
         }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw; // Re-throw typed exceptions
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            logger.LogWarning("API-Football request timed out for {Url}", relativeUrl);
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogError(ex, "API-Football network error for {Url}", relativeUrl);
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "API-Football response parse failure for {Url}", relativeUrl);
+            return null;
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "API-Football request failed for {Url}", relativeUrl);
+            logger.LogError(ex, "API-Football unexpected error for {Url}", relativeUrl);
             return null;
         }
     }

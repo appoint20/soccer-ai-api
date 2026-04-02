@@ -47,7 +47,11 @@ if (builder.Environment.IsProduction())
 // -----------------------------------
 
 // Add services to the container.
-builder.Services.AddControllers()
+builder.Services.AddScoped<SoccerAi.Api.Middleware.FluentValidationFilter>();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.AddService<SoccerAi.Api.Middleware.FluentValidationFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;

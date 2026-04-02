@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using SoccerAi.Application.Features.Analysis;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -20,11 +21,11 @@ public class AnalysisController(IMediator mediator) : ControllerBase
     /// <param name="language">Language code</param>
     /// <param name="ct">Cancellation token</param>
     [HttpGet]
-    [ProducesResponseType<GetMatchAnalysisResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<GetMatchAnalysisResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] GetMatchAnalysisQuery query, CancellationToken ct = default)
     {
         var response = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(query, ct);
-        return Ok(response);
+        return Ok(ApiResponse<GetMatchAnalysisResponse>.Ok(response));
     }
 
     /// <summary>
@@ -33,11 +34,11 @@ public class AnalysisController(IMediator mediator) : ControllerBase
     /// <param name="daysAhead">Number of days to look ahead (default 5)</param>
     /// <param name="ct">Cancellation token</param>
     [HttpGet("audit/gemini-coverage")]
-    [ProducesResponseType<GetGeminiCoverageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<GetGeminiCoverageResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGeminiCoverage([FromQuery] int daysAhead = 5, CancellationToken ct = default)
     {
         var query = new GetGeminiCoverageQuery { DaysAhead = daysAhead };
         var response = await mediator.RequestAsync<GetGeminiCoverageQuery, GetGeminiCoverageResponse>(query, ct);
-        return Ok(response);
+        return Ok(ApiResponse<GetGeminiCoverageResponse>.Ok(response));
     }
 }

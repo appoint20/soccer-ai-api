@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -30,6 +31,6 @@ public class LeagueController : ControllerBase
             new { Id = 2, Name = "UEFA Champions League" },
             new { Id = 3, Name = "UEFA Europa League" }
         };
-        return Ok(leagues);
+        return Ok(ApiResponse<object>.Ok(leagues));
     }
 }

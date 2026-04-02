@@ -2,6 +2,7 @@ using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using SoccerAi.Application.Features.Backtesting;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Api.Controllers;
 
@@ -18,12 +19,12 @@ public class BacktestController(IMediator mediator) : ControllerBase
     /// <param name="ct">Cancellation token</param>
     /// <returns>Backtest Summary and Accuracy Breakdown</returns>
     [HttpGet]
-    [ProducesResponseType<GetBacktestReportResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<GetBacktestReportResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] int weeksBack = 10, [FromQuery] double stake = 100.0, CancellationToken ct = default)
     {
         var response = await mediator.RequestAsync<GetBacktestReportQuery, GetBacktestReportResponse>(
             new GetBacktestReportQuery(weeksBack, stake), ct);
             
-        return Ok(response);
+        return Ok(ApiResponse<GetBacktestReportResponse>.Ok(response));
     }
 }
