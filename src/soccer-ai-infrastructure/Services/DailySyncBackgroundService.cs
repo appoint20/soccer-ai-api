@@ -7,7 +7,7 @@ using SoccerAi.Application.Features.Automation;
 namespace SoccerAi.Infrastructure.Services;
 
 /// <summary>
-/// A perfectly efficient background service that sleeps until exactly 03:35 AM
+/// A perfectly efficient background service that sleeps until exactly 15:30 (3:30 PM)
 /// and triggers the RunDailySyncCommand. Uses zero CPU while waiting.
 /// </summary>
 public class DailySyncBackgroundService(
@@ -21,9 +21,9 @@ public class DailySyncBackgroundService(
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = DateTime.Now;
-            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 3, 0, 0);
+            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 15, 30, 0);
 
-            // If it's already past 3:00 AM today, schedule for 3:00 AM tomorrow.
+            // If it's already past 15:30 today, schedule for 15:30 tomorrow.
             if (now > nextRunTime)
             {
                 nextRunTime = nextRunTime.AddDays(1);
@@ -35,7 +35,7 @@ public class DailySyncBackgroundService(
 
             try
             {
-                // Sleep with zero CPU usage until 03:35 AM
+                // Sleep with zero CPU usage until 15:30
                 await Task.Delay(delay, stoppingToken);
 
                 // We've woken up! Trigger the sync.
