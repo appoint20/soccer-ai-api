@@ -1,4 +1,5 @@
 using Mediator.Net;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ namespace SoccerAi.Infrastructure.Services;
 /// </summary>
 public class DailySyncBackgroundService(
     IServiceProvider serviceProvider,
+    IConfiguration configuration,
     ILogger<DailySyncBackgroundService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -21,9 +23,12 @@ public class DailySyncBackgroundService(
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = DateTime.Now;
-            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 15, 30, 0);
+            var syncHour = configuration.GetValue<int>("AutomationOptions:SyncHour", 15);
+            var syncMinute = configuration.GetValue<int>("AutomationOptions:SyncMinute", 30);
+            
+            var nextRunTime = new DateTime(now.Year, now.Month, now.Day, syncHour, syncMinute, 0);
 
-            // If it's already past 15:30 today, schedule for 15:30 tomorrow.
+            // If it's already past the sync time today, schedule for tomorrow.
             if (now > nextRunTime)
             {
                 nextRunTime = nextRunTime.AddDays(1);
@@ -35,7 +40,7 @@ public class DailySyncBackgroundService(
 
             try
             {
-                // Sleep with zero CPU usage until 15:30
+                // Sleep with zero CPU usage until the configured sync time
                 await Task.Delay(delay, stoppingToken);
 
                 // We've woken up! Trigger the sync.
