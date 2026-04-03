@@ -53,64 +53,77 @@ public class MlTrainingService(ILogger<MlTrainingService> logger, MlTrainingData
 
     private void TrainBinaryModelTuned(DataOperationsCatalog.TrainTestData split, string labelColumn, string filename, string outputDir)
     {
-        logger.LogInformation("Starting AutoML sweep for {Label} (15 seconds)...", labelColumn);
-
-        var experimentSettings = new BinaryExperimentSettings
+        try
         {
-            MaxExperimentTimeInSeconds = 15,
-            OptimizingMetric = BinaryClassificationMetric.AreaUnderRocCurve
-        };
+            logger.LogInformation("Starting AutoML sweep for {Label} (30 seconds)...", labelColumn);
 
-        var experiment = _mlContext.Auto().CreateBinaryClassificationExperiment(experimentSettings);
-        var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
-        
-        logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
-        logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
-        logger.LogInformation("Val ROC-AUC: {Val:P2}", result.BestRun.ValidationMetrics.AreaUnderRocCurve);
+            var experimentSettings = new BinaryExperimentSettings
+            {
+                MaxExperimentTimeInSeconds = 30,
+                OptimizingMetric = BinaryClassificationMetric.AreaUnderRocCurve
+            };
 
-        // Evaluate on Unseen Test Data
-        var predictions = result.BestRun.Model.Transform(split.TestSet);
-        
-        // Use EvaluateNonCalibrated because AutoML may choose an algorithm (like FastForest/Lbfgs)
-        // that produces a 'Score' but no calibrated 'Probability' curve.
-        var metrics = _mlContext.BinaryClassification.EvaluateNonCalibrated(predictions, labelColumnName: labelColumn);
+            var experiment = _mlContext.Auto().CreateBinaryClassificationExperiment(experimentSettings);
+            var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
+            
+            logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
+            logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
+            logger.LogInformation("Val ROC-AUC: {Val:P2}", result.BestRun.ValidationMetrics.AreaUnderRocCurve);
 
-        logger.LogInformation("--- {Label} Final Unseen Test Metrics ---", labelColumn);
-        logger.LogInformation("Test Accuracy: {Accuracy:P2}", metrics.Accuracy);
-        logger.LogInformation("Test F1 Score: {F1:P2}", metrics.F1Score);
-        
-        var filepath = Path.Combine(outputDir, filename);
-        _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+            // Evaluate on Unseen Test Data
+            var predictions = result.BestRun.Model.Transform(split.TestSet);
+            
+            // Use EvaluateNonCalibrated because AutoML may choose an algorithm (like FastForest/Lbfgs)
+            // that produces a 'Score' but no calibrated 'Probability' curve.
+            var metrics = _mlContext.BinaryClassification.EvaluateNonCalibrated(predictions, labelColumnName: labelColumn);
+
+            logger.LogInformation("--- {Label} Final Unseen Test Metrics ---", labelColumn);
+            logger.LogInformation("Test Accuracy: {Accuracy:P2}", metrics.Accuracy);
+            logger.LogInformation("Test F1 Score: {F1:P2}", metrics.F1Score);
+            
+            var filepath = Path.Combine(outputDir, filename);
+            _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "AutoML binary training for label {Label} failed. Sync will continue with existing model or skip this target.", labelColumn);
+        }
     }
 
     private void TrainMulticlassModelTuned(DataOperationsCatalog.TrainTestData split, string labelColumn, string filename, string outputDir)
     {
-        logger.LogInformation("Starting AutoML sweep for {Label} Multiclass (15 seconds)...", labelColumn);
-
-
-        var experimentSettings = new MulticlassExperimentSettings
+        try
         {
-            MaxExperimentTimeInSeconds = 15,
-            OptimizingMetric = MulticlassClassificationMetric.MacroAccuracy
-        };
+            logger.LogInformation("Starting AutoML sweep for {Label} Multiclass (60 seconds)...", labelColumn);
 
-        var experiment = _mlContext.Auto().CreateMulticlassClassificationExperiment(experimentSettings);
-        var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
+            var experimentSettings = new MulticlassExperimentSettings
+            {
+                MaxExperimentTimeInSeconds = 60,
+                OptimizingMetric = MulticlassClassificationMetric.MacroAccuracy
+            };
 
-        logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
-        logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
-        logger.LogInformation("Val MacroAccuracy: {Val:P2}", result.BestRun.ValidationMetrics.MacroAccuracy);
+            var experiment = _mlContext.Auto().CreateMulticlassClassificationExperiment(experimentSettings);
+            var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
 
-        // Evaluate on unseen
-        var predictions = result.BestRun.Model.Transform(split.TestSet);
-        var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: labelColumn);
+            logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
+            logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
+            logger.LogInformation("Val MacroAccuracy: {Val:P2}", result.BestRun.ValidationMetrics.MacroAccuracy);
 
-        logger.LogInformation("--- {Label} Metrics (Multiclass) ---", labelColumn);
-        logger.LogInformation("Micro Accuracy: {Accuracy:P2}", metrics.MicroAccuracy);
-        logger.LogInformation("Macro Accuracy: {Macro:P2}", metrics.MacroAccuracy);
-        logger.LogInformation("Log Loss:       {Loss}", metrics.LogLoss);
+            // Evaluate on unseen
+            var predictions = result.BestRun.Model.Transform(split.TestSet);
+            var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: labelColumn);
 
-        var filepath = Path.Combine(outputDir, filename);
-        _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+            logger.LogInformation("--- {Label} Metrics (Multiclass) ---", labelColumn);
+            logger.LogInformation("Micro Accuracy: {Accuracy:P2}", metrics.MicroAccuracy);
+            logger.LogInformation("Macro Accuracy: {Macro:P2}", metrics.MacroAccuracy);
+            logger.LogInformation("Log Loss:       {Loss}", metrics.LogLoss);
+
+            var filepath = Path.Combine(outputDir, filename);
+            _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "AutoML multiclass training for label {Label} failed. Sync will continue with existing model or skip this target.", labelColumn);
+        }
     }
 }
