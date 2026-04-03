@@ -23,29 +23,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- SQLite Cloud Run Workaround ---
-if (builder.Environment.IsProduction())
-{
-    var gcsDbPath = "/app/data/soccer.db";
-    var localDbPath = "/tmp/soccer.db";
-    
-    // Copy DB from GCS to local ephemeral storage for modification
-    if (File.Exists(gcsDbPath))
-    {
-        Console.WriteLine($"[Startup] Copying database from FUSE mount ({gcsDbPath}) to ephemeral storage ({localDbPath})...");
-        File.Copy(gcsDbPath, localDbPath, true);
-    }
-    else
-    {
-        Console.WriteLine($"[Startup WARNING] GCS DB {gcsDbPath} not found. A new local DB will be created.");
-    }
-
-    // Override the configuration string dynamically so EF Core uses the writable local copy
-    builder.Configuration["ConnectionStrings:DefaultConnection"] = 
-        $"Data Source={localDbPath};Mode=ReadWrite;Cache=Shared";
-}
-// -----------------------------------
-
 // Add services to the container.
 builder.Services.AddScoped<SoccerAi.Api.Middleware.FluentValidationFilter>();
 builder.Services.AddControllers(options =>

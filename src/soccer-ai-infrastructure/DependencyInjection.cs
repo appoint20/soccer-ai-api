@@ -53,20 +53,32 @@ public static class DependencyInjection
         return services;
     }
 
-    private static void InitDatabase(IServiceCollection services, IConfiguration configuration) // Modified signature
+    private static void InitDatabase(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var defaultConn = configuration.GetConnectionString("DefaultConnection");
-            options.UseSqlite(defaultConn);
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            // --- DEPLOYMENT OVERRIDE ---
+            // If DB_PATH is set (Render/Docker), we use it and ensure the directory exists.
+            var dbPath = Environment.GetEnvironmentVariable("DB_PATH");
+            if (!string.IsNullOrEmpty(dbPath))
+            {
+                var directory = Path.GetDirectoryName(dbPath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                connectionString = $"Data Source={dbPath}";
+            }
+
+            options.UseSqlite(connectionString);
             
             // Default to no-tracking for read-heavy workloads.
-            // Write operations should use explicit .AsTracking() or attach entities.
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-
         services.AddMemoryCache();
     }
 
