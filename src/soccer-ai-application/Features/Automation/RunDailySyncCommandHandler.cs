@@ -31,6 +31,11 @@ public class RunDailySyncCommandHandler(
 
             logger.LogInformation("Daily sync orchestration completed successfully.");
         }
+        catch (OperationCanceledException)
+        {
+            logger.LogWarning("Daily sync orchestration was gracefully interrupted by application shutdown.");
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Daily sync orchestration failed: {Message}", ex.Message);

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,6 +10,15 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Transition from legacy UserCombinations to the consolidated Combinations table
+            migrationBuilder.RenameTable(
+                name: "UserCombinations",
+                newName: "Combinations");
+
+            // Clean up the legacy match table that is now handled via the JSON Payload in Combinations
+            migrationBuilder.DropTable(
+                name: "UserCombinationMatch");
+
             migrationBuilder.AddColumn<long>(
                 name: "Date",
                 table: "Combinations",
@@ -64,6 +73,11 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
             migrationBuilder.DropColumn(
                 name: "Payload",
                 table: "Combinations");
+
+            // Revert table rename for migration rollback consistency
+            migrationBuilder.RenameTable(
+                name: "Combinations",
+                newName: "UserCombinations");
         }
     }
 }

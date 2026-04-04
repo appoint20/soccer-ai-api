@@ -115,23 +115,8 @@ public class GeminiSyncService(
                     totalProcessed++;
                 }
 
-                // SAVE INCREMENTALLY: Prevents total data loss on Cloud Run timeout.
                 await dbContext.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("[GeminiSync] Successfully called SaveChangesAsync for batch.");
-                
-                // MIRROR BACK TO GCS: Bypass FUSE SQL Lock errors by uploading the whole file explicitly
-                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
-                {
-                    try
-                    {
-                        File.Copy("/tmp/soccer.db", "/app/data/soccer.db", true);
-                        logger.LogInformation("[GeminiSync] GCS Mirror Success: /tmp/soccer.db -> /app/data/soccer.db");
-                    }
-                    catch (Exception ioEx)
-                    {
-                        logger.LogError(ioEx, "[GeminiSync] FATAL MIRROR ERROR: Data exists in /tmp but failed to copy to GCS volume.");
-                    }
-                }
                 
                 logger.LogInformation("[GeminiSync] Batch {Num} fully persisted.", (i/5)+1);
                 

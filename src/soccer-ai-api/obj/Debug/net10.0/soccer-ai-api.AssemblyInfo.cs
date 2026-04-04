@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("soccer-ai-api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0b7b3cf696105245154c00bcd202e1161fcc62dd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+84806d445ebe65fd70b36e7124d10ed98fe64a84")]
 [assembly: System.Reflection.AssemblyProductAttribute("soccer-ai-api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("soccer-ai-api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
