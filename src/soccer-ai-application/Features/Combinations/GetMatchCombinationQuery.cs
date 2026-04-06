@@ -18,7 +18,7 @@ public class GetMatchCombinationResponse(List<CombinationDto> combinations) : IR
 public sealed class CombinationDto
 {
     [JsonPropertyName("combination_id")]
-    public int CombinationId { get; init; }
+    public int CombinationId { get; set; }
 
     [JsonPropertyName("type")]
     public string Type { get; init; } = "";

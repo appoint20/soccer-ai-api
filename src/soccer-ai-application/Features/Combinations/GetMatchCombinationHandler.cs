@@ -102,6 +102,12 @@ public class GetMatchCombinationHandler(
 
             logger.LogInformation("[Combinations] Successfully generated {Count} combinations.", combinations.Count);
 
+            // Re-index all combinations to ensure unique, sequential IDs across batches
+            for (int i = 0; i < combinations.Count; i++)
+            {
+                combinations[i].CombinationId = i + 1;
+            }
+
             // Step 4: CACHE the result for future API calls today!
             if (combinations.Count > 0)
             {
