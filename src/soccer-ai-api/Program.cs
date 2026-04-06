@@ -190,6 +190,27 @@ if (args.Contains("--sync-gemini"))
     return;
 }
 
+if (args.Contains("--sync-full"))
+{
+    var season = DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
+    Console.WriteLine($"[Startup] Triggering full daily sync orchestration for season {season} in background...");
+    
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            await mediator.SendAsync(new SoccerAi.Application.Features.Automation.RunDailySyncCommand(season));
+            Console.WriteLine("[Startup] Full daily sync orchestration completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Startup] Full daily sync orchestration failed: {ex.Message}");
+        }
+    });
+}
+
 app.Run();
 
 public partial class Program { }

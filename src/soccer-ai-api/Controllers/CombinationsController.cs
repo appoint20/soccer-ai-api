@@ -19,11 +19,12 @@ public class CombinationsController(IMediator mediator) : ControllerBase
     /// <param name="ct">Cancellation token</param>
     [HttpGet("combinations")]
     public async Task<IActionResult> GetCombinations(
-        [FromQuery] DateTime date,
+        [FromQuery] DateTimeOffset? date = null,
         [FromQuery] string language = "en",
         CancellationToken ct = default)
     {
-        var query = new GetMatchCombinationQuery(date, language);
+        var targetDate = date ?? DateTimeOffset.UtcNow;
+        var query = new GetMatchCombinationQuery(targetDate, language);
         var response = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(query, ct);
         return Ok(ApiResponse<GetMatchCombinationResponse>.Ok(response));
     }

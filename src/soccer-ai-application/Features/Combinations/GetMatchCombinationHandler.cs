@@ -129,7 +129,7 @@ public class GetMatchCombinationHandler(
 
             return new GetMatchCombinationResponse(combinations);
         }
-        catch (GeminiQuotaExceededException qEx)
+        catch (GeminiQuotaExceededException)
         {
             logger.LogWarning("[Combinations] Gemini Quota Exceeded. Cannot generate new combinations right now.");
             // We return empty results rather than crashing with 500
