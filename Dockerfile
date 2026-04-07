@@ -1,12 +1,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+
+# Copy solution and project files first to cache restore layers
+COPY soccer-ai-api.sln ./
+COPY src/soccer-ai-api/soccer-ai-api.csproj src/soccer-ai-api/
+COPY src/soccer-ai-application/soccer-ai-application.csproj src/soccer-ai-application/
+COPY src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj src/soccer-ai-infrastructure/
+
+RUN dotnet restore soccer-ai-api.sln
+
+# Now copy the rest of the source
 COPY . .
 
-# Preserve and include the local DB and models if they exist in the source
-# RUN rm -f src/soccer-ai-api/data/*.db*
-
-RUN dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
-RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/publish
+# Build and publish
+RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
