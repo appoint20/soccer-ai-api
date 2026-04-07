@@ -9,9 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-    </list>
+    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -121,7 +119,7 @@
       <workItem from="1772369892729" duration="2429000" />
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
-      <workItem from="1772972114574" duration="13061000" />
+      <workItem from="1772972114574" duration="13664000" />
     </task>
     <servers />
   </component>

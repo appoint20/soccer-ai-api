@@ -5,9 +5,9 @@
 **/.qodo
 **/bin
 **/obj
-**/*.db
-**/*.db-shm
-**/*.db-wal
+# **/*.db
+# **/*.db-shm
+# **/*.db-wal
 **/*.csv
 **/*.log
 .DS_Store
