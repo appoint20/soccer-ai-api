@@ -111,6 +111,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseRouting();
+app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
@@ -121,9 +123,8 @@ app.MapScalarApiReference(options =>
         .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 });
 
-// Global exception middleware should run before auth handlers
+// Global exception middleware should run after CORS to ensure headers are attached to error responses
 app.UseMiddleware<SoccerAi.Api.Middleware.GlobalExceptionMiddleware>();
-app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 

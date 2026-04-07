@@ -356,3 +356,9 @@
 /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/Polly.Core.dll
 /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/Polly.Extensions.dll
 /Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/Polly.RateLimiting.dll
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/models/target_btts_mlnet.zip
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/models/target_goals23_mlnet.zip
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/models/target_over25_mlnet.zip
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/models/target_result_mlnet.zip
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/soccer.db-shm
+/Users/shivm/Workspace/soccer-gpt-api/src/soccer-ai-api/bin/Debug/net10.0/data/soccer.db-wal
