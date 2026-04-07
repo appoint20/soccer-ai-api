@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
 
-# Explicitly exclude local DBs if any leaked in
-RUN rm -f src/soccer-ai-api/data/*.db*
+# Preserve and include the local DB and models if they exist in the source
+# RUN rm -f src/soccer-ai-api/data/*.db*
 
 RUN dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
 RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/publish

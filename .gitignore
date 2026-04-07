@@ -10,9 +10,9 @@ obj/
 .history/
 
 ## SQLite
-*.db
-*.db-shm
-*.db-wal
+# *.db
+# *.db-shm
+# *.db-wal
 
 ## Logs
 logs/
