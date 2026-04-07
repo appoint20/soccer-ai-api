@@ -137,6 +137,33 @@ using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
+
+        // --- DIAGNOSTICS ---
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var conn = context.Database.GetDbConnection();
+        var dataSource = conn.DataSource;
+        
+        try 
+        {
+            var fileInfo = new System.IO.FileInfo(dataSource);
+            logger.LogInformation("[Diagnostics] Database Path: {Path}", dataSource);
+            
+            if (fileInfo.Exists)
+            {
+                logger.LogInformation("[Diagnostics] Database Size: {Size} bytes", fileInfo.Length);
+                var fixtureCount = context.Fixtures.Count();
+                var teamCount = context.Teams.Count();
+                logger.LogInformation("[Diagnostics] Database Data: {Fixtures} fixtures, {Teams} teams", fixtureCount, teamCount);
+            }
+            else
+            {
+                logger.LogWarning("[Diagnostics] Database file NOT FOUND at expected path.");
+            }
+        }
+        catch (Exception diagEx)
+        {
+            logger.LogWarning(diagEx, "Failed to run startup diagnostics.");
+        }
     }
     catch (Exception ex)
     {
