@@ -32,18 +32,9 @@ public class AnalysisResponseMapper
         var prediction = BuildPredictionResponse(analysis, geminiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
 
-        // Enrich team stats with current standing
-        analysis.TeamStats.Home.Name = homeTeam.Name;
-        analysis.TeamStats.Home.Rank = homeTeam.Rank;
-        analysis.TeamStats.Home.Points = homeTeam.Points;
-        analysis.TeamStats.Home.Form = homeTeam.Form;
-        analysis.TeamStats.Home.FormPercentage = FormScoreCalculator.CalculateFormPercentage(homeTeam.Form);
-
-        analysis.TeamStats.Away.Name = awayTeam.Name;
-        analysis.TeamStats.Away.Rank = awayTeam.Rank;
-        analysis.TeamStats.Away.Points = awayTeam.Points;
-        analysis.TeamStats.Away.Form = awayTeam.Form;
-        analysis.TeamStats.Away.FormPercentage = FormScoreCalculator.CalculateFormPercentage(awayTeam.Form);
+        // Production Sanitization: Only show models in Development
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+        var includeModels = env.Equals("Development", StringComparison.OrdinalIgnoreCase);
 
         return new MatchAnalysis
         {
@@ -51,8 +42,8 @@ public class AnalysisResponseMapper
             Date = fixture.Date,
             Time = fixture.Date.TimeOfDay,
             League = analysis.LeagueName,
-            HomeTeam = homeTeam.Name,
-            AwayTeam = awayTeam.Name,
+            HomeTeam = homeTeam.ShortName ?? homeTeam.Name,
+            AwayTeam = awayTeam.ShortName ?? awayTeam.Name,
             Result = matchResult,
             OddsHomeWin = analysis.OddsHomeWin,
             OddsDraw = analysis.OddsDraw,
@@ -61,15 +52,11 @@ public class AnalysisResponseMapper
             OddsBttsYes = analysis.OddsBttsYes,
             HomeStats = analysis.TeamStats.Home,
             AwayStats = analysis.TeamStats.Away,
-            Models = analysis.Models,
+            Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
             Trap = analysis.Decisions.Trap,
             H2H = analysis.H2H,
-            Gemini = geminiAnalysis,
-            HomeElo = analysis.HomeElo,
-            AwayElo = analysis.AwayElo,
-            HomeRestDays = analysis.HomeRestDays,
-            AwayRestDays = analysis.AwayRestDays
+            Gemini = geminiAnalysis
         };
     }
 
@@ -121,6 +108,27 @@ public class AnalysisResponseMapper
                 Reason = !string.IsNullOrWhiteSpace(gemini?.Under25Summary)
                     ? gemini.Under25Summary
                     : d.Markets.LowScoring.Reason
+            },
+            HomeWin = new BoolPrediction
+            {
+                Prediction = wp.MatchWinner.Equals("home", StringComparison.OrdinalIgnoreCase),
+                Probability = wp.HomeProb,
+                IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("home", StringComparison.OrdinalIgnoreCase),
+                Reason = GetWinnerReason(gemini, "home", d.Markets.MatchWinner.Reason)
+            },
+            Draw = new BoolPrediction
+            {
+                Prediction = wp.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase),
+                Probability = wp.DrawProb,
+                IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase),
+                Reason = d.Markets.MatchWinner.Reason
+            },
+            AwayWin = new BoolPrediction
+            {
+                Prediction = wp.MatchWinner.Equals("away", StringComparison.OrdinalIgnoreCase),
+                Probability = wp.AwayProb,
+                IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("away", StringComparison.OrdinalIgnoreCase),
+                Reason = GetWinnerReason(gemini, "away", d.Markets.MatchWinner.Reason)
             },
             MatchWinner = new StringPrediction
             {

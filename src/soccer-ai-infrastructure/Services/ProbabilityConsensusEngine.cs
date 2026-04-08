@@ -172,6 +172,9 @@ public sealed class ProbabilityConsensusEngine(
             BTTSProb = Math.Clamp(pBtts, 0, 1),
             TwoToThreeGoals = p23 > 0.5,
             TwoToThreeGoalsProb = Math.Clamp(p23, 0, 1),
+            HomeProb = Math.Round(pHome, 2),
+            DrawProb = Math.Round(pDraw, 2),
+            AwayProb = Math.Round(pAway, 2),
             MatchWinner = winner,
             Confidence = Math.Round(confidence, 2)
         };

@@ -9,6 +9,7 @@ public class Team
     public int Id { get; set; }
     public int ApiId { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? ShortName { get; set; }
     public int LeagueId { get; set; }
     public int Rank { get; set; }
     public int Points { get; set; }

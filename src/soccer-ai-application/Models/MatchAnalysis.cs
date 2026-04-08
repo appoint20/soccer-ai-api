@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace SoccerAi.Application.Models;
 
 /// <summary>
@@ -31,20 +33,12 @@ public sealed class MatchAnalysis
     public TeamStats AwayStats { get; init; } = TeamStats.Empty;
     
     // Statistical Models (Poisson + Monte Carlo) — for analysis/debugging
-    public StatisticalModels? Models { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public StatisticalModels? Models { get; set; }
     
     // Flattened Decisions
     public TrapDecision Trap { get; init; } = new();
     public PredictionResponse? Prediction { get; init; }
     public HeadToHeadModel? H2H { get; init; }
     public GeminiAnalysis? Gemini { get; set; }
-
-    // Situational Context
-    public double? HomeElo { get; init; }
-    public double? AwayElo { get; init; }
-    public float? HomeRestDays { get; init; }
-    public float? AwayRestDays { get; init; }
-    public double? Temp { get; init; }
-    public int? Humidity { get; init; }
-    public string? VenueSurface { get; init; }
 }

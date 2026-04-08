@@ -78,6 +78,7 @@ public class TeamSyncService(
             if (existingTeam != null)
             {
                 existingTeam.LeagueId = standingData.LeagueId;
+                existingTeam.ShortName = standingData.ShortName;
                 existingTeam.Rank = standingData.Rank;
                 existingTeam.Points = standingData.Points;
                 existingTeam.GoalsFor = standingData.GoalsFor;

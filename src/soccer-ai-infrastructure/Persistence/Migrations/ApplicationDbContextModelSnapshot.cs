@@ -303,6 +303,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<int>("Rank")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ShortName")
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
 

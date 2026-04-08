@@ -22,6 +22,13 @@ public sealed class WeightedPrediction
     [JsonIgnore]
     public double TwoToThreeGoalsProb { get; init; }
     
+    [JsonIgnore]
+    public double HomeProb { get; init; }
+    [JsonIgnore]
+    public double DrawProb { get; init; }
+    [JsonIgnore]
+    public double AwayProb { get; init; }
+
     [JsonPropertyName("match_winner")]
     public string MatchWinner { get; init; } = string.Empty; // "home", "draw", "away"
     

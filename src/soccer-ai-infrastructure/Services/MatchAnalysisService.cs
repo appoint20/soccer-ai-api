@@ -112,14 +112,18 @@ public sealed class MatchAnalysisService(
         40 => "Championship",
         41 => "League One",
         42 => "League Two",
+        46 => "National League",
         78 => "Bundesliga",
         79 => "2. Bundesliga",
+        80 => "3. Liga",
         135 => "Serie A",
         136 => "Serie B",
         140 => "La Liga",
         141 => "La Liga 2",
         61 => "Ligue 1",
         62 => "Ligue 2",
+        2 => "Champions League",
+        3 => "Europa League",
         _ => $"League {leagueId}"
     };
 }

@@ -282,6 +282,7 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                 {
                     ApiId = teamInfo.GetProperty("id").GetInt32(),
                     Name = teamInfo.GetProperty("name").GetString() ?? "Unknown",
+                    ShortName = teamInfo.TryGetProperty("code", out var code) && code.ValueKind != JsonValueKind.Null ? code.GetString() : null,
                     LeagueId = leagueId,
                     Rank = item.GetProperty("rank").GetInt32(),
                     Points = item.GetProperty("points").GetInt32(),

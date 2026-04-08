@@ -16,6 +16,15 @@ public sealed class PredictionResponse
     [JsonPropertyName("low_scoring")]
     public BoolPrediction LowScoring { get; init; } = new();
 
+    [JsonPropertyName("home_win")]
+    public BoolPrediction HomeWin { get; init; } = new();
+
+    [JsonPropertyName("draw")]
+    public BoolPrediction Draw { get; init; } = new();
+
+    [JsonPropertyName("away_win")]
+    public BoolPrediction AwayWin { get; init; } = new();
+
     [JsonPropertyName("match_winner")]
     public StringPrediction MatchWinner { get; init; } = new();
 }
