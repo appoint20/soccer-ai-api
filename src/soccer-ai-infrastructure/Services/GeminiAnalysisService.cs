@@ -252,14 +252,19 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                 CombinationId = combo.CombinationId,
                 Type = combo.Type,
                 TotalOdds = Math.Round(combo.TotalOdds, 2),
-                Matches = combo.Matches.Select(m => new CombinationMatchDto
+                Matches = combo.Matches.Select(m => 
                 {
-                    FixtureId = m.FixtureId,
-                    League = m.League,
-                    HomeTeam = m.HomeTeam,
-                    AwayTeam = m.AwayTeam,
-                    Selection = m.Selection,
-                    Odds = m.Odds
+                    var source = candidates.FirstOrDefault(c => c.Id == m.FixtureId);
+                    return new CombinationMatchDto
+                    {
+                        FixtureId = m.FixtureId,
+                        League = source?.League ?? m.League,
+                        HomeTeam = source?.HomeTeam ?? m.HomeTeam,
+                        AwayTeam = source?.AwayTeam ?? m.AwayTeam,
+                        Selection = m.Selection,
+                        Odds = m.Odds,
+                        Confidence = source?.Gemini?.Confidence ?? 0.0
+                    };
                 }).ToList(),
                 Reason = combo.Reason
             });
@@ -328,6 +333,7 @@ Match Winner (Away) → OddsAwayWin
 Accumulator odds = product of all selection odds.
 
 Minimum required accumulator odds = 1.68
+Minimum required odds for wins predictions = 2.0
 
 If any odds are missing or null:
 Ignore the minimum odds rule for that combination.

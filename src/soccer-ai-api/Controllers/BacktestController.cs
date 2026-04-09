@@ -16,14 +16,15 @@ public class BacktestController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="weeksBack">Number of past weeks to analyze (Default: 10)</param>
     /// <param name="stake">Stake per calculated combination (Default: 25.0)</param>
+    /// <param name="refresh">Force re-calculation by bypassing cache (Default: false)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Backtest Summary and Accuracy Breakdown</returns>
     [HttpGet]
     [ProducesResponseType<ApiResponse<GetBacktestReportResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Get([FromQuery] int weeksBack = 10, [FromQuery] double stake = 100.0, CancellationToken ct = default)
+    public async Task<IActionResult> Get([FromQuery] int weeksBack = 10, [FromQuery] double stake = 100.0, [FromQuery] bool refresh = false, CancellationToken ct = default)
     {
         var response = await mediator.RequestAsync<GetBacktestReportQuery, GetBacktestReportResponse>(
-            new GetBacktestReportQuery(weeksBack, stake), ct);
+            new GetBacktestReportQuery(weeksBack, stake, refresh), ct);
             
         return Ok(ApiResponse<GetBacktestReportResponse>.Ok(response));
     }

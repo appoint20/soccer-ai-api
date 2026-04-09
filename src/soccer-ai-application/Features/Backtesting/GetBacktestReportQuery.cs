@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace SoccerAi.Application.Features.Backtesting;
 
-public record GetBacktestReportQuery(int WeeksBack = 10, double Stake = 100.0) : IRequest;
+public record GetBacktestReportQuery(int WeeksBack = 10, double Stake = 100.0, bool Refresh = false) : IRequest;
 
 public sealed class GetBacktestReportResponse : IResponse
 {

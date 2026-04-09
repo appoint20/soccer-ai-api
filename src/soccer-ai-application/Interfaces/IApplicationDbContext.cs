@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     DbSet<FixtureAnalysis> FixtureAnalyses { get; }
     DbSet<Combination> Combinations { get; }
     DbSet<User> Users { get; }
+    DbSet<BacktestReport> BacktestReports { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }

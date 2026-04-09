@@ -49,9 +49,31 @@ public class GetMatchCombinationHandler(
                 
             if (cachedCombo != null && !string.IsNullOrEmpty(cachedCombo.Payload))
             {
-                logger.LogInformation("[Combinations] Cache HIT for {Date}. Skipping Gemini.", targetDate.ToString("yyyy-MM-dd"));
-                var cachedList = System.Text.Json.JsonSerializer.Deserialize<List<CombinationDto>>(cachedCombo.Payload);
-                return new GetMatchCombinationResponse(cachedList ?? []);
+                logger.LogInformation("[Combinations] Cache HIT for {Date}. Re-verifying metadata...", targetDate.ToString("yyyy-MM-dd"));
+                var cachedList = System.Text.Json.JsonSerializer.Deserialize<List<CombinationDto>>(cachedCombo.Payload) ?? new();
+                
+                // RE-CLEAN: Even if cached, ensure we use latest names and confidence from live analysis
+                var cacheAnalysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
+                var cacheAnalysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(cacheAnalysisQuery, cancellationToken);
+                var cacheSourceMatches = cacheAnalysisResponse.Matches;
+
+                foreach (var combo in cachedList)
+                {
+                    foreach (var match in combo.Matches)
+                    {
+                        var source = cacheSourceMatches.FirstOrDefault(m => m.Id == match.FixtureId);
+                        if (source != null)
+                        {
+                            // Fix properties that might be stale in cache
+                            typeof(CombinationMatchDto).GetProperty("League")?.SetValue(match, source.League);
+                            typeof(CombinationMatchDto).GetProperty("HomeTeam")?.SetValue(match, source.HomeTeam);
+                            typeof(CombinationMatchDto).GetProperty("AwayTeam")?.SetValue(match, source.AwayTeam);
+                            typeof(CombinationMatchDto).GetProperty("Confidence")?.SetValue(match, source.Gemini?.Confidence ?? 0.0);
+                        }
+                    }
+                }
+
+                return new GetMatchCombinationResponse(cachedList);
             }
 
             logger.LogInformation("[Combinations] Cache MISS. Requesting analysis from Mediator...");

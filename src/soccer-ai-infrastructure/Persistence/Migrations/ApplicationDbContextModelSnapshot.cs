@@ -16,6 +16,32 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.BacktestReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReportJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Stake")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("WeeksBack")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WeeksBack", "Stake", "CreatedAt");
+
+                    b.ToTable("BacktestReports", (string)null);
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.Combination", b =>
                 {
                     b.Property<int>("Id")

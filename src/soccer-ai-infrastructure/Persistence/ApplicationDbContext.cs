@@ -12,6 +12,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<FixtureAnalysis> FixtureAnalyses { get; init; }
     public DbSet<Combination> Combinations { get; init; }
     public DbSet<User> Users { get; init; }
+    public DbSet<BacktestReport> BacktestReports { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,6 +86,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(a => new { a.FixtureId, a.Lang }).IsUnique();
             
             entity.ToTable("FixtureAnalyses");
+        });
+
+        // ── BacktestReport ─────────────────────────────────────────────────────
+        modelBuilder.Entity<BacktestReport>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.HasIndex(r => new { r.WeeksBack, r.Stake, r.CreatedAt });
+            entity.ToTable("BacktestReports");
         });
 
         // ── User ─────────────────────────────────────────────────────────────

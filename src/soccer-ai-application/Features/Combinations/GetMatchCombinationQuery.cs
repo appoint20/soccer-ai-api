@@ -52,4 +52,7 @@ public sealed class CombinationMatchDto
 
     [JsonPropertyName("odds")]
     public double Odds { get; init; }
+
+    [JsonPropertyName("confidence")]
+    public double Confidence { get; init; }
 }

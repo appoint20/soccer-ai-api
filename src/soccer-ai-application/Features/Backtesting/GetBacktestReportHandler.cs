@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 using System.Collections.Concurrent;
 using System.Globalization;
+using SoccerAi.Application.Entities;
 
 namespace SoccerAi.Application.Features.Backtesting;
 
@@ -21,7 +23,24 @@ public class GetBacktestReportHandler(
         CancellationToken cancellationToken)
     {
         var query = context.Message;
-        logger.LogInformation("Generating backtest report for last {Weeks} weeks with €{Stake} stake.", query.WeeksBack, query.Stake);
+        
+        // --- 1. Cache Lookup ---
+        if (!query.Refresh)
+        {
+            var cached = await dbContext.BacktestReports
+                .Where(r => r.WeeksBack == query.WeeksBack && r.Stake == query.Stake)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (cached != null && cached.CreatedAt > DateTimeOffset.UtcNow.AddDays(-7))
+            {
+                logger.LogInformation("[Backtest] Cache HIT. Returning stored report from {Date}", cached.CreatedAt);
+                var response = JsonSerializer.Deserialize<GetBacktestReportResponse>(cached.ReportJson);
+                if (response != null) return response;
+            }
+        }
+
+        logger.LogInformation("[Backtest] Generating backtest report for last {Weeks} weeks with €{Stake} stake. (Cache MISS or Refresh)", query.WeeksBack, query.Stake);
 
         var startDate = new DateTimeOffset(DateTime.UtcNow.Date.AddDays(-query.WeeksBack * 7), TimeSpan.Zero);
         var endDate = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
@@ -177,7 +196,7 @@ public class GetBacktestReportHandler(
         .OrderByDescending(la => (la.BttsAccuracy + la.Over25Accuracy) / 2)
         .ToList();
 
-        return new GetBacktestReportResponse
+        var result = new GetBacktestReportResponse
         {
             Summary = new BacktestSummary
             {
@@ -195,6 +214,27 @@ public class GetBacktestReportHandler(
             WeeklyBreakdown = weeklyBreakdown,
             LeagueAccuracy = leagueAccuracy
         };
+
+        // --- 5. Cache Save ---
+        try
+        {
+            var newCache = new BacktestReport
+            {
+                WeeksBack = query.WeeksBack,
+                Stake = query.Stake,
+                ReportJson = JsonSerializer.Serialize(result),
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            dbContext.BacktestReports.Add(newCache);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("[Backtest] Report cached successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[Backtest] Failed to save report to cache.");
+        }
+
+        return result;
     }
 
     private static double NormalizeOdds(double? odds)
