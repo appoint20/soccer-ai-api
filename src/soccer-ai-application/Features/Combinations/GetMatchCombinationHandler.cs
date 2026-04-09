@@ -69,6 +69,7 @@ public class GetMatchCombinationHandler(
                             typeof(CombinationMatchDto).GetProperty("HomeTeam")?.SetValue(match, source.HomeTeam);
                             typeof(CombinationMatchDto).GetProperty("AwayTeam")?.SetValue(match, source.AwayTeam);
                             typeof(CombinationMatchDto).GetProperty("Confidence")?.SetValue(match, source.Gemini?.Confidence ?? 0.0);
+                            typeof(CombinationMatchDto).GetProperty("Reasoning")?.SetValue(match, source.Gemini?.Reasoning ?? string.Empty);
                         }
                     }
                 }

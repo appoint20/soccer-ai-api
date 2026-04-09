@@ -55,4 +55,7 @@ public sealed class CombinationMatchDto
 
     [JsonPropertyName("confidence")]
     public double Confidence { get; init; }
+
+    [JsonPropertyName("reasoning")]
+    public string Reasoning { get; init; } = string.Empty;
 }

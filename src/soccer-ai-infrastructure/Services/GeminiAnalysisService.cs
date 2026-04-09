@@ -263,7 +263,8 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                         AwayTeam = source?.AwayTeam ?? m.AwayTeam,
                         Selection = m.Selection,
                         Odds = m.Odds,
-                        Confidence = source?.Gemini?.Confidence ?? 0.0
+                        Confidence = source?.Gemini?.Confidence ?? 0.0,
+                        Reasoning = source?.Gemini?.Reasoning ?? string.Empty
                     };
                 }).ToList(),
                 Reason = combo.Reason
