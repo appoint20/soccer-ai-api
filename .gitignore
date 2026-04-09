@@ -11,8 +11,8 @@ obj/
 
 ## SQLite
 # *.db
-# *.db-shm
-# *.db-wal
+*.db-shm
+*.db-wal
 
 ## Logs
 logs/

@@ -10,35 +10,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-wal" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-wal" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/obj/Debug/net10.0/soccer-ai-api.csproj.FileListAbsolute.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationQuery.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationQuery.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/bin/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/ref/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/ref/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/refint/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/refint/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/obj/Debug/net10.0/soccer-ai-application.sourcelink.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-application.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/bin/Debug/net10.0/soccer-ai-infrastructure.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/ref/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/ref/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/refint/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/refint/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/obj/Debug/net10.0/soccer-ai-infrastructure.sourcelink.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-wal" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,28 +40,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;.NET Launch Settings Profile.soccer-ai-api: http.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore_missing_gitignore&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.notifications&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "ignore_missing_gitignore": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.notifications",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/DecompilerCache&quot;,
-      &quot;/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/SourcesCache&quot;,
-      &quot;/Users/shivm/Library/Application Support/Symbols/src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/DecompilerCache",
+      "/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/SourcesCache",
+      "/Users/shivm/Library/Application Support/Symbols/src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected=".NET Launch Settings Profile.soccer-ai-api: http">
     <configuration name="soccer-ai-worker" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
@@ -149,7 +123,7 @@
       <workItem from="1772369892729" duration="2429000" />
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
-      <workItem from="1772972114574" duration="20008000" />
+      <workItem from="1772972114574" duration="20248000" />
     </task>
     <servers />
   </component>
