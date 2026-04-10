@@ -17,6 +17,14 @@ public sealed class MatchDataProvider(
 {
     public async Task<MatchData> LoadAsync(Fixture fixture, CancellationToken ct)
     {
+        // ── Fetch Team Metadata (standings/form) ──
+        var teams = await dbContext.Teams
+            .Where(t => t.ApiId == fixture.HomeTeamId || t.ApiId == fixture.AwayTeamId)
+            .ToDictionaryAsync(t => t.ApiId, t => t, ct);
+
+        var homeTeam = teams.GetValueOrDefault(fixture.HomeTeamId);
+        var awayTeam = teams.GetValueOrDefault(fixture.AwayTeamId);
+
         // ── Historical matches ──
         var homeLastMatches = await GetLastMatches(fixture.HomeTeamId, fixture.Date, 7, ct);
         var awayLastMatches = await GetLastMatches(fixture.AwayTeamId, fixture.Date, 7, ct);
@@ -26,6 +34,25 @@ public sealed class MatchDataProvider(
         // ── Team stats (weighted — recent matches count more) ──
         var homeStats = teamStatsService.Calculate(fixture.HomeTeamId, homeLastMatches, true);
         var awayStats = teamStatsService.Calculate(fixture.AwayTeamId, awayLastMatches, false);
+
+        // Enrichment
+        if (homeTeam != null)
+        {
+            homeStats.Name = homeTeam.ShortName ?? homeTeam.Name;
+            homeStats.Rank = homeTeam.Rank;
+            homeStats.Points = homeTeam.Points;
+            homeStats.Form = homeTeam.Form;
+            homeStats.FormPercentage = CalculateFormPercentage(homeTeam.Form);
+        }
+
+        if (awayTeam != null)
+        {
+            awayStats.Name = awayTeam.ShortName ?? awayTeam.Name;
+            awayStats.Rank = awayTeam.Rank;
+            awayStats.Points = awayTeam.Points;
+            awayStats.Form = awayTeam.Form;
+            awayStats.FormPercentage = CalculateFormPercentage(awayTeam.Form);
+        }
 
         var teamStats = new TeamStatsResponse { Home = homeStats, Away = awayStats };
         var h2HModel = CalculateH2H(h2HMatches, fixture.HomeTeamId);
@@ -37,6 +64,25 @@ public sealed class MatchDataProvider(
             HomeRestDays = CalculateRestDays(fixture, homeLastMatches),
             AwayRestDays = CalculateRestDays(fixture, awayLastMatches)
         };
+    }
+
+    private static int CalculateFormPercentage(string form)
+    {
+        if (string.IsNullOrWhiteSpace(form)) return 0;
+        
+        // Take the last 5 results if string is longer
+        var recent = form.Length > 5 ? form.Substring(form.Length - 5) : form;
+        
+        double maxPoints = recent.Length * 3;
+        double earnedPoints = 0;
+
+        foreach (var result in recent.ToUpperInvariant())
+        {
+            if (result == 'W') earnedPoints += 3;
+            else if (result == 'D') earnedPoints += 1;
+        }
+
+        return (int)Math.Round((earnedPoints / maxPoints) * 100);
     }
 
     private static float? CalculateRestDays(Fixture fixture, List<Fixture> lastMatches)

@@ -32,9 +32,16 @@ public sealed class MatchAnalysisService(
         float? homeRest = null;
         float? awayRest = null;
 
+        // 2. ALWAYS load data (team stats + H2H) for UI visibility
+        var data = await dataProvider.LoadAsync(fixture, ct);
+        stats = data.TeamStats;
+        h2h = data.H2H;
+        homeRest = data.HomeRestDays;
+        awayRest = data.AwayRestDays;
+
         if (geminiEntity != null && geminiEntity.HomeProb > 0)
         {
-            // CACHE HIT: Use stored mathematical probabilities
+            // CACHE HIT: Use stored mathematical probabilities, skip heavy ML models
             prediction = new WeightedPrediction
             {
                 HomeProb = geminiEntity.HomeProb,
@@ -48,18 +55,10 @@ public sealed class MatchAnalysisService(
             };
             
             models = new StatisticalModels(); 
-            homeRest = fixture.HomeElo.HasValue ? 0 : 0; // Temporary placeholder for rest days if missing
-            awayRest = fixture.AwayElo.HasValue ? 0 : 0;
         }
         else
         {
-            // CACHE MISS: Run the heavy mathematical engines
-            var data = await dataProvider.LoadAsync(fixture, ct);
-            stats = data.TeamStats;
-            h2h = data.H2H;
-            homeRest = data.HomeRestDays;
-            awayRest = data.AwayRestDays;
-
+            // CACHE MISS: Run the heavy mathematical engines (Poisson → Monte Carlo → ML)
             var bundle = await pipeline.RunAsync(fixture, stats, ct);
             prediction = consensus.Combine(bundle, stats, fixture.LeagueId, h2h, null, null);
             

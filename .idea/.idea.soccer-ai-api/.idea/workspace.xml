@@ -10,9 +10,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-shm" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchDataProvider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchDataProvider.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,7 +42,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Run",
+    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "ignore_missing_gitignore": "true",
@@ -124,6 +124,7 @@
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
       <workItem from="1772972114574" duration="20248000" />
+      <workItem from="1775849046483" duration="340000" />
     </task>
     <servers />
   </component>
