@@ -157,20 +157,31 @@ public class GetBacktestReportHandler(
 
         // 3. Weekly Breakdown (group combos by ISO week)
         var weeklyBreakdown = dailyCombos
-            .GroupBy(c => ISOWeek.GetWeekOfYear(c.Date))
-            .OrderBy(g => g.Key)
+            .GroupBy(c => new { Year = ISOWeek.GetYear(c.Date), Week = ISOWeek.GetWeekOfYear(c.Date) })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Week)
             .Select((g, index) =>
             {
                 int weekBets = g.Count();
                 int weekWon = g.Count(c => c.IsWon);
                 double weekStaked = weekBets * query.Stake;
                 double weekReturned = g.Where(c => c.IsWon).Sum(c => c.Odds * query.Stake);
-                double weekRoi = weekStaked > 0 ? ((weekReturned - weekStaked) / weekStaked) * 100 : 0;
+                double weekProfitLoss = weekReturned - weekStaked;
+                double weekRoi = weekStaked > 0 ? (weekProfitLoss / weekStaked) * 100 : 0;
+
+                // Calculate date range for the ISO week
+                var monday = ISOWeek.ToDateTime(g.Key.Year, g.Key.Week, DayOfWeek.Monday);
+                var sunday = monday.AddDays(6);
+                var dateRange = $"{monday.ToString("MMM dd")} - {sunday.ToString("MMM dd")}";
+
                 return new WeeklyBreakdown
                 {
                     Week = $"W{index + 1}",
+                    DateRange = dateRange,
                     TotalBets = weekBets,
                     BetsWon = weekWon,
+                    StakeAmount = Math.Round(weekStaked, 2),
+                    ProfitLoss = Math.Round(weekProfitLoss, 2),
                     RoiPercent = Math.Round(weekRoi, 1)
                 };
             }).ToList();

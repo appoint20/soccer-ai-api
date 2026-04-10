@@ -55,11 +55,20 @@ public sealed class WeeklyBreakdown
     [JsonPropertyName("week")]
     public string Week { get; init; } = "";
 
+    [JsonPropertyName("date_range")]
+    public string DateRange { get; init; } = "";
+
     [JsonPropertyName("total_bets")]
     public int TotalBets { get; init; }
 
     [JsonPropertyName("bets_won")]
     public int BetsWon { get; init; }
+
+    [JsonPropertyName("stake_amount")]
+    public double StakeAmount { get; init; }
+
+    [JsonPropertyName("profit_loss")]
+    public double ProfitLoss { get; init; }
 
     [JsonPropertyName("roi_percent")]
     public double RoiPercent { get; init; }
