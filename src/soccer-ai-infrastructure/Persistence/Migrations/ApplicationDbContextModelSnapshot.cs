@@ -221,8 +221,14 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<double>("AwayProb")
+                        .HasColumnType("REAL");
+
                     b.Property<string>("AwayWinSummary")
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("BttsProb")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("BttsSummary")
                         .HasColumnType("TEXT");
@@ -237,8 +243,14 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<double>("DrawProb")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("FixtureId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("HomeProb")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("HomeWinSummary")
                         .HasColumnType("TEXT");
@@ -247,6 +259,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("Over25Prob")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("Over25Summary")
                         .HasColumnType("TEXT");

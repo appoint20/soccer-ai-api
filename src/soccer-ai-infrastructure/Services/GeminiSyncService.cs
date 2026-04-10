@@ -110,8 +110,20 @@ public class GeminiSyncService(
                 foreach (var (fixtureId, bilingualResult) in results)
                 {
                     logger.LogInformation("[GeminiSync] Ingesting result for Fixture {Id}: {Rec}", fixtureId, bilingualResult.Recommendation);
-                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", cancellationToken);
-                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", cancellationToken);
+                    
+                    // Find the original analysis to get the math probs
+                    var originalAnalysis = toAnalyze.First(x => x.FixtureId == fixtureId);
+                    var mathProbs = new WeightedPrediction
+                    {
+                        HomeProb = originalAnalysis.ModelHomeWin,
+                        DrawProb = originalAnalysis.ModelDraw,
+                        AwayProb = originalAnalysis.ModelAwayWin,
+                        Over25Prob = originalAnalysis.ModelOver25,
+                        BTTSProb = originalAnalysis.ModelBTTS
+                    };
+
+                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, cancellationToken);
+                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", mathProbs, cancellationToken);
                     totalProcessed++;
                 }
 
@@ -195,8 +207,8 @@ public class GeminiSyncService(
         var results = await geminiService.AnalyzeBatchAsync([item]);
         if (results.TryGetValue(fixtureId, out var bilingualResult))
         {
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", cancellationToken);
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", cancellationToken);
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Successfully synced Gemini analysis for Fixture {FixtureId}.", fixtureId);
         }
@@ -206,7 +218,7 @@ public class GeminiSyncService(
         }
     }
 
-    private async Task UpsertAnalysisAsync(int fixtureId, GeminiBilingualResult aiResult, GeminiLanguageBlock block, string lang, CancellationToken ct)
+    private async Task UpsertAnalysisAsync(int fixtureId, GeminiBilingualResult aiResult, GeminiLanguageBlock block, string lang, WeightedPrediction math, CancellationToken ct)
     {
         var existing = await dbContext.FixtureAnalyses
             .FirstOrDefaultAsync(a => a.FixtureId == fixtureId && a.Lang == lang, ct);
@@ -226,6 +238,13 @@ public class GeminiSyncService(
             existing.Under25Summary      = block.Summaries?.Under25 ?? "";
             existing.HomeWinSummary      = block.Summaries?.HomeWin ?? "";
             existing.AwayWinSummary      = block.Summaries?.AwayWin ?? "";
+            
+            // MATH CACHE
+            existing.HomeProb            = math.HomeProb;
+            existing.DrawProb            = math.DrawProb;
+            existing.AwayProb            = math.AwayProb;
+            existing.Over25Prob          = math.Over25Prob;
+            existing.BttsProb            = math.BTTSProb;
         }
         else
         {
@@ -245,6 +264,14 @@ public class GeminiSyncService(
                 Under25Summary      = block.Summaries?.Under25 ?? "",
                 HomeWinSummary      = block.Summaries?.HomeWin ?? "",
                 AwayWinSummary      = block.Summaries?.AwayWin ?? "",
+                
+                // MATH CACHE
+                HomeProb            = math.HomeProb,
+                DrawProb            = math.DrawProb,
+                AwayProb            = math.AwayProb,
+                Over25Prob          = math.Over25Prob,
+                BttsProb            = math.BTTSProb,
+                
                 CreatedAt           = DateTimeOffset.UtcNow
             });
         }

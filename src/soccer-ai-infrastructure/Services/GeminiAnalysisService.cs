@@ -315,9 +315,18 @@ STRICT COMBINATION RULES
    - Trap = true
    - Recommendation = "Avoid"
 
-5. Correlation control:
+5. Correlation control & Diversity:
    - Prefer matches from different leagues
    - Maximum 2 matches from same league in a combination
+   - **MANDATORY**: Favor combinations that MIX different markets (e.g., combining a 'Match Winner' selection with a 'BTTS' or 'Over 2.5' selection). 
+   - Avoid creating combinations where all matches have the same selection type (e.g., Avoid 3x BTTS) unless those are the ONLY high-confidence options available.
+
+------------------------------------------------
+DIVERSITY & MIXED MARKETS
+------------------------------------------------
+
+A balanced accumulator (e.g., Home Win + BTTS) is often more reliable than three identical market picks. 
+Your primary goal is to provide a "Mixed Bag" of high-confidence picks. 
 
 ------------------------------------------------
 ODDS RULES

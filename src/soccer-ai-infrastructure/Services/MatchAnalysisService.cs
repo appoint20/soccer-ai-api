@@ -22,27 +22,56 @@ public sealed class MatchAnalysisService(
 {
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct)
     {
-        // 1. Load data (team stats + H2H)
-        var data = await dataProvider.LoadAsync(fixture, ct);
-
-        // 2. Run models (Poisson → Monte Carlo → ML)
-        var bundle = await pipeline.RunAsync(fixture, data.TeamStats, ct);
-
-        // 3. Consensus — weighted combination of all models + league volatility + H2H divergence + momentum
-        var prediction = consensus.Combine(bundle, data.TeamStats, fixture.LeagueId, data.H2H, null, null);
-
-        // 4. Decision layer
-        var odds = BuildMatchContext(fixture);
-        var models = new StatisticalModels
-        {
-            Poisson = bundle.Poisson,
-            MonteCarlo = bundle.MonteCarlo
-        };
-
-        var decisions = decisionService.Evaluate(odds, data.TeamStats, data.H2H, prediction, models);
-
         var geminiEntity = await dbContext.FixtureAnalyses
             .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
+
+        WeightedPrediction? prediction;
+        StatisticalModels models;
+        TeamStatsResponse? stats = null;
+        HeadToHeadModel? h2h = null;
+        float? homeRest = null;
+        float? awayRest = null;
+
+        if (geminiEntity != null && geminiEntity.HomeProb > 0)
+        {
+            // CACHE HIT: Use stored mathematical probabilities
+            prediction = new WeightedPrediction
+            {
+                HomeProb = geminiEntity.HomeProb,
+                DrawProb = geminiEntity.DrawProb,
+                AwayProb = geminiEntity.AwayProb,
+                Over25Prob = geminiEntity.Over25Prob,
+                BTTSProb = geminiEntity.BttsProb,
+                Confidence = geminiEntity.Confidence,
+                MatchWinner = geminiEntity.Recommendation.ToLower().Contains("home") ? "home" : 
+                             geminiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
+            };
+            
+            models = new StatisticalModels(); 
+            homeRest = fixture.HomeElo.HasValue ? 0 : 0; // Temporary placeholder for rest days if missing
+            awayRest = fixture.AwayElo.HasValue ? 0 : 0;
+        }
+        else
+        {
+            // CACHE MISS: Run the heavy mathematical engines
+            var data = await dataProvider.LoadAsync(fixture, ct);
+            stats = data.TeamStats;
+            h2h = data.H2H;
+            homeRest = data.HomeRestDays;
+            awayRest = data.AwayRestDays;
+
+            var bundle = await pipeline.RunAsync(fixture, stats, ct);
+            prediction = consensus.Combine(bundle, stats, fixture.LeagueId, h2h, null, null);
+            
+            models = new StatisticalModels
+            {
+                Poisson = bundle.Poisson,
+                MonteCarlo = bundle.MonteCarlo
+            };
+        }
+
+        var odds = BuildMatchContext(fixture);
+        var decisions = decisionService.Evaluate(odds, stats, h2h, prediction, models);
 
         var gemini = geminiEntity != null ? new GeminiAnalysis
         {
@@ -61,12 +90,12 @@ public sealed class MatchAnalysisService(
         } : new GeminiAnalysis();
 
         // Build result
-        var analysisResult = new FixtureAnalysisResult
+        return new FixtureAnalysisResult
         {
             FixtureId = fixture.Id,
-            TeamStats = data.TeamStats,
+            TeamStats = stats ?? new TeamStatsResponse(),
             Models = models,
-            H2H = data.H2H,
+            H2H = h2h ?? new HeadToHeadModel(),
             Prediction = prediction,
             Decisions = decisions,
             LeagueName = GetLeagueName(fixture.LeagueId),
@@ -78,13 +107,9 @@ public sealed class MatchAnalysisService(
             Gemini = gemini,
             HomeElo = fixture.HomeElo,
             AwayElo = fixture.AwayElo,
-            HomeRestDays = data.HomeRestDays,
-            AwayRestDays = data.AwayRestDays
+            HomeRestDays = homeRest,
+            AwayRestDays = awayRest
         };
-
-
-
-        return analysisResult;
     }
 
     // ── Helpers ───────────────────────────────────────────────────

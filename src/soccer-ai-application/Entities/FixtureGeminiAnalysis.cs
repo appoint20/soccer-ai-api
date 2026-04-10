@@ -16,6 +16,13 @@ public class FixtureAnalysis
     public string Recommendation { get; set; } = "";
     public double Confidence { get; set; }
 
+    // ── Mathematical Cache (for backtest optimization) ───────────
+    public double HomeProb { get; set; }
+    public double DrawProb { get; set; }
+    public double AwayProb { get; set; }
+    public double Over25Prob { get; set; }
+    public double BttsProb { get; set; }
+
     /// <summary>2-4 key factors behind the recommendation</summary>
     public string PredictionReason { get; set; } = "";
 
