@@ -309,6 +309,60 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
     }
 
     /// <summary>
+    /// Fetch league ID by name and country
+    /// </summary>
+    public async Task<int?> GetLeagueIdByNameAsync(string leagueName, string country)
+    {
+        try
+        {
+            logger.LogInformation("Searching for league '{LeagueName}' in '{Country}'...", leagueName, country);
+            var response = await GetApiResponseAsync($"/leagues?search={leagueName}&country={country}");
+            
+            // If specific search fails, try searching just by name and filtering in code
+            if (response == null || !response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+            {
+                logger.LogInformation("Specific country search failed. Trying broad search for '{LeagueName}'...", leagueName);
+                response = await GetApiResponseAsync($"/leagues?search={leagueName}");
+            }
+
+            if (response is null)
+                return null;
+
+            if (!response.Value.TryGetProperty("response", out var leaguesData) || leaguesData.GetArrayLength() == 0)
+            {
+                logger.LogWarning("No league found for '{LeagueName}'", leagueName);
+                return null;
+            }
+
+            // Find the best match
+            foreach (var item in leaguesData.EnumerateArray())
+            {
+                var league = item.GetProperty("league");
+                var countryInfo = item.GetProperty("country");
+                var name = league.GetProperty("name").GetString();
+                var cName = countryInfo.GetProperty("name").GetString();
+                var id = league.GetProperty("id").GetInt32();
+                
+                logger.LogInformation("Found League: {Name} (ID: {Id}) in {Country}", name, id, cName);
+
+                if (name != null && name.Contains(leagueName, StringComparison.OrdinalIgnoreCase) && 
+                    cName != null && cName.Equals(country, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation("Resolved League ID {Id} for {LeagueName} in {Country}", id, leagueName, country);
+                    return id;
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to resolve league ID for {LeagueName}", leagueName);
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Test API connection
     /// </summary>
     public async Task<Dictionary<string, object>> TestConnectionAsync()

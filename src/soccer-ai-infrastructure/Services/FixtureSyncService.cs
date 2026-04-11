@@ -69,9 +69,22 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         foreach (var leagueId in SupportedLeagues)
         {
+            var targetLeagueId = leagueId;
+            
+            // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
+            if (leagueId == 5)
+            {
+                var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
+                if (resolvedId.HasValue)
+                {
+                    logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
+                    targetLeagueId = resolvedId.Value;
+                }
+            }
+
             try
             {
-                var leagueResult = await SyncLeagueFixturesAsync(leagueId, season, ct);
+                var leagueResult = await SyncLeagueFixturesAsync(targetLeagueId, season, ct);
                 result.Updated += leagueResult.Updated;
                 result.Created += leagueResult.Created;
                 result.LeaguesSynced++;
@@ -101,9 +114,22 @@ public class FixtureSyncService(IApiFootballService apiService,
     public async Task<SyncResult> SyncLeagueFixturesAsync(int leagueId, int season, CancellationToken ct)
     {
         var result = new SyncResult();
-        logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", leagueId, season);
+        var targetLeagueId = leagueId;
 
-        var apiFixtures = await apiService.GetFixturesAsync(leagueId, season);
+        // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
+        if (leagueId == 5)
+        {
+            var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
+            if (resolvedId.HasValue)
+            {
+                logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
+                targetLeagueId = resolvedId.Value;
+            }
+        }
+
+        logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", targetLeagueId, season);
+
+        var apiFixtures = await apiService.GetFixturesAsync(targetLeagueId, season);
         
         // Phase 1: Upcoming fixtures (capture pre-match odds before they expire)
         var upcomingFixtures = apiFixtures

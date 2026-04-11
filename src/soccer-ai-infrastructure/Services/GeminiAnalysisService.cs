@@ -11,6 +11,7 @@ using SoccerAi.Application.Models;
 using Google.GenAI.Types;
 using SoccerAi.Infrastructure.Options;
 using SoccerAi.Application.Exceptions;
+using DataType = Google.GenAI.Types.Type;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -106,15 +107,9 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
 
         for (var i = 0; i < maxRetries; i++)
         {
-            Schema? geminiSchema = null;
+            var geminiSchema = schema as Schema;
             try
             {
-                if (schema != null)
-                {
-                    // Convert anonymous object schema to the internal Schema type
-                    var json = JsonSerializer.Serialize(schema);
-                    geminiSchema = JsonSerializer.Deserialize<Schema>(json);
-                }
 
                 var config = new GenerateContentConfig
                 {
@@ -605,54 +600,53 @@ Do NOT include explanations outside JSON.
     }
            
     /// <summary>Defines the expected JSON response schema for Gemini structured output.</summary>
-    private static object GetResponseSchema() 
+    private static Schema GetResponseSchema() 
     {
-        var languageBlockSchema = new
+        var languageBlockSchema = new Schema
         {
-            type = "OBJECT",
-            properties = new
+            Type = DataType.Object,
+            Properties = new Dictionary<string, Schema>
             {
-                predictionReason    = new { type = "STRING" },
-                analysis            = new { type = "STRING" },
-                trapReason          = new { type = "STRING" },
-                consensusEvaluation = new { type = "STRING" },
-                summaries = new
+                ["predictionReason"] = new Schema { Type = DataType.String },
+                ["analysis"] = new Schema { Type = DataType.String },
+                ["trapReason"] = new Schema { Type = DataType.String },
+                ["consensusEvaluation"] = new Schema { Type = DataType.String },
+                ["summaries"] = new Schema
                 {
-                    type = "OBJECT",
-                    properties = new
+                    Type = DataType.Object,
+                    Properties = new Dictionary<string, Schema>
                     {
-                        btts    = new { type = "STRING" },
-                        over25  = new { type = "STRING" },
-                        under25 = new { type = "STRING" },
-                        homeWin = new { type = "STRING" },
-                        awayWin = new { type = "STRING" }
+                        ["btts"] = new Schema { Type = DataType.String },
+                        ["over25"] = new Schema { Type = DataType.String },
+                        ["under25"] = new Schema { Type = DataType.String },
+                        ["homeWin"] = new Schema { Type = DataType.String },
+                        ["awayWin"] = new Schema { Type = DataType.String }
                     }
                 }
             },
-            required = new[] { "predictionReason", "analysis", "consensusEvaluation", "summaries" }
+            Required = new List<string> { "predictionReason", "analysis", "consensusEvaluation", "summaries" }
         };
 
-        return new
+        return new Schema
         {
-            type = "ARRAY",
-            items = new
+            Type = DataType.Array,
+            Items = new Schema
             {
-                type = "OBJECT",
-                properties = new
+                Type = DataType.Object,
+                Properties = new Dictionary<string, Schema>
                 {
-                    fixtureId           = new { type = "INTEGER" },
-                    recommendation      = new { type = "STRING",
-                        @enum = new[] { "BTTS", "Over 2.5 Goals", "Under 2.5 Goals",
-                            "Match Winner (Home)", "Match Winner (Away)", "Avoid" } },
-                    confidence          = new { type = "NUMBER" },
-                    trapDetected        = new { type = "BOOLEAN" },
-                    en = languageBlockSchema,
-                    de = languageBlockSchema
+                    ["fixtureId"] = new Schema { Type = DataType.Integer },
+                    ["recommendation"] = new Schema 
+                    { 
+                        Type = DataType.String,
+                        Enum = new List<string> { "BTTS", "Over 2.5 Goals", "Under 2.5 Goals", "Match Winner (Home)", "Match Winner (Away)", "Avoid" }
+                    },
+                    ["confidence"] = new Schema { Type = DataType.Number },
+                    ["trapDetected"] = new Schema { Type = DataType.Boolean },
+                    ["en"] = languageBlockSchema,
+                    ["de"] = languageBlockSchema
                 },
-                required = new[]
-                {
-                    "fixtureId", "recommendation", "confidence", "trapDetected", "en", "de"
-                }
+                Required = new List<string> { "fixtureId", "recommendation", "confidence", "trapDetected", "en", "de" }
             }
         };
     }
@@ -726,38 +720,38 @@ Do NOT include explanations outside JSON.
         public double Odds { get; set; }
     }
 
-    private static object GetCombinationsSchema() => new
+    private static Schema GetCombinationsSchema() => new Schema
     {
-        type = "ARRAY",
-        description = "List of generated betting accumulator combinations.",
-        items = new
+        Type = DataType.Array,
+        Description = "List of generated betting accumulator combinations.",
+        Items = new Schema
         {
-            type = "OBJECT",
-            properties = new Dictionary<string, object>
+            Type = DataType.Object,
+            Properties = new Dictionary<string, Schema>
             {
-                { "combinationId", new { type = "INTEGER", description = "Sequential ID starting from 1." } },
-                { "type", new { type = "STRING", description = "DOUBLE or TREBLE", @enum = new[] { "DOUBLE", "TREBLE" } } },
-                { "totalOdds", new { type = "NUMBER", description = "Product of all selection odds." } },
-                { "matches", new {
-                    type = "ARRAY",
-                    description = "The 2 or 3 match selections in this combination.",
-                    items = new {
-                        type = "OBJECT",
-                        properties = new Dictionary<string, object>
+                ["combinationId"] = new Schema { Type = DataType.Integer, Description = "Sequential ID starting from 1." },
+                ["type"] = new Schema { Type = DataType.String, Description = "DOUBLE or TREBLE", Enum = new List<string> { "DOUBLE", "TREBLE" } },
+                ["totalOdds"] = new Schema { Type = DataType.Number, Description = "Product of all selection odds." },
+                ["matches"] = new Schema {
+                    Type = DataType.Array,
+                    Description = "The 2 or 3 match selections in this combination.",
+                    Items = new Schema {
+                        Type = DataType.Object,
+                        Properties = new Dictionary<string, Schema>
                         {
-                            { "fixtureId", new { type = "INTEGER" } },
-                            { "league", new { type = "STRING" } },
-                            { "homeTeam", new { type = "STRING" } },
-                            { "awayTeam", new { type = "STRING" } },
-                            { "selection", new { type = "STRING", @enum = new[] { "BTTS", "Over 2.5 Goals", "Under 2.5 Goals", "Match Winner (Home)", "Match Winner (Away)" } } },
-                            { "odds", new { type = "NUMBER" } }
+                            ["fixtureId"] = new Schema { Type = DataType.Integer },
+                            ["league"] = new Schema { Type = DataType.String },
+                            ["homeTeam"] = new Schema { Type = DataType.String },
+                            ["awayTeam"] = new Schema { Type = DataType.String },
+                            ["selection"] = new Schema { Type = DataType.String, Enum = new List<string> { "BTTS", "Over 2.5 Goals", "Under 2.5 Goals", "Match Winner (Home)", "Match Winner (Away)" } },
+                            ["odds"] = new Schema { Type = DataType.Number }
                         },
-                        required = new[] { "fixtureId", "league", "homeTeam", "awayTeam", "selection", "odds" }
+                        Required = new List<string> { "fixtureId", "league", "homeTeam", "awayTeam", "selection", "odds" }
                     }
-                }},
-                { "reason", new { type = "STRING", description = "Short explanation why this accumulator is strong." } }
+                },
+                ["reason"] = new Schema { Type = DataType.String, Description = "Short explanation why this accumulator is strong." }
             },
-            required = new[] { "combinationId", "type", "totalOdds", "matches", "reason" }
+            Required = new List<string> { "combinationId", "type", "totalOdds", "matches", "reason" }
         }
     };
 }

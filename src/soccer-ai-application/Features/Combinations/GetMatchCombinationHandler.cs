@@ -59,9 +59,13 @@ public class GetMatchCombinationHandler(
 
                 foreach (var combo in cachedList)
                 {
+                    if (combo.Matches == null) continue;
+                    
                     foreach (var match in combo.Matches)
                     {
-                        var source = cacheSourceMatches.FirstOrDefault(m => m.Id == match.FixtureId);
+                        if (match == null) continue;
+                        
+                        var source = cacheSourceMatches?.FirstOrDefault(m => m.Id == match.FixtureId);
                         if (source != null)
                         {
                             // Fix properties that might be stale in cache

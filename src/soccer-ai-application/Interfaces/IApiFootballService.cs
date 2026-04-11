@@ -42,6 +42,7 @@ public interface IApiFootballService
     Task<(FixtureStats? Home, FixtureStats? Away)> GetBothTeamStatsAsync(int fixtureId);
     Task<FixtureOdds?> GetFixtureOddsAsync(int fixtureId);
     Task<List<Team>> GetStandingsAsync(int leagueId, int season, CancellationToken ct);
+    Task<int?> GetLeagueIdByNameAsync(string leagueName, string country);
     Task<Dictionary<string, object>> TestConnectionAsync();
 }
 

@@ -1,13 +1,17 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using SoccerAi.Application.Models;
+using SoccerAi.Application.Features.Leagues;
 
 namespace SoccerAi.Api.Controllers;
 
 [ApiController]
 [Route("api/leagues")]
 [Authorize(Policy = "CombinedPolicy")]
-public class LeagueController : ControllerBase
+public class LeagueController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     public IActionResult GetLeagues()
@@ -32,5 +36,16 @@ public class LeagueController : ControllerBase
             new { Id = 3, Name = "UEFA Europa League" }
         };
         return Ok(ApiResponse<object>.Ok(leagues));
+    }
+
+    /// <summary>
+    /// Audit endpoint to check persistence status for a specific league.
+    /// </summary>
+    [HttpGet("{leagueId}/status")]
+    public async Task<IActionResult> GetStatus(int leagueId, CancellationToken ct)
+    {
+        var query = new GetLeagueStatusQuery { LeagueId = leagueId };
+        var response = await mediator.RequestAsync<GetLeagueStatusQuery, GetLeagueStatusResponse>(query, ct);
+        return Ok(ApiResponse<GetLeagueStatusResponse>.Ok(response));
     }
 }
