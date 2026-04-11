@@ -42,9 +42,9 @@ public class GetMatchCombinationHandler(
             // Step 0: Check Database Cache for existing combinations!
             var targetDate = new DateTimeOffset(query.Date.Year, query.Date.Month, query.Date.Day, 0, 0, 0, TimeSpan.Zero);
             
-            logger.LogInformation("[Combinations] Checking cache for {Date} {Lang}", targetDate, query.Language);
+            logger.LogInformation("[Combinations] Checking cache for {Date} {Lang} (Refresh: {Refresh})", targetDate, query.Language, query.Refresh);
             
-            var cachedCombo = await dbContext.Combinations
+            var cachedCombo = query.Refresh ? null : await dbContext.Combinations
                 .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language && c.IsDailyCache, cancellationToken);
                 
             if (cachedCombo != null && !string.IsNullOrEmpty(cachedCombo.Payload))
@@ -190,23 +190,35 @@ public class GetMatchCombinationHandler(
             {
                 try 
                 {
-                    var newCache = new Combination
+                    var existingCache = await dbContext.Combinations
+                        .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language && c.IsDailyCache, cancellationToken);
+
+                    if (existingCache != null)
                     {
-                        Name = $"Daily Cache {query.Date:yyyy-MM-dd}",
-                        Date = targetDate,
-                        Language = query.Language,
-                        Payload = System.Text.Json.JsonSerializer.Serialize(combinations),
-                        IsDailyCache = true,
-                        Status = "Cached"
-                    };
+                        logger.LogInformation("[Combinations] Updating existing SQL Cache...");
+                        existingCache.Payload = System.Text.Json.JsonSerializer.Serialize(combinations);
+                    }
+                    else 
+                    {
+                        logger.LogInformation("[Combinations] Creating new SQL Cache entry...");
+                        var newCache = new Combination
+                        {
+                            Name = $"Daily Cache {query.Date:yyyy-MM-dd}",
+                            Date = targetDate,
+                            Language = query.Language,
+                            Payload = System.Text.Json.JsonSerializer.Serialize(combinations),
+                            IsDailyCache = true,
+                            Status = "Cached"
+                        };
+                        dbContext.Combinations.Add(newCache);
+                    }
                     
-                    dbContext.Combinations.Add(newCache);
                     await dbContext.SaveChangesAsync(cancellationToken);
-                    logger.LogInformation("[Combinations] Saved to SQL Cache (Combinations Table).");
+                    logger.LogInformation("[Combinations] SQL Cache Sync Complete.");
                 }
                 catch (Exception cacheEx)
                 {
-                    logger.LogWarning(cacheEx, "[Combinations] Failed to SAVE cache, but returning results anyway.");
+                    logger.LogWarning(cacheEx, "[Combinations] Failed to SYNC cache, but returning results anyway.");
                 }
             }
 

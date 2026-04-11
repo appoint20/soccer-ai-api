@@ -21,10 +21,11 @@ public class CombinationsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetCombinations(
         [FromQuery] DateTimeOffset? date = null,
         [FromQuery] string language = "en",
+        [FromQuery] bool refresh = false,
         CancellationToken ct = default)
     {
         var targetDate = date ?? DateTimeOffset.UtcNow;
-        var query = new GetMatchCombinationQuery(targetDate, language);
+        var query = new GetMatchCombinationQuery(targetDate, language, refresh);
         var response = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(query, ct);
         return Ok(ApiResponse<GetMatchCombinationResponse>.Ok(response));
     }

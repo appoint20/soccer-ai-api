@@ -3,10 +3,11 @@ using System.Text.Json.Serialization;
 
 namespace SoccerAi.Application.Features.Combinations;
 
-public class GetMatchCombinationQuery(DateTimeOffset date, string language = "en") : IRequest
+public class GetMatchCombinationQuery(DateTimeOffset date, string language = "en", bool refresh = false) : IRequest
 {
     public DateTimeOffset Date { get; } = date;
     public string Language { get; } = language;
+    public bool Refresh { get; } = refresh;
 }
 
 public class GetMatchCombinationResponse(List<CombinationDto> combinations) : IResponse
