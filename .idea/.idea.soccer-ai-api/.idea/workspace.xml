@@ -9,22 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/LeagueController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/LeagueController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IApiFootballService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IApiFootballService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/ApiFootballService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/ApiFootballService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/TeamSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/TeamSyncService.cs" afterDir="false" />
-    </list>
+    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -135,7 +120,7 @@
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
       <workItem from="1772972114574" duration="20248000" />
-      <workItem from="1775849046483" duration="12811000" />
+      <workItem from="1775849046483" duration="13459000" />
     </task>
     <servers />
   </component>

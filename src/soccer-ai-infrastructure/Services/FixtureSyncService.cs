@@ -129,6 +129,11 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", targetLeagueId, season);
 
+        // Define status categories
+        var completedStatuses = new[] { "FT", "AET", "PEN", "ABD", "AWD", "WO" };
+        var liveStatuses = new[] { "1H", "HT", "2H", "ET", "BT", "P", "LIVE" };
+        var cancelledStatuses = new[] { "PST", "CANC", "INT", "SUSP" };
+
         var apiFixtures = await apiService.GetFixturesAsync(targetLeagueId, season);
         
         // Phase 1: Upcoming fixtures (capture pre-match odds before they expire)
@@ -145,8 +150,8 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         foreach (var apiFixture in upcomingFixtures)
         {
-            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIdsPhase1, ct);
-            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIdsPhase1, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, targetLeagueId, existingTeamIdsPhase1, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, targetLeagueId, existingTeamIdsPhase1, ct);
 
             var existingFixture = await dbContext.Fixtures
                 .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
@@ -154,7 +159,7 @@ public class FixtureSyncService(IApiFootballService apiService,
             if (existingFixture == null)
             {
                 // New upcoming fixture - capture odds now
-                var fixture = await CreateUpcomingFixtureAsync(apiFixture, leagueId, season);
+                var fixture = await CreateUpcomingFixtureAsync(apiFixture, targetLeagueId, season);
                 if (fixture == null) continue;
                 dbContext.Fixtures.Add(fixture);
                 result.Created++;
@@ -167,11 +172,19 @@ public class FixtureSyncService(IApiFootballService apiService,
             }
         }
 
-        // Phase 2: Recently completed fixtures (last 3 days only — avoids processing thousands of old matches)
+        // Phase 2: Recently active or completed fixtures (last 3 days to catch delayed results/corrections)
         var cutoff = DateTimeOffset.UtcNow.AddDays(-3);
-        var completedStatuses = new[] { "FT", "AET", "PEN" };
-        var completedFixtures = apiFixtures
-            .Where(f => completedStatuses.Contains(f.StatusShort) && f.Date >= cutoff)
+        
+        // We include anything that is:
+        // 1. Officially finished (FT, AET, PEN, ABD, etc.)
+        // 2. Currently Live (1H, 2H, HT, etc.)
+        // 3. Postponed/Cancelled (PST, CANC)
+        // 4. Any match whose start time is in the past (even if status is still NS, we need to refresh it)
+        var recentOrActiveFixtures = apiFixtures
+            .Where(f => (f.Date >= cutoff && f.Date <= DateTimeOffset.UtcNow.AddHours(2)) || 
+                        completedStatuses.Contains(f.StatusShort) || 
+                        liveStatuses.Contains(f.StatusShort) ||
+                        cancelledStatuses.Contains(f.StatusShort))
             .ToList();
 
         // Pre-fetch existing team IDs globally and cache per request to avoid duplicate team errors
@@ -183,46 +196,57 @@ public class FixtureSyncService(IApiFootballService apiService,
         }
         var existingTeamIds = _existingTeamIds;
 
-        foreach (var apiFixture in completedFixtures)
+        foreach (var apiFixture in recentOrActiveFixtures)
         {
             try
             {
                 // Ensure teams exist using local set for speed
-                await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIds, ct);
-                await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIds, ct);
+                await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, targetLeagueId, existingTeamIds, ct);
+                await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, targetLeagueId, existingTeamIds, ct);
 
                 var existingFixture = await dbContext.Fixtures
                     .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
 
                 // Check if match is within 7-day odds window
                 var isWithinOddsWindow = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-7);
+                var isVeryRecent = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-2); // 48-hour refresh window
 
                 if (existingFixture == null)
                 {
-                    // Completed fixture we never captured - create with full enrichment
-                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, leagueId, season, ct, fetchOdds: isWithinOddsWindow);
+                    // Fixture we never captured - create with full enrichment
+                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, targetLeagueId, season, ct, fetchOdds: isWithinOddsWindow);
                     if (fixture != null)
                     {
                         dbContext.Fixtures.Add(fixture);
                         result.Created++;
                     }
                 }
-                else if (!completedStatuses.Contains(existingFixture.Status))
+                else
                 {
-                    // Previously upcoming, now completed - update results, keep odds
-                    await UpdateCompletedFixtureAsync(existingFixture, apiFixture, leagueId, ct);
-                    result.Updated++;
-                }
-                else if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
-                {
-                    // Existing completed fixture missing odds, still within 7-day window - try to fetch
-                    await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
-                    result.Updated++;
+                    // Existing fixture - decide if it needs an update
+                    bool statusChanged = existingFixture.Status != apiFixture.StatusShort;
+                    bool scoreChanged = existingFixture.HomeGoal != (apiFixture.HomeGoals ?? 0) || existingFixture.AwayGoal != (apiFixture.AwayGoals ?? 0);
+                    
+                    // Always update if:
+                    // 1. Status or Score changed
+                    // 2. It's currently LIVE
+                    // 3. it's very recent (within 48h) to ensure we get final stats/odds corrections
+                    if (statusChanged || scoreChanged || liveStatuses.Contains(apiFixture.StatusShort) || isVeryRecent)
+                    {
+                        await UpdateCompletedFixtureAsync(existingFixture, apiFixture, targetLeagueId, ct);
+                        result.Updated++;
+                    }
+                    else if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
+                    {
+                        // Missing odds, still within window - try to fetch
+                        await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
+                        result.Updated++;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to process completed fixture {ApiId} — skipping.", apiFixture.ApiId);
+                logger.LogWarning(ex, "Failed to process recent/active fixture {ApiId} — skipping.", apiFixture.ApiId);
             }
 
             // Rate limiting

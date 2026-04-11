@@ -31,7 +31,7 @@ public class LeagueController(IMediator mediator) : ControllerBase
             new { Id = 141, Name = "La Liga 2" },
             new { Id = 61, Name = "Ligue 1" },
             new { Id = 62, Name = "Ligue 2" },
-            new { Id = 46, Name = "English National League" },
+            new { Id = 43, Name = "English National League" },
             new { Id = 2, Name = "UEFA Champions League" },
             new { Id = 3, Name = "UEFA Europa League" }
         };
