@@ -15,7 +15,7 @@ public class FixtureSyncService(IApiFootballService apiService,
     IApplicationDbContext dbContext, ILogger<FixtureSyncService> logger)
     : IFixtureSyncService
 {
-    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 135, 136, 61, 62, 140, 78, 79, 80, 141, 46, 2, 3 ];
+    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 135, 136, 61, 62, 140, 78, 79, 80, 141, 46, 5, 2, 3 ];
     private HashSet<int>? _existingTeamIds;
 
     /// <summary>
@@ -141,9 +141,12 @@ public class FixtureSyncService(IApiFootballService apiService,
             }
         }
 
-        // Phase 2: Completed fixtures (update with results, preserve odds)
-        // For recently completed (within 7 days), API still has odds - capture them!
-        var completedFixtures = apiFixtures.Where(f => f.StatusShort == "FT").ToList();
+        // Phase 2: Recently completed fixtures (last 3 days only — avoids processing thousands of old matches)
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-3);
+        var completedStatuses = new[] { "FT", "AET", "PEN" };
+        var completedFixtures = apiFixtures
+            .Where(f => completedStatuses.Contains(f.StatusShort) && f.Date >= cutoff)
+            .ToList();
 
         // Pre-fetch existing team IDs globally and cache per request to avoid duplicate team errors
         if (_existingTeamIds == null)
@@ -156,40 +159,47 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         foreach (var apiFixture in completedFixtures)
         {
-            // Ensure teams exist using local set for speed
-            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIds, ct);
-            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIds, ct);
-
-            var existingFixture = await dbContext.Fixtures
-                .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
-
-            // Check if match is within 7-day odds window
-            var isWithinOddsWindow = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-7);
-
-            if (existingFixture == null)
+            try
             {
-                // Completed fixture we never captured - create with full enrichment
-                var fixture = await CreateEnrichedFixtureAsync(apiFixture, leagueId, season, ct, fetchOdds: isWithinOddsWindow);
-                if (fixture != null)
+                // Ensure teams exist using local set for speed
+                await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIds, ct);
+                await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIds, ct);
+
+                var existingFixture = await dbContext.Fixtures
+                    .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
+
+                // Check if match is within 7-day odds window
+                var isWithinOddsWindow = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-7);
+
+                if (existingFixture == null)
                 {
-                    dbContext.Fixtures.Add(fixture);
-                    result.Created++;
+                    // Completed fixture we never captured - create with full enrichment
+                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, leagueId, season, ct, fetchOdds: isWithinOddsWindow);
+                    if (fixture != null)
+                    {
+                        dbContext.Fixtures.Add(fixture);
+                        result.Created++;
+                    }
+                }
+                else if (!completedStatuses.Contains(existingFixture.Status))
+                {
+                    // Previously upcoming, now completed - update results, keep odds
+                    await UpdateCompletedFixtureAsync(existingFixture, apiFixture, leagueId, ct);
+                    result.Updated++;
+                }
+                else if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
+                {
+                    // Existing completed fixture missing odds, still within 7-day window - try to fetch
+                    await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
+                    result.Updated++;
                 }
             }
-            else if (existingFixture.Status != "FT")
+            catch (Exception ex)
             {
-                // Previously upcoming, now completed - update results, keep odds
-                await UpdateCompletedFixtureAsync(existingFixture, apiFixture, leagueId, ct);
-                result.Updated++;
-            }
-            else if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
-            {
-                // Existing completed fixture missing odds, still within 7-day window - try to fetch
-                await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
-                result.Updated++;
+                logger.LogWarning(ex, "Failed to process completed fixture {ApiId} — skipping.", apiFixture.ApiId);
             }
 
-            // Reduced delay (300ms -> 50ms) to maintain some rate limiting but improve speed
+            // Rate limiting
             await Task.Delay(50, ct);
         }
 
@@ -271,40 +281,41 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// </summary>
     private async Task UpdateCompletedFixtureAsync(Fixture fixture, ApiFixture apiFixture, int leagueId, CancellationToken ct)
     {
-        var stats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
-        
-        // Update with results
-        fixture.Status = "FT";
+        // Always update score and status — even if stats API fails (rate limits etc.)
+        fixture.Status = apiFixture.StatusShort; // preserve AET/PEN/FT accurately
         fixture.HomeGoal = apiFixture.HomeGoals ?? 0;
         fixture.AwayGoal = apiFixture.AwayGoals ?? 0;
         fixture.HtHomeGoal = apiFixture.HomeGoalsHalftime ?? 0;
         fixture.HtAwayGoal = apiFixture.AwayGoalsHalftime ?? 0;
-        
-        // Stats from API
-        fixture.HomeShots = stats.Home?.TotalShots ?? 0;
-        fixture.AwayShots = stats.Away?.TotalShots ?? 0;
-        fixture.HomeShotsOnTarget = stats.Home?.ShotsOnGoal ?? 0;
-        fixture.AwayShotsOnTarget = stats.Away?.ShotsOnGoal ?? 0;
-        fixture.HomeBallPossession = stats.Home?.BallPossession;
-        fixture.AwayBallPossession = stats.Away?.BallPossession;
-        fixture.HomePassesAccurate = stats.Home?.PassesAccurate;
-        fixture.AwayPassesAccurate = stats.Away?.PassesAccurate;
-        fixture.HomeXg = stats.Home?.ExpectedGoals ?? 0;
-        fixture.AwayXg = stats.Away?.ExpectedGoals ?? 0;
-        
-        fixture.AwayXg = stats.Away?.ExpectedGoals ?? 0;
+        fixture.UpdatedAt = DateTimeOffset.UtcNow;
 
-        // Calculate averages from historical data
+        // Calculate averages from historical data (lightweight DB query, always runs)
         var avgs = await CalculateAveragesAsync(
             apiFixture.HomeTeamApiId, apiFixture.AwayTeamApiId, leagueId, apiFixture.Date, ct);
-            
         fixture.HomeGoalAvg = avgs.HomeGoalAvg;
         fixture.AwayGoalAvg = avgs.AwayGoalAvg;
         fixture.HtHomeGoalAvg = avgs.HtHomeGoalAvg;
         fixture.HtAwayGoalAvg = avgs.HtAwayGoalAvg;
-        
-        // NOTE: We preserve the pre-match odds that were captured earlier!
-        fixture.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Fetch detailed stats — if this fails (API rate limits etc.) we still keep the score above
+        try
+        {
+            var stats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
+            fixture.HomeShots = stats.Home?.TotalShots ?? 0;
+            fixture.AwayShots = stats.Away?.TotalShots ?? 0;
+            fixture.HomeShotsOnTarget = stats.Home?.ShotsOnGoal ?? 0;
+            fixture.AwayShotsOnTarget = stats.Away?.ShotsOnGoal ?? 0;
+            fixture.HomeBallPossession = stats.Home?.BallPossession;
+            fixture.AwayBallPossession = stats.Away?.BallPossession;
+            fixture.HomePassesAccurate = stats.Home?.PassesAccurate;
+            fixture.AwayPassesAccurate = stats.Away?.PassesAccurate;
+            fixture.HomeXg = stats.Home?.ExpectedGoals ?? 0;
+            fixture.AwayXg = stats.Away?.ExpectedGoals ?? 0;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not fetch stats for fixture {ApiId} — score/status still saved.", apiFixture.ApiId);
+        }
     }
 
     /// <summary>
@@ -486,8 +497,22 @@ public class FixtureSyncService(IApiFootballService apiService,
 
     private async Task EnsureTeamExistsOptimizedAsync(int teamApiId, string teamName, int leagueId, HashSet<int> existingTeamIds, CancellationToken ct)
     {
+        var hasRealName = !string.IsNullOrWhiteSpace(teamName) && !teamName.StartsWith("Team ");
+
         if (existingTeamIds.Contains(teamApiId))
+        {
+            // Team exists — but if we have a real name, check if the stored name is a placeholder and fix it
+            if (hasRealName)
+            {
+                var existingTeam = await dbContext.Teams.FirstOrDefaultAsync(t => t.ApiId == teamApiId, ct);
+                if (existingTeam != null && (existingTeam.Name.StartsWith("Unknown Team") || existingTeam.Name.StartsWith("Team ")))
+                {
+                    existingTeam.Name = teamName;
+                    logger.LogInformation("Fixed placeholder team name: ApiId={ApiId} → '{Name}'", teamApiId, teamName);
+                }
+            }
             return;
+        }
 
         // Check Local collection in case TeamSyncService or a previous league sync added it
         if (dbContext.Teams.Local.Any(t => t.ApiId == teamApiId))
@@ -499,7 +524,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         dbContext.Teams.Add(new Team
         {
             ApiId = teamApiId,
-            Name = string.IsNullOrWhiteSpace(teamName) ? $"Team {teamApiId}" : teamName,
+            Name = hasRealName ? teamName : $"Unknown Team {teamApiId}",
             LeagueId = leagueId,
             Rank = 0,
             Points = 0,

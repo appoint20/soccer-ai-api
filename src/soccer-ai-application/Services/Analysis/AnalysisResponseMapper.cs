@@ -54,7 +54,9 @@ public class AnalysisResponseMapper
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
-            Trap = analysis.Decisions.Trap,
+            Trap = geminiAnalysis?.IsTrap == true 
+                ? new TrapDecision { IsTrap = true, Reason = geminiAnalysis.TrapReason } 
+                : analysis.Decisions.Trap,
             H2H = analysis.H2H,
             Gemini = geminiAnalysis
         };
@@ -145,7 +147,8 @@ public class AnalysisResponseMapper
     /// </summary>
     private static MatchResult? ValidateMatchResult(Fixture fixture, FixtureAnalysisResult analysis)
     {
-        if (fixture.Status != "FT")
+        var completedStatuses = new[] { "FT", "AET", "PEN" };
+        if (!completedStatuses.Contains(fixture.Status))
             return null;
 
         var actualScore = $"{fixture.HomeGoal}:{fixture.AwayGoal}";

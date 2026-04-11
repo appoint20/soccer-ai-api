@@ -145,19 +145,26 @@ using (var scope = app.Services.CreateScope())
         
         try 
         {
-            var fileInfo = new System.IO.FileInfo(dataSource);
-            logger.LogInformation("[Diagnostics] Database Path: {Path}", dataSource);
-            
-            if (fileInfo.Exists)
+            if (!string.IsNullOrEmpty(dataSource))
             {
-                logger.LogInformation("[Diagnostics] Database Size: {Size} bytes", fileInfo.Length);
-                var fixtureCount = context.Fixtures.Count();
-                var teamCount = context.Teams.Count();
-                logger.LogInformation("[Diagnostics] Database Data: {Fixtures} fixtures, {Teams} teams", fixtureCount, teamCount);
+                var fileInfo = new System.IO.FileInfo(dataSource);
+                logger.LogInformation("[Diagnostics] Database Path: {Path}", dataSource);
+                
+                if (fileInfo.Exists)
+                {
+                    logger.LogInformation("[Diagnostics] Database Size: {Size} bytes", fileInfo.Length);
+                    var fixtureCount = context.Fixtures.Count();
+                    var teamCount = context.Teams.Count();
+                    logger.LogInformation("[Diagnostics] Database Data: {Fixtures} fixtures, {Teams} teams", fixtureCount, teamCount);
+                }
+                else
+                {
+                    logger.LogWarning("[Diagnostics] Database file NOT FOUND at expected path.");
+                }
             }
             else
             {
-                logger.LogWarning("[Diagnostics] Database file NOT FOUND at expected path.");
+                logger.LogWarning("[Diagnostics] Database DataSource is empty.");
             }
         }
         catch (Exception diagEx)
@@ -195,7 +202,26 @@ if (args.Contains("--ml"))
     return;
 }
 
-if (args.Contains("--sync-gemini"))
+if (args.Any(a => a.StartsWith("--sync-league")))
+{
+    var leagueIdArg = args.FirstOrDefault(a => a.StartsWith("--sync-league="));
+    if (leagueIdArg != null && int.TryParse(leagueIdArg.Split('=')[1], out var leagueId))
+    {
+        var season = DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
+        Console.WriteLine($"[Startup] Targeted fixture sync for League {leagueId} Season {season}...");
+        using var scope = app.Services.CreateScope();
+        var syncService = scope.ServiceProvider.GetRequiredService<IFixtureSyncService>();
+        var teamService = scope.ServiceProvider.GetRequiredService<ITeamSyncService>();
+        
+        await teamService.SyncLeagueStandingsAsync(leagueId, season, default);
+        var result = await syncService.SyncLeagueFixturesAsync(leagueId, season, default);
+        
+        Console.WriteLine($"[Startup] Sync Complete: Created {result.Created}, Updated {result.Updated}");
+    }
+    return;
+}
+
+if (args.Any(a => a.StartsWith("--sync-gemini")))
 {
     var fixtureIdArg = args.FirstOrDefault(a => a.StartsWith("--fixture-id="));
     int? fixtureId = fixtureIdArg != null ? int.Parse(fixtureIdArg.Split('=')[1]) : null;

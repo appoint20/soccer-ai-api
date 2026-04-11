@@ -50,7 +50,7 @@ public class GetMatchAnalysisHandler(
         if (fixtures.Count == 0)
         {
             logger.LogWarning("No fixtures found in database for date {Date}", date.ToString("yyyy-MM-dd"));
-            return new GetMatchAnalysisResponse { Matches = new(), Summary = null };
+            return new GetMatchAnalysisResponse { Matches = new(), Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 } };
         }
 
         // Step 2: Run core analysis for all fixtures
@@ -116,6 +116,8 @@ public class GetMatchAnalysisHandler(
                 skipMissingAnalysis, skipMissingTeam);
         }
 
+
+
         // Step 5: Calculate summary
         var summary = AnalysisResponseMapper.CalculateSummary(analysisList);
 
@@ -124,9 +126,7 @@ public class GetMatchAnalysisHandler(
         return new GetMatchAnalysisResponse
         {
             Matches = analysisList,
-            Summary = analysisList.Count > 0 ? summary : null
+            Summary = summary
         };
     }
-
-
 }

@@ -13,7 +13,7 @@ public class TeamSyncService(
     : ITeamSyncService
 {
     // Supported English leagues
-    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 61, 62, 78, 79, 80, 135, 136, 140, 141, 46, 2, 3 ];
+    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 61, 62, 78, 79, 80, 135, 136, 140, 141, 46, 5, 2, 3 ];
 
     private static int GetCurrentSeason() => DateTimeOffset.UtcNow.Month >= 7 
         ? DateTimeOffset.UtcNow.Year 

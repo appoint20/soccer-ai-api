@@ -58,6 +58,37 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
         return Ok(ApiResponse<object>.Ok(new { message = "ML Training Completed" }));
     }
 
+    /// <summary>
+    /// Sync fixtures only (past results + upcoming) — skips ML and Gemini.
+    /// Use this to quickly refresh match results and upcoming fixture data.
+    /// </summary>
+    [HttpPost("sync-fixtures")]
+    public async Task<IActionResult> SyncFixtures([FromServices] IFixtureSyncService fixtureSyncService)
+    {
+        var season = DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
+        logger.LogInformation("[AutomationSync] Fixture-only sync requested for season {Season}", season);
+
+        try
+        {
+            var result = await fixtureSyncService.SyncAllLeaguesAsync(season, lifetime.ApplicationStopping);
+            return Ok(ApiResponse<object>.Ok(new
+            {
+                message = "Fixture sync completed",
+                season,
+                created = result.Created,
+                updated = result.Updated,
+                leagues_synced = result.LeaguesSynced,
+                errors = result.Errors,
+                timestamp = DateTime.UtcNow
+            }));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[AutomationSync] Fixture sync failed");
+            return StatusCode(500, ApiResponse<object>.Fail($"Fixture sync failed: {ex.Message}"));
+        }
+    }
+
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {

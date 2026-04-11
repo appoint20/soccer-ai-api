@@ -137,6 +137,7 @@ public sealed class MatchAnalysisService(
         41 => "League One",
         42 => "League Two",
         46 => "National League",
+        5 => "National League",
         78 => "Bundesliga",
         79 => "2. Bundesliga",
         80 => "3. Liga",

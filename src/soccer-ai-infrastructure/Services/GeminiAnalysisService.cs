@@ -17,7 +17,7 @@ namespace SoccerAi.Infrastructure.Services;
 public sealed class GeminiAnalysisService : IGeminiAnalysisService
 {
 
-    private const int BatchSize = 5;
+    private const int BatchSize = 10;
 
 
     private readonly GeminiOptions _options;
@@ -128,7 +128,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                     modelName = GetModelFromUrl(_options.BaseUrl);
                 
                 if (string.IsNullOrEmpty(modelName)) 
-                    modelName = "gemini-1.5-flash"; // Ultimate fallback
+                    modelName = "gemini-2.5-flash"; // Ultimate fallback
                 
                 var response = await _client.Models.GenerateContentAsync(
                     modelName, 
@@ -167,9 +167,9 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                 {
                     var currentModel = _options.Model ?? GetModelFromUrl(_options.BaseUrl);
                     
-                    if (currentModel != "gemini-1.5-flash")
+                    if (currentModel != "gemini-2.5-flash")
                     {
-                        _logger.LogWarning("Gemini Primary Model ({Model}) Quota Exceeded. Falling back to gemini-1.5-flash for resilience...", currentModel ?? "Unknown");
+                        _logger.LogWarning("Gemini Primary Model ({Model}) Quota Exceeded. Falling back to gemini-2.5-flash for resilience...", currentModel ?? "Unknown");
                         
                         // Override model for this retry loop
                         var configFallback = new GenerateContentConfig
@@ -182,7 +182,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                         try 
                         {
                             var fallbackResponse = await _client.Models.GenerateContentAsync(
-                                "gemini-1.5-flash", 
+                                "gemini-2.5-flash", 
                                 prompt,
                                 configFallback);
 
@@ -661,11 +661,11 @@ Do NOT include explanations outside JSON.
 
     private static string GetModelFromUrl(string url)
     {
-        if (string.IsNullOrWhiteSpace(url)) return "gemini-1.5-flash-latest";
+        if (string.IsNullOrWhiteSpace(url)) return "gemini-2.5-flash";
         
         // Extract model name between /models/ and :generateContent
         var startIndex = url.IndexOf("/models/");
-        if (startIndex == -1) return "gemini-1.5-flash-latest";
+        if (startIndex == -1) return "gemini-2.5-flash";
         
         startIndex += "/models/".Length;
         var endIndex = url.IndexOf(":", startIndex);
