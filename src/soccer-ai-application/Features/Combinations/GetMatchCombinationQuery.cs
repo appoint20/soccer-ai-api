@@ -27,6 +27,9 @@ public sealed class CombinationDto
     [JsonPropertyName("total_odds")]
     public double TotalOdds { get; init; }
 
+    [JsonPropertyName("source_type")]
+    public string SourceType { get; set; } = "";
+
     [JsonPropertyName("matches")]
     public List<CombinationMatchDto> Matches { get; init; } = [];
 
