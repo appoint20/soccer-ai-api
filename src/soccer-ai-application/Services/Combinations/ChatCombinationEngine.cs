@@ -87,7 +87,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         return new CombinationDto
         {
             Type = size == 2 ? "DOUBLE" : size == 3 ? "TREBLE" : "ACCUMULATOR",
-            SourceType = "MATHEMATICAL",
+            SourceType = "USER",
             TotalOdds = Math.Round(totalOdds, 2),
             Matches = comboMatches.Select(m => new CombinationMatchDto
             {
@@ -98,10 +98,30 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                 Selection = MapToDisplayName(m.Market),
                 Odds = m.Odds,
                 Confidence = m.Probability * 100,
-                Reasoning = $"Math Model: Probability {Math.Round(m.Probability * 100, 1)}% with team form {Math.Round(m.FormScore, 2)}."
+                Reasoning = GetNaturalReasoning(m)
             }).ToList(),
-            Reason = $"Statistical Portfolio: Ranked {Math.Round(avgScore, 2)}. Matches selected for peak value with zero overlap."
+            Reason = $"Custom Portfolio: Generated based on your specific criteria. Selection prioritized for peak value and statistical consensus."
         };
+    }
+
+    private string GetNaturalReasoning(CandidateMatch m)
+    {
+        var formText = m.FormScore switch
+        {
+            > 0.8 => "exceptional recent form",
+            > 0.6 => "strong consistent performance",
+            > 0.4 => "balanced recent results",
+            _ => "statistical potential"
+        };
+
+        var probText = m.Probability switch
+        {
+            > 0.7 => "high-confidence statistical advantage",
+            > 0.5 => "strong mathematical probability",
+            _ => "favorable value assessment"
+        };
+
+        return $"This selection combines {formText} with a {probText} for the requested market.";
     }
 
     private List<CandidateMatch> FilterAllPossibleCandidates(List<MatchAnalysis> matches, ChatCombinationIntent intent)

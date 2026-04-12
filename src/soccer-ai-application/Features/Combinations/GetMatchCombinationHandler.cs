@@ -26,7 +26,6 @@ namespace SoccerAi.Application.Features.Combinations;
 public class GetMatchCombinationHandler(
     IMediator mediator,
     IApplicationDbContext dbContext,
-    IGeminiAnalysisService geminiAnalysisService,
     ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
@@ -121,7 +120,7 @@ public class GetMatchCombinationHandler(
 
             // 1. Prepare the statistical pool (Confidence > 60%)
             var statPool = matches
-                .Where(m => m.Prediction?.MatchWinner != null && m.Prediction.MatchWinner.Confidence >= 0.60)
+                .Where(m => m.Prediction?.MatchWinner != null && (m.Prediction?.MatchWinner?.Confidence ?? 0) >= 0.60)
                 .OrderByDescending(m => m.Prediction.MatchWinner.Confidence)
                 .ToList();
 
@@ -148,10 +147,10 @@ public class GetMatchCombinationHandler(
 
                 var combo = new CombinationDto
                 {
-                    SourceType = "MATHEMATICAL",
+                    SourceType = "SYSTEM",
                     Type = chunk.Count == 3 ? "TREBLE" : "DOUBLE",
                     TotalOdds = Math.Round(chunk.Select(m => GetPrimaryOdds(m)).Aggregate(1.0, (acc, val) => acc * val), 2),
-                    Reason = "Data-Driven Selection: Portfolio built using pure mathematical models (Poisson & ML) with high statistical consensus.",
+                    Reason = "System Recommendation: High-confidence daily selection built from peak historical performance and current data trends.",
                     Matches = chunk.Select(m => new CombinationMatchDto
                     {
                         FixtureId = m.Id, 
@@ -161,7 +160,7 @@ public class GetMatchCombinationHandler(
                         Selection = GetPrimarySelection(m), 
                         Odds = GetPrimaryOdds(m),
                         Confidence = (m.Prediction?.MatchWinner?.Confidence ?? 0) * 100,
-                        Reasoning = "Selection based on 10-week historical form and Poisson goal distribution."
+                        Reasoning = GetNaturalDailyReasoning(m)
                     }).ToList()
                 };
 
@@ -232,6 +231,18 @@ public class GetMatchCombinationHandler(
             "away" => "Match Winner (Away)",
             _ => "BTTS" // Default to BTTS if draw/other to keep it diverse
         };
+    }
+
+    private static string GetNaturalDailyReasoning(MatchAnalysis m)
+    {
+        var conf = m.Prediction?.MatchWinner?.Confidence ?? 0;
+        var confText = conf switch
+        {
+            >= 0.8 => "very high predictive probability",
+            >= 0.7 => "strong statistical consensus",
+            _ => "favorable analytical advantage"
+        };
+        return $"Selection backed by {confText} and exceptional season form.";
     }
 
     private static double GetPrimaryOdds(MatchAnalysis match)

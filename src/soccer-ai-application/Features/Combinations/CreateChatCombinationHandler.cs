@@ -20,7 +20,23 @@ public class CreateChatCombinationHandler(
         var cmd = context.Message;
         logger.LogInformation("[Chat] Received natural language request: {Query}", cmd.Query);
 
-        // 1. Parse natural language into structured intent
+        // 1. Check for empty query - Fallback to SYSTEM Daily Combinations
+        if (string.IsNullOrWhiteSpace(cmd.Query))
+        {
+            logger.LogInformation("[Chat] Empty query received. Falling back to SYSTEM daily combinations.");
+            var dailyQuery = new GetMatchCombinationQuery(DateTimeOffset.UtcNow, cmd.Language, false);
+            var dailyResponse = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(dailyQuery, cancellationToken);
+            
+            return new CreateChatCombinationResponse 
+            { 
+                Success = true, 
+                Combinations = dailyResponse.Combinations.Take(5).ToList(),
+                AiReasoning = "No criteria specified. Showing today's top system recommendations.",
+                Message = "Here are today's top-rated mathematical portfolios."
+            };
+        }
+
+        // 2. Parse natural language into structured intent
         var intent = await geminiService.ParseChatIntentAsync(cmd.Query);
         if (intent == null)
         {
