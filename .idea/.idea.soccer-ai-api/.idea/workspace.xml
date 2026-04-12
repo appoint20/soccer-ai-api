@@ -38,7 +38,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Debug",
+    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "ignore_missing_gitignore": "true",
@@ -120,7 +120,7 @@
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
       <workItem from="1772972114574" duration="20248000" />
-      <workItem from="1775849046483" duration="22521000" />
+      <workItem from="1775849046483" duration="22862000" />
     </task>
     <servers />
   </component>

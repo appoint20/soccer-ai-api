@@ -7,8 +7,8 @@ namespace SoccerAi.Application.Services.Combinations;
 public sealed class ChatCombinationEngine : IChatCombinationEngine
 {
     private const double ProbabilityWeight = 0.6;
-    private const double FormWeight = 0.3;
-    private const double ValueWeight = 0.1;
+    private const double FormWeight = 0.2;
+    private const double ValueWeight = 0.2;
 
     public List<CombinationDto> GenerateCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent)
     {
@@ -150,7 +150,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                 // --- MARKET HIERARCHY ---
                 // Primary (Goal Atmosphere): BTTS, Over25. Weight 1.2x
                 // Secondary (Match State): Wins, 2-3 Goals. Weight 1.0x
-                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.2 : 1.0;
+                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.1 : 1.0;
                 
                 list.Add(new CandidateMatch
                 {
@@ -206,6 +206,17 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         {
             if (!requested.Contains(item.Key)) continue;
 
+            // --- PROBABILITY THRESHOLDS (ROI OPTIMIZATION) ---
+            // Wins MUST be > 45% confidence, Draws > 30%
+            bool meetsConfidence = item.Key switch
+            {
+                "HomeWin" or "AwayWin" => item.Prob >= 0.45,
+                "Draw" => item.Prob >= 0.30,
+                _ => true // BTTS/Over25 are filtered by odds/atmosphere below
+            };
+
+            if (!meetsConfidence) continue;
+
             bool isGoalMarket = item.Key == "BTTS" || item.Key == "Over25";
             bool meetsFloor = item.Odds >= 1.60;
             bool meetsGoalAtmosphere = isGoalMarket && isStrongGoalEnvironment;
@@ -214,10 +225,9 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             {
                 res.Add((item.Key, item.Odds, item.Prob, false));
             }
-            else
+            else if (item.Prob > 0.6) // High probability exception for lower odds
             {
-                // If user specifically requested it, allow it with a warning
-                res.Add((item.Key, item.Odds, item.Prob, true));
+                res.Add((item.Key, item.Odds, item.Prob, false));
             }
         }
 
