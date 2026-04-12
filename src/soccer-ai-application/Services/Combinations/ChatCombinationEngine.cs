@@ -18,13 +18,21 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         // 1. Pre-filter all matches into candidates
         var allCandidates = FilterAllPossibleCandidates(matches, intent);
 
+        // --- ROBUSTNESS: Ensure MarketGroups is never empty ---
+        if (intent.MarketGroups == null || intent.MarketGroups.Count == 0)
+        {
+            intent.MarketGroups = new List<MarketIntentGroup>
+            {
+                new() { MatchCount = 3, Markets = new List<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" } },
+                new() { MatchCount = 2, Markets = new List<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" } }
+            };
+        }
+
         // 2. Sequential Interleaved Generation (to ensure diversity and type representation)
         // We want up to 5 combinations total.
-        // We alternate between groups to ensure all requested types (e.g. Treble AND Double) appear.
         int maxAttempts = 5;
         for (int i = 0; i < maxAttempts; i++)
         {
-            // Pick a group to work on (round-robin)
             var groupIdx = i % intent.MarketGroups.Count;
             var group = intent.MarketGroups[groupIdx];
 
@@ -296,6 +304,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         public double Probability { get; set; }
         public double FormScore { get; set; }
         public double Score { get; set; }
+        public bool IsLowValue { get; set; }
     }
 
     private class ScoredCombination

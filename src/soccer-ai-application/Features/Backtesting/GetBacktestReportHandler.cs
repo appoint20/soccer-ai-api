@@ -49,6 +49,12 @@ public class GetBacktestReportHandler(
             .OrderBy(f => f.Date)
             .ToListAsync(cancellationToken);
 
+        // Fetch team metadata for mapping
+        var teamIds = fixtures.SelectMany(f => new[] { f.HomeTeamId, f.AwayTeamId }).Distinct().ToList();
+        var teams = await dbContext.Teams
+            .Where(t => teamIds.Contains(t.ApiId))
+            .ToDictionaryAsync(t => t.ApiId, t => t, cancellationToken);
+
         var simulationResults = new List<SimulationCombo>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
@@ -62,8 +68,17 @@ public class GetBacktestReportHandler(
             {
                 try
                 {
-                    var analysis = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
-                    if (analysis.Prediction != null) matchAnalyses.Add(analysis);
+                    var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
+                    if (analysisResult.Prediction != null)
+                    {
+                        var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
+                        var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
+                        
+                        var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
+                            f, analysisResult, home, away, analysisResult.Gemini);
+                        
+                        matchAnalyses.Add(mapped);
+                    }
                 }
                 catch { /* Skip failed analysis */ }
             }

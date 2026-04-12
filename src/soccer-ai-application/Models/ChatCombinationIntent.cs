@@ -36,6 +36,9 @@ public sealed class ChatCombinationIntent
 
     [JsonPropertyName("reasoning")]
     public string Reasoning { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public string SourceType { get; init; } = "SYSTEM";
 }
 
 public class MarketIntentGroup

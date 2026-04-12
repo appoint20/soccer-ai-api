@@ -64,38 +64,3 @@ public class GetMatchCombinationHandler(
         return new GetMatchCombinationResponse(portfolios);
     }
 }
-
-    private static string GetPrimarySelection(MatchAnalysis match)
-    {
-        if (match.Prediction?.MatchWinner == null) return "Match Winner";
-        return match.Prediction.MatchWinner.Prediction.ToLower() switch
-        {
-            "home" => "Match Winner (Home)",
-            "away" => "Match Winner (Away)",
-            _ => "BTTS" // Default to BTTS if draw/other to keep it diverse
-        };
-    }
-
-    private static string GetNaturalDailyReasoning(MatchAnalysis m)
-    {
-        var conf = m.Prediction?.MatchWinner?.Confidence ?? 0;
-        var confText = conf switch
-        {
-            >= 0.8 => "very high predictive probability",
-            >= 0.7 => "strong statistical consensus",
-            _ => "favorable analytical advantage"
-        };
-        return $"Selection backed by {confText} and exceptional season form.";
-    }
-
-    private static double GetPrimaryOdds(MatchAnalysis match)
-    {
-        if (match.Prediction?.MatchWinner == null) return 1.0;
-        return match.Prediction.MatchWinner.Prediction.ToLower() switch
-        {
-            "home" => match.OddsHomeWin > 0 ? match.OddsHomeWin : 1.5,
-            "away" => match.OddsAwayWin > 0 ? match.OddsAwayWin : 1.5,
-            _ => match.OddsBttsYes > 0 ? match.OddsBttsYes : 1.8
-        };
-    }
-}
