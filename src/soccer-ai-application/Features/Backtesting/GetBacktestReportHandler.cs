@@ -56,6 +56,7 @@ public class GetBacktestReportHandler(
             .ToDictionaryAsync(t => t.ApiId, t => t, cancellationToken);
 
         var simulationResults = new List<SimulationCombo>();
+        var leagueResults = new List<LeaguePredictionResult>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         using var scope = serviceProvider.CreateScope();
@@ -77,6 +78,18 @@ public class GetBacktestReportHandler(
                         var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
                             f, analysisResult, home, away, analysisResult.Gemini);
                         
+                        // Track league accuracy for all analyzed matches
+                        var pred = analysisResult.Prediction;
+                        bool bttsActual = f.HomeGoal > 0 && f.AwayGoal > 0;
+                        bool over25Actual = (f.HomeGoal + f.AwayGoal) > 2;
+
+                        leagueResults.Add(new LeaguePredictionResult
+                        {
+                            League = f.League,
+                            BttsHit = pred.BTTS.Prediction == bttsActual,
+                            Over25Hit = pred.Over25.Prediction == over25Actual
+                        });
+
                         matchAnalyses.Add(mapped);
                     }
                 }
@@ -97,7 +110,7 @@ public class GetBacktestReportHandler(
                 bool isFullWin = true;
                 foreach (var leg in combo.Matches)
                 {
-                    var fix = fixtures.First(f => f.Id == leg.FixtureId);
+                    var fix = fixtures.First(fx => fx.Id == leg.FixtureId);
                     if (!IsLegWon(leg.Selection, fix))
                     {
                         isFullWin = false;
@@ -117,7 +130,7 @@ public class GetBacktestReportHandler(
             }
         }
 
-        return CalculateFinalReport(simulationResults, query.WeeksBack, query.Stake);
+        return CalculateFinalReport(simulationResults, leagueResults, query.WeeksBack, query.Stake);
     }
 
     private bool IsLegWon(string selection, Fixture f)
@@ -135,7 +148,7 @@ public class GetBacktestReportHandler(
         };
     }
 
-    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, int weeks, double stake)
+    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, List<LeaguePredictionResult> leagueResults, int weeks, double stake)
     {
         // Group by week and apply the 9-combination limit per week
         var weeklyGroups = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
@@ -168,6 +181,17 @@ public class GetBacktestReportHandler(
                 RoiPercent = Math.Round(g.Items.Sum(x => x.Stake) > 0 ? (g.Items.Sum(x => x.Return - x.Stake) / g.Items.Sum(x => x.Stake)) * 100 : 0, 1)
             }).ToList();
 
+        // Calculate League Accuracy
+        var leagueAccuracy = leagueResults.GroupBy(l => l.League)
+            .Select(g => new LeagueAccuracy
+            {
+                League = g.Key,
+                BttsAccuracy = Math.Round((double)g.Count(x => x.BttsHit) / g.Count() * 100, 1),
+                Over25Accuracy = Math.Round((double)g.Count(x => x.Over25Hit) / g.Count() * 100, 1)
+            })
+            .OrderByDescending(l => l.Over25Accuracy)
+            .ToList();
+
         return new GetBacktestReportResponse
         {
             Summary = new BacktestSummary
@@ -179,7 +203,8 @@ public class GetBacktestReportHandler(
                 CombosTotal = finalSimulations.Count,
                 CombosWon = finalSimulations.Count(r => r.IsWon)
             },
-            WeeklyBreakdown = weeklyBreakdown
+            WeeklyBreakdown = weeklyBreakdown,
+            LeagueAccuracy = leagueAccuracy
         };
     }
 
@@ -191,5 +216,12 @@ public class GetBacktestReportHandler(
         public double Stake { get; set; }
         public double Return { get; set; }
         public double AverageConfidence { get; set; }
+    }
+
+    private class LeaguePredictionResult
+    {
+        public string League { get; set; } = "";
+        public bool BttsHit { get; set; }
+        public bool Over25Hit { get; set; }
     }
 }
