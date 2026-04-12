@@ -41,4 +41,23 @@ public class CombinationsController(IMediator mediator) : ControllerBase
             
         return Ok(ApiResponse<CreateUserCombinationResponse>.Ok(response));
     }
+
+    [HttpPost("combinations")]
+    public async Task<IActionResult> CreateChatCombination(
+        [FromBody] CreateChatCombinationRequest request,
+        CancellationToken ct = default)
+    {
+        var command = new CreateChatCombinationCommand { Query = request.Query };
+        var response = await mediator.SendAsync<CreateChatCombinationCommand, CreateChatCombinationResponse>(command, ct);
+        
+        if (!response.Success)
+            return BadRequest(ApiResponse<CreateChatCombinationResponse>.Fail(response.Message));
+            
+        return Ok(ApiResponse<CreateChatCombinationResponse>.Ok(response));
+    }
+
+    public class CreateChatCombinationRequest
+    {
+        public string Query { get; set; } = string.Empty;
+    }
 }

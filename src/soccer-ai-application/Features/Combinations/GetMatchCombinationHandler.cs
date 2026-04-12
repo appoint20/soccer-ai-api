@@ -113,108 +113,60 @@ public class GetMatchCombinationHandler(
                 .OrderByDescending(x => x.Gemini?.Confidence ?? 0.0)
                 .ToList();
 
+            // --- PURE MATHEMATICAL 10-TIER ENGINE ---
+            // Goal: Generate exactly 10 combinations using high-confidence Statistical & ML models ONLY.
+            
             var combinations = new List<CombinationDto>();
             var usedMatchIds = new HashSet<int>();
 
-            // Phase 1: Pure AI (3 Combinations)
-            try 
-            {
-                var aiList = new List<CombinationDto>();
-                foreach (var batch in orderedCandidates.Chunk(10))
-                {
-                    logger.LogInformation("[Combinations] Yielding {Count} matches to Gemini builder...", batch.Length);
-                    var batchResults = await geminiAnalysisService.BuildCombinationsAsync(batch.ToList());
-                    if (batchResults != null) aiList.AddRange(batchResults);
-                    if (aiList.Count >= 3) break;
-                }
-
-                foreach (var combo in aiList.Take(3))
-                {
-                    combo.SourceType = "AI";
-                    combinations.Add(combo);
-                    foreach (var m in combo.Matches) usedMatchIds.Add(m.FixtureId);
-                }
-            }
-            catch (Exception ex) when (ex is GeminiQuotaExceededException || ex.Message.Contains("quota") || ex.Message.Contains("429"))
-            {
-                logger.LogWarning("[Combinations] Gemini unavailable for AI Phase. Skipping to Fallback...");
-            }
-
-            // Phase 2: Hybrid (2 Combinations)
-            // Strategy: 1 AI-analyzed match + 1 High-confidence Stat match
-            if (combinations.Count < 5) 
-            {
-                var hybridCandidates = orderedCandidates.Where(m => !usedMatchIds.Contains(m.Id)).ToList();
-                var statPool = matches.Where(m => !usedMatchIds.Contains(m.Id) && m.Prediction?.MatchWinner?.Confidence >= 0.70).ToList();
-
-                for (int i = 0; i < 2; i++)
-                {
-                    if (hybridCandidates.Count == 0 || statPool.Count == 0) break;
-
-                    var aiMatch = hybridCandidates[0];
-                    var statMatch = statPool[0];
-
-                    var combo = new CombinationDto
-                    {
-                        SourceType = "HYBRID",
-                        Type = "DOUBLE",
-                        TotalOdds = Math.Round(GetPrimaryOdds(aiMatch) * GetPrimaryOdds(statMatch), 2),
-                        Reason = "Hybrid Synergy: Combining expert AI reasoning with high-confidence statistical probability.",
-                        Matches = new List<CombinationMatchDto>
-                        {
-                            new() {
-                                FixtureId = aiMatch.Id, League = aiMatch.League, HomeTeam = aiMatch.HomeTeam, AwayTeam = aiMatch.AwayTeam,
-                                Selection = aiMatch.Gemini?.Recommendation ?? GetPrimarySelection(aiMatch),
-                                Odds = GetPrimaryOdds(aiMatch), Confidence = (aiMatch.Gemini?.Confidence ?? 0),
-                                Reasoning = aiMatch.Gemini?.Reasoning ?? "AI prioritized selection."
-                            },
-                            new() {
-                                FixtureId = statMatch.Id, League = statMatch.League, HomeTeam = statMatch.HomeTeam, AwayTeam = statMatch.AwayTeam,
-                                Selection = GetPrimarySelection(statMatch), Odds = GetPrimaryOdds(statMatch),
-                                Confidence = (statMatch.Prediction?.MatchWinner?.Confidence ?? 0) * 100,
-                                Reasoning = "High-confidence statistical advantage."
-                            }
-                        }
-                    };
-                    combinations.Add(combo);
-                    usedMatchIds.Add(aiMatch.Id);
-                    usedMatchIds.Add(statMatch.Id);
-                    hybridCandidates.RemoveAt(0);
-                    statPool.RemoveAt(0);
-                }
-            }
-
-            // Phase 3: Mathematical (5 Combinations)
-            var statOnlyPool = matches
-                .Where(m => !usedMatchIds.Contains(m.Id) && m.Prediction?.MatchWinner?.Confidence >= 0.65)
-                .OrderByDescending(m => m.Prediction?.MatchWinner?.Confidence ?? 0)
+            // 1. Prepare the statistical pool (Confidence > 60%)
+            var statPool = matches
+                .Where(m => m.Prediction?.MatchWinner != null && m.Prediction.MatchWinner.Confidence >= 0.60)
+                .OrderByDescending(m => m.Prediction.MatchWinner.Confidence)
                 .ToList();
 
-            while (combinations.Count < 10 && statOnlyPool.Count >= 2)
+            logger.LogInformation("[Combinations] Starting Pure Math generation with {PoolCount} candidates.", statPool.Count);
+
+            // 2. Generate exactly 10 portfolios using a rotating exhaustion strategy
+            while (combinations.Count < 10 && statPool.Count >= 2)
             {
-                var isTreble = combinations.Count == 5 || (combinations.Count < 5 && combinations.All(c => c.Matches.Count < 3));
-                int take = (isTreble && statOnlyPool.Count >= 3) ? 3 : 2;
+                // Determine if we need a Treble (3 matches) or a Double (2 matches)
+                // Rule: We want at least 2 Trebles in the daily mix, the rest as Doubles.
+                var treblesCreated = combinations.Count(c => c.Type == "TREBLE");
+                bool isTreble = treblesCreated < 2 && statPool.Count >= 3;
+                int take = isTreble ? 3 : 2;
+
+                // Pick the top matches that haven't been used yet
+                var chunk = statPool.Where(m => !usedMatchIds.Contains(m.Id)).Take(take).ToList();
                 
-                var chunk = statOnlyPool.Take(take).ToList();
-                if (chunk.Count < 2) break;
+                if (chunk.Count < 2) 
+                {
+                    // If we ran out of fresh matches, break (We refuse to recycle matches in the daily 10)
+                    logger.LogWarning("[Combinations] Match pool exhausted. Only generated {Count}/10 portfolios.", combinations.Count);
+                    break;
+                }
 
                 var combo = new CombinationDto
                 {
                     SourceType = "MATHEMATICAL",
                     Type = chunk.Count == 3 ? "TREBLE" : "DOUBLE",
                     TotalOdds = Math.Round(chunk.Select(m => GetPrimaryOdds(m)).Aggregate(1.0, (acc, val) => acc * val), 2),
-                    Reason = "Pure Statistical Advantage: High mathematical consensus across Poisson and ML models.",
+                    Reason = "Data-Driven Selection: Portfolio built using pure mathematical models (Poisson & ML) with high statistical consensus.",
                     Matches = chunk.Select(m => new CombinationMatchDto
                     {
-                        FixtureId = m.Id, League = m.League, HomeTeam = m.HomeTeam, AwayTeam = m.AwayTeam,
-                        Selection = GetPrimarySelection(m), Odds = GetPrimaryOdds(m),
+                        FixtureId = m.Id, 
+                        League = m.League, 
+                        HomeTeam = m.HomeTeam, 
+                        AwayTeam = m.AwayTeam,
+                        Selection = GetPrimarySelection(m), 
+                        Odds = GetPrimaryOdds(m),
                         Confidence = (m.Prediction?.MatchWinner?.Confidence ?? 0) * 100,
-                        Reasoning = "Data-driven statistical selection."
+                        Reasoning = "Selection based on 10-week historical form and Poisson goal distribution."
                     }).ToList()
                 };
+
                 combinations.Add(combo);
                 foreach (var m in chunk) usedMatchIds.Add(m.Id);
-                statOnlyPool.RemoveRange(0, take);
             }
 
             logger.LogInformation("[Combinations] Final output: {Count} combinations.", combinations.Count);

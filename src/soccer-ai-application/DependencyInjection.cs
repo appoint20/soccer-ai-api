@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IMonteCarloService, MonteCarloService>();
         services.AddScoped<IPoissonCalculationService, PoissonCalculationService>();
+        services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
 
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();

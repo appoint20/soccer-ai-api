@@ -8,4 +8,5 @@ public interface IGeminiAnalysisService
 {
     Task<Dictionary<int, GeminiBilingualResult>> AnalyzeBatchAsync(List<GeminiBatchItem> items);
     Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates);
+    Task<ChatCombinationIntent?> ParseChatIntentAsync(string query);
 }

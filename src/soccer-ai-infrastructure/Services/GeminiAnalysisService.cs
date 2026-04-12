@@ -215,6 +215,117 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
         return default;
     }
 
+    public async Task<ChatCombinationIntent?> ParseChatIntentAsync(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return null;
+
+        if (!HasApiKey())
+        {
+            _logger.LogWarning("[Gemini] API Key missing. Falling back to rule-based parser.");
+            return FallbackParseIntent(query);
+        }
+
+        try
+        {
+            var prompt = BuildChatIntentPrompt(query);
+            var result = await ExecuteGeminiRequest<ChatCombinationIntent>(prompt, GetChatIntentSchema());
+
+            if (result != null)
+            {
+                _logger.LogInformation("[Gemini] Successfully parsed intent: {Intent}", JsonSerializer.Serialize(result));
+                return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Gemini] Chat parsing failed. Using fallback.");
+        }
+
+        return FallbackParseIntent(query);
+    }
+
+    private ChatCombinationIntent FallbackParseIntent(string query)
+    {
+        var q = query.ToLower();
+        var intent = new ChatCombinationIntent();
+
+        // Count detection
+        if (q.Contains("three") || q.Contains("3")) { intent.MinMatches = 3; intent.MaxMatches = 3; }
+        else if (q.Contains("two") || q.Contains("2")) { intent.MinMatches = 2; intent.MaxMatches = 2; }
+
+        // Market detection
+        if (q.Contains("win") || q.Contains("victory")) intent.PreferredMarkets.Add("HomeWin");
+        if (q.Contains("btts") || q.Contains("both team")) intent.PreferredMarkets.Add("BTTS");
+        if (q.Contains("over") || q.Contains("2.5")) intent.PreferredMarkets.Add("Over25");
+
+        // Odds detection (simple regex)
+        var match = System.Text.RegularExpressions.Regex.Match(q, @"\d+\.?\d*");
+        if (match.Success && double.TryParse(match.Value, out var odds) && odds > 1.0)
+        {
+            intent.MinTotalOdds = odds;
+        }
+
+        intent.Reasoning = "Parsed using rule-based fallback logic.";
+        return intent;
+    }
+
+    private string BuildChatIntentPrompt(string query) => $"""
+        You are a PRO football Data Translator. Your ONLY job is to convert a user's natural language request into a strictly structured JSON intent object for a mathematical engine.
+        
+        CRITICAL RULES:
+        1. You are NOT a tipster. Do NOT suggest matches.
+        2. You ONLY extract filters (odds, markets, leagues).
+        3. Convert German terms like "Direkt Tipps" into "HomeWin", "AwayWin", "Draw".
+        4. Detect if the user wants multiple combinations (e.g., "1 Treble and 1 Double") and create multiple objects in the `market_groups` list.
+
+        USER QUERY: "{query}"
+
+        Return ONLY a valid JSON object matching the requested schema.
+        """;
+
+    private Schema GetChatIntentSchema() 
+    {
+        var groupSchema = new Schema
+        {
+            Type = DataType.Object,
+            Properties = new Dictionary<string, Schema>
+            {
+                ["match_count"] = new Schema { Type = DataType.Integer },
+                ["markets"] = new Schema
+                {
+                    Type = DataType.Array,
+                    Items = new Schema { 
+                        Type = DataType.String,
+                        Enum = new List<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Under25" }
+                    }
+                }
+            },
+            Required = new List<string> { "match_count", "markets" }
+        };
+
+        return new Schema
+        {
+            Type = DataType.Object,
+            Properties = new Dictionary<string, Schema>
+            {
+                ["min_matches"] = new Schema { Type = DataType.Integer }, // Deprecated but keep for schema compatibility
+                ["max_matches"] = new Schema { Type = DataType.Integer }, // Deprecated but keep for schema compatibility
+                ["min_total_odds"] = new Schema { Type = DataType.Number },
+                ["min_selection_odds"] = new Schema { Type = DataType.Number },
+                ["max_same_league"] = new Schema { Type = DataType.Integer },
+                ["market_groups"] = new Schema
+                {
+                    Type = DataType.Array,
+                    Items = groupSchema
+                },
+                ["preferred_markets"] = new Schema { Type = DataType.Array, Items = new Schema { Type = DataType.String } }, // Deprecated
+                ["strategy"] = new Schema { Type = DataType.String, Enum = new List<string> { "safe", "balanced", "aggressive" } },
+                ["reasoning"] = new Schema { Type = DataType.String }
+            },
+            Required = new List<string> { "min_total_odds", "min_selection_odds", "max_same_league", "market_groups", "strategy", "reasoning" }
+        };
+    }
+
     // ========================= VALIDATION =========================
 
     private List<CombinationDto> ValidateAndBuildCombinations(

@@ -11,7 +11,12 @@
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/CombinationsController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/CombinationsController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/DependencyInjection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/DependencyInjection.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IGeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IGeminiAnalysisService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,7 +128,7 @@
       <workItem from="1772375075775" duration="86000" />
       <workItem from="1772377209749" duration="26708000" />
       <workItem from="1772972114574" duration="20248000" />
-      <workItem from="1775849046483" duration="14656000" />
+      <workItem from="1775849046483" duration="20083000" />
     </task>
     <servers />
   </component>
