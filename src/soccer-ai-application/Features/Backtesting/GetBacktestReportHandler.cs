@@ -111,7 +111,8 @@ public class GetBacktestReportHandler(
                     Odds = combo.TotalOdds, 
                     IsWon = isFullWin, 
                     Stake = query.Stake,
-                    Return = isFullWin ? combo.TotalOdds * query.Stake : 0
+                    Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
+                    AverageConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0
                 });
             }
         }
@@ -136,20 +137,35 @@ public class GetBacktestReportHandler(
 
     private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, int weeks, double stake)
     {
-        var totalStaked = results.Sum(r => r.Stake);
-        var totalReturned = results.Sum(r => r.Return);
+        // Group by week and apply the 9-combination limit per week
+        var weeklyGroups = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
+            .Select(g => 
+            {
+                // Take the top 9 combinations of the week based on confidence
+                var limited = g.OrderByDescending(x => x.AverageConfidence).Take(9).ToList();
+                return new 
+                {
+                    WeekKey = g.Key,
+                    Items = limited
+                };
+            }).ToList();
+
+        var finalSimulations = weeklyGroups.SelectMany(g => g.Items).ToList();
+
+        var totalStaked = finalSimulations.Sum(r => r.Stake);
+        var totalReturned = finalSimulations.Sum(r => r.Return);
         var profit = totalReturned - totalStaked;
         var roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
 
-        var weekly = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
+        var weeklyBreakdown = weeklyGroups
             .Select(g => new WeeklyBreakdown
             {
-                Week = $"Week {g.Key}",
-                TotalBets = g.Count(),
-                BetsWon = g.Count(x => x.IsWon),
-                StakeAmount = Math.Round(g.Sum(x => x.Stake), 2),
-                ProfitLoss = Math.Round(g.Sum(x => x.Return - x.Stake), 2),
-                RoiPercent = Math.Round(g.Sum(x => x.Stake) > 0 ? (g.Sum(x => x.Return - x.Stake) / g.Sum(x => x.Stake)) * 100 : 0, 1)
+                Week = $"Week {g.WeekKey}",
+                TotalCombinations = g.Items.Count,
+                CombinationsWon = g.Items.Count(x => x.IsWon),
+                StakeAmount = Math.Round(g.Items.Sum(x => x.Stake), 2),
+                ProfitLoss = Math.Round(g.Items.Sum(x => x.Return - x.Stake), 2),
+                RoiPercent = Math.Round(g.Items.Sum(x => x.Stake) > 0 ? (g.Items.Sum(x => x.Return - x.Stake) / g.Items.Sum(x => x.Stake)) * 100 : 0, 1)
             }).ToList();
 
         return new GetBacktestReportResponse
@@ -159,11 +175,11 @@ public class GetBacktestReportHandler(
                 TotalRoi = Math.Round(roi, 1),
                 TotalStaked = Math.Round(totalStaked, 2),
                 TotalReturned = Math.Round(totalReturned, 2),
-                WinRate = Math.Round(results.Count > 0 ? (double)results.Count(r => r.IsWon) / results.Count * 100 : 0, 1),
-                CombosTotal = results.Count,
-                CombosWon = results.Count(r => r.IsWon)
+                WinRate = Math.Round(finalSimulations.Count > 0 ? (double)finalSimulations.Count(r => r.IsWon) / finalSimulations.Count * 100 : 0, 1),
+                CombosTotal = finalSimulations.Count,
+                CombosWon = finalSimulations.Count(r => r.IsWon)
             },
-            WeeklyBreakdown = weekly
+            WeeklyBreakdown = weeklyBreakdown
         };
     }
 
@@ -174,5 +190,6 @@ public class GetBacktestReportHandler(
         public bool IsWon { get; set; }
         public double Stake { get; set; }
         public double Return { get; set; }
+        public double AverageConfidence { get; set; }
     }
 }
