@@ -12,36 +12,10 @@ namespace SoccerAi.Api.Controllers;
 public class CombinationsController(IMediator mediator) : ControllerBase
 {
     /// <summary>
-    /// Get a high-confidence accumulator (top 3 bets) for a given date.
+    /// Unified entry point for all combination requests.
+    /// Handles both custom chat queries and automatic 'SYSTEM' daily recommendations.
     /// </summary>
-    /// <param name="date">Date (YYYY-MM-DD)</param>
-    /// <param name="language">Language code (default 'en')</param>
-    /// <param name="ct">Cancellation token</param>
-    [HttpGet("combinations")]
-    public async Task<IActionResult> GetCombinations(
-        [FromQuery] DateTimeOffset? date = null,
-        [FromQuery] string language = "en",
-        [FromQuery] bool refresh = false,
-        CancellationToken ct = default)
-    {
-        var targetDate = date ?? DateTimeOffset.UtcNow;
-        var query = new GetMatchCombinationQuery(targetDate, language, refresh);
-        var response = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(query, ct);
-        return Ok(ApiResponse<GetMatchCombinationResponse>.Ok(response));
-    }
-
-    [HttpPost("combinations/custom")]
-    public async Task<IActionResult> CreateCustomCombination(
-        [FromBody] CreateUserCombinationCommand command,
-        CancellationToken ct = default)
-    {
-        var response = await mediator.SendAsync<CreateUserCombinationCommand, CreateUserCombinationResponse>(command, ct);
-        if (!response.Success)
-            return BadRequest(ApiResponse<CreateUserCombinationResponse>.Fail(response.Message ?? "Failed to create combination"));
-            
-        return Ok(ApiResponse<CreateUserCombinationResponse>.Ok(response));
-    }
-
+    /// <param name="request">Contains the natural language query. If empty, returns top SYSTEM portfolios.</param>
     [HttpPost("combinations")]
     public async Task<IActionResult> CreateChatCombination(
         [FromBody] CreateChatCombinationRequest request,

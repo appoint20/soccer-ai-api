@@ -26,6 +26,7 @@ public sealed class MatchAnalysis
     public double OddsAwayWin { get; init; }
     public double OddsOver25 { get; init; }
     public double OddsBttsYes { get; init; }
+    public double OddsGoals23 { get; init; } = 1.90;
 
     
     // Flattened Weighted Stats

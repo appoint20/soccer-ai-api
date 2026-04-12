@@ -71,7 +71,13 @@ public sealed class DecisionService(
         };
 
         // 2-3 Goals
-        markets.TwoToThreeGoals = MarketDecision.Create(prediction.TwoToThreeGoalsProb);
+        double goals23Score = scoringEngine.CalculateGoals23Score(prediction.TwoToThreeGoalsProb, teamStats, 1.90);
+        markets.TwoToThreeGoals = new MarketDecision
+        {
+            IsQualified = goals23Score >= 60.0,
+            Confidence = Math.Round(goals23Score / 100.0, 3),
+            Reason = $"Score: {goals23Score}/100 (Precise range analysis)"
+        };
 
         // Match Winner
         string? winnerWarning = null;

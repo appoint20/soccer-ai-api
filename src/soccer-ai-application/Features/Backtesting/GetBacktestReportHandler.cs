@@ -15,6 +15,7 @@ namespace SoccerAi.Application.Features.Backtesting;
 public class GetBacktestReportHandler(
     IApplicationDbContext dbContext,
     IServiceProvider serviceProvider,
+    IChatCombinationEngine engine,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
@@ -24,7 +25,6 @@ public class GetBacktestReportHandler(
     {
         var query = context.Message;
         
-        // --- 1. Cache Lookup ---
         if (!query.Refresh)
         {
             var cached = await dbContext.BacktestReports
@@ -32,241 +32,132 @@ public class GetBacktestReportHandler(
                 .OrderByDescending(r => r.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (cached != null && cached.CreatedAt > DateTimeOffset.UtcNow.AddDays(-7))
+            if (cached != null)
             {
-                logger.LogInformation("[Backtest] Cache HIT. Returning stored report from {Date}", cached.CreatedAt);
                 var response = JsonSerializer.Deserialize<GetBacktestReportResponse>(cached.ReportJson);
                 if (response != null) return response;
             }
         }
 
-        logger.LogInformation("[Backtest] Generating backtest report for last {Weeks} weeks with €{Stake} stake. (Cache MISS or Refresh)", query.WeeksBack, query.Stake);
+        logger.LogInformation("[Backtest] Simulating last {Weeks} weeks. Pure Math Engine.", query.WeeksBack);
 
-        var startDate = new DateTimeOffset(DateTime.UtcNow.Date.AddDays(-query.WeeksBack * 7), TimeSpan.Zero);
-        var endDate = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
+        var startDate = DateTimeOffset.UtcNow.AddDays(-query.WeeksBack * 7);
+        var endDate = DateTimeOffset.UtcNow;
 
-        var allFixtures = await dbContext.Fixtures
-            .Where(f => f.Status == "FT")
+        var fixtures = await dbContext.Fixtures
+            .Where(f => f.Status == "FT" && f.Date >= startDate && f.Date <= endDate)
+            .OrderBy(f => f.Date)
             .ToListAsync(cancellationToken);
 
-        var fixtures = allFixtures
-            .Where(f => f.Date >= startDate && f.Date < endDate)
-            .ToList();
+        var simulationResults = new List<SimulationCombo>();
+        var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
-        logger.LogInformation("Found {Count} finished fixtures for backtesting.", fixtures.Count);
+        using var scope = serviceProvider.CreateScope();
+        var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
 
-        var teamIds = fixtures.SelectMany(f => new[] { f.HomeTeamId, f.AwayTeamId }).Distinct().ToList();
-        var teams = await dbContext.Teams
-            .Where(t => teamIds.Contains(t.ApiId))
-            .ToDictionaryAsync(t => t.ApiId, t => t.Name, cancellationToken);
-
-        // 1. Analyze all fixtures in parallel
-        var evaluatedLegs = new ConcurrentBag<EvaluatedLeg>();
-
-        await Parallel.ForEachAsync(fixtures, new ParallelOptions { MaxDegreeOfParallelism = 10, CancellationToken = cancellationToken }, async (fixture, ct) =>
+        foreach (var day in dayGroups)
         {
-            try
+            var matchAnalyses = new List<MatchAnalysis>();
+            foreach (var f in day)
             {
-                using var scope = serviceProvider.CreateScope();
-                var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", ct);
-                if (analysis.Prediction == null) return;
-
-                var decisions = analysis.Decisions;
-                var actualHome = fixture.HomeGoal;
-                var actualAway = fixture.AwayGoal;
-                int totalGoals = actualHome + actualAway;
-
-                bool isSystemTrap = decisions.Trap.IsTrap;
-
-                // Skip legs for combinations if Avoid/Trap
-                if (decisions.Decision == PredictionDecision.Avoid || isSystemTrap) return;
-
-                // Over 2.5
-                if (decisions.Markets.Over25?.IsQualified == true)
+                try
                 {
-                    bool isCorrect = totalGoals > 2;
-                    double odds = NormalizeOdds(fixture.Over25Odds);
-                    if (odds >= 1.50)
-                        evaluatedLegs.Add(new EvaluatedLeg(fixture.Date, analysis.LeagueName, "Over 2.5 Goals", analysis.Prediction.Over25Prob, odds, isCorrect, decisions.Decision.ToString()));
+                    var analysis = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
+                    if (analysis.Prediction != null) matchAnalyses.Add(analysis);
                 }
-
-                // BTTS
-                if (decisions.Markets.BTTS?.IsQualified == true)
-                {
-                    bool isCorrect = (actualHome > 0 && actualAway > 0);
-                    double odds = NormalizeOdds(fixture.BttsYesOdds);
-                    if (odds >= 1.50)
-                        evaluatedLegs.Add(new EvaluatedLeg(fixture.Date.Date, analysis.LeagueName, "Both Teams To Score", analysis.Prediction.BTTSProb, odds, isCorrect, decisions.Decision.ToString()));
-                }
-
-                // Winner
-                if (decisions.Markets.MatchWinner?.IsQualified == true)
-                {
-                    string pred = analysis.Prediction.MatchWinner;
-                    string actualWinner = actualHome > actualAway ? "home" : actualHome == actualAway ? "draw" : "away";
-                    bool isCorrect = pred.Equals(actualWinner, StringComparison.OrdinalIgnoreCase);
-
-                    double rawOdds = pred.Equals("home", StringComparison.OrdinalIgnoreCase) ? fixture.HomeWinOdds ?? 0 :
-                                     pred.Equals("away", StringComparison.OrdinalIgnoreCase) ? fixture.AwayWinOdds ?? 0 :
-                                     fixture.DrawOdds ?? 0;
-                    double odds = NormalizeOdds(rawOdds);
-
-                    if (odds >= 1.30)
-                        evaluatedLegs.Add(new EvaluatedLeg(fixture.Date.Date, analysis.LeagueName, "Match Winner", analysis.Prediction.Confidence, odds, isCorrect, decisions.Decision.ToString()));
-                }
+                catch { /* Skip failed analysis */ }
             }
-            catch (Exception ex)
+
+            if (matchAnalyses.Count < 5) continue;
+
+            // Simulate the Portfolio Generation
+            var portfolios = engine.GenerateCombinations(matchAnalyses, new ChatCombinationIntent 
+            { 
+                MinSelectionOdds = 1.60,
+                SourceType = "SYSTEM"
+            });
+
+            foreach (var combo in portfolios)
             {
-                logger.LogWarning(ex, "Failed to analyze fixture {Id} during backtest.", fixture.Id);
+                bool isFullWin = true;
+                foreach (var leg in combo.Matches)
+                {
+                    var fix = fixtures.First(f => f.Id == leg.FixtureId);
+                    if (!IsLegWon(leg.Selection, fix))
+                    {
+                        isFullWin = false;
+                        break;
+                    }
+                }
+
+                simulationResults.Add(new SimulationCombo 
+                { 
+                    Date = day.Key, 
+                    Odds = combo.TotalOdds, 
+                    IsWon = isFullWin, 
+                    Stake = query.Stake,
+                    Return = isFullWin ? combo.TotalOdds * query.Stake : 0
+                });
             }
-        });
-
-        var legs = evaluatedLegs.ToList();
-
-        // 2. Daily Combinations & ROI
-        var dailyCombos = new List<TheoreticalCombo>();
-
-        foreach (var dayGroup in legs.GroupBy(l => l.Date.Date))
-        {
-            var dailyLegs = dayGroup.ToList();
-
-            var goalLegs = dailyLegs.Where(x => (x.Market == "Over 2.5 Goals" || x.Market == "Both Teams To Score") &&
-                (x.Decision == "StrongBet" || x.Decision == "SmallEdge" || x.Decision == "LeanBet"))
-                .OrderByDescending(x => x.Confidence).ToList();
-
-            var winnerLegs = dailyLegs.Where(x => x.Market == "Match Winner" &&
-                (x.Decision == "StrongBet" || x.Decision == "SmallEdge"))
-                .OrderByDescending(x => x.Confidence).ToList();
-
-            if (goalLegs.Count >= 2) dailyCombos.Add(BuildCombo(goalLegs.Take(2), dayGroup.Key));
-            if (goalLegs.Count >= 5) dailyCombos.Add(BuildCombo(goalLegs.Skip(2).Take(3), dayGroup.Key));
-            if (winnerLegs.Count >= 2) dailyCombos.Add(BuildCombo(winnerLegs.Take(2), dayGroup.Key));
-            if (winnerLegs.Count >= 5) dailyCombos.Add(BuildCombo(winnerLegs.Skip(2).Take(3), dayGroup.Key));
         }
 
-        double totalStaked = dailyCombos.Count * query.Stake;
-        double totalReturned = dailyCombos.Where(c => c.IsWon).Sum(c => c.Odds * query.Stake);
-        double profit = totalReturned - totalStaked;
-        double roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
-        double comboWinRate = dailyCombos.Count > 0 ? (double)dailyCombos.Count(c => c.IsWon) / dailyCombos.Count * 100 : 0;
+        return CalculateFinalReport(simulationResults, query.WeeksBack, query.Stake);
+    }
 
-        int totalLegsInCombos = dailyCombos.Sum(c => c.LegCount);
-        int correctLegsInCombos = dailyCombos.Sum(c => c.CorrectLegCount);
-        double legHitRate = totalLegsInCombos > 0 ? (double)correctLegsInCombos / totalLegsInCombos * 100 : 0;
+    private bool IsLegWon(string selection, Fixture f)
+    {
+        var goals = f.HomeGoal + f.AwayGoal;
+        return selection switch
+        {
+            "Match Winner (Home)" => f.HomeGoal > f.AwayGoal,
+            "Match Winner (Away)" => f.AwayGoal > f.HomeGoal,
+            "Draw" => f.HomeGoal == f.AwayGoal,
+            "BTTS" => f.HomeGoal > 0 && f.AwayGoal > 0,
+            "Over 2.5 Goals" => goals > 2,
+            "2-3 Goals" => goals == 2 || goals == 3,
+            _ => false
+        };
+    }
 
-        // 3. Weekly Breakdown (group combos by ISO week)
-        var weeklyBreakdown = dailyCombos
-            .GroupBy(c => new { Year = ISOWeek.GetYear(c.Date), Week = ISOWeek.GetWeekOfYear(c.Date) })
-            .OrderBy(g => g.Key.Year)
-            .ThenBy(g => g.Key.Week)
-            .Select((g, index) =>
+    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, int weeks, double stake)
+    {
+        var totalStaked = results.Sum(r => r.Stake);
+        var totalReturned = results.Sum(r => r.Return);
+        var profit = totalReturned - totalStaked;
+        var roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
+
+        var weekly = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
+            .Select(g => new WeeklyBreakdown
             {
-                int weekBets = g.Count();
-                int weekWon = g.Count(c => c.IsWon);
-                double weekStaked = weekBets * query.Stake;
-                double weekReturned = g.Where(c => c.IsWon).Sum(c => c.Odds * query.Stake);
-                double weekProfitLoss = weekReturned - weekStaked;
-                double weekRoi = weekStaked > 0 ? (weekProfitLoss / weekStaked) * 100 : 0;
-
-                // Calculate date range for the ISO week
-                var monday = ISOWeek.ToDateTime(g.Key.Year, g.Key.Week, DayOfWeek.Monday);
-                var sunday = monday.AddDays(6);
-                var dateRange = $"{monday.ToString("MMM dd")} - {sunday.ToString("MMM dd")}";
-
-                return new WeeklyBreakdown
-                {
-                    Week = $"W{index + 1}",
-                    DateRange = dateRange,
-                    TotalBets = weekBets,
-                    BetsWon = weekWon,
-                    StakeAmount = Math.Round(weekStaked, 2),
-                    ProfitLoss = Math.Round(weekProfitLoss, 2),
-                    RoiPercent = Math.Round(weekRoi, 1)
-                };
+                Week = $"Week {g.Key}",
+                TotalBets = g.Count(),
+                BetsWon = g.Count(x => x.IsWon),
+                StakeAmount = Math.Round(g.Sum(x => x.Stake), 2),
+                ProfitLoss = Math.Round(g.Sum(x => x.Return - x.Stake), 2),
+                RoiPercent = Math.Round(g.Sum(x => x.Stake) > 0 ? (g.Sum(x => x.Return - x.Stake) / g.Sum(x => x.Stake)) * 100 : 0, 1)
             }).ToList();
 
-        // 4. League Accuracy (BTTS and Over 2.5 per league)
-        var leagueGroups = legs.GroupBy(l => l.League);
-        var leagueAccuracy = leagueGroups.Select(g =>
-        {
-            var bttsLegs = g.Where(l => l.Market == "Both Teams To Score").ToList();
-            var over25Legs = g.Where(l => l.Market == "Over 2.5 Goals").ToList();
-
-            double bttsAcc = bttsLegs.Count > 0 ? Math.Round(bttsLegs.Average(l => l.IsCorrect ? 1.0 : 0.0) * 100, 1) : 0;
-            double over25Acc = over25Legs.Count > 0 ? Math.Round(over25Legs.Average(l => l.IsCorrect ? 1.0 : 0.0) * 100, 1) : 0;
-
-            return new LeagueAccuracy
-            {
-                League = g.Key,
-                BttsAccuracy = bttsAcc,
-                Over25Accuracy = over25Acc
-            };
-        })
-        .Where(la => la.BttsAccuracy > 0 || la.Over25Accuracy > 0)
-        .OrderByDescending(la => (la.BttsAccuracy + la.Over25Accuracy) / 2)
-        .ToList();
-
-        var result = new GetBacktestReportResponse
+        return new GetBacktestReportResponse
         {
             Summary = new BacktestSummary
             {
                 TotalRoi = Math.Round(roi, 1),
                 TotalStaked = Math.Round(totalStaked, 2),
                 TotalReturned = Math.Round(totalReturned, 2),
-                CombinationAccuracy = Math.Round(comboWinRate, 1),
-                WinRate = Math.Round(comboWinRate, 1),
-                CombosTotal = dailyCombos.Count,
-                CombosWon = dailyCombos.Count(c => c.IsWon),
-                MatchAnalysisAccuracy = Math.Round(legHitRate, 1),
-                TotalLegs = totalLegsInCombos,
-                CorrectLegs = correctLegsInCombos
+                WinRate = Math.Round(results.Count > 0 ? (double)results.Count(r => r.IsWon) / results.Count * 100 : 0, 1),
+                CombosTotal = results.Count,
+                CombosWon = results.Count(r => r.IsWon)
             },
-            WeeklyBreakdown = weeklyBreakdown,
-            LeagueAccuracy = leagueAccuracy
+            WeeklyBreakdown = weekly
         };
-
-        // --- 5. Cache Save ---
-        try
-        {
-            var newCache = new BacktestReport
-            {
-                WeeksBack = query.WeeksBack,
-                Stake = query.Stake,
-                ReportJson = JsonSerializer.Serialize(result),
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-            dbContext.BacktestReports.Add(newCache);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("[Backtest] Report cached successfully.");
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "[Backtest] Failed to save report to cache.");
-        }
-
-        return result;
     }
 
-    private static double NormalizeOdds(double? odds)
+    private class SimulationCombo
     {
-        if (!odds.HasValue || odds.Value <= 0) return 0;
-        return odds.Value > 50 ? odds.Value / 100.0 : odds.Value;
-    }
-
-    private static TheoreticalCombo BuildCombo(IEnumerable<EvaluatedLeg> comboLegs, DateTime date)
-    {
-        var list = comboLegs.ToList();
-        double totalOdds = 1.0;
-        int correct = 0;
-        foreach (var leg in list)
-        {
-            totalOdds *= leg.Odds;
-            if (leg.IsCorrect) correct++;
-        }
-        return new TheoreticalCombo(date, totalOdds, list.Count, correct, correct == list.Count);
+        public DateTime Date { get; set; }
+        public double Odds { get; set; }
+        public bool IsWon { get; set; }
+        public double Stake { get; set; }
+        public double Return { get; set; }
     }
 }
-
-public record EvaluatedLeg(DateTimeOffset Date, string League, string Market, double Confidence, double Odds, bool IsCorrect, string Decision);
-public record TheoreticalCombo(DateTime Date, double Odds, int LegCount, int CorrectLegCount, bool IsWon);

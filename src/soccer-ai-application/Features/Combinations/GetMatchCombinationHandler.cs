@@ -25,7 +25,7 @@ namespace SoccerAi.Application.Features.Combinations;
 /// </summary>
 public class GetMatchCombinationHandler(
     IMediator mediator,
-    IApplicationDbContext dbContext,
+    IChatCombinationEngine combinationEngine,
     ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
@@ -33,194 +33,37 @@ public class GetMatchCombinationHandler(
         IReceiveContext<GetMatchCombinationQuery> context,
         CancellationToken cancellationToken)
     {
-        try
+        var query = context.Message;
+        logger.LogInformation("[Combinations] Generating SYSTEM portfolios for {Date}. Pure live math.", query.Date.ToString("yyyy-MM-dd"));
+
+        // Step 1: Request live Match Analysis from the orchestrator
+        var analysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
+        var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
+
+        if (analysisResponse.Matches == null || analysisResponse.Matches.Count == 0)
         {
-            var query = context.Message;
-            logger.LogInformation("[Combinations] Generating JSON structures for {Date}", query.Date.ToString("yyyy-MM-dd"));
-
-            // Step 0: Check Database Cache for existing combinations!
-            var targetDate = new DateTimeOffset(query.Date.Year, query.Date.Month, query.Date.Day, 0, 0, 0, TimeSpan.Zero);
-            
-            logger.LogInformation("[Combinations] Checking cache for {Date} {Lang} (Refresh: {Refresh})", targetDate, query.Language, query.Refresh);
-            
-            var cachedCombo = query.Refresh ? null : await dbContext.Combinations
-                .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language && c.IsDailyCache, cancellationToken);
-                
-            if (cachedCombo != null && !string.IsNullOrEmpty(cachedCombo.Payload))
-            {
-                logger.LogInformation("[Combinations] Cache HIT for {Date}. Re-verifying metadata...", targetDate.ToString("yyyy-MM-dd"));
-                var cachedList = System.Text.Json.JsonSerializer.Deserialize<List<CombinationDto>>(cachedCombo.Payload) ?? new();
-                
-                // RE-CLEAN: Even if cached, ensure we use latest names and confidence from live analysis
-                var cacheAnalysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
-                var cacheAnalysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(cacheAnalysisQuery, cancellationToken);
-                var cacheSourceMatches = cacheAnalysisResponse.Matches;
-
-                foreach (var combo in cachedList)
-                {
-                    if (combo.Matches == null) continue;
-                    
-                    foreach (var match in combo.Matches)
-                    {
-                        if (match == null) continue;
-                        
-                        var source = cacheSourceMatches?.FirstOrDefault(m => m.Id == match.FixtureId);
-                        if (source != null)
-                        {
-                            // Fix properties that might be stale in cache
-                            typeof(CombinationMatchDto).GetProperty("League")?.SetValue(match, source.League);
-                            typeof(CombinationMatchDto).GetProperty("HomeTeam")?.SetValue(match, source.HomeTeam);
-                            typeof(CombinationMatchDto).GetProperty("AwayTeam")?.SetValue(match, source.AwayTeam);
-                            typeof(CombinationMatchDto).GetProperty("Confidence")?.SetValue(match, source.Gemini?.Confidence ?? 0.0);
-                            typeof(CombinationMatchDto).GetProperty("Reasoning")?.SetValue(match, source.Gemini?.Reasoning ?? string.Empty);
-                        }
-                    }
-                }
-
-                return new GetMatchCombinationResponse(cachedList);
-            }
-
-            logger.LogInformation("[Combinations] Cache MISS. Requesting analysis from Mediator...");
-
-            // Step 1: Request full Match Analysis payload via Mediator
-            var analysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
-            var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
-
-            var matches = analysisResponse.Matches;
-
-            if (matches == null || matches.Count == 0)
-            {
-                logger.LogInformation("[Combinations] No matches found for {Date}", query.Date.ToString("yyyy-MM-dd"));
-                return new GetMatchCombinationResponse([]);
-            }
-
-            // FILTER: Only use games that have a complete Gemini Recommendation attached!
-            var fullyAnalyzedMatches = matches
-                .Where(x => x.Gemini != null && !string.IsNullOrEmpty(x.Gemini.Recommendation))
-                .ToList();
-
-            logger.LogInformation("[Combinations] Found {Count} total matches, {Analyzed} are fully analyzed.", matches.Count, fullyAnalyzedMatches.Count);
-
-            if (fullyAnalyzedMatches.Count == 0)
-            {
-                logger.LogInformation("[Combinations] No analyzed games available. Returning empty.");
-                return new GetMatchCombinationResponse([]);
-            }
-
-            // Step 2: Rank matches by absolute backend confidence to feed Gemini the best baseline
-            var orderedCandidates = fullyAnalyzedMatches
-                .OrderByDescending(x => x.Gemini?.Confidence ?? 0.0)
-                .ToList();
-
-            // --- PURE MATHEMATICAL 10-TIER ENGINE ---
-            // Goal: Generate exactly 10 combinations using high-confidence Statistical & ML models ONLY.
-            
-            var combinations = new List<CombinationDto>();
-            var usedMatchIds = new HashSet<int>();
-
-            // 1. Prepare the statistical pool (Confidence > 60%)
-            var statPool = matches
-                .Where(m => m.Prediction?.MatchWinner != null && (m.Prediction?.MatchWinner?.Confidence ?? 0) >= 0.60)
-                .OrderByDescending(m => m.Prediction.MatchWinner.Confidence)
-                .ToList();
-
-            logger.LogInformation("[Combinations] Starting Pure Math generation with {PoolCount} candidates.", statPool.Count);
-
-            // 2. Generate exactly 10 portfolios using a rotating exhaustion strategy
-            while (combinations.Count < 10 && statPool.Count >= 2)
-            {
-                // Determine if we need a Treble (3 matches) or a Double (2 matches)
-                // Rule: We want at least 2 Trebles in the daily mix, the rest as Doubles.
-                var treblesCreated = combinations.Count(c => c.Type == "TREBLE");
-                bool isTreble = treblesCreated < 2 && statPool.Count >= 3;
-                int take = isTreble ? 3 : 2;
-
-                // Pick the top matches that haven't been used yet
-                var chunk = statPool.Where(m => !usedMatchIds.Contains(m.Id)).Take(take).ToList();
-                
-                if (chunk.Count < 2) 
-                {
-                    // If we ran out of fresh matches, break (We refuse to recycle matches in the daily 10)
-                    logger.LogWarning("[Combinations] Match pool exhausted. Only generated {Count}/10 portfolios.", combinations.Count);
-                    break;
-                }
-
-                var combo = new CombinationDto
-                {
-                    SourceType = "SYSTEM",
-                    Type = chunk.Count == 3 ? "TREBLE" : "DOUBLE",
-                    TotalOdds = Math.Round(chunk.Select(m => GetPrimaryOdds(m)).Aggregate(1.0, (acc, val) => acc * val), 2),
-                    Reason = "System Recommendation: High-confidence daily selection built from peak historical performance and current data trends.",
-                    Matches = chunk.Select(m => new CombinationMatchDto
-                    {
-                        FixtureId = m.Id, 
-                        League = m.League, 
-                        HomeTeam = m.HomeTeam, 
-                        AwayTeam = m.AwayTeam,
-                        Selection = GetPrimarySelection(m), 
-                        Odds = GetPrimaryOdds(m),
-                        Confidence = (m.Prediction?.MatchWinner?.Confidence ?? 0) * 100,
-                        Reasoning = GetNaturalDailyReasoning(m)
-                    }).ToList()
-                };
-
-                combinations.Add(combo);
-                foreach (var m in chunk) usedMatchIds.Add(m.Id);
-            }
-
-            logger.LogInformation("[Combinations] Final output: {Count} combinations.", combinations.Count);
-
-            // Re-index all combinations to ensure unique, sequential IDs across batches
-            for (int i = 0; i < combinations.Count; i++)
-            {
-                combinations[i].CombinationId = i + 1;
-            }
-
-            // Step 4: CACHE the result for future API calls today!
-            if (combinations.Count > 0)
-            {
-                try 
-                {
-                    var existingCache = await dbContext.Combinations
-                        .FirstOrDefaultAsync(c => c.Date == targetDate && c.Language == query.Language && c.IsDailyCache, cancellationToken);
-
-                    if (existingCache != null)
-                    {
-                        logger.LogInformation("[Combinations] Updating existing SQL Cache...");
-                        existingCache.Payload = System.Text.Json.JsonSerializer.Serialize(combinations);
-                    }
-                    else 
-                    {
-                        logger.LogInformation("[Combinations] Creating new SQL Cache entry...");
-                        var newCache = new Combination
-                        {
-                            Name = $"Daily Cache {query.Date:yyyy-MM-dd}",
-                            Date = targetDate,
-                            Language = query.Language,
-                            Payload = System.Text.Json.JsonSerializer.Serialize(combinations),
-                            IsDailyCache = true,
-                            Status = "Cached"
-                        };
-                        dbContext.Combinations.Add(newCache);
-                    }
-                    
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    logger.LogInformation("[Combinations] SQL Cache Sync Complete.");
-                }
-                catch (Exception cacheEx)
-                {
-                    logger.LogWarning(cacheEx, "[Combinations] Failed to SYNC cache, but returning results anyway.");
-                }
-            }
-
-            return new GetMatchCombinationResponse(combinations);
+            return new GetMatchCombinationResponse([]);
         }
-        catch (Exception ex)
+
+        // Step 2: Delegate to the Insane Math Engine for portfolio generation
+        // Default SYSTEM intent: No filters, use daily hierarchy
+        var intent = new ChatCombinationIntent
         {
-            logger.LogError(ex, "[Combinations] CRITICAL FAILURE generating combinations for {Date}", context.Message.Date);
-            throw; // Re-throw for GlobalExceptionMiddleware
+            SourceType = "SYSTEM",
+            MinSelectionOdds = 1.60
+        };
+
+        var portfolios = combinationEngine.GenerateCombinations(analysisResponse.Matches, intent);
+
+        // Re-index for consistent IDs
+        for (int i = 0; i < portfolios.Count; i++)
+        {
+            portfolios[i].CombinationId = i + 1;
         }
+
+        return new GetMatchCombinationResponse(portfolios);
     }
+}
 
     private static string GetPrimarySelection(MatchAnalysis match)
     {

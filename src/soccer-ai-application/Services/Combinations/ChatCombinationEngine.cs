@@ -128,7 +128,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
     {
         var list = new List<CandidateMatch>();
         var allowedMarkets = intent.MarketGroups.SelectMany(g => g.Markets).ToHashSet();
-        if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25" };
+        if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" };
 
         foreach (var m in matches)
         {
@@ -138,6 +138,11 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                 var prob = sel.Probability;
                 var form = CalculateFormScore(m);
                 var val = (sel.Probability * sel.Odds) / 2.0;
+
+                // --- MARKET HIERARCHY ---
+                // Primary (Goal Atmosphere): BTTS, Over25. Weight 1.2x
+                // Secondary (Match State): Wins, 2-3 Goals. Weight 1.0x
+                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.2 : 1.0;
                 
                 list.Add(new CandidateMatch
                 {
@@ -149,7 +154,8 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                     Odds = sel.Odds,
                     Probability = prob,
                     FormScore = form,
-                    Score = (prob * ProbabilityWeight) + (form * FormWeight) + (val * ValueWeight)
+                    Score = ((prob * ProbabilityWeight) + (form * FormWeight) + (val * ValueWeight)) * hierarchyWeight,
+                    IsLowValue = sel.IsLowValue
                 });
             }
         }
@@ -164,12 +170,13 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         "BTTS" => "BTTS",
         "Over25" => "Over 2.5 Goals",
         "Under25" => "Under 2.5 Goals",
+        "Goals23" => "2-3 Goals",
         _ => market
     };
 
-    private List<(string Market, double Odds, double Probability)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds)
+    private List<(string Market, double Odds, double Probability, bool IsLowValue)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds)
     {
-        var res = new List<(string, double, double)>();
+        var res = new List<(string, double, double, bool)>();
         
         var map = new List<(string Key, double Odds, double Prob)> 
         {
@@ -177,14 +184,32 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             ("AwayWin", m.OddsAwayWin, m.Prediction?.AwayWin.Probability ?? 0),
             ("Draw", m.OddsDraw, m.Prediction?.Draw.Probability ?? 0),
             ("BTTS", m.OddsBttsYes, m.Prediction?.BTTS.Probability ?? 0),
-            ("Over25", m.OddsOver25, m.Prediction?.Over25.Probability ?? 0)
+            ("Over25", m.OddsOver25, m.Prediction?.Over25.Probability ?? 0),
+            ("Goals23", m.OddsGoals23, m.Prediction?.TwoToThreeGoals.Probability ?? 0)
         };
+
+        // --- THE "INSANE" RULES ---
+        // 1. Min 1.60 Odd (Hard Floor)
+        // 2. Goal Exception: If (BTTS + O25) > 1.85, qualify as a Goal market.
+        double goalAtmosphere = m.OddsBttsYes + m.OddsOver25;
+        bool isStrongGoalEnvironment = goalAtmosphere > 1.85;
 
         foreach (var item in map)
         {
-            if (requested.Contains(item.Key) && item.Odds >= minOdds && item.Prob > 0.05)
+            if (!requested.Contains(item.Key)) continue;
+
+            bool isGoalMarket = item.Key == "BTTS" || item.Key == "Over25";
+            bool meetsFloor = item.Odds >= 1.60;
+            bool meetsGoalAtmosphere = isGoalMarket && isStrongGoalEnvironment;
+
+            if (meetsFloor || meetsGoalAtmosphere)
             {
-                res.Add((item.Key, item.Odds, item.Prob));
+                res.Add((item.Key, item.Odds, item.Prob, false));
+            }
+            else
+            {
+                // If user specifically requested it, allow it with a warning
+                res.Add((item.Key, item.Odds, item.Prob, true));
             }
         }
 
