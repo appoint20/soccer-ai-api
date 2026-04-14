@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,11 @@ public class CombinationsController(IMediator mediator) : ControllerBase
         [FromBody] CreateChatCombinationRequest request,
         CancellationToken ct = default)
     {
-        var command = new CreateChatCombinationCommand { Query = request.Query };
+        var command = new CreateChatCombinationCommand 
+        { 
+            Query = request.Query,
+            Date = request.Date
+        };
         var response = await mediator.SendAsync<CreateChatCombinationCommand, CreateChatCombinationResponse>(command, ct);
         
         if (!response.Success)
@@ -33,5 +38,8 @@ public class CombinationsController(IMediator mediator) : ControllerBase
     public class CreateChatCombinationRequest
     {
         public string Query { get; set; } = string.Empty;
+
+        [Required]
+        public DateTimeOffset Date { get; set; }
     }
 }

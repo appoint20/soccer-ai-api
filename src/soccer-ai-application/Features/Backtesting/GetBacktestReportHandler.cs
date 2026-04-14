@@ -85,9 +85,9 @@ public class GetBacktestReportHandler(
 
                         leagueResults.Add(new LeaguePredictionResult
                         {
-                            League = f.League,
-                            BttsHit = pred.BTTS.Prediction == bttsActual,
-                            Over25Hit = pred.Over25.Prediction == over25Actual
+                            League = analysisResult.LeagueName,
+                            BttsHit = pred.BTTS == bttsActual,
+                            Over25Hit = pred.Over25 == over25Actual
                         });
 
                         matchAnalyses.Add(mapped);

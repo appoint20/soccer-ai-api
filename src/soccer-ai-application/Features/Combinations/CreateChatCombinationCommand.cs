@@ -7,6 +7,7 @@ public class CreateChatCombinationCommand : ICommand
 {
     public string Query { get; set; } = string.Empty;
     public string Language { get; set; } = "en";
+    public DateTimeOffset Date { get; set; }
 }
 
 public class CreateChatCombinationResponse : IResponse

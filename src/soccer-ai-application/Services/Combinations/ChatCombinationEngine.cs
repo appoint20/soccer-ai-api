@@ -14,71 +14,72 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
     {
         var finalCombinations = new List<CombinationDto>();
         var globallyUsedMatchIds = new HashSet<int>();
+        var totalGoals23Count = 0;
 
         // 1. Pre-filter all matches into candidates
+        // We ensure we have a robust pool of candidates
         var allCandidates = FilterAllPossibleCandidates(matches, intent);
 
-        // --- ROBUSTNESS: Ensure MarketGroups is never empty ---
-        if (intent.MarketGroups == null || intent.MarketGroups.Count == 0)
+        // Define our 5 slots with specific rules
+        for (int i = 0; i < 5; i++)
         {
-            intent.MarketGroups = new List<MarketIntentGroup>
-            {
-                new() { MatchCount = 3, Markets = new List<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" } },
-                new() { MatchCount = 2, Markets = new List<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" } }
-            };
-        }
+            // Slot rules:
+            // 0, 1, 2: ONLY BTTS and Over 2.5 Goals
+            // 3, 4: Mixed, but must include AT LEAST ONE 'Win' market (HomeWin, AwayWin, Draw)
+            bool isGoalOnlySlot = i < 3;
+            int requiredMatchCount = 2; // Every combo is a double
 
-        // 2. Sequential Interleaved Generation (to ensure diversity and type representation)
-        // We want up to 5 combinations total.
-        int maxAttempts = 5;
-        for (int i = 0; i < maxAttempts; i++)
-        {
-            var groupIdx = i % intent.MarketGroups.Count;
-            var group = intent.MarketGroups[groupIdx];
-
-            // Filter out already used matches for THIS slot
-            var availablePool = allCandidates
+            // Filter the available pool for this specific slot
+            var slotCandidates = allCandidates
                 .Where(c => !globallyUsedMatchIds.Contains(c.Id))
-                .Where(c => group.Markets.Contains(c.Market))
+                .Where(c => !isGoalOnlySlot || (c.Market == "BTTS" || c.Market == "Over25"))
+                // Enforce global 2-3 Goals limit (Max 2 across all 10 selections)
+                .Where(c => c.Market != "Goals23" || totalGoals23Count < 2)
                 .OrderByDescending(c => c.Score)
                 .ToList();
 
-            if (availablePool.Count < group.MatchCount) continue;
+            if (slotCandidates.Count < requiredMatchCount) continue;
 
-            // Generate exactly ONE best combination for this group using only fresh matches
-            var results = BuildRecursive(availablePool, group.MatchCount, intent.MaxSameLeague);
-            if (results.Count > 0)
+            List<CandidateMatch>? selectedCombo = null;
+
+            if (isGoalOnlySlot)
             {
-                var best = results[0]; // Take the highest scoring one
-                var dto = MapToDto(best, intent, group.MatchCount);
-                finalCombinations.Add(dto);
-
-                // Lock these matches for ALL subsequent combinations
-                foreach (var m in best) globallyUsedMatchIds.Add(m.Id);
+                // Simple best double for Goal slots
+                var possibleGoalCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague);
+                selectedCombo = possibleGoalCombos.FirstOrDefault();
             }
-        }
-
-        // 3. Fallback: If we still haven't reached 5 combinations, try to fill with any remaining matches
-        if (finalCombinations.Count < 5)
-        {
-            var fallbackGroup = intent.MarketGroups.OrderByDescending(g => g.MatchCount).FirstOrDefault();
-            if (fallbackGroup != null)
+            else
             {
-                var remaining = allCandidates
-                    .Where(c => !globallyUsedMatchIds.Contains(c.Id))
-                    .OrderByDescending(c => c.Score)
-                    .ToList();
+                // For mixed slots, we want a combination that contains at least one Win market
+                var allMixedCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague);
+                selectedCombo = allMixedCombos.FirstOrDefault(c => c.Any(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw"));
 
-                var extraResults = BuildRecursive(remaining, fallbackGroup.MatchCount, intent.MaxSameLeague);
-                foreach (var res in extraResults.Take(5 - finalCombinations.Count))
+                // Fallback: If top combos don't have a Win, force one by seeding the recursive builder with a top Win candidate
+                if (selectedCombo == null)
                 {
-                    finalCombinations.Add(MapToDto(res, intent, fallbackGroup.MatchCount));
-                    foreach (var m in res) globallyUsedMatchIds.Add(m.Id);
+                    var topWin = slotCandidates.FirstOrDefault(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw");
+                    if (topWin != null)
+                    {
+                        var forcedCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague, new List<CandidateMatch> { topWin });
+                        selectedCombo = forcedCombos.FirstOrDefault();
+                    }
+                }
+            }
+
+            if (selectedCombo != null && selectedCombo.Count == requiredMatchCount)
+            {
+                finalCombinations.Add(MapToDto(selectedCombo, intent, requiredMatchCount));
+                
+                // Track usage
+                foreach (var m in selectedCombo)
+                {
+                    globallyUsedMatchIds.Add(m.Id);
+                    if (m.Market == "Goals23") totalGoals23Count++;
                 }
             }
         }
 
-        // 4. Assign IDs and Final Polish
+        // Final ID assignment
         for (int i = 0; i < finalCombinations.Count; i++)
         {
             finalCombinations[i].CombinationId = i + 1;
@@ -149,8 +150,9 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
                 // --- MARKET HIERARCHY ---
                 // Primary (Goal Atmosphere): BTTS, Over25. Weight 1.2x
-                // Secondary (Match State): Wins, 2-3 Goals. Weight 1.0x
-                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.1 : 1.0;
+                // Secondary (Match State): Wins. Weight 1.0x
+                // Low Priority: 2-3 Goals. Weight 0.8x
+                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.2 : (sel.Market == "Goals23" ? 0.8 : 1.0);
                 
                 list.Add(new CandidateMatch
                 {
@@ -252,10 +254,27 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         return score / Math.Max(1, form.Length);
     }
 
-    private List<List<CandidateMatch>> BuildRecursive(List<CandidateMatch> candidates, int size, int maxLeague)
+    private List<List<CandidateMatch>> BuildRecursive(List<CandidateMatch> candidates, int size, int maxLeague, List<CandidateMatch>? seed = null)
     {
         var results = new List<List<CandidateMatch>>();
-        GenerateCombinationsRecursive(candidates, size, 0, new List<CandidateMatch>(), results, new HashSet<string>(), new Dictionary<string, int>(), maxLeague);
+        var startingPool = seed ?? new List<CandidateMatch>();
+        
+        // When using a seed (forced matches), we need to ensure the starting used teams/leagues are respected
+        var usedTeams = new HashSet<string>();
+        var leagueCounts = new Dictionary<string, int>();
+
+        foreach (var s in startingPool)
+        {
+            usedTeams.Add(s.HomeTeam);
+            usedTeams.Add(s.AwayTeam);
+            leagueCounts[s.League] = leagueCounts.GetValueOrDefault(s.League) + 1;
+        }
+
+        // Filter candidates to avoid re-selecting the same match ID that is in the seed
+        var seedIds = startingPool.Select(s => s.Id).ToHashSet();
+        var pool = candidates.Where(c => !seedIds.Contains(c.Id)).ToList();
+
+        GenerateCombinationsRecursive(pool, size, 0, startingPool, results, usedTeams, leagueCounts, maxLeague);
         return results;
     }
 

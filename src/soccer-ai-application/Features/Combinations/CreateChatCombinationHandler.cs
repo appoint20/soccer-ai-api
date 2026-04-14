@@ -23,16 +23,16 @@ public class CreateChatCombinationHandler(
         // 1. Check for empty query - Fallback to SYSTEM Daily Combinations
         if (string.IsNullOrWhiteSpace(cmd.Query))
         {
-            logger.LogInformation("[Chat] Empty query received. Falling back to SYSTEM daily combinations.");
-            var dailyQuery = new GetMatchCombinationQuery(DateTimeOffset.UtcNow, cmd.Language, false);
+            logger.LogInformation("[Chat] Empty query received. Falling back to SYSTEM daily combinations for {Date}.", cmd.Date.ToString("yyyy-MM-dd"));
+            var dailyQuery = new GetMatchCombinationQuery(cmd.Date, cmd.Language, false);
             var dailyResponse = await mediator.RequestAsync<GetMatchCombinationQuery, GetMatchCombinationResponse>(dailyQuery, cancellationToken);
             
             return new CreateChatCombinationResponse 
             { 
                 Success = true, 
                 Combinations = dailyResponse.Combinations.Take(5).ToList(),
-                AiReasoning = "No criteria specified. Showing today's top system recommendations.",
-                Message = "Here are today's top-rated mathematical portfolios."
+                AiReasoning = $"No criteria specified. Showing top system recommendations for {cmd.Date:yyyy-MM-dd}.",
+                Message = $"Here are the top-rated mathematical portfolios for {cmd.Date:yyyy-MM-dd}."
             };
         }
 
@@ -50,8 +50,8 @@ public class CreateChatCombinationHandler(
         logger.LogInformation("[Chat] Extracted Intent: Markets={Markets}, MinOdds={Odds}", 
             string.Join(",", intent.PreferredMarkets), intent.MinTotalOdds);
 
-        // 2. Fetch today's analyzed matches
-        var analysisQuery = new GetMatchAnalysisQuery { Date = DateTimeOffset.UtcNow, Language = cmd.Language };
+        // 2. Fetch analyzed matches for the target date
+        var analysisQuery = new GetMatchAnalysisQuery { Date = cmd.Date, Language = cmd.Language };
         var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
         
         if (analysisResponse.Matches == null || analysisResponse.Matches.Count == 0)
