@@ -19,6 +19,9 @@ public sealed class GetBacktestReportResponse : IResponse
 
 public sealed class BacktestSummary
 {
+    [JsonPropertyName("start_date")]
+    public DateTimeOffset StartDate { get; init; }
+
     [JsonPropertyName("total_roi")]
     public double TotalRoi { get; init; }
 

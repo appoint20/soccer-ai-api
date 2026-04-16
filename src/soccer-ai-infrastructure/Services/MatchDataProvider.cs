@@ -144,14 +144,13 @@ public sealed class MatchDataProvider(
 
     private async Task<List<Fixture>> GetLastMatches(int teamId, DateTimeOffset before, int count, CancellationToken ct)
     {
-        // SQLite/EF Core does not support DateTimeOffset in ORDER BY clauses.
-        // We fetch matches and sort them in-memory.
+        // Filter by date in DB to avoid loading entire history for every team
+        // We still sort/take in-memory due to SQLite DateTimeOffset ordering limitations in older EF versions
         var matches = await dbContext.Fixtures
-            .Where(f => (f.HomeTeamId == teamId || f.AwayTeamId == teamId) && f.Status == "FT")
+            .Where(f => (f.HomeTeamId == teamId || f.AwayTeamId == teamId) && f.Status == "FT" && f.Date < before)
             .ToListAsync(ct);
 
         return matches
-            .Where(f => f.Date < before)
             .OrderByDescending(f => f.Date)
             .Take(count)
             .ToList();
@@ -159,14 +158,12 @@ public sealed class MatchDataProvider(
 
     private async Task<List<Fixture>?> GetH2HMatches(int teamA, int teamB, DateTimeOffset before, int count, CancellationToken ct)
     {
-        // Similar simplification for H2H matches to avoid SQLite translation/ordering issues
         var matches = await dbContext.Fixtures
             .Where(f => ((f.HomeTeamId == teamA && f.AwayTeamId == teamB) ||
-                         (f.HomeTeamId == teamB && f.AwayTeamId == teamA)) && f.Status == "FT")
+                         (f.HomeTeamId == teamB && f.AwayTeamId == teamA)) && f.Status == "FT" && f.Date < before)
             .ToListAsync(ct);
 
         return matches
-            .Where(f => f.Date < before)
             .OrderByDescending(f => f.Date)
             .Take(count)
             .ToList();

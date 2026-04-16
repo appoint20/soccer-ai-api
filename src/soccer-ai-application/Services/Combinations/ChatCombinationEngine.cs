@@ -33,8 +33,8 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             var slotCandidates = allCandidates
                 .Where(c => !globallyUsedMatchIds.Contains(c.Id))
                 .Where(c => !isGoalOnlySlot || (c.Market == "BTTS" || c.Market == "Over25"))
-                // Enforce global 2-3 Goals limit (Max 2 across all 10 selections)
-                .Where(c => c.Market != "Goals23" || totalGoals23Count < 2)
+                // Enforce global 2-3 Goals limit (Max 1 across all 10 selections)
+                .Where(c => c.Market != "Goals23" || totalGoals23Count < 1)
                 .OrderByDescending(c => c.Score)
                 .ToList();
 
@@ -45,13 +45,13 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             if (isGoalOnlySlot)
             {
                 // Simple best double for Goal slots
-                var possibleGoalCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague);
+                var possibleGoalCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
                 selectedCombo = possibleGoalCombos.FirstOrDefault();
             }
             else
             {
                 // For mixed slots, we want a combination that contains at least one Win market
-                var allMixedCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague);
+                var allMixedCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
                 selectedCombo = allMixedCombos.FirstOrDefault(c => c.Any(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw"));
 
                 // Fallback: If top combos don't have a Win, force one by seeding the recursive builder with a top Win candidate
@@ -60,7 +60,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                     var topWin = slotCandidates.FirstOrDefault(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw");
                     if (topWin != null)
                     {
-                        var forcedCombos = BuildRecursive(slotCandidates, requiredMatchCount, intent.MaxSameLeague, new List<CandidateMatch> { topWin });
+                        var forcedCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3), new List<CandidateMatch> { topWin });
                         selectedCombo = forcedCombos.FirstOrDefault();
                     }
                 }
@@ -149,10 +149,10 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                 var val = (sel.Probability * sel.Odds) / 2.0;
 
                 // --- MARKET HIERARCHY ---
-                // Primary (Goal Atmosphere): BTTS, Over25. Weight 1.2x
+                // Primary (Goal Atmosphere): BTTS, Over25, BttsAndOver25. Weight 1.2x
                 // Secondary (Match State): Wins. Weight 1.0x
                 // Low Priority: 2-3 Goals. Weight 0.8x
-                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25") ? 1.2 : (sel.Market == "Goals23" ? 0.8 : 1.0);
+                double hierarchyWeight = (sel.Market == "BTTS" || sel.Market == "Over25" || sel.Market == "BttsAndOver25") ? 1.2 : (sel.Market == "Goals23" ? 0.8 : 1.0);
                 
                 list.Add(new CandidateMatch
                 {
@@ -181,6 +181,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         "Over25" => "Over 2.5 Goals",
         "Under25" => "Under 2.5 Goals",
         "Goals23" => "2-3 Goals",
+        "BttsAndOver25" => "BTTS & Over 2.5 Goals",
         _ => market
     };
 
@@ -200,9 +201,6 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
         // --- THE "INSANE" RULES ---
         // 1. Min 1.60 Odd (Hard Floor)
-        // 2. Goal Exception: If (BTTS + O25) > 1.85, qualify as a Goal market.
-        double goalAtmosphere = m.OddsBttsYes + m.OddsOver25;
-        bool isStrongGoalEnvironment = goalAtmosphere > 1.85;
 
         foreach (var item in map)
         {
@@ -219,17 +217,28 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
             if (!meetsConfidence) continue;
 
-            bool isGoalMarket = item.Key == "BTTS" || item.Key == "Over25";
-            bool meetsFloor = item.Odds >= 1.60;
-            bool meetsGoalAtmosphere = isGoalMarket && isStrongGoalEnvironment;
+            bool meetsFloor = item.Odds >= minOdds;
 
-            if (meetsFloor || meetsGoalAtmosphere)
+            if (meetsFloor)
             {
                 res.Add((item.Key, item.Odds, item.Prob, false));
             }
             else if (item.Prob > 0.6) // High probability exception for lower odds
             {
                 res.Add((item.Key, item.Odds, item.Prob, false));
+            }
+        }
+
+        // --- BTTS + Over 2.5 COMBINED EXCEPTION ---
+        if (requested.Contains("BTTS") || requested.Contains("Over25"))
+        {
+            if (m.Prediction?.BTTS.Probability > 0.55 && m.Prediction?.Over25.Probability > 0.55)
+            {
+                double combinedOdds = Math.Max(m.OddsBttsYes, m.OddsOver25) * 1.30;
+                if (combinedOdds >= minOdds && !res.Any(r => r.Item1 == "BttsAndOver25"))
+                {
+                    res.Add(("BttsAndOver25", Math.Round(combinedOdds, 2), Math.Min(m.Prediction.BTTS.Probability, m.Prediction.Over25.Probability), false));
+                }
             }
         }
 

@@ -81,7 +81,7 @@ public sealed class DecisionService(
 
         // Match Winner
         string? winnerWarning = null;
-        if (prediction.Confidence < 0.40)
+        if (prediction.Confidence < 0.45)
             winnerWarning = $"Very low confidence ({prediction.Confidence:P0})";
         markets.MatchWinner = MarketDecision.Create(prediction.Confidence, winnerWarning);
 

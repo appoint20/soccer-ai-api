@@ -50,8 +50,12 @@ public class GetMatchCombinationHandler(
         var intent = new ChatCombinationIntent
         {
             SourceType = "SYSTEM",
-            MinSelectionOdds = 1.60
+            MinSelectionOdds = 1.50,
+            MaxSameLeague = 2
         };
+
+        logger.LogInformation("[Combinations] Filtering {MatchCount} analyzed matches into candidates (Odds Floor: {Odds}, Max Same League: {MaxLeague})", 
+            analysisResponse.Matches.Count, intent.MinSelectionOdds, intent.MaxSameLeague);
 
         var portfolios = combinationEngine.GenerateCombinations(analysisResponse.Matches, intent);
 

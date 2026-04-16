@@ -276,7 +276,9 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
         1. You are NOT a tipster. Do NOT suggest matches.
         2. You ONLY extract filters (odds, markets, leagues).
         3. Convert German terms like "Direkt Tipps" into "HomeWin", "AwayWin", "Draw".
-        4. Detect if the user wants multiple combinations (e.g., "1 Treble and 1 Double") and create multiple objects in the `market_groups` list.
+        4. If the user explicitly asks for 'wins' or 'victories', extract ONLY 'HomeWin' and 'AwayWin'. Do NOT extract 'Draw'.
+        5. Detect if the user wants multiple combinations (e.g., "1 Treble and 1 Double") and create multiple objects in the `market_groups` list.
+        6. Extract any specific leagues mentioned by the user (e.g., "English leagues" -> ["England"], "Champions League" -> ["Champions League"]).
 
         USER QUERY: "{query}"
 
@@ -313,6 +315,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                 ["min_total_odds"] = new Schema { Type = DataType.Number },
                 ["min_selection_odds"] = new Schema { Type = DataType.Number },
                 ["max_same_league"] = new Schema { Type = DataType.Integer },
+                ["preferred_leagues"] = new Schema { Type = DataType.Array, Items = new Schema { Type = DataType.String } },
                 ["market_groups"] = new Schema
                 {
                     Type = DataType.Array,

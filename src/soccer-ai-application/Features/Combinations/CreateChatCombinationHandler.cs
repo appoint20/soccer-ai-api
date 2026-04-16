@@ -63,6 +63,25 @@ public class CreateChatCombinationHandler(
             };
         }
 
+        // Apply League Filtering if specified
+        if (intent.PreferredLeagues != null && intent.PreferredLeagues.Any())
+        {
+            // Simple substring match for flexibility (e.g. "England" matches "England: Premier League")
+            var prefLeagues = intent.PreferredLeagues.Select(l => l.ToLowerInvariant()).ToList();
+            analysisResponse.Matches = analysisResponse.Matches
+                .Where(m => prefLeagues.Any(pl => m.League.ToLowerInvariant().Contains(pl)))
+                .ToList();
+
+            if (analysisResponse.Matches.Count == 0)
+            {
+                return new CreateChatCombinationResponse 
+                { 
+                    Success = false, 
+                    Message = $"No matches available for the specified leagues: {string.Join(", ", intent.PreferredLeagues)}" 
+                };
+            }
+        }
+
         // 3. Generate and rank combinations using the engine
         var combinations = engine.GenerateCombinations(analysisResponse.Matches, intent);
 

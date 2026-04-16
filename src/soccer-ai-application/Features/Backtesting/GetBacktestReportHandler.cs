@@ -55,82 +55,99 @@ public class GetBacktestReportHandler(
             .Where(t => teamIds.Contains(t.ApiId))
             .ToDictionaryAsync(t => t.ApiId, t => t, cancellationToken);
 
-        var simulationResults = new List<SimulationCombo>();
-        var leagueResults = new List<LeaguePredictionResult>();
+        var simulationResults = new ConcurrentBag<SimulationCombo>();
+        var leagueResults = new ConcurrentBag<LeaguePredictionResult>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
-        using var scope = serviceProvider.CreateScope();
-        var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
+        // Use a semaphore to limit concurrency and avoid hammering the database/AI
+        using var semaphore = new SemaphoreSlim(10); 
 
-        foreach (var day in dayGroups)
+        var tasks = dayGroups.Select(async day =>
         {
-            var matchAnalyses = new List<MatchAnalysis>();
-            foreach (var f in day)
+            await semaphore.WaitAsync(cancellationToken);
+            try
             {
-                try
-                {
-                    var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
-                    if (analysisResult.Prediction != null)
-                    {
-                        var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
-                        var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
-                        
-                        var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
-                            f, analysisResult, home, away, analysisResult.Gemini);
-                        
-                        // Track league accuracy for all analyzed matches
-                        var pred = analysisResult.Prediction;
-                        bool bttsActual = f.HomeGoal > 0 && f.AwayGoal > 0;
-                        bool over25Actual = (f.HomeGoal + f.AwayGoal) > 2;
+                using var scope = serviceProvider.CreateScope();
+                var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
+                var matchAnalyses = new List<MatchAnalysis>();
 
-                        leagueResults.Add(new LeaguePredictionResult
+                foreach (var f in day)
+                {
+                    try
+                    {
+                        var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
+                        if (analysisResult.Prediction != null)
                         {
-                            League = analysisResult.LeagueName,
-                            BttsHit = pred.BTTS == bttsActual,
-                            Over25Hit = pred.Over25 == over25Actual
-                        });
+                            var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
+                            var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
+                            
+                            var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
+                                f, analysisResult, home, away, analysisResult.Gemini);
+                            
+                            // Track league accuracy for all analyzed matches
+                            var pred = analysisResult.Prediction;
+                            bool bttsActual = f.HomeGoal > 0 && f.AwayGoal > 0;
+                            bool over25Actual = (f.HomeGoal + f.AwayGoal) > 2;
 
-                        matchAnalyses.Add(mapped);
+                            leagueResults.Add(new LeaguePredictionResult
+                            {
+                                League = analysisResult.LeagueName,
+                                BttsHit = pred.BTTS == bttsActual,
+                                Over25Hit = pred.Over25 == over25Actual
+                            });
+
+                            matchAnalyses.Add(mapped);
+                        }
                     }
-                }
-                catch { /* Skip failed analysis */ }
-            }
-
-            if (matchAnalyses.Count < 5) continue;
-
-            // Simulate the Portfolio Generation
-            var portfolios = engine.GenerateCombinations(matchAnalyses, new ChatCombinationIntent 
-            { 
-                MinSelectionOdds = 1.60,
-                SourceType = "SYSTEM"
-            });
-
-            foreach (var combo in portfolios)
-            {
-                bool isFullWin = true;
-                foreach (var leg in combo.Matches)
-                {
-                    var fix = fixtures.First(fx => fx.Id == leg.FixtureId);
-                    if (!IsLegWon(leg.Selection, fix))
+                    catch (Exception ex)
                     {
-                        isFullWin = false;
-                        break;
+                        logger.LogError(ex, "Error analyzing fixture {FixtureId}", f.Id);
                     }
                 }
 
-                simulationResults.Add(new SimulationCombo 
-                { 
-                    Date = day.Key, 
-                    Odds = combo.TotalOdds, 
-                    IsWon = isFullWin, 
-                    Stake = query.Stake,
-                    Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
-                    AverageConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0
-                });
-            }
-        }
+                if (matchAnalyses.Count >= 5)
+                {
+                    // Simulate the Portfolio Generation
+                    var portfolios = engine.GenerateCombinations(matchAnalyses, new ChatCombinationIntent 
+                    { 
+                        MinSelectionOdds = 1.50, // Updated to match relaxed threshold
+                        SourceType = "SYSTEM"
+                    });
 
-        return CalculateFinalReport(simulationResults, leagueResults, query.WeeksBack, query.Stake);
+                    foreach (var combo in portfolios)
+                    {
+                        bool isFullWin = true;
+                        foreach (var leg in combo.Matches)
+                        {
+                            var fix = fixtures.First(fx => fx.Id == leg.FixtureId);
+                            if (!IsLegWon(leg.Selection, fix))
+                            {
+                                isFullWin = false;
+                                break;
+                            }
+                        }
+
+                        simulationResults.Add(new SimulationCombo 
+                        { 
+                            Date = day.Key, 
+                            Odds = combo.TotalOdds, 
+                            IsWon = isFullWin, 
+                            Stake = query.Stake,
+                            Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
+                            AverageConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0
+                        });
+                    }
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+
+        return CalculateFinalReport(simulationResults.ToList(), leagueResults.ToList(), startDate, query.WeeksBack, query.Stake);
     }
 
     private bool IsLegWon(string selection, Fixture f)
@@ -148,7 +165,7 @@ public class GetBacktestReportHandler(
         };
     }
 
-    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, List<LeaguePredictionResult> leagueResults, int weeks, double stake)
+    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, List<LeaguePredictionResult> leagueResults, DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week and apply the 9-combination limit per week
         var weeklyGroups = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
@@ -196,6 +213,7 @@ public class GetBacktestReportHandler(
         {
             Summary = new BacktestSummary
             {
+                StartDate = startDate,
                 TotalRoi = Math.Round(roi, 1),
                 TotalStaked = Math.Round(totalStaked, 2),
                 TotalReturned = Math.Round(totalReturned, 2),
