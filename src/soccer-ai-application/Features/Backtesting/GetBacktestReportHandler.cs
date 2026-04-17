@@ -82,7 +82,7 @@ public class GetBacktestReportHandler(
                             var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
                             
                             var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
-                                f, analysisResult, home, away, analysisResult.Gemini);
+                                f, analysisResult, home, away, analysisResult.Ai);
                             
                             // Track league accuracy for all analyzed matches
                             var pred = analysisResult.Prediction;

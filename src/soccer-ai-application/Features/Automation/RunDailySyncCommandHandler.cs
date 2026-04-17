@@ -7,7 +7,7 @@ namespace SoccerAi.Application.Features.Automation;
 
 public class RunDailySyncCommandHandler(
     ITeamSyncService teamSyncService, IFixtureSyncService fixtureSyncService,
-    IMlTrainingService mlTrainingService, IGeminiSyncService geminiSyncService, 
+    IMlTrainingService mlTrainingService, IAiSyncService aiSyncService, 
     ILogger<RunDailySyncCommandHandler> logger) 
     : ICommandHandler<RunDailySyncCommand>
 {
@@ -26,8 +26,8 @@ public class RunDailySyncCommandHandler(
             // 3. Train ML Models natively via ML.NET
             await mlTrainingService.TrainModelsAsync(cancellationToken);
 
-            // 4. Generate Gemini AI Analysis
-            await geminiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, cancellationToken);
+            // 4. Generate AI Analysis
+            await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, false, cancellationToken);
 
             logger.LogInformation("Daily sync orchestration completed successfully.");
         }

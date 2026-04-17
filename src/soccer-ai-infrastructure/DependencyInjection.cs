@@ -17,20 +17,24 @@ public static class DependencyInjection
     {
         InitDatabase(services, configuration);
         InitApiFootballService(services, configuration);
-        InitGeminiService(services, configuration);
+        InitAiService(services, configuration);
+        InitLegacyAiService(services, configuration);
 
         // Sync services
         services.AddScoped<ITeamSyncService, TeamSyncService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
-        services.AddScoped<IGeminiSyncService, GeminiSyncService>();
+        services.AddScoped<IAiSyncService, AiSyncService>();
         services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
         services.AddScoped<IMlPredictionService, MlPredictionService>();
+        services.AddScoped<IMatchRepository, Repositories.MatchRepository>();
         
         // ML.NET native trainer services
         services.AddScoped<SoccerAi.Infrastructure.MlNet.MlTrainingDataBuilder>();
         services.AddScoped<IMlTrainingService, SoccerAi.Infrastructure.MlNet.MlTrainingService>();
 
-        services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
+        // Register IAiAnalysisService based on configuration
+        RegisterAiAnalysisService(services, configuration);
+
         services.AddScoped<IDecisionService, SoccerAi.Infrastructure.Services.DecisionService>();
         services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
         services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
@@ -115,35 +119,56 @@ public static class DependencyInjection
             });
     }
     
-    private static void InitGeminiService(IServiceCollection services, IConfiguration configuration)
+    private static void InitLegacyAiService(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.Configure<LegacyAiOptions>(configuration.GetSection(LegacyAiOptions.SectionName));
 
-        services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>((provider, client) =>
+        services.AddHttpClient("LegacyAiClient", (provider, client) =>
         {
             var options = provider
-                .GetRequiredService<IOptions<GeminiOptions>>()
+                .GetRequiredService<IOptions<LegacyAiOptions>>()
                 .Value;
 
             var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
                          ?? options.ApiKey;
 
             client.BaseAddress = new Uri(options.BaseUrl);
-            client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
-        })
-        .AddResilienceHandler("gemini-api", builder =>
-        {
-            builder.AddRetry(new HttpRetryStrategyOptions
-            {
-                MaxRetryAttempts = 2,
-                BackoffType = DelayBackoffType.Exponential,
-                Delay = TimeSpan.FromSeconds(5),
-                ShouldHandle = args => ValueTask.FromResult(
-                    args.Outcome.Result?.StatusCode is System.Net.HttpStatusCode.TooManyRequests
-                    or System.Net.HttpStatusCode.ServiceUnavailable
-                    || args.Outcome.Exception is HttpRequestException or TaskCanceledException)
-            });
-            builder.AddTimeout(TimeSpan.FromMinutes(5));
         });
+    }
+
+    private static void InitAiService(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<AiServiceOptions>(configuration.GetSection("AiService"));
+
+        services.AddHttpClient("AiService", (provider, client) =>
+        {
+            var options = provider
+                .GetRequiredService<IOptions<AiServiceOptions>>()
+                .Value;
+
+            client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        });
+
+        services.AddHttpClient<INlpService, NlpService>((provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<Options.AiServiceOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        });
+    }
+
+    private static void RegisterAiAnalysisService(IServiceCollection services, IConfiguration configuration)
+    {
+        var aiOptions = configuration.GetSection("AiService").Get<AiServiceOptions>();
+
+        if (aiOptions != null && aiOptions.Enabled)
+        {
+            services.AddScoped<IAiAnalysisService, LocalAiAnalysisService>();
+        }
+        else
+        {
+            services.AddScoped<IAiAnalysisService, LegacyExternalAiService>();
+        }
     }
 }

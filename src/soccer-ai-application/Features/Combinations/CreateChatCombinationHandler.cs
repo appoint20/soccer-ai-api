@@ -10,7 +10,7 @@ namespace SoccerAi.Application.Features.Combinations;
 
 public class CreateChatCombinationHandler(
     IMediator mediator,
-    IGeminiAnalysisService geminiService,
+    IAiAnalysisService aiService,
     IChatCombinationEngine engine,
     ILogger<CreateChatCombinationHandler> logger) 
     : ICommandHandler<CreateChatCombinationCommand, CreateChatCombinationResponse>
@@ -37,7 +37,7 @@ public class CreateChatCombinationHandler(
         }
 
         // 2. Parse natural language into structured intent
-        var intent = await geminiService.ParseChatIntentAsync(cmd.Query);
+        var intent = await aiService.ParseChatIntentAsync(cmd.Query);
         if (intent == null)
         {
             return new CreateChatCombinationResponse 

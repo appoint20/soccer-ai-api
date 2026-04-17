@@ -1,45 +1,33 @@
-using System.ComponentModel.DataAnnotations;
-using Mediator.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using SoccerAi.Application.Features.Combinations;
-using SoccerAi.Application.Models;
+using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Models.Deterministic;
 
 namespace SoccerAi.Api.Controllers;
 
 [ApiController]
-[Route("api")]
-[Authorize(Policy = "CombinedPolicy")]
-public class CombinationsController(IMediator mediator) : ControllerBase
+[Route("api/[controller]")]
+public class CombinationsController(
+    INlpService nlpService,
+    IMatchRepository matchRepository,
+    ICombinationService combinationService) : ControllerBase
 {
-    /// <summary>
-    /// Unified entry point for all combination requests.
-    /// Handles both custom chat queries and automatic 'SYSTEM' daily recommendations.
-    /// </summary>
-    /// <param name="request">Contains the natural language query. If empty, returns top SYSTEM portfolios.</param>
-    [HttpPost("combinations")]
-    public async Task<IActionResult> CreateChatCombination(
-        [FromBody] CreateChatCombinationRequest request,
-        CancellationToken ct = default)
+    [HttpPost]
+    public async Task<ActionResult<CombinationResponse>> GetCombinations([FromBody] CombinationRequest request)
     {
-        var command = new CreateChatCombinationCommand 
-        { 
-            Query = request.Query,
-            Date = request.Date
-        };
-        var response = await mediator.SendAsync<CreateChatCombinationCommand, CreateChatCombinationResponse>(command, ct);
+        if (string.IsNullOrWhiteSpace(request.Query))
+            return BadRequest("Query is required.");
+
+        // 1. NLP Integration: Parse natural language input
+        var intent = await nlpService.ParseIntentAsync(request.Query);
         
-        if (!response.Success)
-            return BadRequest(ApiResponse<CreateChatCombinationResponse>.Fail(response.Message));
-            
-        return Ok(ApiResponse<CreateChatCombinationResponse>.Ok(response));
-    }
+        // 2. Data Source: Fetch available matches (Mock)
+        var matches = await matchRepository.GetUpcomingMatchesAsync();
 
-    public class CreateChatCombinationRequest
-    {
-        public string Query { get; set; } = string.Empty;
+        // 3. Combination Engine: Generate, score and rank
+        var combinations = combinationService.GenerateCombinations(matches, intent);
 
-        [Required]
-        public DateTimeOffset Date { get; set; }
+        // 4. Return results
+        return Ok(new CombinationResponse { Combinations = combinations });
     }
 }

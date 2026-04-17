@@ -14,7 +14,7 @@ namespace SoccerAi.Application.Services.Analysis;
 /// 1. Convert domain analysis to response format
 /// 2. Enrich team stats with standing information
 /// 3. Validate prediction accuracy for completed matches
-/// 4. Integrate Gemini AI analysis
+/// 4. Integrate AI analysis
 /// 5. Calculate summary statistics
 /// </summary>
 public class AnalysisResponseMapper
@@ -27,9 +27,9 @@ public class AnalysisResponseMapper
         FixtureAnalysisResult analysis,
         Team homeTeam,
         Team awayTeam,
-        GeminiAnalysis? geminiAnalysis)
+        AiAnalysisDto? aiAnalysis)
     {
-        var prediction = BuildPredictionResponse(analysis, geminiAnalysis);
+        var prediction = BuildPredictionResponse(analysis, aiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
 
         // Production Sanitization: Only show models in Development
@@ -54,11 +54,11 @@ public class AnalysisResponseMapper
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
-            Trap = geminiAnalysis?.IsTrap == true 
-                ? new TrapDecision { IsTrap = true, Reason = geminiAnalysis.TrapReason } 
+            Trap = aiAnalysis?.IsTrap == true 
+                ? new TrapDecision { IsTrap = true, Reason = aiAnalysis.TrapReason } 
                 : analysis.Decisions.Trap,
             H2H = analysis.H2H,
-            Gemini = geminiAnalysis
+            Ai = aiAnalysis
         };
     }
 
@@ -67,7 +67,7 @@ public class AnalysisResponseMapper
     /// </summary>
     private static PredictionResponse? BuildPredictionResponse(
         FixtureAnalysisResult analysis,
-        GeminiAnalysis? gemini)
+        AiAnalysisDto? ai)
     {
         if (analysis.Prediction == null)
             return null;
@@ -82,8 +82,8 @@ public class AnalysisResponseMapper
                 Prediction = wp.Over25,
                 Probability = Math.Round(wp.Over25Prob, 2),
                 IsQualified = d.Markets.Over25.IsQualified,
-                Reason = !string.IsNullOrWhiteSpace(gemini?.Over25Summary)
-                    ? gemini.Over25Summary
+                Reason = !string.IsNullOrWhiteSpace(ai?.Over25Summary)
+                    ? ai.Over25Summary
                     : d.Markets.Over25.Reason
             },
             BTTS = new BoolPrediction
@@ -91,8 +91,8 @@ public class AnalysisResponseMapper
                 Prediction = wp.BTTS,
                 Probability = Math.Round(wp.BTTSProb, 2),
                 IsQualified = d.Markets.BTTS.IsQualified,
-                Reason = !string.IsNullOrWhiteSpace(gemini?.BttsSummary)
-                    ? gemini.BttsSummary
+                Reason = !string.IsNullOrWhiteSpace(ai?.BttsSummary)
+                    ? ai.BttsSummary
                     : d.Markets.BTTS.Reason
             },
             TwoToThreeGoals = new BoolPrediction
@@ -107,8 +107,8 @@ public class AnalysisResponseMapper
                 Prediction = d.Markets.LowScoring.IsQualified,
                 Probability = d.Markets.LowScoring.Confidence,
                 IsQualified = d.Markets.LowScoring.IsQualified,
-                Reason = !string.IsNullOrWhiteSpace(gemini?.Under25Summary)
-                    ? gemini.Under25Summary
+                Reason = !string.IsNullOrWhiteSpace(ai?.Under25Summary)
+                    ? ai.Under25Summary
                     : d.Markets.LowScoring.Reason
             },
             HomeWin = new BoolPrediction
@@ -116,7 +116,7 @@ public class AnalysisResponseMapper
                 Prediction = wp.MatchWinner.Equals("home", StringComparison.OrdinalIgnoreCase),
                 Probability = wp.HomeProb,
                 IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("home", StringComparison.OrdinalIgnoreCase),
-                Reason = GetWinnerReason(gemini, "home", d.Markets.MatchWinner.Reason)
+                Reason = GetWinnerReason(ai, "home", d.Markets.MatchWinner.Reason)
             },
             Draw = new BoolPrediction
             {
@@ -130,14 +130,14 @@ public class AnalysisResponseMapper
                 Prediction = wp.MatchWinner.Equals("away", StringComparison.OrdinalIgnoreCase),
                 Probability = wp.AwayProb,
                 IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("away", StringComparison.OrdinalIgnoreCase),
-                Reason = GetWinnerReason(gemini, "away", d.Markets.MatchWinner.Reason)
+                Reason = GetWinnerReason(ai, "away", d.Markets.MatchWinner.Reason)
             },
             MatchWinner = new StringPrediction
             {
                 Prediction = wp.MatchWinner,
                 Confidence = wp.Confidence,
                 IsQualified = d.Markets.MatchWinner.IsQualified,
-                Reason = GetWinnerReason(gemini, wp.MatchWinner, d.Markets.MatchWinner.Reason)
+                Reason = GetWinnerReason(ai, wp.MatchWinner, d.Markets.MatchWinner.Reason)
             }
         };
     }
@@ -168,13 +168,13 @@ public class AnalysisResponseMapper
     /// <summary>
     /// Gets winner prediction reason from Gemini or fallback.
     /// </summary>
-    private static string GetWinnerReason(GeminiAnalysis? gemini, string winner, string defaultReason)
+    private static string GetWinnerReason(AiAnalysisDto? ai, string winner, string defaultReason)
     {
         var w = winner.ToLowerInvariant();
-        if (w == "home" && !string.IsNullOrWhiteSpace(gemini?.HomeWinSummary))
-            return gemini.HomeWinSummary;
-        if (w == "away" && !string.IsNullOrWhiteSpace(gemini?.AwayWinSummary))
-            return gemini.AwayWinSummary;
+        if (w == "home" && !string.IsNullOrWhiteSpace(ai?.HomeWinSummary))
+            return ai.HomeWinSummary;
+        if (w == "away" && !string.IsNullOrWhiteSpace(ai?.AwayWinSummary))
+            return ai.AwayWinSummary;
         return defaultReason;
     }
 

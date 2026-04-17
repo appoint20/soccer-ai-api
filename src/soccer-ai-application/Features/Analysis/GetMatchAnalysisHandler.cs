@@ -15,15 +15,15 @@ namespace SoccerAi.Application.Features.Analysis;
 /// Orchestrates analysis workflow:
 /// 1. Fetches fixtures and team data for specified date
 /// 2. Analyzes each fixture through statistical models (Poisson, MC, ML)
-/// 3. Requests Gemini AI batch analysis for semantic reasoning
-/// 4. Maps analysis to response DTOs with Gemini integration
+/// 3. Requests AI batch analysis for semantic reasoning
+/// 4. Maps analysis to response DTOs with AI integration
 /// 5. Calculates accuracy summary for completed matches
 ///
 /// Refactored for orchestration only. Complex logic delegated to:
 /// - FixtureQueryHelper (data loading)
 /// - AnalysisResponseMapper (DTO mapping)
 /// - IMatchAnalysisService (statistical analysis)
-/// - IGeminiAnalysisService (AI reasoning)
+/// - IAiAnalysisService (AI reasoning)
 /// </summary>
 public class GetMatchAnalysisHandler(
     FixtureQueryHelper queryHelper,
@@ -100,7 +100,7 @@ public class GetMatchAnalysisHandler(
                 }
 
                 var matchAnalysis = AnalysisResponseMapper.MapToResponse(
-                    fixture, analysis, homeTeam, awayTeam, analysis.Gemini);
+                    fixture, analysis, homeTeam, awayTeam, analysis.Ai);
 
                 analysisList.Add(matchAnalysis);
             }

@@ -37,9 +37,9 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             };
             await HandleExceptionAsync(context, statusCode, ex.Message);
         }
-        catch (GeminiQuotaExceededException ex)
+        catch (AiQuotaExceededException ex)
         {
-            logger.LogWarning(ex, "Gemini quota exceeded: {Message}", ex.Message);
+            logger.LogWarning(ex, "AI quota exceeded: {Message}", ex.Message);
             await HandleExceptionAsync(context, HttpStatusCode.ServiceUnavailable, ex.Message);
         }
         catch (Exception ex)

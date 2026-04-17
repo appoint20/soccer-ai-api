@@ -1,0 +1,20 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using SoccerAi.Application.Models.Deterministic;
+
+namespace SoccerAi.Application.Interfaces;
+
+public interface INlpService
+{
+    Task<NlpIntent> ParseIntentAsync(string query);
+}
+
+public interface IMatchRepository
+{
+    Task<List<Match>> GetUpcomingMatchesAsync();
+}
+
+public interface ICombinationService
+{
+    List<Combination> GenerateCombinations(List<Match> matches, NlpIntent intent);
+}

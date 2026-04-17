@@ -22,7 +22,7 @@ public sealed class MatchAnalysisService(
 {
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct)
     {
-        var geminiEntity = await dbContext.FixtureAnalyses
+        var aiEntity = await dbContext.FixtureAnalyses
             .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
 
         WeightedPrediction? prediction;
@@ -39,19 +39,19 @@ public sealed class MatchAnalysisService(
         homeRest = data.HomeRestDays;
         awayRest = data.AwayRestDays;
 
-        if (geminiEntity != null && geminiEntity.HomeProb > 0)
+        if (aiEntity != null && aiEntity.HomeProb > 0)
         {
             // CACHE HIT: Use stored mathematical probabilities, skip heavy ML models
             prediction = new WeightedPrediction
             {
-                HomeProb = geminiEntity.HomeProb,
-                DrawProb = geminiEntity.DrawProb,
-                AwayProb = geminiEntity.AwayProb,
-                Over25Prob = geminiEntity.Over25Prob,
-                BTTSProb = geminiEntity.BttsProb,
-                Confidence = geminiEntity.Confidence,
-                MatchWinner = geminiEntity.Recommendation.ToLower().Contains("home") ? "home" : 
-                             geminiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
+                HomeProb = aiEntity.HomeProb,
+                DrawProb = aiEntity.DrawProb,
+                AwayProb = aiEntity.AwayProb,
+                Over25Prob = aiEntity.Over25Prob,
+                BTTSProb = aiEntity.BttsProb,
+                Confidence = aiEntity.Confidence,
+                MatchWinner = aiEntity.Recommendation.ToLower().Contains("home") ? "home" : 
+                             aiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
             };
             
             models = new StatisticalModels(); 
@@ -72,21 +72,21 @@ public sealed class MatchAnalysisService(
         var odds = BuildMatchContext(fixture);
         var decisions = decisionService.Evaluate(odds, stats, h2h, prediction, models);
 
-        var gemini = geminiEntity != null ? new GeminiAnalysis
+        var ai = aiEntity != null ? new AiAnalysisDto
         {
-            Recommendation = geminiEntity.Recommendation ?? "Avoid",
-            Confidence = geminiEntity.Confidence,
-            Reasoning = geminiEntity.PredictionReason ?? "",
-            Analysis = geminiEntity.Analysis ?? "",
-            IsTrap = geminiEntity.TrapDetected,
-            TrapReason = geminiEntity.TrapReason ?? "",
-            OneLineSummary = geminiEntity.ConsensusEvaluation ?? "",
-            BttsSummary = geminiEntity.BttsSummary ?? "",
-            Over25Summary = geminiEntity.Over25Summary ?? "",
-            Under25Summary = geminiEntity.Under25Summary ?? "",
-            HomeWinSummary = geminiEntity.HomeWinSummary ?? "",
-            AwayWinSummary = geminiEntity.AwayWinSummary ?? ""
-        } : new GeminiAnalysis();
+            Recommendation = aiEntity.Recommendation ?? "Avoid",
+            Confidence = aiEntity.Confidence,
+            Reasoning = aiEntity.PredictionReason ?? "",
+            Analysis = aiEntity.Analysis ?? "",
+            IsTrap = aiEntity.TrapDetected,
+            TrapReason = aiEntity.TrapReason ?? "",
+            OneLineSummary = aiEntity.ConsensusEvaluation ?? "",
+            BttsSummary = aiEntity.BttsSummary ?? "",
+            Over25Summary = aiEntity.Over25Summary ?? "",
+            Under25Summary = aiEntity.Under25Summary ?? "",
+            HomeWinSummary = aiEntity.HomeWinSummary ?? "",
+            AwayWinSummary = aiEntity.AwayWinSummary ?? ""
+        } : new AiAnalysisDto();
 
         // Build result
         return new FixtureAnalysisResult
@@ -103,7 +103,7 @@ public sealed class MatchAnalysisService(
             OddsHomeWin = odds.OddsHome,
             OddsAwayWin = odds.OddsAway,
             OddsDraw = odds.OddsDraw,
-            Gemini = gemini,
+            Ai = ai,
             HomeElo = fixture.HomeElo,
             AwayElo = fixture.AwayElo,
             HomeRestDays = homeRest,

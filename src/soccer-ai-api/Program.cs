@@ -221,26 +221,27 @@ if (args.Any(a => a.StartsWith("--sync-league")))
     return;
 }
 
-if (args.Any(a => a.StartsWith("--sync-gemini")))
+if (args.Any(a => a.StartsWith("--sync-ai")))
 {
     var fixtureIdArg = args.FirstOrDefault(a => a.StartsWith("--fixture-id="));
     int? fixtureId = fixtureIdArg != null ? int.Parse(fixtureIdArg.Split('=')[1]) : null;
+    var force = args.Contains("--force");
 
     Console.WriteLine(fixtureId.HasValue 
-        ? $"Starting Gemini Analysis Sync for Fixture {fixtureId}..." 
-        : "Starting Gemini Analysis Batch Sync...");
+        ? $"Starting AI Analysis Sync for Fixture {fixtureId}... (Force: {force})" 
+        : $"Starting AI Analysis Batch Sync... (Force: {force})");
 
     using var scope = app.Services.CreateScope();
-    var geminiSyncService = scope.ServiceProvider.GetRequiredService<IGeminiSyncService>();
+    var aiSyncService = scope.ServiceProvider.GetRequiredService<IAiSyncService>();
     
     if (fixtureId.HasValue)
-        await geminiSyncService.SyncSingleFixtureAsync(fixtureId.Value);
+        await aiSyncService.SyncSingleFixtureAsync(fixtureId.Value, force);
     else
     {
-        await geminiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow);
+        await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, force);
     }
 
-    Console.WriteLine("Gemini Sync Complete!");
+    Console.WriteLine("AI Sync Complete!");
     return;
 }
 

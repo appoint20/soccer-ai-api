@@ -18,7 +18,7 @@ namespace SoccerAi.Application.Features.Combinations;
 /// Orchestrates the combination pipeline:
 /// 1. Fetches full Match Analysis JSON objects via Mediator GetMatchAnalysisQuery 
 /// 2. Ranks matches by highest overall internal confidence 
-/// 3. Batches matches in groupings of 10 and yields straight to Gemini AI
+/// 3. Batches matches and yields straight to AI service
 /// 4. Returns structured combination DTOs combining the raw JSON elements
 ///
 /// Refactored to bypass mathematical portfolio generators.

@@ -41,5 +41,5 @@ public sealed class MatchAnalysis
     public TrapDecision Trap { get; init; } = new();
     public PredictionResponse? Prediction { get; init; }
     public HeadToHeadModel? H2H { get; init; }
-    public GeminiAnalysis? Gemini { get; set; }
+    public AiAnalysisDto? Ai { get; set; }
 }

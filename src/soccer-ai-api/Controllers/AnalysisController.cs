@@ -29,16 +29,16 @@ public class AnalysisController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Audit endpoint to check how many upcoming fixtures possess Gemini Analysis.
+    /// Audit endpoint to check how many upcoming fixtures possess AI Analysis.
     /// </summary>
     /// <param name="daysAhead">Number of days to look ahead (default 5)</param>
     /// <param name="ct">Cancellation token</param>
-    [HttpGet("audit/gemini-coverage")]
-    [ProducesResponseType<ApiResponse<GetGeminiCoverageResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetGeminiCoverage([FromQuery] int daysAhead = 5, CancellationToken ct = default)
+    [HttpGet("audit/ai-coverage")]
+    [ProducesResponseType<ApiResponse<GetAiCoverageResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAiCoverage([FromQuery] int daysAhead = 5, CancellationToken ct = default)
     {
-        var query = new GetGeminiCoverageQuery { DaysAhead = daysAhead };
-        var response = await mediator.RequestAsync<GetGeminiCoverageQuery, GetGeminiCoverageResponse>(query, ct);
-        return Ok(ApiResponse<GetGeminiCoverageResponse>.Ok(response));
+        var query = new GetAiCoverageQuery { DaysAhead = daysAhead };
+        var response = await mediator.RequestAsync<GetAiCoverageQuery, GetAiCoverageResponse>(query, ct);
+        return Ok(ApiResponse<GetAiCoverageResponse>.Ok(response));
     }
 }

@@ -29,3 +29,5 @@ Thumbs.db
 crash.log
 *.tfvars
 *.tfvars.json
+*.log
+*.log

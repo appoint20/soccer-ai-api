@@ -31,7 +31,7 @@ public sealed class FixtureAnalysisResult
     public WeightedPrediction? Prediction { get; init; }
     public required DecisionServiceResult Decisions { get; init; }
     public required string LeagueName { get; init; }
-    public GeminiAnalysis? Gemini { get; init; }
+    public AiAnalysisDto? Ai { get; init; }
     public double OddsOver25 { get; init; }
     public double OddsBttsYes { get; init; }
     public double OddsHomeWin { get; init; }

@@ -39,7 +39,7 @@ public sealed class ProbabilityConsensusEngine(
         return Combine(bundle, stats, leagueId, h2h, null, null);
     }
 
-    public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h, string? geminiRecommendation, double? geminiConfidence)
+    public WeightedPrediction? Combine(ProbabilityBundle bundle, TeamStatsResponse stats, int leagueId, HeadToHeadModel? h2h, string? aiRecommendation, double? aiConfidence)
     {
         if (bundle.MlPrediction == null)
             return null;
@@ -96,11 +96,11 @@ public sealed class ProbabilityConsensusEngine(
         var total = pHome + pDraw + pAway;
         if (total > 0) { pHome /= total; pDraw /= total; pAway /= total; }
 
-        // ── Gemini 40% Consensus Weighting ──
-        if (!string.IsNullOrEmpty(geminiRecommendation) && geminiConfidence > 0)
+        // ── AI 40% Consensus Weighting ──
+        if (!string.IsNullOrEmpty(aiRecommendation) && aiConfidence > 0)
         {
-            double gConf = Math.Clamp(geminiConfidence.Value / 100.0, 0, 1);
-            string rec = geminiRecommendation.Trim().ToLowerInvariant();
+            double gConf = Math.Clamp(aiConfidence.Value / 100.0, 0, 1);
+            string rec = aiRecommendation.Trim().ToLowerInvariant();
 
             if (rec.Contains("btts"))
             {
