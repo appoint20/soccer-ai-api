@@ -1,4 +1,4 @@
-# --- BUILD STAGE (.NET) ---
+# --- STAGE 1: .NET BUILD ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dotnet-build
 WORKDIR /src
 COPY src/soccer-ai-api/soccer-ai-api.csproj src/soccer-ai-api/
@@ -8,29 +8,41 @@ RUN dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
 COPY . .
 RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/publish --no-restore
 
-# --- FINAL RUNTIME STAGE ---
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# --- STAGE 2: PYTHON DEPENDENCIES ---
+FROM debian:bookworm-slim AS python-deps
 WORKDIR /app
-
-# Install Python and dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cache heavy libraries (PyTorch, Transformers)
+COPY ai-service/requirements.txt .
+RUN python3 -m venv .venv && \
+    .venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# --- STAGE 3: FINAL RUNTIME ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+
+# Install Python runtime and libgomp (essential for CPU torch)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-venv \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy .NET publish files
+# Copy .NET binaries from Stage 1
 COPY --from=dotnet-build /app/publish .
 
-# Copy Python AI Service
+# Copy pre-built Python environment from Stage 2
+COPY --from=python-deps /app/.venv /app/ai-service/.venv/
+
+# Copy Python source code (Last to maximize cache hits)
 COPY ai-service/ /app/ai-service/
 
-# Set up Python Virtual Environment
-RUN python3 -m venv /app/ai-service/.venv && \
-    /app/ai-service/.venv/bin/pip install --no-cache-dir -r /app/ai-service/requirements.txt
-
-# Entrypoint script
+# Copy orchestration scripts
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
