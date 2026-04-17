@@ -127,6 +127,8 @@ public class GetBacktestReportHandler(
                             }
                         }
 
+                        double avgConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0;
+                        
                         simulationResults.Add(new SimulationCombo 
                         { 
                             Date = day.Key, 
@@ -134,7 +136,7 @@ public class GetBacktestReportHandler(
                             IsWon = isFullWin, 
                             Stake = query.Stake,
                             Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
-                            AverageConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0
+                            AverageConfidence = avgConfidence
                         });
                     }
                 }
@@ -167,16 +169,20 @@ public class GetBacktestReportHandler(
 
     private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, List<LeaguePredictionResult> leagueResults, DateTimeOffset startDate, int weeks, double stake)
     {
-        // Group by week and apply the 9-combination limit per week
+        // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
         var weeklyGroups = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
             .Select(g => 
             {
-                // Take the top 9 combinations of the week based on confidence
-                var limited = g.OrderByDescending(x => x.AverageConfidence).Take(9).ToList();
+                var dailyLimited = g.GroupBy(x => x.Date.Date)
+                                    .SelectMany(dailyGroup => 
+                                    {
+                                        int dailyTake = (dailyGroup.Key.DayOfWeek == DayOfWeek.Saturday || dailyGroup.Key.DayOfWeek == DayOfWeek.Sunday) ? 4 : 1;
+                                        return dailyGroup.OrderByDescending(x => x.AverageConfidence).Take(dailyTake);
+                                    }).ToList();
                 return new 
                 {
                     WeekKey = g.Key,
-                    Items = limited
+                    Items = dailyLimited
                 };
             }).ToList();
 

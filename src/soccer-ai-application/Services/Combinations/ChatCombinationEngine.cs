@@ -12,6 +12,10 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
     public List<CombinationDto> GenerateCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent)
     {
+        var sizes = intent.SourceType == "USER" 
+            ? Enumerable.Range(intent.MinMatches, Math.Max(1, intent.MaxMatches - intent.MinMatches + 1)).ToArray()
+            : new[] { 2 }; // Strictly bet Doubles to multiply win-rate and reduce variance for System run
+            
         var finalCombinations = new List<CombinationDto>();
         var globallyUsedMatchIds = new HashSet<int>();
         var totalGoals23Count = 0;
@@ -141,7 +145,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
         foreach (var m in matches)
         {
-            var validSelections = GetValidSelections(m, allowedMarkets.ToList(), intent.MinSelectionOdds);
+            var validSelections = GetValidSelections(m, allowedMarkets.ToList(), intent.MinSelectionOdds, intent);
             foreach (var sel in validSelections)
             {
                 var prob = sel.Probability;
@@ -185,7 +189,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         _ => market
     };
 
-    private List<(string Market, double Odds, double Probability, bool IsLowValue)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds)
+    private List<(string Market, double Odds, double Probability, bool IsLowValue)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds, ChatCombinationIntent intent)
     {
         var res = new List<(string, double, double, bool)>();
         
@@ -202,28 +206,39 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         // --- THE "INSANE" RULES ---
         // 1. Min 1.60 Odd (Hard Floor)
 
+        // --- SMART TRAP AVOIDANCE ---
+        // If Gemini explicitly flags this match as a trap/unpredictable, do not touch it!
+        if (m.Trap != null && m.Trap.IsTrap)
+        {
+            return res;
+        }
+
+        // --- EXPECTED VALUE (EV) ROI RULES ---
         foreach (var item in map)
         {
             if (!requested.Contains(item.Key)) continue;
 
-            // --- PROBABILITY THRESHOLDS (ROI OPTIMIZATION) ---
-            // Wins MUST be > 45% confidence, Draws > 30%
-            bool meetsConfidence = item.Key switch
+            // IF USER REQUEST: We trust the user's minOdds prompt blindly and bypass System EV Math constraints
+            if (intent.SourceType == "USER")
             {
-                "HomeWin" or "AwayWin" => item.Prob >= 0.45,
-                "Draw" => item.Prob >= 0.30,
-                _ => true // BTTS/Over25 are filtered by odds/atmosphere below
-            };
+                if (item.Odds >= minOdds) res.Add((item.Key, item.Odds, item.Prob, false));
+                continue;
+            }
 
-            if (!meetsConfidence) continue;
+            // --- SYSTEM GENERATION ROI RULES ---
+            
+            // 1. Minimum baseline probability: Require HIGH certainty (Bankers only)
+            if (item.Prob < 0.45) continue;
+
+            // 2. The Extreme Value Strategy 
+            // In order to achieve the high +60% ROI targets, we MUST focus entirely on gross market mispricings.
+            double expectedValue = item.Odds * item.Prob;
+            if (expectedValue < 1.15) continue;
 
             bool meetsFloor = item.Odds >= minOdds;
 
-            if (meetsFloor)
-            {
-                res.Add((item.Key, item.Odds, item.Prob, false));
-            }
-            else if (item.Prob > 0.6) // High probability exception for lower odds
+            // 3. Accept strictly based on EV edge
+            if (meetsFloor || expectedValue >= 1.20)
             {
                 res.Add((item.Key, item.Odds, item.Prob, false));
             }
@@ -232,12 +247,17 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         // --- BTTS + Over 2.5 COMBINED EXCEPTION ---
         if (requested.Contains("BTTS") || requested.Contains("Over25"))
         {
-            if (m.Prediction?.BTTS.Probability > 0.55 && m.Prediction?.Over25.Probability > 0.55)
+            double bttsProb = (m.Prediction?.BTTS.Probability ?? 0) * 0.90;
+            double over25Prob = (m.Prediction?.Over25.Probability ?? 0) * 0.90;
+
+            if (bttsProb > 0.50 && over25Prob > 0.50)
             {
                 double combinedOdds = Math.Max(m.OddsBttsYes, m.OddsOver25) * 1.30;
-                if (combinedOdds >= minOdds && !res.Any(r => r.Item1 == "BttsAndOver25"))
+                double minProb = Math.Min(bttsProb, over25Prob);
+
+                if (combinedOdds >= minOdds && (combinedOdds * minProb) >= 1.00 && !res.Any(r => r.Item1 == "BttsAndOver25"))
                 {
-                    res.Add(("BttsAndOver25", Math.Round(combinedOdds, 2), Math.Min(m.Prediction.BTTS.Probability, m.Prediction.Over25.Probability), false));
+                    res.Add(("BttsAndOver25", Math.Round(combinedOdds, 2), minProb, false));
                 }
             }
         }

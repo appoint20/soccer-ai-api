@@ -279,6 +279,8 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
         4. If the user explicitly asks for 'wins' or 'victories', extract ONLY 'HomeWin' and 'AwayWin'. Do NOT extract 'Draw'.
         5. Detect if the user wants multiple combinations (e.g., "1 Treble and 1 Double") and create multiple objects in the `market_groups` list.
         6. Extract any specific leagues mentioned by the user (e.g., "English leagues" -> ["England"], "Champions League" -> ["Champions League"]).
+        7. If the user explicitly specifies the number of matches (e.g. "three match combine"), you MUST set both `min_matches` and `max_matches` to that exact number (e.g., 3).
+        8. If the user specifies a time window (e.g., "between 11:00-15:00"), strictly populate `time_frame` with `start_time` and `end_time` (format: HH:mm:ss).
 
         USER QUERY: "{query}"
 
@@ -305,13 +307,24 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
             Required = new List<string> { "match_count", "markets" }
         };
 
+        var timeFrameSchema = new Schema
+        {
+            Type = DataType.Object,
+            Properties = new Dictionary<string, Schema>
+            {
+                ["start_time"] = new Schema { Type = DataType.String, Description = "e.g., 11:00:00" },
+                ["end_time"] = new Schema { Type = DataType.String, Description = "e.g., 15:00:00" }
+            }
+        };
+
         return new Schema
         {
             Type = DataType.Object,
             Properties = new Dictionary<string, Schema>
             {
-                ["min_matches"] = new Schema { Type = DataType.Integer }, // Deprecated but keep for schema compatibility
-                ["max_matches"] = new Schema { Type = DataType.Integer }, // Deprecated but keep for schema compatibility
+                ["min_matches"] = new Schema { Type = DataType.Integer }, 
+                ["max_matches"] = new Schema { Type = DataType.Integer }, 
+                ["time_frame"] = timeFrameSchema,
                 ["min_total_odds"] = new Schema { Type = DataType.Number },
                 ["min_selection_odds"] = new Schema { Type = DataType.Number },
                 ["max_same_league"] = new Schema { Type = DataType.Integer },
@@ -321,7 +334,7 @@ public sealed class GeminiAnalysisService : IGeminiAnalysisService
                     Type = DataType.Array,
                     Items = groupSchema
                 },
-                ["preferred_markets"] = new Schema { Type = DataType.Array, Items = new Schema { Type = DataType.String } }, // Deprecated
+                ["preferred_markets"] = new Schema { Type = DataType.Array, Items = new Schema { Type = DataType.String } },
                 ["strategy"] = new Schema { Type = DataType.String, Enum = new List<string> { "safe", "balanced", "aggressive" } },
                 ["reasoning"] = new Schema { Type = DataType.String }
             },

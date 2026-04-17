@@ -50,6 +50,9 @@ public class CreateChatCombinationHandler(
         logger.LogInformation("[Chat] Extracted Intent: Markets={Markets}, MinOdds={Odds}", 
             string.Join(",", intent.PreferredMarkets), intent.MinTotalOdds);
 
+        // Explicitly decouple these queries from system automation
+        intent.SourceType = "USER";
+
         // 2. Fetch analyzed matches for the target date
         var analysisQuery = new GetMatchAnalysisQuery { Date = cmd.Date, Language = cmd.Language };
         var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
@@ -61,6 +64,32 @@ public class CreateChatCombinationHandler(
                 Success = false, 
                 Message = "No matches available for analysis today." 
             };
+        }
+
+        // Apply Time Filtering if specified
+        if (intent.TimeFrame != null)
+        {
+            if (intent.TimeFrame.StartTime.HasValue)
+            {
+                analysisResponse.Matches = analysisResponse.Matches
+                    .Where(m => m.Time >= intent.TimeFrame.StartTime.Value)
+                    .ToList();
+            }
+            if (intent.TimeFrame.EndTime.HasValue)
+            {
+                analysisResponse.Matches = analysisResponse.Matches
+                    .Where(m => m.Time <= intent.TimeFrame.EndTime.Value)
+                    .ToList();
+            }
+
+            if (analysisResponse.Matches.Count == 0)
+            {
+                return new CreateChatCombinationResponse 
+                { 
+                    Success = false, 
+                    Message = "No matches available within the specified time frame." 
+                };
+            }
         }
 
         // Apply League Filtering if specified

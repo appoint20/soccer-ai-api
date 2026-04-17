@@ -38,7 +38,19 @@ public sealed class ChatCombinationIntent
     public string Reasoning { get; set; } = string.Empty;
 
     [JsonIgnore]
-    public string SourceType { get; init; } = "SYSTEM";
+    public string SourceType { get; set; } = "SYSTEM"; // Changed from init to set so handlers can easily override
+
+    [JsonPropertyName("time_frame")]
+    public TimeConstraint? TimeFrame { get; set; }
+}
+
+public class TimeConstraint
+{
+    [JsonPropertyName("start_time")]
+    public TimeSpan? StartTime { get; set; } // e.g., 11:00:00
+
+    [JsonPropertyName("end_time")]
+    public TimeSpan? EndTime { get; set; } // e.g., 15:00:00
 }
 
 public class MarketIntentGroup
