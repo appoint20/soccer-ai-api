@@ -12,32 +12,82 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
     public List<CombinationDto> GenerateCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent)
     {
-        var sizes = intent.SourceType == "USER" 
-            ? Enumerable.Range(intent.MinMatches, Math.Max(1, intent.MaxMatches - intent.MinMatches + 1)).ToArray()
-            : new[] { 2 }; // Strictly bet Doubles to multiply win-rate and reduce variance for System run
-            
+        // Route USER queries through a flexible builder that respects the user's exact request.
+        // SYSTEM queries use the strict ROI-optimised slot logic.
+        if (intent.SourceType == "USER")
+            return GenerateUserCombinations(matches, intent);
+
+        return GenerateSystemCombinations(matches, intent);
+    }
+
+    // ─── USER PATH ───────────────────────────────────────────────────────────────
+    // Trusts the user's minOdds / market / size constraints directly.
+    // No EV math enforcement here — the filtering is done in GetValidSelections.
+    private List<CombinationDto> GenerateUserCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent)
+    {
+        var finalCombinations = new List<CombinationDto>();
+        var usedMatchIds = new HashSet<int>();
+
+        var allCandidates = FilterAllPossibleCandidates(matches, intent);
+        if (allCandidates.Count == 0) return finalCombinations;
+
+        // Determine sizes: honour exact user request, default to doubles if not specified
+        int minSize = Math.Max(2, intent.MinMatches);
+        int maxSize = Math.Max(minSize, intent.MaxMatches);
+
+        int maxLeague = intent.MaxSameLeague > 0 ? intent.MaxSameLeague : 3;
+
+        // Generate up to 5 non-overlapping combinations
+        for (int i = 0; i < 5; i++)
+        {
+            var pool = allCandidates
+                .Where(c => !usedMatchIds.Contains(c.Id))
+                .OrderByDescending(c => c.Score)
+                .ToList();
+
+            List<CandidateMatch>? selectedCombo = null;
+
+            // Try from largest requested size down to minSize to maximise hit rate
+            for (int size = maxSize; size >= minSize; size--)
+            {
+                if (pool.Count < size) continue;
+                var combos = BuildRecursive(pool, size, maxLeague);
+                selectedCombo = combos.FirstOrDefault();
+                if (selectedCombo != null) break;
+            }
+
+            if (selectedCombo == null) break;
+
+            int comboSize = selectedCombo.Count;
+            finalCombinations.Add(MapToDto(selectedCombo, intent, comboSize));
+            foreach (var m in selectedCombo) usedMatchIds.Add(m.Id);
+        }
+
+        for (int i = 0; i < finalCombinations.Count; i++)
+            finalCombinations[i].CombinationId = i + 1;
+
+        return finalCombinations;
+    }
+
+    // ─── SYSTEM PATH ─────────────────────────────────────────────────────────────
+    // Strict EV > 1.15 / Doubles-only / slot-based layout for daily ROI.
+    private List<CombinationDto> GenerateSystemCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent)
+    {
         var finalCombinations = new List<CombinationDto>();
         var globallyUsedMatchIds = new HashSet<int>();
         var totalGoals23Count = 0;
 
-        // 1. Pre-filter all matches into candidates
-        // We ensure we have a robust pool of candidates
         var allCandidates = FilterAllPossibleCandidates(matches, intent);
 
-        // Define our 5 slots with specific rules
+        // 5 slots: 0-2 goal-markets only, 3-4 mixed with at least one Win
         for (int i = 0; i < 5; i++)
         {
-            // Slot rules:
-            // 0, 1, 2: ONLY BTTS and Over 2.5 Goals
-            // 3, 4: Mixed, but must include AT LEAST ONE 'Win' market (HomeWin, AwayWin, Draw)
             bool isGoalOnlySlot = i < 3;
-            int requiredMatchCount = 2; // Every combo is a double
+            int requiredMatchCount = 2;
 
-            // Filter the available pool for this specific slot
             var slotCandidates = allCandidates
                 .Where(c => !globallyUsedMatchIds.Contains(c.Id))
-                .Where(c => !isGoalOnlySlot || (c.Market == "BTTS" || c.Market == "Over25"))
-                // Enforce global 2-3 Goals limit (Max 1 across all 10 selections)
+                .Where(c => !isGoalOnlySlot || c.Market == "BTTS" || c.Market == "Over25")
                 .Where(c => c.Market != "Goals23" || totalGoals23Count < 1)
                 .OrderByDescending(c => c.Score)
                 .ToList();
@@ -48,33 +98,24 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
             if (isGoalOnlySlot)
             {
-                // Simple best double for Goal slots
-                var possibleGoalCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
-                selectedCombo = possibleGoalCombos.FirstOrDefault();
+                selectedCombo = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3)).FirstOrDefault();
             }
             else
             {
-                // For mixed slots, we want a combination that contains at least one Win market
-                var allMixedCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
-                selectedCombo = allMixedCombos.FirstOrDefault(c => c.Any(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw"));
+                var allMixed = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
+                selectedCombo = allMixed.FirstOrDefault(c => c.Any(m => m.Market is "HomeWin" or "AwayWin" or "Draw"));
 
-                // Fallback: If top combos don't have a Win, force one by seeding the recursive builder with a top Win candidate
                 if (selectedCombo == null)
                 {
-                    var topWin = slotCandidates.FirstOrDefault(m => m.Market == "HomeWin" || m.Market == "AwayWin" || m.Market == "Draw");
+                    var topWin = slotCandidates.FirstOrDefault(m => m.Market is "HomeWin" or "AwayWin" or "Draw");
                     if (topWin != null)
-                    {
-                        var forcedCombos = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3), new List<CandidateMatch> { topWin });
-                        selectedCombo = forcedCombos.FirstOrDefault();
-                    }
+                        selectedCombo = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3), new List<CandidateMatch> { topWin }).FirstOrDefault();
                 }
             }
 
             if (selectedCombo != null && selectedCombo.Count == requiredMatchCount)
             {
                 finalCombinations.Add(MapToDto(selectedCombo, intent, requiredMatchCount));
-                
-                // Track usage
                 foreach (var m in selectedCombo)
                 {
                     globallyUsedMatchIds.Add(m.Id);
@@ -83,11 +124,8 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             }
         }
 
-        // Final ID assignment
         for (int i = 0; i < finalCombinations.Count; i++)
-        {
             finalCombinations[i].CombinationId = i + 1;
-        }
 
         return finalCombinations;
     }
@@ -140,7 +178,9 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
     private List<CandidateMatch> FilterAllPossibleCandidates(List<MatchAnalysis> matches, ChatCombinationIntent intent)
     {
         var list = new List<CandidateMatch>();
+        // Merge MarketGroups + PreferredMarkets so both Gemini parsing paths work
         var allowedMarkets = intent.MarketGroups.SelectMany(g => g.Markets).ToHashSet();
+        foreach (var m in intent.PreferredMarkets) allowedMarkets.Add(m);
         if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" };
 
         foreach (var m in matches)
