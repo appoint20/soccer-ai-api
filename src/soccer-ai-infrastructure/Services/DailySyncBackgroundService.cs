@@ -16,6 +16,8 @@ public class DailySyncBackgroundService(
     IConfiguration configuration,
     ILogger<DailySyncBackgroundService> logger) : BackgroundService
 {
+    private static int GetCurrentSeason(DateTime now) => now.Month >= 7 ? now.Year : now.Year - 1;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Daily Sync Background Service is starting.");
@@ -50,7 +52,7 @@ public class DailySyncBackgroundService(
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                await mediator.SendAsync(new RunDailySyncCommand(DateTime.Now.Year), stoppingToken);
+                await mediator.SendAsync(new RunDailySyncCommand(GetCurrentSeason(DateTime.Now)), stoppingToken);
                 sw.Stop();
 
                 logger.LogInformation("Daily Sync Orchestration completed successfully in {ElapsedMilliseconds} ms. Going back to sleep.", sw.ElapsedMilliseconds);

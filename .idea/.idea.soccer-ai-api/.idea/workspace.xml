@@ -11,24 +11,23 @@
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/inference.py" beforeDir="false" afterPath="$PROJECT_DIR$/ai-service/inference.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/ai-service/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/prompts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ai-service/prompts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/CombinationsController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Controllers/CombinationsController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/download_models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/engine.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/inference.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/prompts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/start.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-service/test_engine.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/render.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/render.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationQuery.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Combinations/GetMatchCombinationQuery.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IDeterministicEngineInterfaces.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IDeterministicEngineInterfaces.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/Deterministic/DeterministicModels.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Models/Deterministic/DeterministicModels.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Models/MatchContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Models/MatchContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Services/Combinations/ChatCombinationEngine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Services/Combinations/ChatCombinationEngine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Repositories/MatchRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Repositories/MatchRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/NlpService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/NlpService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/AiServiceOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/AiServiceOptions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/LocalAiAnalysisService.cs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,8 +43,6 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/af805f7aed1340dab49aea0ce8dfb3f61046308/c8/d539bdcd/ThrowHelper.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/af805f7aed1340dab49aea0ce8dfb3f61046308/cd/a6f4956d/ExceptionDispatchInfo.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiAnalysisService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/GeminiSyncService.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -56,28 +53,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;.NET Launch Settings Profile.soccer-ai-api: http.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore_missing_gitignore&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.notifications&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    ".NET Launch Settings Profile.soccer-ai-api: http.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "XThreadsFramesViewSplitterKey": "0.68151814",
+    "git-widget-placeholder": "main",
+    "ignore_missing_gitignore": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.notifications",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/DecompilerCache&quot;,
-      &quot;/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/SourcesCache&quot;,
-      &quot;/Users/shivm/Library/Application Support/Symbols/src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/DecompilerCache",
+      "/Users/shivm/Library/Application Support/JetBrains/Rider2024.1/resharper-host/SourcesCache",
+      "/Users/shivm/Library/Application Support/Symbols/src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected=".NET Launch Settings Profile.soccer-ai-api: http">
     <configuration name="soccer-ai-worker" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
@@ -142,6 +140,7 @@
       <workItem from="1772972114574" duration="20248000" />
       <workItem from="1775849046483" duration="26098000" />
       <workItem from="1776510757815" duration="3724000" />
+      <workItem from="1776546532900" duration="4625000" />
     </task>
     <servers />
   </component>
@@ -151,5 +150,24 @@
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/AiSyncService.cs</url>
+          <line>118</line>
+          <properties documentPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/AiSyncService.cs" containingFunctionPresentation="Method 'SyncUpcomingFixturesAsync'">
+            <startOffsets>
+              <option value="5052" />
+            </startOffsets>
+            <endOffsets>
+              <option value="5170" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

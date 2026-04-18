@@ -63,7 +63,7 @@ public class AnalysisResponseMapper
     }
 
     /// <summary>
-    /// Builds prediction response with Gemini reasoning.
+    /// Builds prediction response with persisted AI reasoning.
     /// </summary>
     private static PredictionResponse? BuildPredictionResponse(
         FixtureAnalysisResult analysis,
@@ -175,7 +175,7 @@ public class AnalysisResponseMapper
     }
 
     /// <summary>
-    /// Gets winner prediction reason from Gemini or fallback.
+    /// Gets winner prediction reason from AI output or fallback logic.
     /// </summary>
     private static string GetWinnerReason(AiAnalysisDto? ai, string winner, string defaultReason)
     {

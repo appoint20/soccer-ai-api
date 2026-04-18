@@ -206,7 +206,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
     private List<CandidateMatch> FilterAllPossibleCandidates(List<MatchAnalysis> matches, ChatCombinationIntent intent)
     {
         var list = new List<CandidateMatch>();
-        // Merge MarketGroups + PreferredMarkets so both Gemini parsing paths work
+        // Merge MarketGroups + PreferredMarkets so both parsing paths work
         var allowedMarkets = intent.MarketGroups.SelectMany(g => g.Markets).ToHashSet();
         foreach (var m in intent.PreferredMarkets) allowedMarkets.Add(m);
         if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "BTTS", "Over25", "Goals23" };

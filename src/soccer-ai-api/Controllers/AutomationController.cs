@@ -19,7 +19,7 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
 {
     /// <summary>
     /// Executes the full daily synchronization job:
-    /// Standings -> Fixtures -> ML Retraining -> Gemini Analysis.
+    /// Standings -> Fixtures -> ML retraining -> AI analysis.
     /// </summary>
     [HttpPost("sync-daily")]
     public async Task<IActionResult> RunDailySync()
@@ -51,7 +51,6 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
     /// Lightweight health check specifically for the automation subsystem.
     /// </summary>
     [HttpPost("sync-ml-only")]
-    [AllowAnonymous] // Temp for testing
     public async Task<IActionResult> SyncMlOnly([FromServices] IMlTrainingService mlService)
     {
         await mlService.TrainModelsAsync();
@@ -59,7 +58,7 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
     }
 
     /// <summary>
-    /// Sync fixtures only (past results + upcoming) — skips ML and Gemini.
+    /// Sync fixtures only (past results + upcoming) — skips ML and AI analysis.
     /// Use this to quickly refresh match results and upcoming fixture data.
     /// </summary>
     [HttpPost("sync-fixtures")]

@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Mediator.Net;
 using SoccerAi.Application.Features.Backtesting;
@@ -12,7 +11,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SoccerAi.Application.Interfaces;
@@ -104,7 +102,7 @@ builder.Services.RegisterMediator(mediaBuilder);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -176,6 +174,7 @@ using (var scope = app.Services.CreateScope())
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogCritical(ex, "Failed to initialize database context.");
+        throw;
     }
 }
 

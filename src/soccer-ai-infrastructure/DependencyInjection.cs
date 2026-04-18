@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using SoccerAi.Application.Interfaces;
@@ -18,7 +20,6 @@ public static class DependencyInjection
         InitDatabase(services, configuration);
         InitApiFootballService(services, configuration);
         InitAiService(services, configuration);
-        InitLegacyAiService(services, configuration);
 
         // Sync services
         services.AddScoped<ITeamSyncService, TeamSyncService>();
@@ -32,8 +33,7 @@ public static class DependencyInjection
         services.AddScoped<SoccerAi.Infrastructure.MlNet.MlTrainingDataBuilder>();
         services.AddScoped<IMlTrainingService, SoccerAi.Infrastructure.MlNet.MlTrainingService>();
 
-        // Register IAiAnalysisService based on configuration
-        RegisterAiAnalysisService(services, configuration);
+        services.AddScoped<IAiAnalysisService, ZaiAnalysisService>();
 
         services.AddScoped<IDecisionService, SoccerAi.Infrastructure.Services.DecisionService>();
         services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
@@ -77,9 +77,6 @@ public static class DependencyInjection
             }
 
             options.UseSqlite(connectionString);
-            
-            // Default to no-tracking for read-heavy workloads.
-            options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -119,56 +116,38 @@ public static class DependencyInjection
             });
     }
     
-    private static void InitLegacyAiService(IServiceCollection services, IConfiguration configuration)
-    {
-        services.Configure<LegacyAiOptions>(configuration.GetSection(LegacyAiOptions.SectionName));
-
-        services.AddHttpClient("LegacyAiClient", (provider, client) =>
-        {
-            var options = provider
-                .GetRequiredService<IOptions<LegacyAiOptions>>()
-                .Value;
-
-            var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
-                         ?? options.ApiKey;
-
-            client.BaseAddress = new Uri(options.BaseUrl);
-        });
-    }
-
     private static void InitAiService(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AiServiceOptions>(configuration.GetSection("AiService"));
 
-        services.AddHttpClient("AiService", (provider, client) =>
+        services.AddHttpClient("ZaiClient", (provider, client) =>
         {
             var options = provider
                 .GetRequiredService<IOptions<AiServiceOptions>>()
                 .Value;
 
+            var apiKey = Environment.GetEnvironmentVariable("ZAI_API_KEY") 
+                         ?? options.ApiKey;
+
             client.BaseAddress = new Uri(options.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            
+            client.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
         });
 
+        // Register NLP service using the same Z.ai cloud settings
         services.AddHttpClient<INlpService, NlpService>((provider, client) =>
         {
-            var options = provider.GetRequiredService<IOptions<Options.AiServiceOptions>>().Value;
+            var options = provider.GetRequiredService<IOptions<AiServiceOptions>>().Value;
+            var apiKey = Environment.GetEnvironmentVariable("ZAI_API_KEY") 
+                         ?? options.ApiKey;
+
             client.BaseAddress = new Uri(options.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            
+            client.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
         });
-    }
-
-    private static void RegisterAiAnalysisService(IServiceCollection services, IConfiguration configuration)
-    {
-        var aiOptions = configuration.GetSection("AiService").Get<AiServiceOptions>();
-
-        if (aiOptions != null && aiOptions.Enabled)
-        {
-            services.AddScoped<IAiAnalysisService, LocalAiAnalysisService>();
-        }
-        else
-        {
-            services.AddScoped<IAiAnalysisService, LegacyExternalAiService>();
-        }
     }
 }

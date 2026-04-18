@@ -10,13 +10,17 @@ obj/
 .history/
 
 ## SQLite
-# *.db
+*.db
 *.db-shm
 *.db-wal
 
 ## Logs
 logs/
 *.log
+backtest_result.json
+final_backtest.json
+sync_result.json
+key.txt
 
 ## OS
 .DS_Store

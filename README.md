@@ -7,20 +7,20 @@ A powerful, AI-driven backend API for predicting European soccer matches, genera
 - **Stack**: .NET 10, ASP.NET Core Web API
 - **Architecture**: Domain-Driven Design (Clean Architecture)
 - **Database**: SQLite (managed via EF Core Migrations)
-- **AI Integration**: Google Gemini (LLM Analysis) & ML.NET (FastTree/AutoML predictions)
+- **AI Integration**: Z.ai (LLM Analysis) and ML.NET (FastTree/AutoML predictions)
 - **Data Source**: API-Football & internal historical logic
 
 ## Project Structure
 
 - **`src/soccer-ai-api`**: The entry point for the REST API. Handles HTTP requests, authentication, and global exception wrapping.
 - **`src/soccer-ai-application`**: The "brain" of the application. Contains all business logic (Use Cases, Commands, Queries) via Mediator, defining how match combinations are generated and analyzed.
-- **`src/soccer-ai-infrastructure`**: The data layer. Handles database persistence (SQLite), external HTTP requests to API-Football, and integrations with Google Gemini.
+- **`src/soccer-ai-infrastructure`**: The data layer. Handles database persistence (SQLite), external HTTP requests to API-Football, and integration with Z.ai.
 
 ## Requirements
 
 You must provide the following environment variables (or secrets on Render) to run the application:
 - `ApiFootball__ApiKey`: Your API-Football API key
-- `Gemini__ApiKey`: Your Google Gemini API key
+- `ZAI_API_KEY` or `AiService__ApiKey`: Your Z.ai API key
 - `Jwt__Secret`: A secure random string for JWT token generation
 - `DB_PATH`: *(Optional)* Path to the SQLite database. Defaults to `data/soccer.db`.
 

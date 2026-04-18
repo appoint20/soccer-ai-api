@@ -15,40 +15,17 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: AISERVICE__BASEURL
-        fromService:
-          name: soccer-ai-python
-          type: pvt
-          property: host
-          # We'll use the internal host provided by Render
+        value: "https://api.z.ai/api/paas/v4/chat/completions"
+      - key: AISERVICE__DEFAULTMODEL
+        value: "glm-5.1"
+      - key: ZAI_API_KEY
+        sync: false # Set this manually in the Render dashboard
       - key: CONNECTIONSTRINGS__DEFAULTCONNECTION
         value: "Data Source=/app/data/soccer.db"
     disk:
       name: sqlite-data
       mountPath: /app/data
       sizeGB: 1
-
-  # 2. Python AI Inference Microservice
-  - type: pvt # Private service (not accessible from public internet)
-    name: soccer-ai-python
-    env: docker
-    dockerContext: ./ai-service
-    dockerfilePath: Dockerfile
-    # LLMs require significant RAM. 'pro_plus' or 'max' is recommended for Mistral/Llama.
-    plan: pro_plus 
-    region: frankfurt
-    envVars:
-      - key: PORT
-        value: 8103
-      - key: DEFAULT_MODEL
-        value: mistral
-      - key: HF_HOME
-        value: /app/model_cache
-      - key: HUGGINGFACE_TOKEN
-        sync: false # Set this manually in the Render dashboard for security
-    disk:
-      name: model-cache
-      mountPath: /app/model_cache
-      sizeGB: 60 # Sufficient for both Mistral and Llama 3
 
 databases:
   - name: soccer-ai-db

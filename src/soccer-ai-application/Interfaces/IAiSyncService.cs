@@ -3,7 +3,7 @@ using SoccerAi.Application.Models;
 namespace SoccerAi.Application.Interfaces;
 
 /// <summary>
-/// Orchestrates the synchronization of Gemini AI fixture analyses.
+/// Orchestrates the synchronization of persisted AI fixture analyses.
 /// </summary>
 public interface IAiSyncService
 {

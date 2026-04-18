@@ -11,10 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.GenAI" Version="1.2.0" />
     <PackageReference Include="Mediator.Net" Version="4.9.0" />
     <PackageReference Include="Mediator.Net.MicrosoftDependencyInjection" Version="4.9.0" />
-    <PackageReference Include="MediatR" Version="14.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />

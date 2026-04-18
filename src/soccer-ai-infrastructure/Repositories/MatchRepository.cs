@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models.Deterministic;
 

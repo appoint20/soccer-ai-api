@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models.Deterministic;
