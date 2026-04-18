@@ -14,6 +14,17 @@ public class NlpService(HttpClient httpClient, ILogger<NlpService> logger) : INl
 {
     public async Task<NlpIntent> ParseIntentAsync(string query)
     {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return new NlpIntent
+            {
+                NumMatches = new List<int> { 2, 3 },
+                BetType = "win",
+                MinOdds = 1.0,
+                Filters = new NlpFilters { MinProbability = 0.6 }
+            };
+        }
+
         try
         {
             var response = await httpClient.PostAsJsonAsync("nlp/parse", new { query });
@@ -22,7 +33,7 @@ public class NlpService(HttpClient httpClient, ILogger<NlpService> logger) : INl
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var result = await response.Content.ReadFromJsonAsync<NlpIntent>(options);
             
-            return result ?? new NlpIntent();
+            return result ?? new NlpIntent { NumMatches = new List<int> { 2, 3 }, BetType = "win" };
         }
         catch (Exception ex)
         {

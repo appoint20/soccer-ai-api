@@ -103,11 +103,11 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             else
             {
                 var allMixed = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3));
-                selectedCombo = allMixed.FirstOrDefault(c => c.Any(m => m.Market is "HomeWin" or "AwayWin" or "Draw"));
+                selectedCombo = allMixed.FirstOrDefault(c => c.Any(m => m.Market is "HomeWin" or "AwayWin"));
 
                 if (selectedCombo == null)
                 {
-                    var topWin = slotCandidates.FirstOrDefault(m => m.Market is "HomeWin" or "AwayWin" or "Draw");
+                    var topWin = slotCandidates.FirstOrDefault(m => m.Market is "HomeWin" or "AwayWin");
                     if (topWin != null)
                         selectedCombo = BuildRecursive(slotCandidates, requiredMatchCount, Math.Max(intent.MaxSameLeague, 3), new List<CandidateMatch> { topWin }).FirstOrDefault();
                 }
@@ -135,7 +135,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         var totalOdds = comboMatches.Aggregate(1.0, (acc, m) => acc * m.Odds);
         var avgScore = comboMatches.Average(m => m.Score);
 
-        return new CombinationDto
+        var dto = new CombinationDto
         {
             Type = size == 2 ? "DOUBLE" : size == 3 ? "TREBLE" : "ACCUMULATOR",
             SourceType = "USER",
@@ -149,10 +149,38 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                 Selection = MapToDisplayName(m.Market),
                 Odds = m.Odds,
                 Confidence = m.Probability * 100,
-                Reasoning = GetNaturalReasoning(m)
+                Reasoning = GetNaturalReasoning(m),
+                Status = m.Status,
+                HomeGoals = m.HomeGoals,
+                AwayGoals = m.AwayGoals,
+                Outcome = CalculateOutcome(m)
             }).ToList(),
             Reason = $"Custom Portfolio: Generated based on your specific criteria. Selection prioritized for peak value and statistical consensus."
         };
+
+        // Add summary counts
+        dto.TotalCount = dto.Matches.Count;
+        dto.WonCount = dto.Matches.Count(m => m.Outcome == "Win");
+        return dto;
+    }
+
+    private string CalculateOutcome(CandidateMatch m)
+    {
+        if (m.Status != "FT" && m.Status != "AET" && m.Status != "PEN") return "Pending";
+
+        bool isCorrect = m.Market switch
+        {
+            "HomeWin" => (m.HomeGoals > m.AwayGoals),
+            "AwayWin" => (m.HomeGoals < m.AwayGoals),
+            "Draw" => (m.HomeGoals == m.AwayGoals),
+            "BTTS" => (m.HomeGoals > 0 && m.AwayGoals > 0),
+            "Over25" => (m.HomeGoals + m.AwayGoals > 2.5),
+            "Under25" => (m.HomeGoals + m.AwayGoals < 2.5),
+            "BttsAndOver25" => (m.HomeGoals > 0 && m.AwayGoals > 0 && m.HomeGoals + m.AwayGoals > 2.5),
+            _ => false
+        };
+
+        return isCorrect ? "Win" : "Loss";
     }
 
     private string GetNaturalReasoning(CandidateMatch m)
@@ -181,7 +209,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         // Merge MarketGroups + PreferredMarkets so both Gemini parsing paths work
         var allowedMarkets = intent.MarketGroups.SelectMany(g => g.Markets).ToHashSet();
         foreach (var m in intent.PreferredMarkets) allowedMarkets.Add(m);
-        if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "Draw", "BTTS", "Over25", "Goals23" };
+        if (!allowedMarkets.Any()) allowedMarkets = new HashSet<string> { "HomeWin", "AwayWin", "BTTS", "Over25", "Goals23" };
 
         foreach (var m in matches)
         {
@@ -209,7 +237,10 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
                     Probability = prob,
                     FormScore = form,
                     Score = ((prob * ProbabilityWeight) + (form * FormWeight) + (val * ValueWeight)) * hierarchyWeight,
-                    IsLowValue = sel.IsLowValue
+                    IsLowValue = sel.IsLowValue,
+                    Status = m.Result != null ? "FT" : "NS", // Fallback to FT if MatchResult exists
+                    HomeGoals = m.Result != null ? int.Parse(m.Result.ActualScore.Split(':')[0]) : null,
+                    AwayGoals = m.Result != null ? int.Parse(m.Result.ActualScore.Split(':')[1]) : null
                 });
             }
         }
@@ -247,10 +278,11 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         // 1. Min 1.60 Odd (Hard Floor)
 
         // --- SMART TRAP AVOIDANCE ---
-        // If Gemini explicitly flags this match as a trap/unpredictable, do not touch it!
+        // If the match is flagged as a trap, we still allow it IF the recommended market is a Primary Goal market (safe harbor).
         if (m.Trap != null && m.Trap.IsTrap)
         {
-            return res;
+            var isGoalMarket = m.Ai?.Recommendation is "BTTS" or "Over 2.5 Goals" or "Under 2.5 Goals";
+            if (!isGoalMarket) return res;
         }
 
         // --- EXPECTED VALUE (EV) ROI RULES ---
@@ -273,12 +305,12 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             // 2. The Extreme Value Strategy 
             // In order to achieve the high +60% ROI targets, we MUST focus entirely on gross market mispricings.
             double expectedValue = item.Odds * item.Prob;
-            if (expectedValue < 1.15) continue;
+            if (expectedValue < 1.10) continue;
 
             bool meetsFloor = item.Odds >= minOdds;
 
             // 3. Accept strictly based on EV edge
-            if (meetsFloor || expectedValue >= 1.20)
+            if (meetsFloor || expectedValue >= 1.15)
             {
                 res.Add((item.Key, item.Odds, item.Prob, false));
             }
@@ -403,6 +435,9 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         public double FormScore { get; set; }
         public double Score { get; set; }
         public bool IsLowValue { get; set; }
+        public string Status { get; set; } = "NS";
+        public int? HomeGoals { get; set; }
+        public int? AwayGoals { get; set; }
     }
 
     private class ScoredCombination

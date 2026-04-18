@@ -7,7 +7,7 @@ namespace SoccerAi.Infrastructure.Repositories;
 
 public class MatchRepository : IMatchRepository
 {
-    public Task<List<Match>> GetUpcomingMatchesAsync()
+    public Task<List<Match>> GetUpcomingMatchesAsync(System.DateTimeOffset? date = null)
     {
         var matches = new List<Match>
         {

@@ -28,6 +28,9 @@ public sealed class MatchResult
 {
     public bool IsCorrect { get; init; }
     public string ActualScore { get; init; } = string.Empty;
+    public bool? IsBttsCorrect { get; init; }
+    public bool? IsOver25Correct { get; init; }
+    public bool? IsUnder25Correct { get; init; }
 }
 
 public sealed class TeamStats

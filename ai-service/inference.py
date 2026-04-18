@@ -25,6 +25,9 @@ MODEL_LLAMA3 = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 # ─── Device selection ─────────────────────────────────────────────────────────
 def _get_device() -> str:
+    env_device = os.environ.get("DEVICE")
+    if env_device in ("cpu", "mps", "cuda"):
+        return env_device
     if torch.backends.mps.is_available():
         return "mps"
     if torch.cuda.is_available():
@@ -109,6 +112,7 @@ def run_inference(
     model_key: str = "mistral",
     max_new_tokens: int = 4096,
     temperature: float = 0.05,
+    do_sample: bool = False,
 ) -> str:
     """
     Run inference on the selected model and return raw text output.
@@ -139,7 +143,7 @@ def run_inference(
     outputs = pipe(
         prompt_text,
         max_new_tokens=max_new_tokens,
-        do_sample=False,
+        do_sample=do_sample,
         temperature=temperature,
         return_full_text=False,
     )

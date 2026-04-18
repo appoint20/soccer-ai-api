@@ -55,6 +55,7 @@ public class NlpIntent
 public class CombinationRequest
 {
     public string Query { get; set; } = string.Empty;
+    public System.DateTimeOffset? Date { get; set; }
 }
 
 public class CombinationResponse

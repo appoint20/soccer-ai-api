@@ -27,6 +27,6 @@ pip install -r "$SCRIPT_DIR/requirements.txt" --quiet
 # ─── Model selection ─────────────────────────────────────────────────────────
 export DEFAULT_MODEL="${DEFAULT_MODEL:-mistral}"
 
-echo "→ Starting Soccer AI service on port 8100 (model: $DEFAULT_MODEL)"
+echo "→ Starting Soccer AI service on port ${PORT:-8100} (model: $DEFAULT_MODEL)"
 cd "$SCRIPT_DIR"
 exec "$VENV_DIR/bin/python" main.py

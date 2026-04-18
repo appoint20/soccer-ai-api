@@ -19,8 +19,8 @@ public class AiSyncService(
     {
         logger.LogInformation("[AiSync] Starting batch sync. Current time: {Now}", now);
 
-        var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
-        var endUtc = startUtc.AddDays(5);
+        var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero).AddDays(-3);
+        var endUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero).AddDays(4); // Includes up to 3 days in future (exclusive end)
 
         logger.LogInformation("[AiSync] Window: {Start} to {End}", startUtc, endUtc);
 
@@ -82,6 +82,11 @@ public class AiSyncService(
                     HomeElo = analysis.HomeElo,
                     AwayElo = analysis.AwayElo
                 });
+
+                if (analysis.OddsHomeWin == 0 && analysis.OddsAwayWin == 0)
+                {
+                    logger.LogWarning("[AiSync] Fixture {FixtureId} has ZERO odds. AI analysis might be less accurate.", fixture.Id);
+                }
             }
             catch (Exception ex)
             {
@@ -97,15 +102,15 @@ public class AiSyncService(
             return;
         }
 
-        logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Starting batch processing (Chunk of 5)...", toAnalyze.Count);
+        logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Starting batch processing (Chunk of 3)...", toAnalyze.Count);
 
-        // 3. Process incrementally in batches of 5 and SAVE immediately.
-        for (var i = 0; i < toAnalyze.Count; i += 5)
+        // 3. Process incrementally in batches of 1 and SAVE immediately.
+        for (var i = 0; i < toAnalyze.Count; i += 1)
         {
-            var chunkList = toAnalyze.Skip(i).Take(5).ToList();
+            var chunkList = toAnalyze.Skip(i).Take(1).ToList();
             try
             {
-                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", (i/5)+1, chunkList.Count);
+                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", (i/3)+1, chunkList.Count);
                 
                 var results = await aiService.AnalyzeBatchAsync(chunkList);
                 
@@ -114,14 +119,20 @@ public class AiSyncService(
                     logger.LogInformation("[AiSync] Ingesting result for Fixture {Id}: {Rec}", fixtureId, bilingualResult.Recommendation);
                     
                     // Find the original analysis to get the math probs
-                    var originalAnalysis = toAnalyze.First(x => x.FixtureId == fixtureId);
+                    var originalAnalysis = toAnalyze.FirstOrDefault(x => x.FixtureId == fixtureId);
+                    if (originalAnalysis == null)
+                    {
+                        logger.LogWarning("[AiSync] CRITICAL: AI returned FixtureId {Id} which was NOT in the source batch! Skipping.", fixtureId);
+                        continue;
+                    }
+
                     var mathProbs = new WeightedPrediction
                     {
                         HomeProb = originalAnalysis.ModelHomeWin,
                         Over25Prob = originalAnalysis.ModelOver25,
                         BTTSProb = originalAnalysis.ModelBTTS,
                         DrawProb = 0.0, // Explicitly excluded
-                        AwayProb = originalAnalysis.ModelAwayWin
+                        AwayProb = originalAnalysis.ModelAwayWin,
                     };
 
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, cancellationToken);
@@ -132,7 +143,7 @@ public class AiSyncService(
                 await dbContext.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("[AiSync] Successfully called SaveChangesAsync for batch.");
                 
-                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", (i/5)+1);
+                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", (i/3)+1);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);

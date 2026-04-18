@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
@@ -39,7 +37,7 @@ public sealed class MatchAnalysisService(
         homeRest = data.HomeRestDays;
         awayRest = data.AwayRestDays;
 
-        if (aiEntity != null && aiEntity.HomeProb > 0)
+        if (aiEntity is { HomeProb: > 0 })
         {
             // CACHE HIT: Use stored mathematical probabilities, skip heavy ML models
             prediction = new WeightedPrediction

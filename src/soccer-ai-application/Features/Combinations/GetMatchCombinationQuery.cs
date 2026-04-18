@@ -33,6 +33,12 @@ public sealed class CombinationDto
     [JsonPropertyName("matches")]
     public List<CombinationMatchDto> Matches { get; init; } = [];
 
+    [JsonPropertyName("won_count")]
+    public int WonCount { get; set; }
+
+    [JsonPropertyName("total_count")]
+    public int TotalCount { get; set; }
+
     [JsonPropertyName("reason")]
     public string Reason { get; init; } = "";
 }
@@ -62,4 +68,16 @@ public sealed class CombinationMatchDto
 
     [JsonPropertyName("reasoning")]
     public string Reasoning { get; init; } = string.Empty;
+
+    [JsonPropertyName("outcome")]
+    public string Outcome { get; set; } = "Pending"; // Win, Loss, Pending
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "NS";
+
+    [JsonPropertyName("home_goals")]
+    public int? HomeGoals { get; set; }
+
+    [JsonPropertyName("away_goals")]
+    public int? AwayGoals { get; set; }
 }

@@ -74,9 +74,10 @@ public sealed class LocalAiAnalysisService : IAiAnalysisService
             response.EnsureSuccessStatusCode();
 
             var envelope = await response.Content.ReadFromJsonAsync<AnalyzeEnvelope>(JsonOpts);
-            if (envelope?.Results == null) return new();
-
-            return envelope.Results.ToDictionary(r => r.FixtureId);
+            
+            return envelope?.Results == null 
+                ? new Dictionary<int, AiBilingualResult>() 
+                : envelope.Results.ToDictionary(r => r.FixtureId);
         }
         catch (Exception ex)
         {

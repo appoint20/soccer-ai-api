@@ -12,5 +12,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  ai-service:
+    build:
+      context: ./ai-service
+      args:
+        # Provide your token here during build: docker-compose build --build-arg HUGGINGFACE_TOKEN=hf_...
+        - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+    container_name: soccer_ai_python
+    restart: always
+    ports:
+      - "8103:8103"
+    environment:
+      - PORT=8103
+      - DEFAULT_MODEL=mistral
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8103/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres_data:

@@ -11,7 +11,7 @@ public interface INlpService
 
 public interface IMatchRepository
 {
-    Task<List<Match>> GetUpcomingMatchesAsync();
+    Task<List<Match>> GetUpcomingMatchesAsync(System.DateTimeOffset? date = null);
 }
 
 public interface ICombinationService

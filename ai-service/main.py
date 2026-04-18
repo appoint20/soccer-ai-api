@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -38,6 +39,16 @@ logger = logging.getLogger("ai_service")
 async def lifespan(app: FastAPI):
     logger.info("Soccer AI Python service starting up…")
     logger.info(f"Default model: {os.environ.get('DEFAULT_MODEL', 'mistral')}")
+    
+    # Preload the default model to avoid timeout on first request
+    try:
+        from inference import _load_pipeline
+        logger.info("[Lifespan] Preloading Mistral model...")
+        _load_pipeline("mistral")
+        logger.info("[Lifespan] Preloading complete.")
+    except Exception as e:
+        logger.error(f"[Lifespan] Failed to preload model: {e}")
+        
     yield
     logger.info("Soccer AI Python service shutting down.")
 
@@ -142,6 +153,8 @@ async def analyze_batch(
                 user_content=user_content,
                 model_key=model_key,
                 max_new_tokens=6000,
+                temperature=0.7,
+                do_sample=True,
             )
             parsed = parse_json_output(raw)
 
@@ -178,7 +191,7 @@ async def parse_intent(
             system_prompt=prompts.PARSE_INTENT_SYSTEM_PROMPT,
             user_content=f'USER QUERY: "{request.query}"',
             model_key=model_key,
-            max_new_tokens=1024,
+            max_new_tokens=256,
         )
         parsed = parse_json_output(raw)
         intent = m.ChatCombinationIntent(**parsed)
@@ -265,7 +278,7 @@ async def nlp_parse(
             system_prompt=prompts.DETERMINISTIC_PARSE_PROMPT,
             user_content=f'USER QUERY: "{request.query}"',
             model_key=model_key,
-            max_new_tokens=1024,
+            max_new_tokens=256,
         )
         parsed = parse_json_output(raw)
         return m.NLPIntent(**parsed)
@@ -293,7 +306,7 @@ async def api_combinations(
             system_prompt=prompts.DETERMINISTIC_PARSE_PROMPT,
             user_content=f'USER QUERY: "{request.query}"',
             model_key=model_key,
-            max_new_tokens=1024,
+            max_new_tokens=256,
         )
         parsed = parse_json_output(raw)
         intent = m.NLPIntent(**parsed)

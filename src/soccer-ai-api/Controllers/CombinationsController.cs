@@ -15,14 +15,11 @@ public class CombinationsController(
     [HttpPost]
     public async Task<ActionResult<CombinationResponse>> GetCombinations([FromBody] CombinationRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Query))
-            return BadRequest("Query is required.");
-
-        // 1. NLP Integration: Parse natural language input
+        // 1. NLP Integration: Parse natural language input (Service now handles empty query)
         var intent = await nlpService.ParseIntentAsync(request.Query);
         
-        // 2. Data Source: Fetch available matches (Mock)
-        var matches = await matchRepository.GetUpcomingMatchesAsync();
+        // 2. Data Source: Fetch available matches (Filter by Date if provided)
+        var matches = await matchRepository.GetUpcomingMatchesAsync(request.Date);
 
         // 3. Combination Engine: Generate, score and rank
         var combinations = combinationService.GenerateCombinations(matches, intent);
