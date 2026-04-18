@@ -10,7 +10,7 @@ RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/pub
 
 # --- STAGE 2: PYTHON DEPENDENCIES ---
 FROM debian:bookworm-slim AS python-deps
-WORKDIR /app
+WORKDIR /app/ai-service
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=dotnet-build /app/publish .
 
 # Copy pre-built Python environment from Stage 2
-COPY --from=python-deps /app/.venv /app/ai-service/.venv/
+COPY --from=python-deps /app/ai-service/.venv /app/ai-service/.venv
 
 # Copy Python source code (Last to maximize cache hits)
 COPY ai-service/ /app/ai-service/
