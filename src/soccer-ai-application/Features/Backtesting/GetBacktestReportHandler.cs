@@ -25,20 +25,7 @@ public class GetBacktestReportHandler(
     {
         var query = context.Message;
         
-        if (!query.Refresh)
-        {
-            var cached = await dbContext.BacktestReports
-                .Where(r => r.WeeksBack == query.WeeksBack && r.Stake == query.Stake)
-                .OrderByDescending(r => r.CreatedAt)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (cached != null)
-            {
-                var response = JsonSerializer.Deserialize<GetBacktestReportResponse>(cached.ReportJson);
-                if (response != null) return response;
-            }
-        }
-
+        // Cache disabled per user request to ensure fresh simulations.
         logger.LogInformation("[Backtest] Simulating last {Weeks} weeks. Pure Math Engine.", query.WeeksBack);
 
         var startDate = DateTimeOffset.UtcNow.AddDays(-query.WeeksBack * 7);
@@ -116,14 +103,17 @@ public class GetBacktestReportHandler(
 
                     foreach (var combo in portfolios)
                     {
+                        var legResults = new List<LegResult>();
                         bool isFullWin = true;
                         foreach (var leg in combo.Matches)
                         {
                             var fix = fixtures.First(fx => fx.Id == leg.FixtureId);
-                            if (!IsLegWon(leg.Selection, fix))
+                            bool legWon = IsLegWon(leg.Selection, fix);
+                            legResults.Add(new LegResult { IsWon = legWon });
+                            
+                            if (!legWon)
                             {
                                 isFullWin = false;
-                                break;
                             }
                         }
 
@@ -136,7 +126,8 @@ public class GetBacktestReportHandler(
                             IsWon = isFullWin, 
                             Stake = query.Stake,
                             Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
-                            AverageConfidence = avgConfidence
+                            AverageConfidence = avgConfidence,
+                            Legs = legResults
                         });
                     }
                 }
@@ -188,20 +179,28 @@ public class GetBacktestReportHandler(
 
         var finalSimulations = weeklyGroups.SelectMany(g => g.Items).ToList();
 
-        var totalStaked = finalSimulations.Sum(r => r.Stake);
-        var totalReturned = finalSimulations.Sum(r => r.Return);
-        var profit = totalReturned - totalStaked;
-        var roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
+        var totalLegs = finalSimulations.Sum(r => r.Legs.Count);
+        var correctLegs = finalSimulations.Sum(r => r.Legs.Count(l => l.IsWon));
+        
+        var totalPredictions = leagueResults.Count;
+        var totalHitPredictions = leagueResults.Count(r => r.BttsHit) + leagueResults.Count(r => r.Over25Hit);
+        var matchAnalysisAccuracy = totalPredictions > 0 ? (double)totalHitPredictions / (totalPredictions * 2) * 100 : 0;
 
         var weeklyBreakdown = weeklyGroups
-            .Select(g => new WeeklyBreakdown
+            .Select(g => 
             {
-                Week = $"Week {g.WeekKey}",
-                TotalCombinations = g.Items.Count,
-                CombinationsWon = g.Items.Count(x => x.IsWon),
-                StakeAmount = Math.Round(g.Items.Sum(x => x.Stake), 2),
-                ProfitLoss = Math.Round(g.Items.Sum(x => x.Return - x.Stake), 2),
-                RoiPercent = Math.Round(g.Items.Sum(x => x.Stake) > 0 ? (g.Items.Sum(x => x.Return - x.Stake) / g.Items.Sum(x => x.Stake)) * 100 : 0, 1)
+                var minDate = g.Items.Min(x => x.Date);
+                var maxDate = g.Items.Max(x => x.Date);
+                return new WeeklyBreakdown
+                {
+                    Week = $"Week {g.WeekKey}",
+                    DateRange = $"{minDate:MMM dd} - {maxDate:MMM dd}",
+                    TotalCombinations = g.Items.Count,
+                    CombinationsWon = g.Items.Count(x => x.IsWon),
+                    StakeAmount = Math.Round(g.Items.Sum(x => x.Stake), 2),
+                    ProfitLoss = Math.Round(g.Items.Sum(x => x.Return - x.Stake), 2),
+                    RoiPercent = Math.Round(g.Items.Sum(x => x.Stake) > 0 ? (g.Items.Sum(x => x.Return - x.Stake) / g.Items.Sum(x => x.Stake)) * 100 : 0, 1)
+                };
             }).ToList();
 
         // Calculate League Accuracy
@@ -223,9 +222,13 @@ public class GetBacktestReportHandler(
                 TotalRoi = Math.Round(roi, 1),
                 TotalStaked = Math.Round(totalStaked, 2),
                 TotalReturned = Math.Round(totalReturned, 2),
+                CombinationAccuracy = Math.Round(finalSimulations.Count > 0 ? (double)finalSimulations.Count(r => r.IsWon) / finalSimulations.Count * 100 : 0, 1),
                 WinRate = Math.Round(finalSimulations.Count > 0 ? (double)finalSimulations.Count(r => r.IsWon) / finalSimulations.Count * 100 : 0, 1),
                 CombosTotal = finalSimulations.Count,
-                CombosWon = finalSimulations.Count(r => r.IsWon)
+                CombosWon = finalSimulations.Count(r => r.IsWon),
+                MatchAnalysisAccuracy = Math.Round(matchAnalysisAccuracy, 1),
+                TotalLegs = totalLegs,
+                CorrectLegs = correctLegs
             },
             WeeklyBreakdown = weeklyBreakdown,
             LeagueAccuracy = leagueAccuracy
@@ -240,6 +243,12 @@ public class GetBacktestReportHandler(
         public double Stake { get; set; }
         public double Return { get; set; }
         public double AverageConfidence { get; set; }
+        public List<LegResult> Legs { get; set; } = [];
+    }
+
+    private class LegResult
+    {
+        public bool IsWon { get; set; }
     }
 
     private class LeaguePredictionResult
