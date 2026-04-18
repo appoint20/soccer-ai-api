@@ -161,8 +161,13 @@ public sealed class ProbabilityConsensusEngine(
         var winner = "home";
         var confidence = pHome;
 
-        if (pDraw > pHome && pDraw > pAway) { winner = "draw"; confidence = pDraw; }
-        else if (pAway > pHome && pAway > pDraw) { winner = "away"; confidence = pAway; }
+        // Draws are explicitly excluded from recommendation.
+        // If Away is more likely than Home, choose Away.
+        if (pAway > pHome)
+        {
+            winner = "away";
+            confidence = pAway;
+        }
 
         return new WeightedPrediction
         {

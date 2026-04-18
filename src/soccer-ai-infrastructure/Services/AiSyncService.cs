@@ -67,6 +67,8 @@ public class AiSyncService(
                     AwayTeam = analysis.TeamStats.Away.Name,
                     HomeStats = analysis.TeamStats.Home,
                     AwayStats = analysis.TeamStats.Away,
+                    HomeGoalAvg = analysis.TeamStats.Home.AvgGoalsScoredLast7,
+                    AwayGoalAvg = analysis.TeamStats.Away.AvgGoalsScoredLast7,
                     ModelHomeWin = analysis.Models.Poisson.HomeWin,
                     ModelDraw = analysis.Models.Poisson.Draw,
                     ModelAwayWin = analysis.Models.Poisson.AwayWin,
@@ -116,10 +118,10 @@ public class AiSyncService(
                     var mathProbs = new WeightedPrediction
                     {
                         HomeProb = originalAnalysis.ModelHomeWin,
-                        DrawProb = originalAnalysis.ModelDraw,
-                        AwayProb = originalAnalysis.ModelAwayWin,
                         Over25Prob = originalAnalysis.ModelOver25,
-                        BTTSProb = originalAnalysis.ModelBTTS
+                        BTTSProb = originalAnalysis.ModelBTTS,
+                        DrawProb = 0.0, // Explicitly excluded
+                        AwayProb = originalAnalysis.ModelAwayWin
                     };
 
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, cancellationToken);
@@ -241,7 +243,7 @@ public class AiSyncService(
             
             // MATH CACHE
             existing.HomeProb            = math.HomeProb;
-            existing.DrawProb            = math.DrawProb;
+            existing.DrawProb            = 0.0; // Explicitly excluded
             existing.AwayProb            = math.AwayProb;
             existing.Over25Prob          = math.Over25Prob;
             existing.BttsProb            = math.BTTSProb;
@@ -267,7 +269,7 @@ public class AiSyncService(
                 
                 // MATH CACHE
                 HomeProb            = math.HomeProb,
-                DrawProb            = math.DrawProb,
+                DrawProb            = 0.0, // Explicitly excluded
                 AwayProb            = math.AwayProb,
                 Over25Prob          = math.Over25Prob,
                 BttsProb            = math.BTTSProb,

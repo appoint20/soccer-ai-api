@@ -115,9 +115,8 @@ public sealed class DecisionService(
             };
         }
 
-        // Draw
-        var drawScore = CalculateDrawScore(stats, h2h, teamStats);
-        markets.Draw = DrawDecision.Create(drawScore);
+        // Draws are explicitly excluded from analysis as per user requirements
+        markets.Draw = new DrawDecision { IsQualified = false, Score = 0, Label = "Excluded" };
 
         // ── EV check and Trap Integration ──
         
@@ -168,10 +167,14 @@ public sealed class DecisionService(
             }
         }
 
-        // ── Overall qualification ──
+        // Overall qualification (Draws excluded)
         var bestProb = Math.Max(prediction.Over25Prob, Math.Max(prediction.BTTSProb, prediction.Confidence));
-        var isQualified = markets.Over25.IsQualified || markets.BTTS.IsQualified ||
-                          markets.MatchWinner.IsQualified || markets.LowScoring.IsQualified;
+        
+        // Qualification priority: Goals FIRST. MatchWinner only secondary.
+        var isQualified = markets.Over25.IsQualified || 
+                          markets.BTTS.IsQualified || 
+                          markets.LowScoring.IsQualified || 
+                          markets.MatchWinner.IsQualified;
 
         // ── Final decision tier ──
         var decision = PredictionDecision.NoBet;
@@ -234,27 +237,5 @@ public sealed class DecisionService(
         return Evaluate(new MatchContext(), teamStats, head2head, null, new StatisticalModels());
     }
 
-    // ── Draw Score ───────────────────────────────────────────────
-
-    private static double CalculateDrawScore(
-        StatisticalModels stats,
-        HeadToHeadModel h2h,
-        TeamStatsResponse teamStats)
-    {
-        double score = 0;
-
-        if (stats.Poisson.IsValid)
-            score += stats.Poisson.Draw * 0.35;
-
-        if (stats.MonteCarlo.IsValid)
-            score += stats.MonteCarlo.Draw * 0.25;
-
-        if (h2h.IsValid)
-            score += h2h.DrawRate * 0.20;
-
-        var avgDrawRate = (teamStats.Home.DrawRate + teamStats.Away.DrawRate) / 2.0;
-        score += avgDrawRate * 0.20;
-
-        return score;
-    }
+    // Draw scoring removed as Draws are excluded from analysis.
 }

@@ -214,6 +214,10 @@ public class GetBacktestReportHandler(
             .OrderByDescending(l => l.Over25Accuracy)
             .ToList();
 
+        var totalStaked = finalSimulations.Sum(r => r.Stake);
+        var totalReturned = finalSimulations.Sum(r => r.Return);
+        var roi = totalStaked > 0 ? ((totalReturned - totalStaked) / totalStaked) * 100 : 0;
+
         return new GetBacktestReportResponse
         {
             Summary = new BacktestSummary
