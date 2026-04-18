@@ -8,38 +8,31 @@ RUN dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
 COPY . .
 RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/publish --no-restore
 
-# --- STAGE 2: PYTHON DEPENDENCIES ---
-FROM debian:bookworm-slim AS python-deps
-WORKDIR /app/ai-service
+# --- STAGE 2: FINAL RUNTIME ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+
+# Install Python and dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cache heavy libraries (PyTorch, Transformers)
+# Set up Python Virtual Environment and install dependencies first (for caching)
+WORKDIR /app/ai-service
 COPY ai-service/requirements.txt .
 RUN python3 -m venv .venv && \
     .venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# --- STAGE 3: FINAL RUNTIME ---
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# Return to root workdir
 WORKDIR /app
 
-# Install Python runtime and libgomp (essential for CPU torch)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-venv \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy .NET binaries from Stage 1
+# Copy .NET binaries
 COPY --from=dotnet-build /app/publish .
 
-# Copy pre-built Python environment from Stage 2
-COPY --from=python-deps /app/ai-service/.venv /app/ai-service/.venv
-
-# Copy Python source code (Last to maximize cache hits)
+# Copy Python source code
 COPY ai-service/ /app/ai-service/
 
 # Copy orchestration scripts
