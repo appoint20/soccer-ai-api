@@ -10,24 +10,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/ai-service/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/contracts.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/json_tools.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/prompts.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/app/service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/pyproject.toml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ai-service/tests/test_json_tools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/download_models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/engine.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/inference.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/prompts.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/start.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ai-service/test_engine.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/render.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/render.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/Program.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/appsettings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisQuery.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisQuery.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Helpers/FixtureQueryHelper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Helpers/FixtureQueryHelper.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/AiServiceOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Options/AiServiceOptions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/LocalAiAnalysisService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/ZaiAnalysisService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,6 +46,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/af805f7aed1340dab49aea0ce8dfb3f61046308/c8/d539bdcd/ThrowHelper.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/af805f7aed1340dab49aea0ce8dfb3f61046308/cd/a6f4956d/ExceptionDispatchInfo.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/c9e330a63440452d9065dd08209c51c43ab10/fa/63c5ee71/ServiceProvider.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -140,7 +144,7 @@
       <workItem from="1772972114574" duration="20248000" />
       <workItem from="1775849046483" duration="26098000" />
       <workItem from="1776510757815" duration="3724000" />
-      <workItem from="1776546532900" duration="4625000" />
+      <workItem from="1776546532900" duration="10436000" />
     </task>
     <servers />
   </component>

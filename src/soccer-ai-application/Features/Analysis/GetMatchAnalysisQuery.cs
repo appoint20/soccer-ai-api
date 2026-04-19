@@ -7,11 +7,14 @@ public class GetMatchAnalysisQuery : IRequest
 {
     public DateTimeOffset? Date { get; set; }
     public string Language { get; set; } = "en";
+    public int? Page { get; set; }
+    public int? PageSize { get; set; }
 }
 
 public class GetMatchAnalysisResponse : IResponse
 {
     public List<MatchAnalysis> Matches { get; set; } = new();
+    public int TotalCount { get; set; }
     public AnalysisSummary? Summary { get; set; }
 }
 

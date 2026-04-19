@@ -5,149 +5,115 @@ using Microsoft.Extensions.Http.Resilience;
 using SoccerAi.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenAI;
+using OpenAI.Chat;
 using Polly;
 using SoccerAi.Infrastructure.Options;
 using SoccerAi.Infrastructure.Persistence;
 using SoccerAi.Infrastructure.Services;
+using SoccerAi.Infrastructure.MlNet;
 
 namespace SoccerAi.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        InitDatabase(services, configuration);
-        InitApiFootballService(services, configuration);
-        InitAiService(services, configuration);
-
-        // Sync services
-        services.AddScoped<ITeamSyncService, TeamSyncService>();
-        services.AddScoped<IFixtureSyncService, FixtureSyncService>();
-        services.AddScoped<IAiSyncService, AiSyncService>();
-        services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
-        services.AddScoped<IMlPredictionService, MlPredictionService>();
-        services.AddScoped<IMatchRepository, Repositories.MatchRepository>();
+        services.AddPersistence(configuration);
+        services.AddExternalApis(configuration);
         
-        // ML.NET native trainer services
-        services.AddScoped<SoccerAi.Infrastructure.MlNet.MlTrainingDataBuilder>();
-        services.AddScoped<IMlTrainingService, SoccerAi.Infrastructure.MlNet.MlTrainingService>();
+        RegisterAiAnalysisService(services, configuration);
 
-        services.AddScoped<IAiAnalysisService, ZaiAnalysisService>();
-
-        services.AddScoped<IDecisionService, SoccerAi.Infrastructure.Services.DecisionService>();
-        services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
-        services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
-        services.AddScoped<ITrapDetectionService, TrapDetectionService>();
-        services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
-        services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
-        services.AddSingleton<ILeagueVolatilityService, LeagueVolatilityService>();
-
-        // Analysis pipeline services
-        services.AddScoped<IMatchDataProvider, MatchDataProvider>();
-        services.AddScoped<IProbabilityPipeline, ProbabilityPipeline>();
-        services.AddScoped<IProbabilityConsensusEngine, ProbabilityConsensusEngine>();
+        services.AddServices();
         
-        // Shared analysis orchestrator (both analysis + combination endpoints)
-        services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
-
-        // Background Schedulers
-        services.AddHostedService<DailySyncBackgroundService>();
-
         return services;
     }
 
-    private static void InitDatabase(IServiceCollection services, IConfiguration configuration)
+    private static void AddServices(this IServiceCollection services)
     {
+        // Core Analysis & Prediction
+        services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
+        services.AddScoped<IMatchDataProvider, MatchDataProvider>();
+        services.AddScoped<IApiFootballService, ApiFootballService>();
+        services.AddScoped<IFixtureSyncService, FixtureSyncService>();
+        services.AddScoped<IAiSyncService, AiSyncService>();
+        services.AddScoped<ITeamSyncService, TeamSyncService>();
+        
+        // Mathematical Engines
+        services.AddScoped<IProbabilityPipeline, ProbabilityPipeline>();
+        services.AddScoped<IProbabilityConsensusEngine, ProbabilityConsensusEngine>();
+        services.AddScoped<DecisionService>(); // Register concretely for AiDecisionService to use
+        services.AddScoped<IDecisionService, AiDecisionService>(); // AI-driven implementation
+        services.AddScoped<IAiDecisionLayerService, AiDecisionLayerService>();
+        services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
+        services.AddScoped<ILeagueVolatilityService, LeagueVolatilityService>();
+        services.AddScoped<ITrapDetectionService, TrapDetectionService>();
+        services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
+        services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
+        services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
+        services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
+        
+        // Machine Learning
+        services.AddScoped<IMlPredictionService, MlPredictionService>();
+        services.AddScoped<IMlTrainingService, MlTrainingService>();
+        services.AddSingleton<MlTrainingDataBuilder>();
+
+        // Security & Utilities
+        services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<INlpService, NlpService>();
+
+        // Background Automation
+        services.AddHostedService<DailySyncBackgroundService>();
+    }
+
+    private static void AddPersistence(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
         services.AddDbContext<ApplicationDbContext>(options =>
-        {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            options.UseSqlite(connectionString));
 
-            // --- DEPLOYMENT OVERRIDE ---
-            // If DB_PATH is set (Render/Docker), we use it and ensure the directory exists.
-            var dbPath = Environment.GetEnvironmentVariable("DB_PATH");
-            if (!string.IsNullOrEmpty(dbPath))
-            {
-                var directory = Path.GetDirectoryName(dbPath);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-                connectionString = $"Data Source={dbPath}";
-            }
-
-            options.UseSqlite(connectionString);
-        });
-
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddMemoryCache();
+        services.AddScoped<IApplicationDbContext>(provider => 
+            provider.GetRequiredService<ApplicationDbContext>());
     }
 
-    private static void InitApiFootballService(IServiceCollection services, IConfiguration configuration)
+    private static void AddExternalApis(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<FootballApiOptions>(configuration.GetSection(FootballApiOptions.SectionName));
+        services.AddHttpClient("FootballApi", (provider, client) =>
+        {
+            var options = configuration.GetSection("ApiFootball").Get<FootballApiOptions>();
+            var apiKey = Environment.GetEnvironmentVariable("API_FOOTBALL_KEY") ?? options?.ApiKey;
 
-        services.AddHttpClient<IApiFootballService, ApiFootballService>((provider, client) =>
+            client.BaseAddress = new Uri(options?.BaseUrl ?? "https://v3.football.api-sports.io");
+            client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
+        })
+        .AddResilienceHandler("football-api", builder =>
+        {
+            builder.AddRetry(new HttpRetryStrategyOptions
             {
-                var options = provider
-                    .GetRequiredService<IOptions<FootballApiOptions>>()
-                    .Value;
-
-                var apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY")
-                             ?? options.ApiKey;
-
-                client.BaseAddress = new Uri(options.BaseUrl);
-                client.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
-            })
-            .AddResilienceHandler("football-api", builder =>
-            {
-                builder.AddRetry(new HttpRetryStrategyOptions
-                {
-                    MaxRetryAttempts = 3,
-                    BackoffType = DelayBackoffType.Exponential,
-                    Delay = TimeSpan.FromSeconds(2),
-                    ShouldHandle = args => ValueTask.FromResult(
-                        args.Outcome.Result?.StatusCode is System.Net.HttpStatusCode.TooManyRequests
-                        or System.Net.HttpStatusCode.ServiceUnavailable
-                        or System.Net.HttpStatusCode.GatewayTimeout
-                        || args.Outcome.Exception is HttpRequestException or TaskCanceledException)
-                });
-                builder.AddTimeout(TimeSpan.FromSeconds(30));
+                MaxRetryAttempts = 3,
+                BackoffType = DelayBackoffType.Exponential,
+                Delay = TimeSpan.FromSeconds(2)
             });
+            builder.AddTimeout(TimeSpan.FromSeconds(30));
+        });
     }
-    
-    private static void InitAiService(IServiceCollection services, IConfiguration configuration)
+
+    private static void RegisterAiAnalysisService(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AiServiceOptions>(configuration.GetSection("AiService"));
-
-        services.AddHttpClient("ZaiClient", (provider, client) =>
+        services.AddScoped<IAiAnalysisService, OpenAiAnalysisService>();
+        
+        services.AddScoped<ChatClient>(sp => 
         {
-            var options = provider
-                .GetRequiredService<IOptions<AiServiceOptions>>()
-                .Value;
-
-            var apiKey = Environment.GetEnvironmentVariable("ZAI_API_KEY") 
-                         ?? options.ApiKey;
-
-            client.BaseAddress = new Uri(options.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            
-            client.DefaultRequestHeaders.Authorization = 
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
-        });
-
-        // Register NLP service using the same Z.ai cloud settings
-        services.AddHttpClient<INlpService, NlpService>((provider, client) =>
-        {
-            var options = provider.GetRequiredService<IOptions<AiServiceOptions>>().Value;
-            var apiKey = Environment.GetEnvironmentVariable("ZAI_API_KEY") 
-                         ?? options.ApiKey;
-
-            client.BaseAddress = new Uri(options.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            
-            client.DefaultRequestHeaders.Authorization = 
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            var options = sp.GetRequiredService<IOptions<AiServiceOptions>>().Value;
+            var clientOptions = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(options.BaseUrl.TrimEnd('/') + "/") };
+            return new ChatClient(options.DefaultModel ?? "glm-4-plus", new System.ClientModel.ApiKeyCredential(options.ApiKey), clientOptions);
         });
     }
+
 }

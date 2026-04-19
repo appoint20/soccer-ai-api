@@ -14,7 +14,7 @@ public sealed class DecisionService(
     ILeagueAdjustmentService leagueAdjuster,
     IExpectedValueEngine evEngine) : IDecisionService
 {
-    public DecisionServiceResult Evaluate(
+    public Task<DecisionServiceResult> Evaluate(
         MatchContext context,
         TeamStatsResponse teamStats,
         HeadToHeadModel h2h,
@@ -25,7 +25,7 @@ public sealed class DecisionService(
 
         if (prediction == null)
         {
-            return new DecisionServiceResult
+            return Task.FromResult(new DecisionServiceResult
             {
                 Markets = markets,
                 Trap = new TrapDecision(),
@@ -35,7 +35,7 @@ public sealed class DecisionService(
                     CombinedProbability = 0,
                     Label = "No prediction available"
                 }
-            };
+            });
         }
 
         // ── Market decisions ──
@@ -217,7 +217,7 @@ public sealed class DecisionService(
             decision = (PredictionDecision)Math.Max((int)scoreDecision, (int)evDecision);
         }
 
-        return new DecisionServiceResult
+        return Task.FromResult(new DecisionServiceResult
         {
             Markets = markets,
             Trap = trap,
@@ -228,13 +228,13 @@ public sealed class DecisionService(
                 Label = isQualified ? "Qualified" : "Not qualified"
             },
             Decision = decision
-        };
+        });
     }
 
-    public DecisionServiceResult Evaluate2(TeamStats homeStats, TeamStats awayStats, HeadToHeadModel head2head)
+    public async Task<DecisionServiceResult> Evaluate2(TeamStats homeStats, TeamStats awayStats, HeadToHeadModel head2head)
     {
         var teamStats = new TeamStatsResponse { Home = homeStats, Away = awayStats };
-        return Evaluate(new MatchContext(), teamStats, head2head, null, new StatisticalModels());
+        return await Evaluate(new MatchContext(), teamStats, head2head, null, new StatisticalModels());
     }
 
     // Draw scoring removed as Draws are excluded from analysis.

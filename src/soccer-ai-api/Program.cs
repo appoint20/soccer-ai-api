@@ -47,7 +47,6 @@ builder.Services.AddOpenApi("v1");
 // Clean Architecture Layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddScoped<IJwtService, JwtService>();
 
 builder.Services.AddOptions<AdminApiKeyOptions>()
     .Bind(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));

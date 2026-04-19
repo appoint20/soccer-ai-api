@@ -21,9 +21,9 @@ public sealed class TrapDecision
 
 public sealed class Qualification
 {
-    public bool IsQualified { get; init; }
-    public double CombinedProbability { get; init; }
-    public string Label { get; init; } = string.Empty;
+    public bool IsQualified { get; set; }
+    public double CombinedProbability { get; set; }
+    public string Label { get; set; } = string.Empty;
 }
 
 /// <summary>

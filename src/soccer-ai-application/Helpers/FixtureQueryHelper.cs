@@ -11,18 +11,30 @@ namespace SoccerAi.Application.Helpers;
 public class FixtureQueryHelper(IApplicationDbContext dbContext)
 {
     /// <summary>
-    /// Loads all fixtures for a given date along with their team mappings.
+    /// Loads paginated fixtures for a given date along with their team mappings.
     /// </summary>
-    public async Task<(List<Fixture> Fixtures, Dictionary<int, Team> Teams)> GetFixturesWithTeamsAsync(
+    public async Task<(List<Fixture> Fixtures, Dictionary<int, Team> Teams, int TotalCount)> GetFixturesWithTeamsAsync(
         DateTimeOffset date,
+        int? page = null,
+        int? pageSize = null,
         CancellationToken cancellationToken = default)
     {
         var startUtc = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var endUtc = startUtc.AddDays(1);
 
-        var fixtures = await dbContext.Fixtures
-            .Where(f => f.Date >= startUtc && f.Date < endUtc)
-            .ToListAsync(cancellationToken);
+        var query = dbContext.Fixtures.Where(f => f.Date >= startUtc && f.Date < endUtc);
+        
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (page.HasValue && pageSize.HasValue)
+        {
+            query = query
+                .OrderBy(f => f.Date)
+                .Skip((page.Value - 1) * pageSize.Value)
+                .Take(pageSize.Value);
+        }
+
+        var fixtures = await query.ToListAsync(cancellationToken);
 
         var teamIds = fixtures
             .SelectMany(f => new[] { f.HomeTeamId, f.AwayTeamId })
@@ -33,7 +45,7 @@ public class FixtureQueryHelper(IApplicationDbContext dbContext)
             .Where(t => teamIds.Contains(t.ApiId))
             .ToDictionaryAsync(t => t.ApiId, t => t, cancellationToken);
 
-        return (fixtures, teams);
+        return (fixtures, teams, totalCount);
     }
 
     /// <summary>

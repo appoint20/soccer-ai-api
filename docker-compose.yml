@@ -1,18 +1,18 @@
 services:
-  db:
-    image: postgres:16
-    container_name: soccer_ai_db
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soccer_ai_api
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: soccer_ai
     ports:
-      - "5432:5432"
+      - "10000:8080"
+    environment:
+      - PORT=8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Data Source=/app/data/soccer.db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  # AI Service has been migrated to cloud API. Local container removed.
+      - sqlite_data:/app/data
 
 volumes:
-  postgres_data:
+  sqlite_data:

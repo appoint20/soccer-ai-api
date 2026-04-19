@@ -23,6 +23,9 @@ public sealed class MatchAnalysisService(
         var aiEntity = await dbContext.FixtureAnalyses
             .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
 
+        // If AI is missing and it's a critical match (e.g., today), we could trigger it on-demand.
+        // For now, we'll just check if it's there.
+        
         WeightedPrediction? prediction;
         StatisticalModels models;
         TeamStatsResponse? stats = null;
@@ -68,8 +71,11 @@ public sealed class MatchAnalysisService(
         }
 
         var odds = BuildMatchContext(fixture);
-        var decisions = decisionService.Evaluate(odds, stats, h2h, prediction, models);
+        var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models);
 
+        // On-Demand AI Patch: If AI is missing, we could try to sync it if specifically requested
+        // but to keep it simple and professional, we rely on the background sync or manual trigger.
+        
         var ai = aiEntity != null ? new AiAnalysisDto
         {
             Recommendation = aiEntity.Recommendation ?? "Avoid",

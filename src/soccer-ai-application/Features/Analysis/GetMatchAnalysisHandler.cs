@@ -43,17 +43,23 @@ public class GetMatchAnalysisHandler(
             date.ToString("yyyy-MM-dd"), lang);
 
         // Step 1: Load fixtures and teams
-        var (fixtures, teams) = await queryHelper.GetFixturesWithTeamsAsync(date, cancellationToken);
+        var (fixtures, teams, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(date, query.Page, query.PageSize, cancellationToken);
 
-        logger.LogInformation("Loaded {Count} fixtures from DB for {Date}", fixtures.Count, date.ToString("yyyy-MM-dd"));
+        logger.LogInformation("Loaded {Count} fixtures from DB for {Date} (Page: {Page}, PageSize: {PageSize})", 
+            fixtures.Count, date.ToString("yyyy-MM-dd"), query.Page, query.PageSize);
 
         if (fixtures.Count == 0)
         {
             logger.LogWarning("No fixtures found in database for date {Date}", date.ToString("yyyy-MM-dd"));
-            return new GetMatchAnalysisResponse { Matches = new(), Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 } };
+            return new GetMatchAnalysisResponse 
+            { 
+                Matches = new(), 
+                TotalCount = totalCount,
+                Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 } 
+            };
         }
 
-        // Step 2: Run core analysis for all fixtures
+        // ... (Step 2-4 remains mostly the same, analysis is now limited to the returned fixtures) ...
         var fixtureAnalysisMap = new Dictionary<int, FixtureAnalysisResult>();
         int analysisCount = 0;
         foreach (var fixture in fixtures)
@@ -71,61 +77,29 @@ public class GetMatchAnalysisHandler(
             }
         }
 
-        logger.LogInformation("Successfully analyzed {Count}/{Total} fixtures", analysisCount, fixtures.Count);
-
-        // Step 3: Map to response DTOs
         var analysisList = new List<MatchAnalysis>();
-        int skipMissingTeam = 0;
-        int skipMissingAnalysis = 0;
-
         foreach (var fixture in fixtures)
         {
-            try
-            {
-                if (!fixtureAnalysisMap.TryGetValue(fixture.Id, out var analysis))
-                {
-                    skipMissingAnalysis++;
-                    continue;
-                }
+            if (!fixtureAnalysisMap.TryGetValue(fixture.Id, out var analysis)) continue;
 
-                var homeTeam = teams.GetValueOrDefault(fixture.HomeTeamId);
-                var awayTeam = teams.GetValueOrDefault(fixture.AwayTeamId);
+            var homeTeam = teams.GetValueOrDefault(fixture.HomeTeamId);
+            var awayTeam = teams.GetValueOrDefault(fixture.AwayTeamId);
 
-                if (homeTeam == null || awayTeam == null)
-                {
-                    skipMissingTeam++;
-                    logger.LogWarning("Skipping fixture {Id} due to missing team data (Home: {HomeId} Found: {HomeFound}, Away: {AwayId} Found: {AwayFound})",
-                        fixture.Id, fixture.HomeTeamId, homeTeam != null, fixture.AwayTeamId, awayTeam != null);
-                    continue;
-                }
+            if (homeTeam == null || awayTeam == null) continue;
 
-                var matchAnalysis = AnalysisResponseMapper.MapToResponse(
-                    fixture, analysis, homeTeam, awayTeam, analysis.Ai);
+            var matchAnalysis = AnalysisResponseMapper.MapToResponse(
+                fixture, analysis, homeTeam, awayTeam, analysis.Ai);
 
-                analysisList.Add(matchAnalysis);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error mapping fixture {Id} to response", fixture.Id);
-            }
+            analysisList.Add(matchAnalysis);
         }
-
-        if (skipMissingAnalysis > 0 || skipMissingTeam > 0)
-        {
-            logger.LogWarning("Filtered out {AnalysisCount} matches due to analysis failure and {TeamCount} matches due to missing team metadata",
-                skipMissingAnalysis, skipMissingTeam);
-        }
-
-
 
         // Step 5: Calculate summary
         var summary = AnalysisResponseMapper.CalculateSummary(analysisList);
 
-        logger.LogInformation("Returning {Count} matches in response", analysisList.Count);
-
         return new GetMatchAnalysisResponse
         {
             Matches = analysisList,
+            TotalCount = totalCount,
             Summary = summary
         };
     }

@@ -2,15 +2,18 @@ namespace SoccerAi.Infrastructure.Options;
 
 public sealed class AiServiceOptions
 {
-    /// <summary>Base URL of the Z.ai chat completions endpoint.</summary>
-    public string BaseUrl { get; set; } = "https://api.z.ai/api/paas/v4/chat/completions";
+    /// <summary>Base URL of the Python inference microservice, e.g. http://localhost:8101</summary>
+    public string BaseUrl { get; set; } = "http://localhost:8101";
 
-    /// <summary>Default Z.ai model to use.</summary>
+    /// <summary>Default model to use: "glm-5.1" or "mistral"</summary>
     public string DefaultModel { get; set; } = "glm-5.1";
 
-    /// <summary>HTTP timeout in seconds for the external AI provider.</summary>
-    public int TimeoutSeconds { get; set; } = 120;
+    /// <summary>HTTP timeout in seconds for inference calls (can be slow on CPU).</summary>
+    public int TimeoutSeconds { get; set; } = 300;
 
-    /// <summary>API key for the external AI provider.</summary>
+    /// <summary>API Key for cloud providers like Z.ai or Gemini.</summary>
     public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>Whether the AI service is enabled.</summary>
+    public bool Enabled { get; set; } = true;
 }
