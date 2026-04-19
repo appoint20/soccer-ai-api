@@ -17,11 +17,11 @@ public sealed class MatchContext
     public string AwayTeam { get; init; } = string.Empty;
     public MatchResult? Result { get; init; }
     
-    public double OddsHome { get; init; }
-    public double OddsDraw { get; init; }
-    public double OddsAway { get; init; }
-    public double OddsOver25 { get; init; }
-    public double OddsBttsYes { get; init; }
+    public double? OddsHome { get; init; }
+    public double? OddsDraw { get; init; }
+    public double? OddsAway { get; init; }
+    public double? OddsOver25 { get; init; }
+    public double? OddsBttsYes { get; init; }
 }
 
 public sealed class MatchResult

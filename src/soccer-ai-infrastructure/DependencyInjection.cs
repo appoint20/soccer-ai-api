@@ -111,6 +111,14 @@ public static class DependencyInjection
         services.AddScoped<ChatClient>(sp => 
         {
             var options = sp.GetRequiredService<IOptions<AiServiceOptions>>().Value;
+            
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
+            {
+                throw new InvalidOperationException(
+                    "AI Service API Key is missing. Please ensure 'AiService:ApiKey' is configured in appsettings.json " +
+                    "or set the 'AiService__ApiKey' environment variable in your hosting environment (e.g., Render).");
+            }
+
             var clientOptions = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(options.BaseUrl.TrimEnd('/') + "/") };
             return new ChatClient(options.DefaultModel ?? "glm-4-plus", new System.ClientModel.ApiKeyCredential(options.ApiKey), clientOptions);
         });

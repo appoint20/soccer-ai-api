@@ -21,20 +21,20 @@ public sealed class MatchAnalysis
     public string AwayTeam { get; init; } = string.Empty;
     public MatchResult? Result { get; init; }
     
-    public double OddsHomeWin { get; init; }
-    public double OddsDraw { get; init; }
-    public double OddsAwayWin { get; init; }
-    public double OddsOver25 { get; init; }
-    public double OddsBttsYes { get; init; }
-    public double OddsGoals23 { get; init; } = 1.90;
+    public double? OddsHomeWin { get; init; }
+    public double? OddsDraw { get; init; }
+    public double? OddsAwayWin { get; init; }
+    public double? OddsOver25 { get; init; }
+    public double? OddsBttsYes { get; init; }
+    public double? OddsGoals23 { get; init; } = 1.90;
 
     
     // Flattened Weighted Stats
     public TeamStats HomeStats { get; init; } = TeamStats.Empty;
     public TeamStats AwayStats { get; init; } = TeamStats.Empty;
     
-    // Statistical Models (Poisson + Monte Carlo) — for analysis/debugging
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    // Statistical Models (Poisson + Monte Carlo) — for internal processing only
+    [JsonIgnore]
     public StatisticalModels? Models { get; set; }
     
     // Flattened Decisions

@@ -442,7 +442,7 @@ public class FixtureSyncService(IApiFootballService apiService,
             AwayTeamId = apiFixture.AwayTeamApiId,
             LeagueId = leagueId,
             Date = apiFixture.Date,
-            Status = "FT",
+            Status = apiFixture.StatusShort,
 
             // Goals
             HomeGoal = apiFixture.HomeGoals ?? 0,

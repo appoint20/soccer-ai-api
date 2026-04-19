@@ -9,9 +9,9 @@ namespace SoccerAi.Infrastructure.Services;
 /// </summary>
 public sealed class ExpectedValueEngine : IExpectedValueEngine
 {
-    public double CalculateEV(double probability, double odds)
-        => probability * odds - 1.0;
+    public double CalculateEV(double probability, double? odds)
+        => odds.HasValue ? probability * odds.Value - 1.0 : -1.0;
 
-    public bool IsValueBet(double probability, double odds, double threshold = 0.05)
+    public bool IsValueBet(double probability, double? odds, double threshold = 0.05)
         => CalculateEV(probability, odds) > threshold;
 }

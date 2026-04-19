@@ -7,6 +7,6 @@ namespace SoccerAi.Application.Interfaces;
 /// </summary>
 public interface IExpectedValueEngine
 {
-    double CalculateEV(double probability, double odds);
-    bool IsValueBet(double probability, double odds, double threshold = 0.05);
+    double CalculateEV(double probability, double? odds);
+    bool IsValueBet(double probability, double? odds, double threshold = 0.05);
 }

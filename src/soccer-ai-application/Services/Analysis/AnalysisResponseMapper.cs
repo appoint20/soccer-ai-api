@@ -146,10 +146,11 @@ public class AnalysisResponseMapper
 
     /// <summary>
     /// Validates match result for completed fixtures.
+    /// Supports variety of completed statuses from API-Football.
     /// </summary>
     private static MatchResult? ValidateMatchResult(Fixture fixture, FixtureAnalysisResult analysis)
     {
-        var completedStatuses = new[] { "FT", "AET", "PEN" };
+        var completedStatuses = new[] { "FT", "AET", "PEN", "ABD", "AWD", "WO" };
         if (!completedStatuses.Contains(fixture.Status))
             return null;
 

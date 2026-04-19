@@ -44,19 +44,19 @@ public class AiBatchItem
     public double ModelBTTS { get; set; }
 
     [JsonPropertyName("oddsHomeWin")]
-    public double OddsHomeWin { get; set; }
+    public double? OddsHomeWin { get; set; }
     
     [JsonPropertyName("oddsDraw")]
-    public double OddsDraw { get; set; }
+    public double? OddsDraw { get; set; }
     
     [JsonPropertyName("oddsAwayWin")]
-    public double OddsAwayWin { get; set; }
+    public double? OddsAwayWin { get; set; }
     
     [JsonPropertyName("oddsOver25")]
-    public double OddsOver25 { get; set; }
+    public double? OddsOver25 { get; set; }
     
     [JsonPropertyName("oddsBtts")]
-    public double OddsBTTS { get; set; }
+    public double? OddsBTTS { get; set; }
 
     public double? HomeElo { get; set; }
     public double? AwayElo { get; set; }

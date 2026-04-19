@@ -144,7 +144,7 @@ public sealed class DecisionService(
                 markets.Over25.IsQualified = false;
                 markets.Over25.Reason += $" | Failed adjusted threshold {threshold}";
             }
-            if (context.OddsOver25 > 0 && evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25) < 0)
+            if (context.OddsOver25.GetValueOrDefault() > 0 && evEngine.CalculateEV(prediction.Over25Prob, context.OddsOver25) < 0)
             {
                 markets.Over25.IsQualified = false;
                 markets.Over25.Reason += " | Negative EV";
@@ -160,7 +160,7 @@ public sealed class DecisionService(
                 markets.BTTS.IsQualified = false;
                 markets.BTTS.Reason += $" | Failed adjusted threshold {threshold}";
             }
-            if (context.OddsBttsYes > 0 && evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes) < 0)
+            if (context.OddsBttsYes.GetValueOrDefault() > 0 && evEngine.CalculateEV(prediction.BTTSProb, context.OddsBttsYes) < 0)
             {
                 markets.BTTS.IsQualified = false;
                 markets.BTTS.Reason += " | Negative EV";
@@ -202,8 +202,8 @@ public sealed class DecisionService(
             var bestEv = 0.0;
             if (markets.MatchWinner.IsQualified)
             {
-                double odds = prediction.MatchWinner == "home" ? context.OddsHome : prediction.MatchWinner == "away" ? context.OddsAway : context.OddsDraw;
-                if (odds > 0) bestEv = evEngine.CalculateEV(prediction.Confidence, odds);
+                double? odds = prediction.MatchWinner == "home" ? context.OddsHome : prediction.MatchWinner == "away" ? context.OddsAway : context.OddsDraw;
+                if (odds.HasValue && odds.Value > 0) bestEv = evEngine.CalculateEV(prediction.Confidence, odds);
             }
 
             var evDecision = bestEv switch

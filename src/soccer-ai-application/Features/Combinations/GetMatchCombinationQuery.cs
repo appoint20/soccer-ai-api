@@ -61,7 +61,7 @@ public sealed class CombinationMatchDto
     public string Selection { get; init; } = "";
 
     [JsonPropertyName("odds")]
-    public double Odds { get; init; }
+    public double? Odds { get; init; }
 
     [JsonPropertyName("confidence")]
     public double Confidence { get; init; }

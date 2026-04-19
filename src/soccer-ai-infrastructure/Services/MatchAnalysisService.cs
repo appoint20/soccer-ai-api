@@ -128,9 +128,9 @@ public sealed class MatchAnalysisService(
         LeagueName = GetLeagueName(fixture.LeagueId)
     };
 
-    private static double NormalizeOdds(double? odds)
+    private static double? NormalizeOdds(double? odds)
     {
-        if (!odds.HasValue) return 0;
+        if (!odds.HasValue || odds.Value == 0) return null;
         return odds.Value > 50 ? odds.Value / 100.0 : odds.Value;
     }
 

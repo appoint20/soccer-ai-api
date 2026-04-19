@@ -12,7 +12,7 @@ public sealed class FeatureScoringEngine(IExpectedValueEngine evEngine) : IFeatu
     public double CalculateGoalScore(
         double modelProbability, 
         TeamStatsResponse teamStats, 
-        double marketOdds)
+        double? marketOdds)
     {
         double score = 0;
 
@@ -28,9 +28,9 @@ public sealed class FeatureScoringEngine(IExpectedValueEngine evEngine) : IFeatu
         score += Math.Min(avgConceded / 2.0, 1.0) * 20.0;
 
         // 4. Market Agreement / EV (20%)
-        if (marketOdds > 1.0) 
+        if (marketOdds.HasValue && marketOdds.Value > 1.0) 
         {
-            double ev = evEngine.CalculateEV(modelProbability, marketOdds);
+            double ev = evEngine.CalculateEV(modelProbability, marketOdds.Value);
             if (ev >= 0.05) score += 20.0;
             else if (ev >= 0.02) score += 15.0;
             else if (ev >= 0.0) score += 10.0;
@@ -43,7 +43,7 @@ public sealed class FeatureScoringEngine(IExpectedValueEngine evEngine) : IFeatu
     public double CalculateGoals23Score(
         double modelProbability,
         TeamStatsResponse teamStats,
-        double fixedOdds = 1.90)
+        double? fixedOdds = 1.90)
     {
         double score = 0;
 
@@ -59,7 +59,7 @@ public sealed class FeatureScoringEngine(IExpectedValueEngine evEngine) : IFeatu
         else if (avgTotal >= 1.5 && avgTotal <= 3.5) score += 15.0;
 
         // 3. EV against 1.90 fixed (30%)
-        double ev = evEngine.CalculateEV(modelProbability, fixedOdds);
+        double ev = evEngine.CalculateEV(modelProbability, fixedOdds ?? 1.90);
         if (ev >= 0.10) score += 30.0;
         else if (ev >= 0.05) score += 20.0;
         else if (ev >= 0.0) score += 10.0;

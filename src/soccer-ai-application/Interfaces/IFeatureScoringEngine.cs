@@ -10,7 +10,7 @@ public interface IFeatureScoringEngine
     double CalculateGoalScore(
         double modelProbability, 
         TeamStatsResponse teamStats, 
-        double marketOdds);
+        double? marketOdds);
 
     /// <summary>
     /// Calculates a weighted 0-100 score for the 2-3 Goals market.
@@ -19,5 +19,5 @@ public interface IFeatureScoringEngine
     double CalculateGoals23Score(
         double modelProbability,
         TeamStatsResponse teamStats,
-        double fixedOdds = 1.90);
+        double? fixedOdds = 1.90);
 }

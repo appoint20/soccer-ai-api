@@ -132,7 +132,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
     private CombinationDto MapToDto(List<CandidateMatch> comboMatches, ChatCombinationIntent intent, int size)
     {
-        var totalOdds = comboMatches.Aggregate(1.0, (acc, m) => acc * m.Odds);
+        var totalOdds = comboMatches.Aggregate(1.0, (acc, m) => acc * m.Odds.GetValueOrDefault());
         var avgScore = comboMatches.Average(m => m.Score);
 
         var dto = new CombinationDto
@@ -218,7 +218,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
             {
                 var prob = sel.Probability;
                 var form = CalculateFormScore(m);
-                var val = (sel.Probability * sel.Odds) / 2.0;
+                var val = (sel.Probability * sel.Odds.GetValueOrDefault()) / 2.0;
 
                 // --- MARKET HIERARCHY ---
                 // Primary (Goal Atmosphere): BTTS, Over25, BttsAndOver25. Weight 1.2x
@@ -260,11 +260,11 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         _ => market
     };
 
-    private List<(string Market, double Odds, double Probability, bool IsLowValue)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds, ChatCombinationIntent intent)
+    private List<(string Market, double? Odds, double Probability, bool IsLowValue)> GetValidSelections(MatchAnalysis m, List<string> requested, double minOdds, ChatCombinationIntent intent)
     {
-        var res = new List<(string, double, double, bool)>();
+        var res = new List<(string, double?, double, bool)>();
         
-        var map = new List<(string Key, double Odds, double Prob)> 
+        var map = new List<(string Key, double? Odds, double Prob)> 
         {
             ("HomeWin", m.OddsHomeWin, m.Prediction?.HomeWin.Probability ?? 0),
             ("AwayWin", m.OddsAwayWin, m.Prediction?.AwayWin.Probability ?? 0),
@@ -304,7 +304,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
             // 2. The Extreme Value Strategy 
             // In order to achieve the high +60% ROI targets, we MUST focus entirely on gross market mispricings.
-            double expectedValue = item.Odds * item.Prob;
+            double expectedValue = item.Odds.GetValueOrDefault() * item.Prob;
             if (expectedValue < 1.10) continue;
 
             bool meetsFloor = item.Odds >= minOdds;
@@ -324,7 +324,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
 
             if (bttsProb > 0.50 && over25Prob > 0.50)
             {
-                double combinedOdds = Math.Max(m.OddsBttsYes, m.OddsOver25) * 1.30;
+                double combinedOdds = Math.Max(m.OddsBttsYes.GetValueOrDefault(), m.OddsOver25.GetValueOrDefault()) * 1.30;
                 double minProb = Math.Min(bttsProb, over25Prob);
 
                 if (combinedOdds >= minOdds && (combinedOdds * minProb) >= 1.00 && !res.Any(r => r.Item1 == "BttsAndOver25"))
@@ -430,7 +430,7 @@ public sealed class ChatCombinationEngine : IChatCombinationEngine
         public string HomeTeam { get; set; } = "";
         public string AwayTeam { get; set; } = "";
         public string Market { get; set; } = "";
-        public double Odds { get; set; }
+        public double? Odds { get; set; }
         public double Probability { get; set; }
         public double FormScore { get; set; }
         public double Score { get; set; }

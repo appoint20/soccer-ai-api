@@ -37,8 +37,8 @@ public sealed class AiDecisionService : IDecisionService
 
         if (prediction == null) return result;
 
-        // 2. We only want to "Judge" the markets that the math engine actually LIKED (Qualified)
-        // or we judge the overall Match Winner if it's high confidence.
+        // 2. The AI Judge acts as a Senior Risk Analyst.
+        // It validates ALL core markets to check for overrides or hidden traps.
         
         var matchFactsJson = JsonSerializer.Serialize(new
         {
@@ -46,32 +46,31 @@ public sealed class AiDecisionService : IDecisionService
             AwayTeam = teamStats.Away.Name,
             HomeStats = teamStats.Home,
             AwayStats = teamStats.Away,
-            H2H = h2h
+            H2H = h2h,
+            Models = new { Over25Prob = prediction.Over25Prob, BTTSProb = prediction.BTTSProb, MatchWinnerProb = prediction.Confidence }
         });
 
-        // Loop through markets and ask the Judge for verification
-        if (result.Markets.Over25.IsQualified)
-        {
-            result.Markets.Over25 = await ValidateMarket(matchFactsJson, "Over 2.5 Goals", result.Markets.Over25);
-        }
+        // Validate Over 2.5
+        result.Markets.Over25 = await ValidateMarket(matchFactsJson, "Over 2.5 Goals", result.Markets.Over25);
         
-        if (result.Markets.BTTS.IsQualified)
-        {
-            result.Markets.BTTS = await ValidateMarket(matchFactsJson, "Both Teams to Score (Yes)", result.Markets.BTTS);
-        }
+        // Validate BTTS
+        result.Markets.BTTS = await ValidateMarket(matchFactsJson, "Both Teams to Score (Yes)", result.Markets.BTTS);
 
-        if (result.Markets.MatchWinner.IsQualified)
-        {
-            var winnerLabel = prediction.MatchWinner == "home" ? teamStats.Home.Name : teamStats.Away.Name;
-            result.Markets.MatchWinner = await ValidateMarket(matchFactsJson, $"Match Winner: {winnerLabel}", result.Markets.MatchWinner);
-        }
+        // Validate Match Winner
+        var winnerLabel = prediction.MatchWinner == "home" ? teamStats.Home.Name : teamStats.Away.Name;
+        result.Markets.MatchWinner = await ValidateMarket(matchFactsJson, $"Match Winner: {winnerLabel}", result.Markets.MatchWinner);
 
         // 3. Update overall qualification based on Judge's verdict
         result.Qualification.IsQualified = result.Markets.Over25.IsQualified || 
                                           result.Markets.BTTS.IsQualified || 
                                           result.Markets.MatchWinner.IsQualified;
 
-        if (!result.Qualification.IsQualified)
+        if (result.Qualification.IsQualified)
+        {
+            result.Decision = PredictionDecision.StrongBet; // Promote if AI confirms or overrides
+            result.Qualification.Label = "Qualified (Validated by AI Decision Layer)";
+        }
+        else
         {
             result.Decision = PredictionDecision.NoBet;
             result.Qualification.Label = "Invalidated by AI Decision Layer";
@@ -82,33 +81,44 @@ public sealed class AiDecisionService : IDecisionService
 
     private async Task<MarketDecision> ValidateMarket(string factsJson, string marketName, MarketDecision proposed)
     {
-        _logger.LogInformation("[AiDecision] Validating {Market}...", marketName);
+        _logger.LogInformation("[AiDecision] Validating {Market} (Current Status: {Status})...", marketName, proposed.IsQualified);
         
-        var judgeResult = await _aiJudge.ValidatePredictionAsync(factsJson, $"Prediction: {marketName}. Reasoning: {proposed.Reason}");
+        var judgeResult = await _aiJudge.ValidatePredictionAsync(factsJson, $"Prediction: {marketName}. Current Mathematical Reason: {proposed.Reason}");
 
-        if (judgeResult.Decision == "INVALID")
+        if (judgeResult.Decision == "OVERRIDE_MODEL")
         {
-            _logger.LogWarning("[AiDecision] Market {Market} INVALIDATED: {Reason}", marketName, judgeResult.Reason);
+            _logger.LogWarning("[AiDecision] AI OVERRIDDEN MODEL for {Market}: {Reason}", marketName, judgeResult.Reasoning);
             return new MarketDecision
             {
-                IsQualified = false,
-                Confidence = proposed.Confidence * 0.5, // Reduce confidence
-                Reason = $"JUDGE REJECTED: {judgeResult.Reason}"
+                IsQualified = true,
+                Confidence = Math.Max(proposed.Confidence, judgeResult.Confidence / 100.0),
+                Reason = $"OVERRIDE MODEL: {judgeResult.Reasoning}"
             };
         }
 
-        if (judgeResult.Decision == "VALID")
+        if (judgeResult.Decision == "INVALID")
         {
-            _logger.LogInformation("[AiDecision] Market {Market} VALIDATED: {Reason}", marketName, judgeResult.Reason);
+            _logger.LogWarning("[AiDecision] Market {Market} INVALIDATED: {Reason}", marketName, judgeResult.Reasoning);
+            return new MarketDecision
+            {
+                IsQualified = false,
+                Confidence = proposed.Confidence * 0.5,
+                Reason = $"JUDGE REJECTED: {judgeResult.Reasoning}"
+            };
+        }
+
+        if (judgeResult.Decision == "VALID" && proposed.IsQualified)
+        {
+            _logger.LogInformation("[AiDecision] Market {Market} VALIDATED: {Reason}", marketName, judgeResult.Reasoning);
             return new MarketDecision
             {
                 IsQualified = true,
                 Confidence = proposed.Confidence,
-                Reason = $"JUDGE APPROVED: {judgeResult.Reason}"
+                Reason = $"JUDGE APPROVED: {judgeResult.Reasoning}"
             };
         }
 
-        return proposed; // Keep original if unsure
+        return proposed; // Keep original status if VALID but not qualified by engine, or if unsure
     }
 
     public async Task<DecisionServiceResult> Evaluate2(TeamStats homeStats, TeamStats awayStats, HeadToHeadModel head2head)

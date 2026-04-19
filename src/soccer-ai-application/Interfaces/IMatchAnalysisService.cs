@@ -32,11 +32,11 @@ public sealed class FixtureAnalysisResult
     public required DecisionServiceResult Decisions { get; init; }
     public required string LeagueName { get; init; }
     public AiAnalysisDto? Ai { get; init; }
-    public double OddsOver25 { get; init; }
-    public double OddsBttsYes { get; init; }
-    public double OddsHomeWin { get; init; }
-    public double OddsAwayWin { get; init; }
-    public double OddsDraw { get; init; }
+    public double? OddsOver25 { get; init; }
+    public double? OddsBttsYes { get; init; }
+    public double? OddsHomeWin { get; init; }
+    public double? OddsAwayWin { get; init; }
+    public double? OddsDraw { get; init; }
 
     // Situational Context
     public double? HomeElo { get; init; }
