@@ -5,5 +5,5 @@ namespace SoccerAi.Application.Interfaces;
 
 public interface IChatCombinationEngine
 {
-    List<CombinationDto> GenerateCombinations(List<MatchAnalysis> matches, ChatCombinationIntent intent);
+    Task<List<CombinationDto>> GenerateCombinationsAsync(List<MatchAnalysis> matches, ChatCombinationIntent intent);
 }

@@ -112,7 +112,9 @@ public class CreateChatCombinationHandler(
         }
 
         // 3. Generate and rank combinations using the engine
-        var combinations = engine.GenerateCombinations(analysisResponse.Matches, intent);
+        intent.UserMessage = cmd.Query;
+        intent.Refresh = true; // User chat requests should bypass daily system cache
+        var combinations = await engine.GenerateCombinationsAsync(analysisResponse.Matches, intent);
 
         if (combinations.Count == 0)
         {

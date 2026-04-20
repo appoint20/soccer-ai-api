@@ -40,6 +40,12 @@ public sealed class ChatCombinationIntent
     [JsonIgnore]
     public string SourceType { get; set; } = "SYSTEM"; // Changed from init to set so handlers can easily override
 
+    [JsonIgnore]
+    public string? UserMessage { get; set; }
+
+    [JsonIgnore]
+    public bool Refresh { get; set; }
+
     [JsonPropertyName("time_frame")]
     public TimeConstraint? TimeFrame { get; set; }
 }

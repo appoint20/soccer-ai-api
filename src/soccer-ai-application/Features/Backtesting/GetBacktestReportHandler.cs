@@ -95,10 +95,11 @@ public class GetBacktestReportHandler(
                 if (matchAnalyses.Count >= 5)
                 {
                     // Simulate the Portfolio Generation
-                    var portfolios = engine.GenerateCombinations(matchAnalyses, new ChatCombinationIntent 
+                    var portfolios = await engine.GenerateCombinationsAsync(matchAnalyses, new ChatCombinationIntent 
                     { 
                         MinSelectionOdds = 1.50, // Updated to match relaxed threshold
-                        SourceType = "SYSTEM"
+                        SourceType = "SYSTEM",
+                        Refresh = true // Ensure variety in backtests
                     });
 
                     foreach (var combo in portfolios)

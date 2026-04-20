@@ -45,19 +45,26 @@ public class GetMatchCombinationHandler(
             return new GetMatchCombinationResponse([]);
         }
 
-        // Step 2: Delegate to the Insane Math Engine for portfolio generation
-        // Default SYSTEM intent: No filters, use daily hierarchy
+        // Step 2: Determine Intent (SYSTEM or USER)
+        bool isUser = !string.IsNullOrWhiteSpace(query.UserMessage);
         var intent = new ChatCombinationIntent
         {
-            SourceType = "SYSTEM",
-            MinSelectionOdds = 1.50,
-            MaxSameLeague = 2
+            SourceType = isUser ? "USER" : "SYSTEM",
+            Refresh = query.Refresh,
+            UserMessage = query.UserMessage
         };
 
-        logger.LogInformation("[Combinations] Filtering {MatchCount} analyzed matches into candidates (Odds Floor: {Odds}, Max Same League: {MaxLeague})", 
-            analysisResponse.Matches.Count, intent.MinSelectionOdds, intent.MaxSameLeague);
+        if (isUser)
+        {
+            // Optional: Parse natural language into structured intent if the engine needs specific filters
+            // For now, the engine (AI) will handle the query directly inside BuildCombinationsAsync if we adapt it.
+            // But the current BuildCombinationsAsync doesn't take the user message.
+            // I should update IAiAnalysisService.BuildCombinationsAsync to accept the context/message.
+            logger.LogInformation("[Combinations] USER chat request: {Query}", query.UserMessage);
+        }
 
-        var portfolios = combinationEngine.GenerateCombinations(analysisResponse.Matches, intent);
+        // Step 3: Call the AI-driven Engine
+        var portfolios = await combinationEngine.GenerateCombinationsAsync(analysisResponse.Matches, intent);
 
         // Re-index for consistent IDs
         for (int i = 0; i < portfolios.Count; i++)

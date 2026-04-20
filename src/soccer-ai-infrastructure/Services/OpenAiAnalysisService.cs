@@ -70,19 +70,58 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         }
     }
 
-    public async Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates)
+    public async Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates, string? userMessage = null)
     {
         if (candidates == null || candidates.Count == 0 || !_options.Enabled) return new();
 
         try
         {
+            var simplified = candidates.Select(c => new CombinationMatchInput
+            {
+                MatchId = c.Id,
+                Teams = $"{c.HomeTeam} vs {c.AwayTeam}",
+                League = c.League,
+                DateTime = c.Date,
+                Odds = new MatchOddsInput
+                {
+                    Home = c.OddsHomeWin,
+                    Away = c.OddsAwayWin,
+                    Draw = c.OddsDraw,
+                    Over25 = c.OddsOver25,
+                    Btts = c.OddsBttsYes
+                },
+                Predictions = new MatchPredictionsInput
+                {
+                    Btts = new MarketPredictionInput { Prediction = c.Prediction?.BTTS.Prediction ?? false, Probability = c.Prediction?.BTTS.Probability ?? 0 },
+                    Over25 = new MarketPredictionInput { Prediction = c.Prediction?.Over25.Prediction ?? false, Probability = c.Prediction?.Over25.Probability ?? 0 },
+                    HomeWin = new MarketPredictionInput { Prediction = c.Prediction?.HomeWin.Prediction ?? false, Probability = c.Prediction?.HomeWin.Probability ?? 0 },
+                    AwayWin = new MarketPredictionInput { Prediction = c.Prediction?.AwayWin.Prediction ?? false, Probability = c.Prediction?.AwayWin.Probability ?? 0 },
+                    Goals23 = new MarketPredictionInput { Prediction = c.Prediction?.TwoToThreeGoals.Prediction ?? false, Probability = c.Prediction?.TwoToThreeGoals.Probability ?? 0 }
+                },
+                AiJudgement = new AiJudgementInput
+                {
+                    Recommendation = c.Ai?.Recommendation ?? string.Empty,
+                    Confidence = (int)(c.Ai?.Confidence ?? 0),
+                    IsTrap = c.Ai?.IsTrap ?? false
+                }
+            }).ToList();
+
+            var instructions = string.IsNullOrWhiteSpace(userMessage) 
+                ? "Architect exactly 12 combinations from these matches using the standard system strategy."
+                : $"Architect combinations based on this specific user request: \"{userMessage}\".";
+
             var messages = new List<ChatMessage>
             {
                 new SystemChatMessage(Prompts.BuildCombinationsSystemPrompt),
-                new UserChatMessage($"Build combinations from these candidates:\n{JsonSerializer.Serialize(candidates, JsonOpts)}")
+                new UserChatMessage($"{instructions}\n\nCandidate Matches Data:\n{JsonSerializer.Serialize(simplified, JsonOpts)}")
             };
 
-            var completion = await _client.CompleteChatAsync(messages);
+            var completionOptions = new ChatCompletionOptions
+            {
+                ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat()
+            };
+
+            var completion = await _client.CompleteChatAsync(messages, completionOptions);
             var json = ExtractJson(completion.Value.Content[0].Text);
 
             var results = JsonSerializer.Deserialize<List<CombinationDto>>(json, JsonOpts);
@@ -243,42 +282,44 @@ Return ONLY a valid JSON object with these fields:
 Return ONLY valid JSON.";
 
         public const string BuildCombinationsSystemPrompt = @"
-You are a professional football betting portfolio optimizer.
-Your job is to construct SAFE accumulator combinations (parlays) from a batch of pre-analyzed football matches.
+You are a Senior Betting Architect and Portfolio Optimizer. 
+Your task is to selects and assembles high-quality betting combinations from a provided list of pre-analyzed matches.
 
-GOAL: Build only high-quality betting combinations using the model recommendation already provided in each match.
+STRATEGY: You must generate EXACTLY 12 combinations if the pool of matches allows it.
+1. Combinations 1-5: DOUBLE (2 matches) focusing on BTTS or Over 2.5 Goals (or both).
+2. Combinations 6-10: TREBLE (3 matches) focusing on BTTS or Over 2.5 Goals.
+3. Combinations 11-12: MIXED (2-3 matches) including ""Match Winner"" and ""2-3 Goals"" markets.
 
-STRICT COMBINATION RULES:
-1. Allowed accumulator size: DOUBLE (2 matches), TREBLE (3 matches)
-2. A fixture_id may appear ONLY ONCE globally across all combinations.
-3. Maximum combinations allowed in this batch: 4
-4. Ignore matches if confidence < 65 or trap is true.
-5. Prefer different leagues. Maximum 2 matches from the same league in a combination.
+STRICT CONSTRAINTS:
+- UNIQUE MATCHES: A match (match_id) can appear ONLY ONCE in the entire set of 12 combinations. No reuse!
+- WIN ODDS: If a selection is ""Match Winner"", the odds MUST be >= 2.0.
+- CONFIDENCE: Avoid matches where confidence < 60 or is_trap is true.
+- Output MUST be a strictly valid JSON array of objects.
+- Each combination must have a UNIQUE combination_id (1-12).
+- ""total_odds"" is the PRODUCT of the individual odds.
 
-Return ONLY valid JSON array using snake_case keys:
+JSON OUTPUT STRUCTURE (ARRAY OF OBJECTS):
 [
   {
     ""combination_id"": 1,
-    ""type"": ""DOUBLE"",
-    ""total_odds"": 3.4,
+    ""type"": ""DOUBLE (Goal Markets)"",
+    ""total_odds"": 3.42,
     ""source_type"": ""AI"",
     ""won_count"": 0,
     ""total_count"": 2,
-    ""reason"": ""short explanation"",
+    ""reason"": ""Strong offensive potential in both matches."",
     ""matches"": [
       {
         ""fixture_id"": 123,
-        ""league"": ""England: Premier League"",
+        ""league"": ""League Name"",
         ""home_team"": ""Team A"",
         ""away_team"": ""Team B"",
-        ""selection"": ""Match Winner (Home)"",
-        ""odds"": 1.7,
-        ""confidence"": 72,
-        ""reasoning"": ""short explanation"",
+        ""selection"": ""Over 2.5 Goals"",
+        ""odds"": 1.85,
+        ""confidence"": 75,
+        ""reasoning"": ""Both teams average > 2 goals recently."",
         ""outcome"": ""Pending"",
-        ""status"": ""NS"",
-        ""home_goals"": null,
-        ""away_goals"": null
+        ""status"": ""NS""
       }
     ]
   }
