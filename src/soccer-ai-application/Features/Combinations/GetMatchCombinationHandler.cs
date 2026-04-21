@@ -36,8 +36,16 @@ public class GetMatchCombinationHandler(
         var query = context.Message;
         logger.LogInformation("[Combinations] Generating SYSTEM portfolios for {Date}. Pure live math.", query.Date.ToString("yyyy-MM-dd"));
 
-        // Step 1: Request live Match Analysis from the orchestrator
-        var analysisQuery = new GetMatchAnalysisQuery { Date = query.Date, Language = query.Language };
+        // Step 1: Request ONLY analyzed Match Analysis from the orchestrator
+        // We use OnlyAnalyzed = true and a large PageSize to get all qualified matches efficiently
+        var analysisQuery = new GetMatchAnalysisQuery 
+        { 
+            Date = query.Date, 
+            Language = query.Language,
+            OnlyAnalyzed = true,
+            Page = 1,
+            PageSize = 250 // Sufficient for any single day's analyzed matches
+        };
         var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
 
         if (analysisResponse.Matches == null || analysisResponse.Matches.Count == 0)

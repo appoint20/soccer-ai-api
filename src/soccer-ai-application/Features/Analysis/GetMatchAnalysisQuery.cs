@@ -9,6 +9,7 @@ public class GetMatchAnalysisQuery : IRequest
     public string Language { get; set; } = "en";
     public int? Page { get; set; }
     public int? PageSize { get; set; }
+    public bool OnlyAnalyzed { get; set; }
 }
 
 public class GetMatchAnalysisResponse : IResponse

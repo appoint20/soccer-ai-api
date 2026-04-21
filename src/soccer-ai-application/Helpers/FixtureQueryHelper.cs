@@ -17,12 +17,18 @@ public class FixtureQueryHelper(IApplicationDbContext dbContext)
         DateTimeOffset date,
         int? page = null,
         int? pageSize = null,
+        bool onlyAnalyzed = false,
         CancellationToken cancellationToken = default)
     {
         var startUtc = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var endUtc = startUtc.AddDays(1);
 
         var query = dbContext.Fixtures.Where(f => f.Date >= startUtc && f.Date < endUtc);
+
+        if (onlyAnalyzed)
+        {
+            query = query.Where(f => dbContext.FixtureAnalyses.Any(a => a.FixtureId == f.Id));
+        }
         
         var totalCount = await query.CountAsync(cancellationToken);
 

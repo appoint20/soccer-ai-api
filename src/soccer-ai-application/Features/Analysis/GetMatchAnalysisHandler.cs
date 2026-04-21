@@ -43,7 +43,7 @@ public class GetMatchAnalysisHandler(
             date.ToString("yyyy-MM-dd"), lang);
 
         // Step 1: Load fixtures and teams
-        var (fixtures, teams, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(date, query.Page, query.PageSize, cancellationToken);
+        var (fixtures, teams, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(date, query.Page, query.PageSize, query.OnlyAnalyzed, cancellationToken);
 
         logger.LogInformation("Loaded {Count} fixtures from DB for {Date} (Page: {Page}, PageSize: {PageSize})", 
             fixtures.Count, date.ToString("yyyy-MM-dd"), query.Page, query.PageSize);
