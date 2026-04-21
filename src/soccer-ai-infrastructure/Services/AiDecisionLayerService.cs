@@ -29,6 +29,7 @@ public class DecisionLayerResult
 public interface IAiDecisionLayerService
 {
     Task<DecisionLayerResult> ValidatePredictionAsync(string matchJson, string proposedPrediction);
+    Task<Dictionary<string, DecisionLayerResult>> ValidateMarketsAsync(string matchJson, List<KeyValuePair<string, string>> proposals);
 }
 
 public sealed class AiDecisionLayerService : IAiDecisionLayerService
@@ -47,6 +48,15 @@ public sealed class AiDecisionLayerService : IAiDecisionLayerService
 
     public async Task<DecisionLayerResult> ValidatePredictionAsync(string matchJson, string proposedPrediction)
     {
+        var proposals = new List<KeyValuePair<string, string>> { new("default", proposedPrediction) };
+        var results = await ValidateMarketsAsync(matchJson, proposals);
+        return results.TryGetValue("default", out var result) ? result : new DecisionLayerResult { Decision = "ERROR" };
+    }
+
+    public async Task<Dictionary<string, DecisionLayerResult>> ValidateMarketsAsync(string matchJson, List<KeyValuePair<string, string>> proposals)
+    {
+        var proposalsText = string.Join("\n", proposals.Select(p => $"[{p.Key}]: {p.Value}"));
+        
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(Prompts.DecisionLayerSystemPrompt),
@@ -54,29 +64,52 @@ public sealed class AiDecisionLayerService : IAiDecisionLayerService
                 Analyze this match data:
                 {matchJson}
 
-                CURRENT PROPOSAL:
-                '{proposedPrediction}'")
+                CURRENT PROPOSALS TO VALIDATE:
+                {proposalsText}
+                
+                Respond for EACH key provided in the format: {{ ""key"": {{ decision, confidence, reasoning }} }}")
         };
 
-        try
+        int maxRetries = 3;
+        int delayMs = 2000;
+        var random = new Random();
+
+        for (int i = 0; i <= maxRetries; i++)
         {
-            var options = new ChatCompletionOptions
+            try
             {
-                MaxOutputTokenCount = 1000,
-                ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat()
-            };
+                var options = new ChatCompletionOptions
+                {
+                    MaxOutputTokenCount = 2000,
+                    ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat()
+                };
 
-            var completion = await _client.CompleteChatAsync(messages, options);
-            var rawContent = completion.Value.Content[0].Text;
+                var completion = await _client.CompleteChatAsync(messages, options);
+                var rawContent = completion.Value.Content[0].Text;
 
-            return JsonSerializer.Deserialize<DecisionLayerResult>(rawContent) 
-                ?? new DecisionLayerResult { Decision = "ERROR", Reasoning = "Null response from AI" };
+                return JsonSerializer.Deserialize<Dictionary<string, DecisionLayerResult>>(rawContent) ?? new();
+            }
+            catch (Exception ex) when (ex.Message.Contains("429") || ex.Message.Contains("rate limit"))
+            {
+                if (i == maxRetries)
+                {
+                    _logger.LogError(ex, "AiDecisionLayerService.ValidateMarketsAsync: Final retry failed due to rate limit.");
+                    throw;
+                }
+
+                // Exponential backoff with jitter
+                int backoff = delayMs * (int)Math.Pow(2, i) + random.Next(0, 1000);
+                _logger.LogWarning("[AiDecision] Rate limit hit (429). Retrying in {Ms}ms... (Attempt {Attempt}/{Max})", backoff, i + 1, maxRetries);
+                await Task.Delay(backoff);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AiDecisionLayerService.ValidateMarketsAsync failed");
+                return proposals.ToDictionary(p => p.Key, p => new DecisionLayerResult { Decision = "ERROR", Reasoning = ex.Message });
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "AiDecisionLayerService.ValidatePredictionAsync failed");
-            return new DecisionLayerResult { Decision = "ERROR", Reasoning = ex.Message };
-        }
+
+        return new Dictionary<string, DecisionLayerResult>();
     }
 
     private static class Prompts

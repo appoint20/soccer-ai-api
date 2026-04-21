@@ -19,7 +19,8 @@ public sealed class DecisionService(
         TeamStatsResponse teamStats,
         HeadToHeadModel h2h,
         WeightedPrediction? prediction,
-        StatisticalModels stats)
+        StatisticalModels stats,
+        AiAnalysisDto? aiContext = null)
     {
         var markets = new QualificationDecisions();
 

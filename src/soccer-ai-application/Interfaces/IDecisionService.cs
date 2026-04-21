@@ -6,7 +6,7 @@ namespace SoccerAi.Application.Interfaces;
 public interface IDecisionService
 {
     Task<DecisionServiceResult> Evaluate2(TeamStats homeStats, TeamStats awayStats, HeadToHeadModel head2head);
-    Task<DecisionServiceResult> Evaluate(MatchContext context, TeamStatsResponse teamStats, HeadToHeadModel h2h, WeightedPrediction? prediction, StatisticalModels stats);
+    Task<DecisionServiceResult> Evaluate(MatchContext context, TeamStatsResponse teamStats, HeadToHeadModel h2h, WeightedPrediction? prediction, StatisticalModels stats, AiAnalysisDto? aiContext = null);
 }
 
 public class DecisionServiceResult

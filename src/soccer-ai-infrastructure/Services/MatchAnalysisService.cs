@@ -70,12 +70,6 @@ public sealed class MatchAnalysisService(
             };
         }
 
-        var odds = BuildMatchContext(fixture);
-        var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models);
-
-        // On-Demand AI Patch: If AI is missing, we could try to sync it if specifically requested
-        // but to keep it simple and professional, we rely on the background sync or manual trigger.
-        
         var ai = aiEntity != null ? new AiAnalysisDto
         {
             Recommendation = aiEntity.Recommendation ?? "Avoid",
@@ -91,6 +85,9 @@ public sealed class MatchAnalysisService(
             HomeWinSummary = aiEntity.HomeWinSummary ?? "",
             AwayWinSummary = aiEntity.AwayWinSummary ?? ""
         } : new AiAnalysisDto();
+
+        var odds = BuildMatchContext(fixture);
+        var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, ai);
 
         // Build result
         return new FixtureAnalysisResult
