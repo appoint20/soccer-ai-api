@@ -16,4 +16,17 @@ public sealed class AiAnalysisDto
     public string Under25Summary { get; init; } = string.Empty;
     public string HomeWinSummary { get; init; } = string.Empty;
     public string AwayWinSummary { get; init; } = string.Empty;
+    
+    // ── AI Decision Layer (per-market qualifications) ────────────
+    public bool AiOver25Qualified { get; init; }
+    public bool AiBttsQualified { get; init; }
+    public bool AiUnder25Qualified { get; init; }
+    public bool AiGoals23Qualified { get; init; }
+    public bool AiHomeWinQualified { get; init; }
+    public bool AiAwayWinQualified { get; init; }
+    public string AiBestBet { get; init; } = "";
+    public int AiOverallConfidence { get; init; }
+    
+    /// <summary>True if this entity was processed by the AI Decision Layer (has per-market decisions).</summary>
+    public bool HasDecisionLayer => AiOverallConfidence > 0;
 }

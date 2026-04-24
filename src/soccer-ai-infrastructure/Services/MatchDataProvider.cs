@@ -41,6 +41,7 @@ public sealed class MatchDataProvider(
             homeStats.Name = homeTeam.ShortName ?? homeTeam.Name;
             homeStats.Rank = homeTeam.Rank;
             homeStats.Points = homeTeam.Points;
+            homeStats.Played = homeTeam.Played;
             homeStats.Form = homeTeam.Form;
             homeStats.FormPercentage = CalculateFormPercentage(homeTeam.Form);
         }
@@ -50,6 +51,7 @@ public sealed class MatchDataProvider(
             awayStats.Name = awayTeam.ShortName ?? awayTeam.Name;
             awayStats.Rank = awayTeam.Rank;
             awayStats.Points = awayTeam.Points;
+            awayStats.Played = awayTeam.Played;
             awayStats.Form = awayTeam.Form;
             awayStats.FormPercentage = CalculateFormPercentage(awayTeam.Form);
         }

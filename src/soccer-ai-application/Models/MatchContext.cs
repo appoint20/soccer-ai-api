@@ -45,6 +45,9 @@ public sealed class TeamStats
     [JsonPropertyName("points")]
     public int Points { get; set; }
     
+    [JsonIgnore]
+    public int Played { get; set; }
+    
     [JsonPropertyName("form")]
     public string Form { get; set; } = "";
     

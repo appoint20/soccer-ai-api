@@ -38,7 +38,6 @@ public static class DependencyInjection
         // Core Analysis & Prediction
         services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();
-        services.AddScoped<IApiFootballService, ApiFootballService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
         services.AddScoped<ITeamSyncService, TeamSyncService>();
@@ -83,7 +82,7 @@ public static class DependencyInjection
 
     private static void AddExternalApis(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddHttpClient("FootballApi", (provider, client) =>
+        services.AddHttpClient<IApiFootballService, ApiFootballService>((provider, client) =>
         {
             var options = configuration.GetSection("ApiFootball").Get<FootballApiOptions>();
             var apiKey = Environment.GetEnvironmentVariable("API_FOOTBALL_KEY") ?? options?.ApiKey;

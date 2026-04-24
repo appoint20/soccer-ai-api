@@ -53,7 +53,7 @@ public class GetMatchAnalysisHandler(
             logger.LogWarning("No fixtures found in database for date {Date}", date.ToString("yyyy-MM-dd"));
             return new GetMatchAnalysisResponse 
             { 
-                Matches = new(), 
+                Matches = [], 
                 TotalCount = totalCount,
                 Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 } 
             };

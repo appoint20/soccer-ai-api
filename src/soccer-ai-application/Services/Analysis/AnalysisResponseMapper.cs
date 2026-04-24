@@ -158,10 +158,7 @@ public class AnalysisResponseMapper
         var totalGoals = fixture.HomeGoal + fixture.AwayGoal;
         var isBtts = fixture.HomeGoal > 0 && fixture.AwayGoal > 0;
 
-        if (analysis.Prediction == null)
-            return new MatchResult { ActualScore = actualScore, IsCorrect = false };
-
-        string predWinner = analysis.Prediction.MatchWinner;
+        string predWinner = analysis.Prediction?.MatchWinner ?? "";
         bool isWinnerCorrect =
             (predWinner.Equals("home", StringComparison.OrdinalIgnoreCase) && fixture.HomeGoal > fixture.AwayGoal) ||
             (predWinner.Equals("draw", StringComparison.OrdinalIgnoreCase) && fixture.HomeGoal == fixture.AwayGoal) ||
@@ -171,9 +168,9 @@ public class AnalysisResponseMapper
         { 
             ActualScore = actualScore, 
             IsCorrect = isWinnerCorrect,
-            IsBttsCorrect = analysis.Prediction.BTTS == isBtts,
-            IsOver25Correct = totalGoals > 2.5 == analysis.Prediction.Over25,
-            IsUnder25Correct = totalGoals < 2.5 == (analysis.Decisions.Markets.LowScoring.IsQualified)
+            IsBttsCorrect = isBtts,
+            IsOver25Correct = totalGoals > 2.5,
+            IsUnder25Correct = totalGoals < 2.5
         };
     }
 

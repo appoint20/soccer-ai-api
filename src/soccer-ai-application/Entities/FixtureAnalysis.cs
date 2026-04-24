@@ -43,6 +43,16 @@ public class FixtureAnalysis
     public string? HomeWinSummary { get; set; }
     public string? AwayWinSummary { get; set; }
 
+    // ── AI Decision Layer (per-market qualifications) ────────────
+    public bool AiOver25Qualified { get; set; }
+    public bool AiBttsQualified { get; set; }
+    public bool AiUnder25Qualified { get; set; }
+    public bool AiGoals23Qualified { get; set; }
+    public bool AiHomeWinQualified { get; set; }
+    public bool AiAwayWinQualified { get; set; }
+    public string AiBestBet { get; set; } = "";
+    public int AiOverallConfidence { get; set; }
+
     // ── Audit ──────────────────────────────────────────────────────
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

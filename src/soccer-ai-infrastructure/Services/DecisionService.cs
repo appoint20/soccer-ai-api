@@ -97,13 +97,21 @@ public sealed class DecisionService(
         if (avgTotalScored > 2.5)
             lowWarning = $"High combined scoring ({avgTotalScored:F1} avg total goals)";
 
-        if (lowScoringProb >= 0.55 && p00 > 0.10 && string.IsNullOrWhiteSpace(lowWarning))
+        // Low scoring qualifies if probability is high enough AND supported by at least one indicator:
+        // 1. P(0-0) > 10% — strong defensive profile
+        // 2. Combined average scoring < 2.5 — statistical low-scoring trend
+        // 3. Both BTTS and Over2.5 probabilities are below 50% — consistent low-scoring signals
+        bool hasLowScoringIndicator = p00 > 0.10 
+            || avgTotalScored < 2.5 
+            || (prediction.BTTSProb < 0.50 && prediction.Over25Prob < 0.50);
+
+        if (lowScoringProb >= 0.55 && hasLowScoringIndicator && string.IsNullOrWhiteSpace(lowWarning))
         {
             markets.LowScoring = new MarketDecision
             {
                 IsQualified = true,
                 Confidence = Math.Round(lowScoringProb, 3),
-                Reason = $"Low scoring profile: P(0-0)={p00:P0}, P(U1.5)={pUnder15:P0}"
+                Reason = $"Low scoring profile: P(0-0)={p00:P0}, P(U1.5)={pUnder15:P0}, AvgGoals={avgTotalScored:F1}"
             };
         }
         else
@@ -127,7 +135,7 @@ public sealed class DecisionService(
             MonteCarlo = stats.MonteCarlo,
             MarketCalibrated = null // Calibrated markets not strictly required for trap detection at this stage
         };
-        var trapResult = trapDetection.Detect(bundle, prediction, context);
+        var trapResult = trapDetection.Detect(bundle, prediction, context, teamStats);
         var trap = new TrapDecision
         {
             IsTrap = trapResult.IsTrap,

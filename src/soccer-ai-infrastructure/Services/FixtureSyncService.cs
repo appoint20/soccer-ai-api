@@ -236,7 +236,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                         await UpdateCompletedFixtureAsync(existingFixture, apiFixture, targetLeagueId, ct);
                         result.Updated++;
                     }
-                    else if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
+                    
+                    if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
                     {
                         // Missing odds, still within window - try to fetch
                         await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);

@@ -11,7 +11,8 @@ public interface ITrapDetectionService
     TrapResult Detect(
         ProbabilityBundle bundle,
         WeightedPrediction? prediction,
-        MatchContext odds);
+        MatchContext odds,
+        TeamStatsResponse? teamStats = null);
 }
 
 /// <summary>
@@ -22,6 +23,7 @@ public sealed class TrapResult
     public bool LowScoreTrap { get; init; }
     public bool MarketMismatch { get; init; }
     public bool DefensiveMatch { get; init; }
+    public bool RelegationTrap { get; init; }
     
     /// <summary>Points to deduct from the final 100-point feature score.</summary>
     public double PenaltyScore { get; init; }

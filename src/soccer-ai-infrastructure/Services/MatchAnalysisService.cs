@@ -83,7 +83,16 @@ public sealed class MatchAnalysisService(
             Over25Summary = aiEntity.Over25Summary ?? "",
             Under25Summary = aiEntity.Under25Summary ?? "",
             HomeWinSummary = aiEntity.HomeWinSummary ?? "",
-            AwayWinSummary = aiEntity.AwayWinSummary ?? ""
+            AwayWinSummary = aiEntity.AwayWinSummary ?? "",
+            // AI Decision Layer per-market qualifications
+            AiOver25Qualified = aiEntity.AiOver25Qualified,
+            AiBttsQualified = aiEntity.AiBttsQualified,
+            AiUnder25Qualified = aiEntity.AiUnder25Qualified,
+            AiGoals23Qualified = aiEntity.AiGoals23Qualified,
+            AiHomeWinQualified = aiEntity.AiHomeWinQualified,
+            AiAwayWinQualified = aiEntity.AiAwayWinQualified,
+            AiBestBet = aiEntity.AiBestBet ?? "",
+            AiOverallConfidence = aiEntity.AiOverallConfidence
         } : new AiAnalysisDto();
 
         var odds = BuildMatchContext(fixture);
@@ -93,9 +102,9 @@ public sealed class MatchAnalysisService(
         return new FixtureAnalysisResult
         {
             FixtureId = fixture.Id,
-            TeamStats = stats ?? new TeamStatsResponse(),
+            TeamStats = stats,
             Models = models,
-            H2H = h2h ?? new HeadToHeadModel(),
+            H2H = h2h,
             Prediction = prediction,
             Decisions = decisions,
             LeagueName = GetLeagueName(fixture.LeagueId),
@@ -105,8 +114,6 @@ public sealed class MatchAnalysisService(
             OddsAwayWin = odds.OddsAway,
             OddsDraw = odds.OddsDraw,
             Ai = ai,
-            HomeElo = fixture.HomeElo,
-            AwayElo = fixture.AwayElo,
             HomeRestDays = homeRest,
             AwayRestDays = awayRest
         };

@@ -37,10 +37,6 @@ public sealed class FixtureAnalysisResult
     public double? OddsHomeWin { get; init; }
     public double? OddsAwayWin { get; init; }
     public double? OddsDraw { get; init; }
-
-    // Situational Context
-    public double? HomeElo { get; init; }
-    public double? AwayElo { get; init; }
     public float? HomeRestDays { get; init; }
     public float? AwayRestDays { get; init; }
 }
