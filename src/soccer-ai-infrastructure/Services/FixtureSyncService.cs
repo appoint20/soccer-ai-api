@@ -172,8 +172,8 @@ public class FixtureSyncService(IApiFootballService apiService,
             }
         }
 
-        // Phase 2: Recently active or completed fixtures (last 3 days to catch delayed results/corrections)
-        var cutoff = DateTimeOffset.UtcNow.AddDays(-3);
+        // Phase 2: Recently active or completed fixtures (last 14 days to catch delayed results/corrections)
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-14);
         
         // We include anything that is:
         // 1. Officially finished (FT, AET, PEN, ABD, etc.)

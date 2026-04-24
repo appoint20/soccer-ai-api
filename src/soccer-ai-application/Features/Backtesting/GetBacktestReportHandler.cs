@@ -25,7 +25,28 @@ public class GetBacktestReportHandler(
     {
         var query = context.Message;
         
-        // Cache disabled per user request to ensure fresh simulations.
+        // 1. Check persistence layer for cached report
+        if (!query.Refresh)
+        {
+            var cached = await dbContext.BacktestReports
+                .Where(r => r.WeeksBack == query.WeeksBack && r.Stake == query.Stake)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (cached != null && cached.CreatedAt > DateTimeOffset.UtcNow.AddDays(-7))
+            {
+                logger.LogInformation("[Backtest] Cache HIT. Returning persisted report from {Date}", cached.CreatedAt);
+                try
+                {
+                    return JsonSerializer.Deserialize<GetBacktestReportResponse>(cached.ReportJson)!;
+                }
+                catch
+                {
+                    logger.LogWarning("[Backtest] Failed to deserialize cached report. Recalculating...");
+                }
+            }
+        }
+
         logger.LogInformation("[Backtest] Simulating last {Weeks} weeks. Pure Math Engine.", query.WeeksBack);
 
         var startDate = DateTimeOffset.UtcNow.AddDays(-query.WeeksBack * 7);
@@ -141,7 +162,28 @@ public class GetBacktestReportHandler(
 
         await Task.WhenAll(tasks);
 
-        return CalculateFinalReport(simulationResults.ToList(), leagueResults.ToList(), startDate, query.WeeksBack, query.Stake);
+        var response = CalculateFinalReport(simulationResults.ToList(), leagueResults.ToList(), startDate, query.WeeksBack, query.Stake);
+
+        // 2. Persist the report to cache
+        try
+        {
+            var reportEntity = new BacktestReport
+            {
+                WeeksBack = query.WeeksBack,
+                Stake = query.Stake,
+                ReportJson = JsonSerializer.Serialize(response),
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            dbContext.BacktestReports.Add(reportEntity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("[Backtest] Saved fresh report to cache (WeeksBack: {WeeksBack})", query.WeeksBack);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[Backtest] Failed to save report to cache.");
+        }
+
+        return response;
     }
 
     private bool IsLegWon(string selection, Fixture f)
