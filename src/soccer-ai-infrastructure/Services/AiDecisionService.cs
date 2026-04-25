@@ -11,6 +11,7 @@ namespace SoccerAi.Infrastructure.Services;
 /// 2. Checks if persisted AI decisions exist in the DB (via AiAnalysisDto).
 /// 3. If not, calls the AI Decision Layer with enriched match data.
 /// 4. Merges AI decisions into the final result.
+/// Persistence of decisions is handled by MatchAnalysisService (which has the fixtureId).
 /// </summary>
 public sealed class AiDecisionService : IDecisionService
 {
@@ -43,7 +44,7 @@ public sealed class AiDecisionService : IDecisionService
 
         if (aiContext != null && aiContext.HasDecisionLayer)
         {
-            // ── CACHE HIT: Use persisted AI market decisions ──
+            // ── CACHE HIT: Use persisted AI market decisions (no AI call needed) ──
             _logger.LogInformation("[AiDecision] Using persisted AI decisions for {Home} vs {Away}.",
                 teamStats.Home.Name, teamStats.Away.Name);
 
@@ -51,8 +52,8 @@ public sealed class AiDecisionService : IDecisionService
         }
         else if (aiContext != null && !string.IsNullOrWhiteSpace(aiContext.Recommendation))
         {
-            // ── LEGACY CACHE: Old-style analysis without per-market decisions ──
-            // Call AI Decision Layer with enriched data
+            // ── LEGACY CACHE: Old-style analysis exists but no per-market decisions yet ──
+            // Call AI Decision Layer — MatchAnalysisService will persist the result
             _logger.LogInformation("[AiDecision] Persisted analysis found but no decision layer data. Calling AI for {Home} vs {Away}...",
                 teamStats.Home.Name, teamStats.Away.Name);
 

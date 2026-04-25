@@ -98,6 +98,13 @@ public sealed class MatchAnalysisService(
         var odds = BuildMatchContext(fixture);
         var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, ai);
 
+        // Persist AI decision layer results if they were just computed (not from cache)
+        // This happens when the analysis existed but decision layer data was missing (legacy data)
+        if (aiEntity != null && aiEntity.AiOverallConfidence == 0 && decisions.Qualification.Label?.Contains("AI Decision Layer") == true)
+        {
+            await PersistAiDecisionsAsync(fixture.Id, decisions, ct);
+        }
+
         // Build result
         return new FixtureAnalysisResult
         {
@@ -117,6 +124,48 @@ public sealed class MatchAnalysisService(
             HomeRestDays = homeRest,
             AwayRestDays = awayRest
         };
+    }
+
+    /// <summary>
+    /// Persists AI Decision Layer market qualifications to the FixtureAnalysis rows
+    /// for the given fixture, so subsequent API requests use the cached decisions.
+    /// </summary>
+    private async Task PersistAiDecisionsAsync(int fixtureId, DecisionServiceResult decisions, CancellationToken ct)
+    {
+        try
+        {
+            var analyses = await dbContext.FixtureAnalyses
+                .Where(a => a.FixtureId == fixtureId && a.AiOverallConfidence == 0)
+                .ToListAsync(ct);
+
+            if (analyses.Count == 0) return;
+
+            foreach (var analysis in analyses)
+            {
+                analysis.AiOver25Qualified = decisions.Markets.Over25.IsQualified;
+                analysis.AiBttsQualified = decisions.Markets.BTTS.IsQualified;
+                analysis.AiUnder25Qualified = decisions.Markets.LowScoring.IsQualified;
+                analysis.AiGoals23Qualified = decisions.Markets.TwoToThreeGoals.IsQualified;
+                analysis.AiHomeWinQualified = decisions.Markets.MatchWinner.IsQualified; 
+                analysis.AiAwayWinQualified = false; // Derived from MatchWinner context
+                analysis.AiBestBet = decisions.Qualification.Label ?? "";
+                analysis.AiOverallConfidence = (int)(decisions.Qualification.CombinedProbability * 100);
+                analysis.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+
+            // Use a minimum confidence of 1 to mark as "processed" even if no market qualified
+            if (analyses.Any(a => a.AiOverallConfidence == 0))
+            {
+                foreach (var a in analyses.Where(x => x.AiOverallConfidence == 0))
+                    a.AiOverallConfidence = 1; // Mark as processed
+            }
+
+            await dbContext.SaveChangesAsync(ct);
+        }
+        catch (Exception)
+        {
+            // Non-critical — will retry on next request
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────
