@@ -9,20 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.soccer-ai-api/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_btts_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_goals23_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_over25_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/models/target_result_mlnet.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-api/data/soccer.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-application/Interfaces/IMatchAnalysisService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/DependencyInjection.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/AiSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/AiSyncService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/FixtureSyncService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/soccer-ai-infrastructure/Services/MatchAnalysisService.cs" afterDir="false" />
-    </list>
+    <list default="true" id="ebe074bf-d15c-4cf0-a3c1-6224747cf502" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -135,7 +122,7 @@
       <workItem from="1772972114574" duration="20248000" />
       <workItem from="1775849046483" duration="26098000" />
       <workItem from="1776510757815" duration="3724000" />
-      <workItem from="1776546532900" duration="18301000" />
+      <workItem from="1776546532900" duration="18955000" />
     </task>
     <servers />
   </component>
@@ -145,50 +132,5 @@
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs</url>
-          <line>152</line>
-          <properties documentPath="$PROJECT_DIR$/src/soccer-ai-application/Services/Analysis/AnalysisResponseMapper.cs" containingFunctionPresentation="Method 'ValidateMatchResult'">
-            <startOffsets>
-              <option value="6361" />
-            </startOffsets>
-            <endOffsets>
-              <option value="6434" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs</url>
-          <line>89</line>
-          <properties documentPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" containingFunctionPresentation="Method 'Handle'">
-            <startOffsets>
-              <option value="3685" />
-            </startOffsets>
-            <endOffsets>
-              <option value="3811" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs</url>
-          <line>45</line>
-          <properties documentPath="$PROJECT_DIR$/src/soccer-ai-application/Features/Analysis/GetMatchAnalysisHandler.cs" containingFunctionPresentation="Method 'Handle'">
-            <startOffsets>
-              <option value="1745" />
-            </startOffsets>
-            <endOffsets>
-              <option value="1898" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
