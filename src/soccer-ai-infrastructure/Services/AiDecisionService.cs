@@ -282,7 +282,7 @@ public sealed class AiDecisionService : IDecisionService
 
     private static MarketDecision ToMarketDecision(AiMarketDecision ai, string label) => new()
     {
-        IsQualified = ai.Qualified && ai.Confidence >= 60,
+        IsQualified = ai.Qualified && ai.Confidence >= 55,
         Confidence = ai.Confidence / 100.0,
         Reason = $"AI: {ai.Reasoning}"
     };
