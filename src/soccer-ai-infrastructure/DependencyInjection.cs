@@ -47,7 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IProbabilityConsensusEngine, ProbabilityConsensusEngine>();
         services.AddScoped<DecisionService>(); // Register concretely for AiDecisionService to use
         services.AddScoped<IDecisionService, AiDecisionService>(); // AI-driven implementation
-        services.AddScoped<IAiDecisionLayerService, AiDecisionLayerService>();
+
         services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
         services.AddScoped<ILeagueVolatilityService, LeagueVolatilityService>();
         services.AddScoped<ITrapDetectionService, TrapDetectionService>();

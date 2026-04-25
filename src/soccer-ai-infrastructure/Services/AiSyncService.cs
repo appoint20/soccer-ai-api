@@ -12,7 +12,6 @@ public class AiSyncService(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
     IAiAnalysisService aiService,
-    IAiDecisionLayerService aiDecisionLayer,
     ILogger<AiSyncService> logger)
     : IAiSyncService
 {
@@ -107,12 +106,12 @@ public class AiSyncService(
         logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Starting batch processing (Chunk of 5)...", toAnalyze.Count);
 
         // 3. Process incrementally in batches of 5 and SAVE immediately.
-        for (var i = 0; i < toAnalyze.Count; i += 5)
+        for (var i = 0; i < toAnalyze.Count; i += 3)
         {
-            var chunkList = toAnalyze.Skip(i).Take(5).ToList();
+            var chunkList = toAnalyze.Skip(i).Take(3).ToList();
             try
             {
-                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", (i / 5) + 1, chunkList.Count);
+                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", (i / 3) + 1, chunkList.Count);
                 
                 var results = await aiService.AnalyzeBatchAsync(chunkList);
                 
@@ -137,35 +136,15 @@ public class AiSyncService(
                         AwayProb = originalAnalysis.ModelAwayWin,
                     };
 
-                    // Call AI Decision Layer for per-market decisions
-                    AiFullDecisionResult? decisions = null;
-                    try
-                    {
-                        var decisionPayload = BuildDecisionPayload(originalAnalysis, mathProbs);
-                        decisions = await aiDecisionLayer.EvaluateMatchAsync(decisionPayload);
-                        if (decisions != null)
-                        {
-                            logger.LogInformation("[AiSync] Decision Layer for Fixture {Id}: BestBet={Best}, Confidence={Conf}%",
-                                fixtureId, decisions.BestBet, decisions.OverallConfidence);
-                        }
-                    }
-                    catch (Exception dlEx)
-                    {
-                        logger.LogWarning(dlEx, "[AiSync] Decision Layer failed for Fixture {Id}. Persisting without decisions.", fixtureId);
-                    }
-
-                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, decisions, cancellationToken);
-                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", mathProbs, decisions, cancellationToken);
+                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, cancellationToken);
+                    await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", mathProbs, cancellationToken);
                     totalProcessed++;
-
-                    // Small delay between decision layer calls to respect rate limits
-                    await Task.Delay(500, cancellationToken);
                 }
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("[AiSync] Successfully called SaveChangesAsync for batch.");
                 
-                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", (i / 5) + 1);
+                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", (i / 3) + 1);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
@@ -240,20 +219,8 @@ public class AiSyncService(
         var results = await aiService.AnalyzeBatchAsync([item]);
         if (results.TryGetValue(fixtureId, out var bilingualResult))
         {
-            // Single fixture sync — also call decision layer
-            AiFullDecisionResult? decisions = null;
-            try
-            {
-                var decisionPayload = BuildDecisionPayload(item, analysis.Prediction ?? new WeightedPrediction());
-                decisions = await aiDecisionLayer.EvaluateMatchAsync(decisionPayload);
-            }
-            catch (Exception dlEx)
-            {
-                logger.LogWarning(dlEx, "[AiSync] Decision Layer failed for single fixture {Id}.", fixture.Id);
-            }
-
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", analysis.Prediction ?? new WeightedPrediction(), decisions, cancellationToken);
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", analysis.Prediction ?? new WeightedPrediction(), decisions, cancellationToken);
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Successfully synced AI analysis for Fixture {FixtureId}.", fixtureId);
         }
@@ -263,76 +230,7 @@ public class AiSyncService(
         }
     }
 
-    /// <summary>
-    /// Builds enriched JSON payload for the AI Decision Layer from sync batch data.
-    /// </summary>
-    private static string BuildDecisionPayload(AiBatchItem item, WeightedPrediction math)
-    {
-        return System.Text.Json.JsonSerializer.Serialize(new
-        {
-            match = new { league = item.League },
-            home_team = new
-            {
-                name = item.HomeTeam,
-                rank = item.HomeStats.Rank,
-                points = item.HomeStats.Points,
-                played = item.HomeStats.Played,
-                form = item.HomeStats.Form,
-                form_percentage = item.HomeStats.FormPercentage,
-                possession = item.HomeStats.Possession,
-                momentum = item.HomeStats.Momentum,
-                avg_goals_scored_last_3 = item.HomeStats.AvgGoalsScoredLast3,
-                avg_goals_conceded_last_3 = item.HomeStats.AvgGoalsConcededLast3,
-                avg_goals_scored_last_7 = item.HomeStats.AvgGoalsScoredLast7,
-                avg_goals_conceded_last_7 = item.HomeStats.AvgGoalsConcededLast7,
-                attack_strength = item.HomeStats.AttackStrength,
-                defensive_strength = item.HomeStats.DefensiveStrength,
-                clean_sheet_rate = item.HomeStats.CleanSheetRate,
-                win_rate = item.HomeStats.WinRate,
-                btts_rate_last_3 = item.HomeStats.BTTSRateLast3,
-                over25_rate_last_3 = item.HomeStats.Over25RateLast3
-            },
-            away_team = new
-            {
-                name = item.AwayTeam,
-                rank = item.AwayStats.Rank,
-                points = item.AwayStats.Points,
-                played = item.AwayStats.Played,
-                form = item.AwayStats.Form,
-                form_percentage = item.AwayStats.FormPercentage,
-                possession = item.AwayStats.Possession,
-                momentum = item.AwayStats.Momentum,
-                avg_goals_scored_last_3 = item.AwayStats.AvgGoalsScoredLast3,
-                avg_goals_conceded_last_3 = item.AwayStats.AvgGoalsConcededLast3,
-                avg_goals_scored_last_7 = item.AwayStats.AvgGoalsScoredLast7,
-                avg_goals_conceded_last_7 = item.AwayStats.AvgGoalsConcededLast7,
-                attack_strength = item.AwayStats.AttackStrength,
-                defensive_strength = item.AwayStats.DefensiveStrength,
-                clean_sheet_rate = item.AwayStats.CleanSheetRate,
-                win_rate = item.AwayStats.WinRate,
-                btts_rate_last_3 = item.AwayStats.BTTSRateLast3,
-                over25_rate_last_3 = item.AwayStats.Over25RateLast3
-            },
-            model_probabilities = new
-            {
-                home_win = math.HomeProb,
-                away_win = math.AwayProb,
-                over25 = math.Over25Prob,
-                btts = math.BTTSProb,
-                confidence = math.Confidence
-            },
-            odds = new
-            {
-                home = item.OddsHomeWin,
-                draw = item.OddsDraw,
-                away = item.OddsAwayWin,
-                over25 = item.OddsOver25,
-                btts = item.OddsBTTS
-            }
-        });
-    }
-
-    private async Task UpsertAnalysisAsync(int fixtureId, AiBilingualResult aiResult, AiLanguageBlock block, string lang, WeightedPrediction math, AiFullDecisionResult? decisions, CancellationToken ct)
+    private async Task UpsertAnalysisAsync(int fixtureId, AiBilingualResult aiResult, AiLanguageBlock block, string lang, WeightedPrediction math, CancellationToken ct)
     {
         var existing = await dbContext.FixtureAnalyses
             .FirstOrDefaultAsync(a => a.FixtureId == fixtureId && a.Lang == lang, ct);
@@ -360,28 +258,25 @@ public class AiSyncService(
             existing.Over25Prob          = math.Over25Prob;
             existing.BttsProb            = math.BTTSProb;
             
-            // AI Decision Layer
-            if (decisions != null)
-            {
-                existing.AiOver25Qualified    = decisions.Over25.Qualified;
-                existing.AiBttsQualified      = decisions.Btts.Qualified;
-                existing.AiUnder25Qualified   = decisions.Under25.Qualified;
-                existing.AiGoals23Qualified   = decisions.Goals23.Qualified;
-                existing.AiHomeWinQualified   = decisions.HomeWin.Qualified;
-                existing.AiAwayWinQualified   = decisions.AwayWin.Qualified;
-                existing.AiBestBet            = decisions.BestBet;
-                existing.AiOverallConfidence  = decisions.OverallConfidence;
-            }
-            
+            // Unified AI Decision Layer
+            existing.AiOver25Qualified    = aiResult.Over25Qualified;
+            existing.AiBttsQualified      = aiResult.BttsQualified;
+            existing.AiUnder25Qualified   = aiResult.Under25Qualified;
+            existing.AiGoals23Qualified   = aiResult.Goals23Qualified;
+            existing.AiHomeWinQualified   = aiResult.HomeWinQualified;
+            existing.AiAwayWinQualified   = aiResult.AwayWinQualified;
+            existing.AiBestBet            = aiResult.BestBet ?? "";
+            existing.AiOverallConfidence  = aiResult.OverallConfidence;
+
             existing.UpdatedAt = DateTimeOffset.UtcNow;
         }
         else
         {
-            var entity = new FixtureAnalysis
+            dbContext.FixtureAnalyses.Add(new FixtureAnalysis
             {
                 FixtureId           = fixtureId,
-                Recommendation      = aiResult.Recommendation,
                 Lang                = lang,
+                Recommendation      = aiResult.Recommendation,
                 Confidence          = aiResult.Confidence,
                 PredictionReason    = block.PredictionReason ?? "",
                 Analysis            = block.Analysis ?? "",
@@ -396,28 +291,21 @@ public class AiSyncService(
                 
                 // MATH CACHE
                 HomeProb            = math.HomeProb,
-                DrawProb            = 0.0, // Explicitly excluded
+                DrawProb            = 0.0,
                 AwayProb            = math.AwayProb,
                 Over25Prob          = math.Over25Prob,
                 BttsProb            = math.BTTSProb,
                 
-                CreatedAt           = DateTimeOffset.UtcNow
-            };
-            
-            // AI Decision Layer
-            if (decisions != null)
-            {
-                entity.AiOver25Qualified    = decisions.Over25.Qualified;
-                entity.AiBttsQualified      = decisions.Btts.Qualified;
-                entity.AiUnder25Qualified   = decisions.Under25.Qualified;
-                entity.AiGoals23Qualified   = decisions.Goals23.Qualified;
-                entity.AiHomeWinQualified   = decisions.HomeWin.Qualified;
-                entity.AiAwayWinQualified   = decisions.AwayWin.Qualified;
-                entity.AiBestBet            = decisions.BestBet;
-                entity.AiOverallConfidence  = decisions.OverallConfidence;
-            }
-            
-            dbContext.FixtureAnalyses.Add(entity);
+                // Unified AI Decision Layer
+                AiOver25Qualified   = aiResult.Over25Qualified,
+                AiBttsQualified     = aiResult.BttsQualified,
+                AiUnder25Qualified  = aiResult.Under25Qualified,
+                AiGoals23Qualified  = aiResult.Goals23Qualified,
+                AiHomeWinQualified  = aiResult.HomeWinQualified,
+                AiAwayWinQualified  = aiResult.AwayWinQualified,
+                AiBestBet           = aiResult.BestBet ?? "",
+                AiOverallConfidence = aiResult.OverallConfidence
+            });
         }
     }
 }
