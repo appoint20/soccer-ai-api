@@ -125,7 +125,16 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             var json = ExtractJson(completion.Value.Content[0].Text);
 
             var results = JsonSerializer.Deserialize<List<CombinationDto>>(json, JsonOpts);
-            return results ?? new();
+            if (results == null) return new();
+
+            // Sanity check: Ensure the AI only returned matches that were in the input list
+            var validIds = simplified.Select(m => m.MatchId).ToHashSet();
+            foreach (var combo in results)
+            {
+                combo.Matches.RemoveAll(m => !validIds.Contains(m.FixtureId));
+            }
+            
+            return results.Where(c => c.Matches.Any()).ToList();
         }
         catch (Exception ex)
         {

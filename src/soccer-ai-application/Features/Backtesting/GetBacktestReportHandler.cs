@@ -83,7 +83,7 @@ public class GetBacktestReportHandler(
                 {
                     try
                     {
-                        var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", cancellationToken);
+                        var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", false, cancellationToken);
                         if (analysisResult.Prediction != null)
                         {
                             var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
@@ -129,7 +129,14 @@ public class GetBacktestReportHandler(
                         bool isFullWin = true;
                         foreach (var leg in combo.Matches)
                         {
-                            var fix = fixtures.First(fx => fx.Id == leg.FixtureId);
+                            var fix = fixtures.FirstOrDefault(fx => fx.Id == leg.FixtureId);
+                            if (fix == null)
+                            {
+                                logger.LogWarning("[Backtest] AI returned unknown fixture ID {Id}. Skipping leg.", leg.FixtureId);
+                                isFullWin = false;
+                                continue;
+                            }
+
                             bool legWon = IsLegWon(leg.Selection, fix);
                             legResults.Add(new LegResult { IsWon = legWon });
                             

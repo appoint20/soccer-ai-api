@@ -21,7 +21,7 @@ public sealed class ChatCombinationEngine(
         if (intent.SourceType == "SYSTEM" && !intent.Refresh)
         {
             var cached = await dbContext.Combinations
-                .FirstOrDefaultAsync(c => c.Date == matches.FirstOrDefault().Date.Date && 
+                .FirstOrDefaultAsync(c => c.Date == matches.FirstOrDefault()!.Date.Date && 
                                          c.Language == "en" && 
                                          c.IsDailyCache);
 
