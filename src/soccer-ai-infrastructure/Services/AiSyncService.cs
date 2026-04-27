@@ -60,7 +60,7 @@ public class AiSyncService(
             try
             {
                 // Run predictive ML for this unanalyzed fixture
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", cancellationToken);
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", false, cancellationToken);
 
                 toAnalyze.Add(new AiBatchItem
                 {
@@ -195,7 +195,7 @@ public class AiSyncService(
             return;
         }
 
-        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", cancellationToken);
+        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", false, cancellationToken);
         var item = new AiBatchItem
         {
             FixtureId = fixture.Id,
