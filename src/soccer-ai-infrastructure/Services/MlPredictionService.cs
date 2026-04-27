@@ -90,6 +90,7 @@ public class MlPredictionService : IMlPredictionService
             "home_overall_xg_avg", "home_overall_btts_rate", "home_overall_over25_rate",
             "home_overall_scored_diff", "home_overall_xg_diff",
             "home_overall_under_streak", "home_overall_over_streak", "home_overall_btts_streak",
+            "home_motivation", "home_red_hangover",
 
             "away_goals_scored_avg", "away_goals_conceded_avg", "away_xg_avg",
             "away_shots_avg", "away_shots_on_target_avg", "away_btts_rate",
@@ -98,7 +99,9 @@ public class MlPredictionService : IMlPredictionService
             "away_overall_xg_avg", "away_overall_btts_rate", "away_overall_over25_rate",
             "away_overall_scored_diff", "away_overall_xg_diff",
             "away_overall_under_streak", "away_overall_over_streak", "away_overall_btts_streak",
-            "h2h_total_goals_avg", "h2h_btts_rate", "h2h_over25_rate",
+            "away_motivation", "away_red_hangover",
+            "motivation_delta",
+            "h2h_btts_rate", "h2h_over25_rate",
             "league_avg_goals", "league_btts_rate", "league_over25_rate",
             "is_derby",
             "is_weekend", "day_of_week", "month", "season_month_idx",

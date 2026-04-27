@@ -407,6 +407,89 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         return new Dictionary<string, object> { ["status"] = "unknown" };
     }
 
+    /// <summary>
+    /// Fetch current coach for a team
+    /// </summary>
+    public async Task<TeamCoach?> GetTeamCoachAsync(int teamId)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync($"/coachs?team={teamId}");
+            if (response is null) return null;
+            
+            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+                return null;
+
+            // The API returns a list of coaches, usually the current one has "career" entry where "end" is null.
+            // Or we just take the first coach in the response if they only return the current one.
+            foreach (var item in data.EnumerateArray())
+            {
+                var id = item.GetProperty("id").GetInt32();
+                var name = item.GetProperty("name").GetString() ?? "";
+                
+                // Let's try to find the appointment date from career
+                DateTimeOffset? appointed = null;
+                if (item.TryGetProperty("career", out var career) && career.GetArrayLength() > 0)
+                {
+                    // Find the career entry for the current team where end is null
+                    foreach (var c in career.EnumerateArray())
+                    {
+                        var team = c.GetProperty("team").GetProperty("id").GetInt32();
+                        var end = c.GetProperty("end").ValueKind == JsonValueKind.Null ? (string?)null : c.GetProperty("end").GetString();
+                        
+                        if (team == teamId && end == null)
+                        {
+                            var startStr = c.GetProperty("start").GetString();
+                            if (DateTimeOffset.TryParse(startStr, out var start))
+                                appointed = start;
+                            break;
+                        }
+                    }
+                }
+                
+                return new TeamCoach(id, name, appointed);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch coach for team {TeamId}", teamId);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Fetch red cards for a specific fixture
+    /// </summary>
+    public async Task<Dictionary<int, int>> GetFixtureRedCardsAsync(int fixtureId)
+    {
+        var redCards = new Dictionary<int, int>();
+        try
+        {
+            var response = await GetApiResponseAsync($"/fixtures/events?fixture={fixtureId}&type=Card");
+            if (response is null) return redCards;
+            
+            if (!response.Value.TryGetProperty("response", out var data))
+                return redCards;
+
+            foreach (var item in data.EnumerateArray())
+            {
+                var detail = item.GetProperty("detail").GetString() ?? "";
+                if (detail.Contains("Red Card", StringComparison.OrdinalIgnoreCase))
+                {
+                    var teamId = item.GetProperty("team").GetProperty("id").GetInt32();
+                    if (!redCards.ContainsKey(teamId))
+                        redCards[teamId] = 0;
+                    redCards[teamId]++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch red cards for fixture {FixtureId}", fixtureId);
+        }
+        return redCards;
+    }
+
     private async Task<JsonElement?> GetApiResponseAsync(string relativeUrl, CancellationToken ct = default)
     {
         try

@@ -107,6 +107,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<int?>("AwayPassesAccurate")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AwayRedCards")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("AwayShots")
                         .HasColumnType("INTEGER");
 
@@ -147,6 +150,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<int?>("HomePassesAccurate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HomeRedCards")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("HomeShots")
@@ -354,6 +360,12 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Lose")
                         .HasColumnType("INTEGER");
+
+                    b.Property<long?>("ManagerAppointedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ManagerName")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()

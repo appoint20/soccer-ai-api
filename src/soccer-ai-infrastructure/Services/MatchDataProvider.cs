@@ -44,6 +44,9 @@ public sealed class MatchDataProvider(
             homeStats.Played = homeTeam.Played;
             homeStats.Form = homeTeam.Form;
             homeStats.FormPercentage = CalculateFormPercentage(homeTeam.Form);
+            homeStats.MotivationScore = CalculateMotivation(homeTeam.Points, homeTeam.Played, 38);
+            homeStats.IsNewManager = homeTeam.ManagerAppointedAt.HasValue && (fixture.Date - homeTeam.ManagerAppointedAt.Value).TotalDays <= 30;
+            homeStats.HasRedCardHangover = homeLastMatches.Any() && ((homeLastMatches[0].HomeTeamId == fixture.HomeTeamId && homeLastMatches[0].HomeRedCards > 0) || (homeLastMatches[0].AwayTeamId == fixture.HomeTeamId && homeLastMatches[0].AwayRedCards > 0));
         }
 
         if (awayTeam != null)
@@ -54,6 +57,9 @@ public sealed class MatchDataProvider(
             awayStats.Played = awayTeam.Played;
             awayStats.Form = awayTeam.Form;
             awayStats.FormPercentage = CalculateFormPercentage(awayTeam.Form);
+            awayStats.MotivationScore = CalculateMotivation(awayTeam.Points, awayTeam.Played, 38);
+            awayStats.IsNewManager = awayTeam.ManagerAppointedAt.HasValue && (fixture.Date - awayTeam.ManagerAppointedAt.Value).TotalDays <= 30;
+            awayStats.HasRedCardHangover = awayLastMatches.Any() && ((awayLastMatches[0].HomeTeamId == fixture.AwayTeamId && awayLastMatches[0].HomeRedCards > 0) || (awayLastMatches[0].AwayTeamId == fixture.AwayTeamId && awayLastMatches[0].AwayRedCards > 0));
         }
 
         var teamStats = new TeamStatsResponse { Home = homeStats, Away = awayStats };
@@ -92,6 +98,19 @@ public sealed class MatchDataProvider(
         if (lastMatches == null || lastMatches.Count == 0) return null;
         var lastMatch = lastMatches.OrderByDescending(m => m.Date).First();
         return (float)(fixture.Date - lastMatch.Date).TotalDays;
+    }
+
+    private static double CalculateMotivation(int points, int played, int totalGames)
+    {
+        if (played < 10) return 5.0; // Early season neutral
+        
+        double ppg = (double)points / played;
+        
+        if (ppg < 1.0) return 10.0; // Survival
+        if (ppg > 1.8) return 9.0;  // Title/Europe
+        if (ppg > 1.2 && ppg < 1.5) return 2.0; // Dead mid-table
+        
+        return 5.0;
     }
 
     // ── H2H Calculation ──────────────────────────────────────────

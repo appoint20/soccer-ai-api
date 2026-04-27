@@ -36,6 +36,14 @@ public record FixtureOdds(
     double? BttsYes,
     double? BttsNo);
 
+/// <summary>
+/// Coach data from API
+/// </summary>
+public record TeamCoach(
+    int Id,
+    string Name,
+    DateTimeOffset? Appointed);
+
 public interface IApiFootballService
 {
     Task<List<ApiFixture>> GetFixturesAsync(int leagueId, int season);
@@ -44,6 +52,10 @@ public interface IApiFootballService
     Task<List<Team>> GetStandingsAsync(int leagueId, int season, CancellationToken ct);
     Task<int?> GetLeagueIdByNameAsync(string leagueName, string country);
     Task<Dictionary<string, object>> TestConnectionAsync();
+    
+    // ── Contextual Intelligence Data ──
+    Task<TeamCoach?> GetTeamCoachAsync(int teamId);
+    Task<Dictionary<int, int>> GetFixtureRedCardsAsync(int fixtureId);
 }
 
 

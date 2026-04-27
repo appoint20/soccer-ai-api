@@ -105,13 +105,13 @@ public class AiSyncService(
 
         logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Starting batch processing (Chunk of 5)...", toAnalyze.Count);
 
-        // 3. Process incrementally in batches of 5 and SAVE immediately.
-        for (var i = 0; i < toAnalyze.Count; i += 3)
+        // 3. Process incrementally in batches of 1 to prevent LLM context bleeding/hallucinations.
+        for (var i = 0; i < toAnalyze.Count; i += 1)
         {
-            var chunkList = toAnalyze.Skip(i).Take(3).ToList();
+            var chunkList = toAnalyze.Skip(i).Take(1).ToList();
             try
             {
-                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", (i / 3) + 1, chunkList.Count);
+                logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", i + 1, chunkList.Count);
                 
                 var results = await aiService.AnalyzeBatchAsync(chunkList);
                 
@@ -144,7 +144,7 @@ public class AiSyncService(
                 await dbContext.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("[AiSync] Successfully called SaveChangesAsync for batch.");
                 
-                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", (i / 3) + 1);
+                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", i + 1);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);

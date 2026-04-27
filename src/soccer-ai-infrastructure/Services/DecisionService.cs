@@ -50,11 +50,50 @@ public sealed class DecisionService(
         if (avgTotalScored < 2.0)
             over25Warning = $"Low combined scoring ({avgTotalScored:F1} avg total goals)";
         
+        bool isHighGoalPotential = teamStats.Away.AvgGoalsConcededLast7 > 1.8 || teamStats.Home.AvgGoalsConcededLast7 > 1.8;
+        
+        // Rule 3C: Playstyle Clash (High-Press vs Low-Block failure)
+        bool isParkTheBusFailure = false;
+        if (teamStats.Home.Possession > 55 && teamStats.Away.Possession < 45 && teamStats.Away.AvgGoalsConcededLast7 > 1.5)
+        {
+            isParkTheBusFailure = true;
+        }
+        else if (teamStats.Away.Possession > 55 && teamStats.Home.Possession < 45 && teamStats.Home.AvgGoalsConcededLast7 > 1.5)
+        {
+            isParkTheBusFailure = true;
+        }
+
+        string over25Reason = $"Score: {over25Score}/100" + (over25Warning != null ? $" | {over25Warning}" : "");
+
+        if (isParkTheBusFailure)
+        {
+            over25Score += 10;
+            over25Reason += " | OVERRIDE: Playstyle clash (Possession vs Weak Low-Block) boosted goal potential.";
+        }
+
+        bool over25Qualified = over25Score > 50;
+
+        if (isHighGoalPotential)
+        {
+            over25Qualified = true;
+            over25Reason = "OVERRIDE: High defensive fragility detected.";
+        }
+
+        // Rule 2: Streak Breaker (Regression to the Mean)
+        double homeRegression = teamStats.Home.AvgGoalsScoredLast7 - teamStats.Home.AvgGoalsScoredLast3;
+        double awayRegression = teamStats.Away.AvgGoalsScoredLast7 - teamStats.Away.AvgGoalsScoredLast3;
+        if (homeRegression + awayRegression > 1.0 && over25Score < 60)
+        {
+            over25Score += 15;
+            over25Reason += " | Boosted by Regression Signal (scoring correction expected)";
+            if (over25Score >= 60) over25Qualified = true;
+        }
+
         markets.Over25 = new MarketDecision
         {
-            IsQualified = over25Score > 50,
+            IsQualified = over25Qualified,
             Confidence = Math.Round(over25Score / 100.0, 3), // Store the score as a pseudo-probability for compatibility
-            Reason = $"Score: {over25Score}/100" + (over25Warning != null ? $" | {over25Warning}" : "")
+            Reason = over25Reason
         };
 
         // BTTS
@@ -82,9 +121,96 @@ public sealed class DecisionService(
 
         // Match Winner
         string? winnerWarning = null;
-        if (prediction.Confidence < 0.45)
-            winnerWarning = $"Very low confidence ({prediction.Confidence:P0})";
-        markets.MatchWinner = MarketDecision.Create(prediction.Confidence, winnerWarning);
+        double winnerConfidence = prediction.Confidence;
+        bool applyRegressionPenalty = false;
+        
+        if (prediction.MatchWinner == "away" && teamStats.Away.FormPercentage == 100) applyRegressionPenalty = true;
+        if (prediction.MatchWinner == "home" && teamStats.Home.FormPercentage == 100) applyRegressionPenalty = true;
+
+        if (applyRegressionPenalty)
+        {
+            winnerConfidence = Math.Max(0, winnerConfidence - 0.15);
+        }
+        
+        if (winnerConfidence < 0.45 && prediction.Confidence >= 0.45)
+        {
+            winnerWarning = $"Regression penalty dropped confidence to {winnerConfidence:P0}.";
+        }
+        else if (winnerConfidence < 0.45)
+        {
+            winnerWarning = $"Very low confidence ({winnerConfidence:P0})";
+        }
+        else 
+        {
+            double formDiff = teamStats.Home.FormPercentage - teamStats.Away.FormPercentage;
+            
+            if (prediction.MatchWinner == "away")
+            {
+                if (teamStats.Away.FormPercentage < 25)
+                    winnerWarning = $"OVERRIDE: Away team form is too poor ({teamStats.Away.FormPercentage}%) to back for a win.";
+                else if (teamStats.Home.FormPercentage > 65 && teamStats.Away.FormPercentage < 40)
+                    winnerWarning = $"OVERRIDE: Home team has strong form ({teamStats.Home.FormPercentage}%). Away win is statistically unlikely.";
+                else if (Math.Abs(formDiff) > 30 && formDiff > 0)
+                    winnerWarning = $"OVERRIDE: Form vs H2H conflict. Home form ({teamStats.Home.FormPercentage}%) significantly better than Away ({teamStats.Away.FormPercentage}%).";
+            }
+            else if (prediction.MatchWinner == "home")
+            {
+                if (Math.Abs(formDiff) > 30 && formDiff < 0)
+                    winnerWarning = $"OVERRIDE: Away form ({teamStats.Away.FormPercentage}%) significantly better than Home ({teamStats.Home.FormPercentage}%).";
+            }
+        }
+
+        // Rule 1: Motivation Engine (Asymmetric War)
+        string? motivationReason = null;
+        double motivationDelta = teamStats.Home.MotivationScore - teamStats.Away.MotivationScore;
+        if (Math.Abs(motivationDelta) >= 5.0)
+        {
+            if (motivationDelta >= 5.0 && prediction.MatchWinner == "home") winnerConfidence += 0.10;
+            else if (motivationDelta <= -5.0 && prediction.MatchWinner == "away") winnerConfidence += 0.10;
+            else winnerConfidence -= 0.10; // Penalize if betting against the motivated team
+            
+            motivationReason = $"Motivation adjusted ({motivationDelta:F1} delta)";
+        }
+
+        // Rule 3A: Rest Disadvantage (Fatigue)
+        string? fatigueReason = null;
+        if (context.HomeRestDays.HasValue && context.AwayRestDays.HasValue)
+        {
+            float restDelta = context.HomeRestDays.Value - context.AwayRestDays.Value;
+            if (restDelta <= -3.0f) // Home team has at least 3 days LESS rest
+            {
+                winnerConfidence -= 0.10;
+                fatigueReason = $"Fatigue Penalty (Home has {restDelta:F1} days rest diff)";
+            }
+            else if (restDelta >= 3.0f) // Home team has at least 3 days MORE rest
+            {
+                winnerConfidence += 0.05;
+                fatigueReason = $"Rest Advantage (Home has +{restDelta:F1} days)";
+            }
+        }
+
+        // Rule 3B & 3D: Manager Bounce & Red Card Penalty
+        if (teamStats.Home.IsNewManager) winnerConfidence += 0.05;
+        if (teamStats.Away.IsNewManager) winnerConfidence += 0.05;
+        
+        if (teamStats.Home.HasRedCardHangover) winnerConfidence -= 0.08;
+        if (teamStats.Away.HasRedCardHangover) winnerConfidence -= 0.08;
+
+        winnerConfidence = Math.Clamp(winnerConfidence, 0, 1.0);
+        
+        markets.MatchWinner = MarketDecision.Create(winnerConfidence, winnerWarning);
+        if (applyRegressionPenalty && string.IsNullOrWhiteSpace(winnerWarning))
+        {
+            markets.MatchWinner.Reason += " (100% Form Regression Penalty applied)";
+        }
+        if (motivationReason != null)
+        {
+            markets.MatchWinner.Reason += $" | {motivationReason}";
+        }
+        if (fatigueReason != null)
+        {
+            markets.MatchWinner.Reason += $" | {fatigueReason}";
+        }
 
         // Low Scoring — use Poisson P(0-0) + Under 1.5 for proper detection
         var lambdaH = stats.Poisson.ExpectedHomeGoals;
@@ -105,7 +231,16 @@ public sealed class DecisionService(
             || avgTotalScored < 2.5 
             || (prediction.BTTSProb < 0.50 && prediction.Over25Prob < 0.50);
 
-        if (lowScoringProb >= 0.55 && hasLowScoringIndicator && string.IsNullOrWhiteSpace(lowWarning))
+        if (isHighGoalPotential)
+        {
+            markets.LowScoring = new MarketDecision
+            {
+                IsQualified = false,
+                Confidence = Math.Round(lowScoringProb, 3),
+                Reason = "OVERRIDE: High defensive fragility detected."
+            };
+        }
+        else if (lowScoringProb >= 0.55 && hasLowScoringIndicator && string.IsNullOrWhiteSpace(lowWarning))
         {
             markets.LowScoring = new MarketDecision
             {

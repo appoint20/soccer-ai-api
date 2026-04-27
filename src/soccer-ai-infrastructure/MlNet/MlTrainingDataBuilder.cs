@@ -13,7 +13,13 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
     private const int H2hWindow = 5;
     private const int LeagueWindow = 100;
 
-    public Task<List<MatchTrainingData>> BuildTrainingDataAsync(List<Fixture> allFinishedFixtures, CancellationToken ct = default)
+    private struct TeamSeasonState
+    {
+        public int Points;
+        public int Played;
+    }
+
+    public async Task<List<MatchTrainingData>> BuildTrainingDataAsync(List<Fixture> allFinishedFixtures, CancellationToken ct = default)
     {
         logger.LogInformation("Starting fast in-memory ML feature extraction for {Count} fixtures...", allFinishedFixtures.Count);
         var sw = Stopwatch.StartNew();
@@ -26,6 +32,9 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
         var overallHistory = new Dictionary<int, List<Fixture>>();
         var h2hHistory = new Dictionary<string, Queue<Fixture>>();
         var leagueHistory = new Dictionary<int, Queue<Fixture>>();
+        
+        // Track points/played per league/season for motivation approximation
+        var seasonStats = new Dictionary<int, Dictionary<int, TeamSeasonState>>(); // LeagueId -> TeamId -> State
 
         foreach (var f in allFinishedFixtures.OrderBy(f => f.Date))
         {
@@ -40,6 +49,10 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             
             if (!leagueHistory.ContainsKey(f.LeagueId)) leagueHistory[f.LeagueId] = new Queue<Fixture>();
 
+            if (!seasonStats.ContainsKey(f.LeagueId)) seasonStats[f.LeagueId] = new Dictionary<int, TeamSeasonState>();
+            if (!seasonStats[f.LeagueId].ContainsKey(f.HomeTeamId)) seasonStats[f.LeagueId][f.HomeTeamId] = new TeamSeasonState { Points = 0, Played = 0 };
+            if (!seasonStats[f.LeagueId].ContainsKey(f.AwayTeamId)) seasonStats[f.LeagueId][f.AwayTeamId] = new TeamSeasonState { Points = 0, Played = 0 };
+
             // Current historical state BEFORE this match
             var homeV = homeHistory[f.HomeTeamId].ToList();
             var awayV = awayHistory[f.AwayTeamId].ToList();
@@ -49,8 +62,10 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             var homeO = overallHistory[f.HomeTeamId];
             var awayO = overallHistory[f.AwayTeamId];
 
+            var homeS = seasonStats[f.LeagueId][f.HomeTeamId];
+            var awayS = seasonStats[f.LeagueId][f.AwayTeamId];
+
             // Only generate training rows if we have at least SOME baseline history (e.g. 5 overall matches)
-            // Python drops the first 100 rows globally; we can just require a local minimum.
             if (homeO.Count >= 5 && awayO.Count >= 5)
             {
                 var homeRecent = homeO.TakeLast(OverallWindow).ToList();
@@ -58,7 +73,7 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
                 var homeSeasonal = homeO.TakeLast(SeasonalWindow).ToList();
                 var awaySeasonal = awayO.TakeLast(SeasonalWindow).ToList();
 
-                var features = BuildFeatures(f, homeV, awayV, h2h, league, homeRecent, awayRecent, homeSeasonal, awaySeasonal);
+                var features = BuildFeatures(f, homeV, awayV, h2h, league, homeRecent, awayRecent, homeSeasonal, awaySeasonal, homeS, awayS);
 
                 // Targets
                 int totalGoals = f.HomeGoal + f.AwayGoal;
@@ -78,6 +93,20 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             }
 
             // --- Update State for NEXT matches ---
+            // Update season stats
+            var homePoints = f.HomeGoal > f.AwayGoal ? 3 : (f.HomeGoal == f.AwayGoal ? 1 : 0);
+            var awayPoints = f.AwayGoal > f.HomeGoal ? 3 : (f.HomeGoal == f.AwayGoal ? 1 : 0);
+            
+            var hs = seasonStats[f.LeagueId][f.HomeTeamId];
+            hs.Points += homePoints;
+            hs.Played += 1;
+            seasonStats[f.LeagueId][f.HomeTeamId] = hs;
+
+            var @as = seasonStats[f.LeagueId][f.AwayTeamId];
+            @as.Points += awayPoints;
+            @as.Played += 1;
+            seasonStats[f.LeagueId][f.AwayTeamId] = @as;
+
             homeHistory[f.HomeTeamId].Enqueue(f);
             if (homeHistory[f.HomeTeamId].Count > VenueWindow) homeHistory[f.HomeTeamId].Dequeue();
 
@@ -101,13 +130,14 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
 
         sw.Stop();
         logger.LogInformation("Built {Count} ML training rows in {Ms}ms", trainingData.Count, sw.ElapsedMilliseconds);
-        return Task.FromResult(trainingData);
+        return trainingData;
     }
 
     private static float[] BuildFeatures(
         Fixture fixture,
         List<Fixture> homeVenue, List<Fixture> awayVenue, List<Fixture> h2h, List<Fixture> league,
-        List<Fixture> homeOverall, List<Fixture> awayOverall, List<Fixture> homeSeasonal, List<Fixture> awaySeasonal)
+        List<Fixture> homeOverall, List<Fixture> awayOverall, List<Fixture> homeSeasonal, List<Fixture> awaySeasonal,
+        TeamSeasonState homeSeason, TeamSeasonState awaySeason)
     {
         // ── Home venue stats ──
         var homeGoals = homeVenue.Select(f => f.HomeGoal).ToList();
@@ -153,6 +183,18 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
         float awayOverStreak = CalculateStreak(EnumerateBackwards(awaySeasonal).ToList(), f => (f.HomeGoal + f.AwayGoal) > 2.5);
         float awayBttsStreak = CalculateStreak(EnumerateBackwards(awaySeasonal).ToList(), f => f.HomeGoal > 0 && f.AwayGoal > 0);
 
+        // ── Motivation & Context ──
+        // Approximate motivation based on points and games played
+        // Safety line approx: 1.1 points per game
+        float homeMotivation = CalculateMotivation(homeSeason.Points, homeSeason.Played, 38);
+        float awayMotivation = CalculateMotivation(awaySeason.Points, awaySeason.Played, 38);
+        float motivationDelta = homeMotivation - awayMotivation;
+
+        // ── Red Card Hangover ──
+        // Check if team had red card in the very last match
+        float homeRedHangover = homeOverall.Count > 0 && homeOverall[^1].HomeTeamId == fixture.HomeTeamId ? (homeOverall[^1].HomeRedCards > 0 ? 1f : 0f) : (homeOverall.Count > 0 && homeOverall[^1].AwayRedCards > 0 ? 1f : 0f);
+        float awayRedHangover = awayOverall.Count > 0 && awayOverall[^1].AwayTeamId == fixture.AwayTeamId ? (awayOverall[^1].AwayRedCards > 0 ? 1f : 0f) : (awayOverall.Count > 0 && awayOverall[^1].HomeRedCards > 0 ? 1f : 0f);
+
         var features = new float[]
         {
             SafeAvg(homeGoals), SafeAvg(homeConceded), SafeAvgDouble(homeXg), SafeAvg(homeShots), SafeAvg(homeSot),
@@ -165,6 +207,7 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             Rate(homeOverall.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), homeOverall.Count),
             Rate(homeOverall.Count(f => f.HomeGoal + f.AwayGoal > 2.5), homeOverall.Count),
             homeScoredDiff, homeXgDiff, homeUnderStreak, homeOverStreak, homeBttsStreak,
+            homeMotivation, homeRedHangover,
 
             SafeAvg(awayGoals), SafeAvg(awayConceded), SafeAvgDouble(awayXg), SafeAvg(awayShots), SafeAvg(awaySot),
             Rate(awayVenue.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), awayVenue.Count),
@@ -176,8 +219,9 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             Rate(awayOverall.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), awayOverall.Count),
             Rate(awayOverall.Count(f => f.HomeGoal + f.AwayGoal > 2.5), awayOverall.Count),
             awayScoredDiff, awayXgDiff, awayUnderStreak, awayOverStreak, awayBttsStreak,
+            awayMotivation, awayRedHangover,
 
-            h2h.Count > 0 ? SafeAvg(h2h.Select(f => f.HomeGoal + f.AwayGoal)) : 2.5f,
+            motivationDelta,
             h2h.Count > 0 ? Rate(h2h.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), h2h.Count) : 0.5f,
             h2h.Count > 0 ? Rate(h2h.Count(f => f.HomeGoal + f.AwayGoal > 2.5), h2h.Count) : 0.5f,
 
@@ -248,5 +292,24 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
         var lastDate = history[^1].Date; // Last match is the ultimate element
         var days = (float)(currentDate - lastDate).TotalDays;
         return Math.Min(days, 14f);
+    }
+
+    private static float CalculateMotivation(int points, int played, int totalGames)
+    {
+        if (played < 10) return 5f; // Early season neutral
+        
+        float ppg = (float)points / played;
+        int remaining = totalGames - played;
+        
+        // Simple heuristic: 
+        // Desperate (relegation fight): ppg between 0.8 and 1.2
+        // Dead (safe): ppg > 1.3 and far from top
+        // Top: ppg > 1.8
+        
+        if (ppg < 1.0f) return 10f; // High motivation (survival)
+        if (ppg > 1.8f) return 9f;  // High motivation (title/Europe)
+        if (ppg > 1.2f && ppg < 1.5f) return 2f; // Low motivation (mid-table "dead")
+        
+        return 5f;
     }
 }

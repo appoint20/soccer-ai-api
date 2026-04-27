@@ -22,6 +22,9 @@ public sealed class MatchContext
     public double? OddsAway { get; init; }
     public double? OddsOver25 { get; init; }
     public double? OddsBttsYes { get; init; }
+    
+    public float? HomeRestDays { get; init; }
+    public float? AwayRestDays { get; init; }
 }
 
 public sealed class MatchResult
@@ -59,6 +62,15 @@ public sealed class TeamStats
     
     [JsonPropertyName("momentum")]
     public double Momentum { get; set; }
+
+    [JsonPropertyName("motivation_score")]
+    public double MotivationScore { get; set; }
+    
+    [JsonPropertyName("is_new_manager")]
+    public bool IsNewManager { get; set; }
+    
+    [JsonPropertyName("has_red_card_hangover")]
+    public bool HasRedCardHangover { get; set; }
 
     // ---------- LAST 3 OVERALL ----------
     [JsonPropertyName("avg_goals_scored_last_3")]

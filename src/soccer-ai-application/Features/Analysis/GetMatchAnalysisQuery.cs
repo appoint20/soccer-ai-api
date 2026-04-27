@@ -10,6 +10,7 @@ public class GetMatchAnalysisQuery : IRequest
     public int? Page { get; set; }
     public int? PageSize { get; set; }
     public bool OnlyAnalyzed { get; set; }
+    public bool Refresh { get; set; }
 }
 
 public class GetMatchAnalysisResponse : IResponse

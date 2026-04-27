@@ -254,6 +254,9 @@ public class FixtureSyncService(IApiFootballService apiService,
             await Task.Delay(50, ct);
         }
 
+        // Phase 3: Sync Coaches for all teams in the league (once per season sync to keep it fresh)
+        await SyncLeagueCoachesAsync(targetLeagueId, ct);
+
         await dbContext.SaveChangesAsync(ct);
         result.LeaguesSynced = 1;
 
@@ -362,10 +365,15 @@ public class FixtureSyncService(IApiFootballService apiService,
             fixture.AwayPassesAccurate = stats.Away?.PassesAccurate;
             fixture.HomeXg = stats.Home?.ExpectedGoals ?? 0;
             fixture.AwayXg = stats.Away?.ExpectedGoals ?? 0;
+
+            // Fetch Red Cards
+            var redCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
+            fixture.HomeRedCards = redCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0);
+            fixture.AwayRedCards = redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Could not fetch stats for fixture {ApiId} — score/status still saved.", apiFixture.ApiId);
+            logger.LogWarning(ex, "Could not fetch stats/events for fixture {ApiId} — score/status still saved.", apiFixture.ApiId);
         }
     }
 
@@ -390,8 +398,13 @@ public class FixtureSyncService(IApiFootballService apiService,
             var averages = await CalculateAveragesAsync(
                 apiFixture.HomeTeamApiId, apiFixture.AwayTeamApiId, leagueId, apiFixture.Date, ct);
 
-            // 3. Build Entity
-            return BuildFixtureEntity(apiFixture, leagueId, season, stats, apiOdds, averages);
+            // 3. Fetch Red Cards
+            var redCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
+            var homeRed = redCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0);
+            var awayRed = redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0);
+
+            // 4. Build Entity
+            return BuildFixtureEntity(apiFixture, leagueId, season, stats, apiOdds, averages, homeRed, awayRed);
         }
         catch (Exception ex)
         {
@@ -434,7 +447,7 @@ public class FixtureSyncService(IApiFootballService apiService,
     private static Fixture BuildFixtureEntity(
         ApiFixture apiFixture, int leagueId, int season,
         (FixtureStats? Home, FixtureStats? Away) stats, FixtureOdds? apiOdds,
-        FixtureAverages avgs)
+        FixtureAverages avgs, int homeRed = 0, int awayRed = 0)
     {
         return new Fixture
         {
@@ -483,8 +496,39 @@ public class FixtureSyncService(IApiFootballService apiService,
             IsCurrentSeason = IsCurrentSeason(season),
             IsDerby = DerbyDetector.IsDerby(apiFixture.HomeTeamApiId, apiFixture.AwayTeamApiId),
 
+            // Contextual Intelligence
+            HomeRedCards = homeRed,
+            AwayRedCards = awayRed,
+
             CreatedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    private async Task SyncLeagueCoachesAsync(int leagueId, CancellationToken ct)
+    {
+        logger.LogInformation("Syncing coaches for teams in league {LeagueId}", leagueId);
+        
+        var teams = await dbContext.Teams
+            .Where(t => t.LeagueId == leagueId)
+            .ToListAsync(ct);
+
+        foreach (var team in teams)
+        {
+            // Only sync if never synced or synced more than 7 days ago
+            if (team.ManagerAppointedAt == null || team.UpdatedAt < DateTimeOffset.UtcNow.AddDays(-7))
+            {
+                var coach = await apiService.GetTeamCoachAsync(team.ApiId);
+                if (coach != null)
+                {
+                    team.ManagerName = coach.Name;
+                    team.ManagerAppointedAt = coach.Appointed;
+                    team.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+                
+                // Be careful with rate limits
+                await Task.Delay(100, ct);
+            }
+        }
     }
 
 

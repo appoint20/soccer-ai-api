@@ -28,6 +28,7 @@ namespace SoccerAi.Application.Features.Analysis;
 public class GetMatchAnalysisHandler(
     FixtureQueryHelper queryHelper,
     IMatchAnalysisService analysisService,
+    IAiSyncService aiSyncService,
     ILogger<GetMatchAnalysisHandler> logger)
     : IRequestHandler<GetMatchAnalysisQuery, GetMatchAnalysisResponse>
 {
@@ -66,7 +67,13 @@ public class GetMatchAnalysisHandler(
         {
             try 
             {
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, lang, cancellationToken);
+                if (query.Refresh)
+                {
+                    logger.LogInformation("Forcing AI refresh for fixture {Id}", fixture.Id);
+                    await aiSyncService.SyncSingleFixtureAsync(fixture.Id, force: true, cancellationToken);
+                }
+
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, lang, query.Refresh, cancellationToken);
                 fixtureAnalysisMap[fixture.Id] = analysis;
                 analysisCount++;
             }

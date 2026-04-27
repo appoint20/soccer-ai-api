@@ -62,5 +62,9 @@ public class Fixture
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    // ── Contextual Intelligence Data ──
+    public int HomeRedCards { get; set; }
+    public int AwayRedCards { get; set; }
+
     public ICollection<FixtureAnalysis> Analyses { get; } = new List<FixtureAnalysis>();
 }

@@ -18,10 +18,14 @@ public sealed class MatchAnalysisService(
     IDecisionService decisionService,
     IApplicationDbContext dbContext) : IMatchAnalysisService
 {
-    public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, CancellationToken ct)
+    public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, bool refresh = false, CancellationToken ct = default)
     {
-        var aiEntity = await dbContext.FixtureAnalyses
-            .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
+        FixtureAnalysis? aiEntity = null;
+        if (!refresh)
+        {
+            aiEntity = await dbContext.FixtureAnalyses
+                .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
+        }
 
         // If AI is missing and it's a critical match (e.g., today), we could trigger it on-demand.
         // For now, we'll just check if it's there.
@@ -95,7 +99,7 @@ public sealed class MatchAnalysisService(
             AiOverallConfidence = aiEntity.AiOverallConfidence
         } : new AiAnalysisDto();
 
-        var odds = BuildMatchContext(fixture);
+        var odds = BuildMatchContext(fixture, homeRest, awayRest);
         var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, ai);
 
 
@@ -124,7 +128,7 @@ public sealed class MatchAnalysisService(
 
     // ── Helpers ───────────────────────────────────────────────────
 
-    private static MatchContext BuildMatchContext(Fixture fixture) => new()
+    private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null) => new()
     {
         Date = fixture.Date,
         OddsOver25 = NormalizeOdds(fixture.Over25Odds),
@@ -132,7 +136,9 @@ public sealed class MatchAnalysisService(
         OddsHome = NormalizeOdds(fixture.HomeWinOdds),
         OddsAway = NormalizeOdds(fixture.AwayWinOdds),
         OddsDraw = NormalizeOdds(fixture.DrawOdds),
-        LeagueName = GetLeagueName(fixture.LeagueId)
+        LeagueName = GetLeagueName(fixture.LeagueId),
+        HomeRestDays = homeRest,
+        AwayRestDays = awayRest
     };
 
     private static double? NormalizeOdds(double? odds)

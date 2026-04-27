@@ -29,4 +29,8 @@ public class Team
 
     /// <summary>Last time standings were synced from API</summary>
     public DateTimeOffset UpdatedAt { get; set; }
+
+    // ── Contextual Intelligence Data ──
+    public string? ManagerName { get; set; }
+    public DateTimeOffset? ManagerAppointedAt { get; set; }
 }
