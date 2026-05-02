@@ -184,6 +184,12 @@ if (args.Contains("--dump"))
     return;
 }
 
+if (args.Contains("--force-sync"))
+{
+    await ForceSync.Sync(app.Services);
+    return;
+}
+
 if (args.Contains("--backtest"))
 {
     Console.WriteLine("Starting Native ML.NET 10-Week Backtest Pipeline...");
