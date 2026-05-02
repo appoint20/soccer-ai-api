@@ -41,6 +41,5 @@ public sealed class MatchAnalysis
     public TrapDecision Trap { get; init; } = new();
     public PredictionResponse? Prediction { get; init; }
     public HeadToHeadModel? H2H { get; init; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AiAnalysisDto? Ai { get; set; }
 }

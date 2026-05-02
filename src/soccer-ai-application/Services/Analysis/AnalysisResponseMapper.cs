@@ -59,7 +59,7 @@ public class AnalysisResponseMapper
                 : analysis.Decisions.Trap,
             H2H = analysis.H2H,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0)) 
-                ? null 
+                ? new AiAnalysisDto() 
                 : aiAnalysis
         };
     }

@@ -177,6 +177,13 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+if (args.Contains("--dump"))
+{
+    Console.WriteLine("Dumping...");
+    await Dumper.Dump(app.Services);
+    return;
+}
+
 if (args.Contains("--backtest"))
 {
     Console.WriteLine("Starting Native ML.NET 10-Week Backtest Pipeline...");
