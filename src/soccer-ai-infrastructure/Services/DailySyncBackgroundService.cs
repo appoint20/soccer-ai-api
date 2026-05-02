@@ -21,12 +21,30 @@ public class DailySyncBackgroundService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Daily Sync Background Service is starting.");
+        bool hasRunOnce = false;
 
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = DateTime.Now;
             var syncHour = configuration.GetValue<int>("AutomationOptions:SyncHour", 15);
             var syncMinute = configuration.GetValue<int>("AutomationOptions:SyncMinute", 30);
+            
+            // Run immediately on startup once
+            if (!hasRunOnce)
+            {
+                hasRunOnce = true;
+                logger.LogInformation("Running Daily Sync immediately on startup...");
+                try
+                {
+                    using var scope = serviceProvider.CreateScope();
+                    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                    await mediator.SendAsync(new RunDailySyncCommand(GetCurrentSeason(DateTime.Now)), stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Startup sync failed");
+                }
+            }
             
             var nextRunTime = new DateTime(now.Year, now.Month, now.Day, syncHour, syncMinute, 0);
 

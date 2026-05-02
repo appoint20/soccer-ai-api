@@ -46,7 +46,7 @@ public class AiSyncService(
         foreach (var fixture in fixtures)
         {
             var alreadyAnalyzedCount = await dbContext.FixtureAnalyses
-                .CountAsync(a => a.FixtureId == fixture.Id && (a.Lang == "en" || a.Lang == "de"), cancellationToken);
+                .CountAsync(a => a.FixtureId == fixture.Id && (a.Lang == "en" || a.Lang == "de") && a.Confidence > 0, cancellationToken);
 
             if (!force && alreadyAnalyzedCount >= 2)
             {
