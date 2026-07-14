@@ -9,18 +9,28 @@ obj/
 .vscode/
 .history/
 
+## JetBrains Rider
+.idea/
+*.DotSettings.user
+
 ## SQLite
 *.db
 *.db-shm
 *.db-wal
 
-## Logs
+## Logs & generated results
 logs/
 *.log
+*_log.txt
+results/
 backtest_result.json
 final_backtest.json
 sync_result.json
+curl_err.txt
 key.txt
+
+## ML model artifacts (build outputs, not source)
+src/soccer-ai-api/data/models/
 
 ## OS
 .DS_Store

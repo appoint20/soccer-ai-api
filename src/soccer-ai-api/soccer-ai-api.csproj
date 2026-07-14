@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RollForward>LatestMajor</RollForward>
@@ -11,12 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mediator.Net" Version="4.9.0" />
-    <PackageReference Include="Mediator.Net.MicrosoftDependencyInjection" Version="4.9.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.11.6" />
+    <PackageReference Include="Mediator.Net" Version="5.0.0" />
+    <PackageReference Include="Mediator.Net.MicrosoftDependencyInjection" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.14.14" />
   </ItemGroup>
 
   <ItemGroup>
