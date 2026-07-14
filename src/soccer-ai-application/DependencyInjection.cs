@@ -11,7 +11,8 @@ public static class DependencyInjection
     {
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IMonteCarloService, MonteCarloService>();
-        services.AddScoped<IPoissonCalculationService, PoissonCalculationService>();
+        services.AddScoped<IDixonColesModel, DixonColesModel>();
+        services.AddOptions<Options.DixonColesOptions>();
         services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
         services.AddScoped<ICombinationService, Services.Combinations.DeterministicCombinationService>();
 

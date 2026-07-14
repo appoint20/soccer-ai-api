@@ -23,6 +23,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Model constants (typed options; defaults apply when section absent)
+        services.Configure<SoccerAi.Application.Options.DixonColesOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.DixonColesOptions.SectionName));
+
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
         

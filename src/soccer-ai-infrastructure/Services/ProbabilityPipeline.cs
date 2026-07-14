@@ -10,7 +10,7 @@ namespace SoccerAi.Infrastructure.Services;
 /// Single place where all models execute — MatchAnalysisService never calls them directly.
 /// </summary>
 public sealed class ProbabilityPipeline(
-    IPoissonCalculationService poissonService,
+    IDixonColesModel dixonColesModel,
     IMonteCarloService monteCarloService,
     IMlPredictionService mlService,
     IFeatureExtractionService featureService,
@@ -22,8 +22,8 @@ public sealed class ProbabilityPipeline(
         TeamStatsResponse stats,
         CancellationToken ct)
     {
-        // ── 1. Poisson — attack/defense strength relative to league ──
-        var poissonProbs = await poissonService.CalculateProbabilitiesAsync(
+        // ── 1. Dixon-Coles — attack/defense strength relative to league ──
+        var poissonProbs = await dixonColesModel.CalculateProbabilitiesAsync(
             fixture.LeagueId, fixture.HomeTeamId, fixture.AwayTeamId, fixture.Date, ct);
 
         var poissonModel = poissonProbs != null ? new PoissonModel
