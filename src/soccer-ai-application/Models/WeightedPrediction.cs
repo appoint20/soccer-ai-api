@@ -31,7 +31,33 @@ public sealed class WeightedPrediction
 
     [JsonPropertyName("match_winner")]
     public string MatchWinner { get; init; } = string.Empty; // "home", "draw", "away"
-    
+
     [JsonPropertyName("confidence")]
     public double Confidence { get; init; } // HDA Confidence
+
+    /// <summary>
+    /// Builds the prediction directly from the single calibrated probability
+    /// set — no blending, no boosts. Draws are excluded from recommendations
+    /// (existing product rule).
+    /// </summary>
+    public static WeightedPrediction FromCalibrated(Interfaces.CalibratedProbabilities c)
+    {
+        var winner = c.AwayWin > c.HomeWin ? "away" : "home";
+        var confidence = Math.Max(c.HomeWin, c.AwayWin);
+
+        return new WeightedPrediction
+        {
+            Over25 = c.Over25 > 0.50,
+            Over25Prob = Math.Clamp(c.Over25, 0, 1),
+            BTTS = c.Btts > 0.50,
+            BTTSProb = Math.Clamp(c.Btts, 0, 1),
+            TwoToThreeGoals = c.TwoToThreeGoals > 0.50,
+            TwoToThreeGoalsProb = Math.Clamp(c.TwoToThreeGoals, 0, 1),
+            HomeProb = Math.Round(c.HomeWin, 2),
+            DrawProb = Math.Round(c.Draw, 2),
+            AwayProb = Math.Round(c.AwayWin, 2),
+            MatchWinner = winner,
+            Confidence = Math.Round(confidence, 2)
+        };
+    }
 }

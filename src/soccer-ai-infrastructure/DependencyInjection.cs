@@ -26,6 +26,8 @@ public static class DependencyInjection
         // Model constants (typed options; defaults apply when section absent)
         services.Configure<SoccerAi.Application.Options.DixonColesOptions>(
             configuration.GetSection(SoccerAi.Application.Options.DixonColesOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.CalibrationOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.CalibrationOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -48,7 +50,6 @@ public static class DependencyInjection
         
         // Mathematical Engines
         services.AddScoped<IProbabilityPipeline, ProbabilityPipeline>();
-        services.AddScoped<IProbabilityConsensusEngine, ProbabilityConsensusEngine>();
         services.AddScoped<DecisionService>(); // Register concretely for AiDecisionService to use
         services.AddScoped<IDecisionService, AiDecisionService>(); // AI-driven implementation
 
@@ -58,7 +59,6 @@ public static class DependencyInjection
         services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
         services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
         services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
-        services.AddScoped<IMarketCalibrationService, MarketCalibrationServiceImpl>();
         
         // Machine Learning
         services.AddScoped<IMlPredictionService, MlPredictionService>();

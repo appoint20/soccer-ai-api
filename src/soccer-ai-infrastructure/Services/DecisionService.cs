@@ -263,12 +263,19 @@ public sealed class DecisionService(
         markets.Draw = new DrawDecision { IsQualified = false, Score = 0, Label = "Excluded" };
 
         // ── EV check and Trap Integration ──
-        
-        var bundle = new ProbabilityBundle 
-        { 
-            Poisson = stats.Poisson, 
-            MonteCarlo = stats.MonteCarlo,
-            MarketCalibrated = null // Calibrated markets not strictly required for trap detection at this stage
+
+        var bundle = new ProbabilityBundle
+        {
+            Poisson = stats.Poisson,
+            Calibrated = new CalibratedProbabilities
+            {
+                HomeWin = prediction.HomeProb,
+                Draw = prediction.DrawProb,
+                AwayWin = prediction.AwayProb,
+                Over25 = prediction.Over25Prob,
+                Btts = prediction.BTTSProb,
+                TwoToThreeGoals = prediction.TwoToThreeGoalsProb
+            }
         };
         var trapResult = trapDetection.Detect(bundle, prediction, context, teamStats);
         var trap = new TrapDecision

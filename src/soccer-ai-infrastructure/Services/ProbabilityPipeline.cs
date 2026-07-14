@@ -6,122 +6,50 @@ using SoccerAi.Application.Models;
 namespace SoccerAi.Infrastructure.Services;
 
 /// <summary>
-/// Runs all probability models (Poisson → Monte Carlo → ML) in sequence.
-/// Single place where all models execute — MatchAnalysisService never calls them directly.
+/// The single probability flow:
+/// Dixon-Coles model → market calibration (Shin-cleaned odds). That's it.
+/// No Monte Carlo, no consensus blending, no ML contribution.
 /// </summary>
 public sealed class ProbabilityPipeline(
     IDixonColesModel dixonColesModel,
-    IMonteCarloService monteCarloService,
-    IMlPredictionService mlService,
-    IFeatureExtractionService featureService,
-    IMarketCalibrationService marketCalibrationService,
+    IMarketCalibrationService marketCalibration,
     ILogger<ProbabilityPipeline> logger) : IProbabilityPipeline
 {
-    public async Task<ProbabilityBundle> RunAsync(
+    public async Task<ProbabilityBundle?> RunAsync(
         Fixture fixture,
         TeamStatsResponse stats,
         CancellationToken ct)
     {
-        // ── 1. Dixon-Coles — attack/defense strength relative to league ──
-        var poissonProbs = await dixonColesModel.CalculateProbabilitiesAsync(
+        var dc = await dixonColesModel.CalculateProbabilitiesAsync(
             fixture.LeagueId, fixture.HomeTeamId, fixture.AwayTeamId, fixture.Date, ct);
 
-        var poissonModel = poissonProbs != null ? new PoissonModel
+        if (dc == null)
         {
-            ExpectedHomeGoals = poissonProbs.HomeExpectedGoals,
-            ExpectedAwayGoals = poissonProbs.AwayExpectedGoals,
-            ExpectedScoreDifference = poissonProbs.HomeExpectedGoals - poissonProbs.AwayExpectedGoals,
-            HomeWin = poissonProbs.HomeWin,
-            Draw = poissonProbs.Draw,
-            AwayWin = poissonProbs.AwayWin,
-            BTTS = poissonProbs.BothTeamScoredGoal,
-            Over25 = poissonProbs.Over25,
-            TwoToThreeGoals = poissonProbs.TwoToThreeGoals,
+            logger.LogInformation(
+                "Dixon-Coles returned no output for fixture {Id} (insufficient data)", fixture.Id);
+            return null;
+        }
+
+        var poissonModel = new PoissonModel
+        {
+            ExpectedHomeGoals = dc.HomeExpectedGoals,
+            ExpectedAwayGoals = dc.AwayExpectedGoals,
+            ExpectedScoreDifference = dc.HomeExpectedGoals - dc.AwayExpectedGoals,
+            HomeWin = dc.HomeWin,
+            Draw = dc.Draw,
+            AwayWin = dc.AwayWin,
+            BTTS = dc.BothTeamScoredGoal,
+            Over25 = dc.Over25,
+            TwoToThreeGoals = dc.TwoToThreeGoals,
             IsValid = true
-        } : PoissonModel.Empty;
+        };
 
-        // ── 2. Monte Carlo — uses λ from Poisson + market calibration ──
-        var marketOdds = (fixture.BttsYesOdds.HasValue || fixture.Over25Odds.HasValue)
-            ? new MarketOdds
-            {
-                BttsOdds = fixture.BttsYesOdds ?? 0,
-                Over25Odds = fixture.Over25Odds ?? 0
-            }
-            : null;
-
-        var mcResult = poissonProbs != null
-            ? monteCarloService.Predict(poissonProbs, marketOdds)
-            : null;
-
-        var monteCarloModel = mcResult != null ? new MonteCarloModel
-        {
-            SimulationCount = 50000,
-            HomeWin = mcResult.MonteCarlo.HomeWinProbability,
-            Draw = mcResult.MonteCarlo.DrawProbability,
-            AwayWin = mcResult.MonteCarlo.AwayWinProbability,
-            BTTS = mcResult.MonteCarlo.BttsProbability,
-            Over25 = mcResult.MonteCarlo.Over25Probability,
-            TwoToThreeGoals = mcResult.MonteCarlo.TwoToThreeGoalsProbability
-        } : MonteCarloModel.Empty;
-
-        // Calibrated values (Bayesian update of MC + market odds)
-        var calibratedBtts = mcResult?.FinalBttsProbability;
-        var calibratedOver25 = mcResult?.FinalOver25Probability;
-
-        // ── 3. ML Prediction ──
-        FixturePrediction? mlPrediction = null;
-        try
-        {
-            var features = await featureService.BuildFeaturesAsync(fixture, ct);
-            var mlResults = await mlService.PredictFromFeaturesAsync(features, ct);
-
-            if (mlResults.Count > 0)
-            {
-                mlPrediction = new FixturePrediction(
-                    fixture.Id,
-                    BuildMarketPrediction("Over 2.5 Goals", mlResults.GetValueOrDefault("over25")),
-                    BuildMarketPrediction("Both Teams To Score", mlResults.GetValueOrDefault("btts")),
-                    BuildMarketPrediction("2-3 Goals", mlResults.GetValueOrDefault("goals_2_3")),
-                    BuildMarketPrediction("Match Winner", mlResults.GetValueOrDefault("hda"))
-                );
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "ML prediction failed for fixture {Id}", fixture.Id);
-        }
-
-        // ── 4. Market calibration (80% model + 20% market implied) ──
-        var marketCalibrated = marketCalibrationService.Calibrate(
-            monteCarloModel,
-            fixture.Over25Odds ?? 0,
-            fixture.BttsYesOdds ?? 0);
+        var calibrated = marketCalibration.Calibrate(dc, fixture);
 
         return new ProbabilityBundle
         {
             Poisson = poissonModel,
-            MonteCarlo = monteCarloModel,
-            MlPrediction = mlPrediction,
-            CalibratedBttsProb = calibratedBtts,
-            CalibratedOver25Prob = calibratedOver25,
-            MarketCalibrated = marketCalibrated
+            Calibrated = calibrated
         };
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────
-
-    private static MarketPrediction BuildMarketPrediction(string market, double[]? probs)
-    {
-        if (probs == null || probs.Length < 2)
-            return new MarketPrediction(market, false, 0, []);
-
-        if (market == "Match Winner" && probs.Length >= 3)
-        {
-            var maxIdx = Array.IndexOf(probs, probs.Max());
-            return new MarketPrediction(market, true, probs[maxIdx], probs);
-        }
-
-        var yesProb = probs.Length > 1 ? probs[1] : probs[0];
-        return new MarketPrediction(market, yesProb > 0.45, yesProb > 0.5 ? yesProb : 1 - yesProb, probs);
     }
 }

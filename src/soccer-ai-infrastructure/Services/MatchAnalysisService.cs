@@ -9,12 +9,11 @@ namespace SoccerAi.Infrastructure.Services;
 /// Orchestrator-only analysis pipeline for a single fixture.
 /// Used by both the analysis and combination endpoints — single source of truth.
 ///
-/// Pipeline: MatchDataProvider → ProbabilityPipeline → ConsensusEngine → DecisionService
+/// Pipeline: MatchDataProvider → ProbabilityPipeline (DC → calibration) → DecisionService
 /// </summary>
 public sealed class MatchAnalysisService(
     IMatchDataProvider dataProvider,
     IProbabilityPipeline pipeline,
-    IProbabilityConsensusEngine consensus,
     IDecisionService decisionService,
     IApplicationDbContext dbContext) : IMatchAnalysisService
 {
@@ -63,15 +62,15 @@ public sealed class MatchAnalysisService(
         }
         else
         {
-            // CACHE MISS: Run the heavy mathematical engines (Poisson → Monte Carlo → ML)
+            // CACHE MISS: Run the single probability flow (Dixon-Coles → calibration)
             var bundle = await pipeline.RunAsync(fixture, stats, ct);
-            prediction = consensus.Combine(bundle, stats, fixture.LeagueId, h2h, null, null);
-            
-            models = new StatisticalModels
-            {
-                Poisson = bundle.Poisson,
-                MonteCarlo = bundle.MonteCarlo
-            };
+            prediction = bundle != null
+                ? WeightedPrediction.FromCalibrated(bundle.Calibrated)
+                : null;
+
+            models = bundle != null
+                ? new StatisticalModels { Poisson = bundle.Poisson }
+                : new StatisticalModels();
         }
 
         var ai = aiEntity != null ? new AiAnalysisDto

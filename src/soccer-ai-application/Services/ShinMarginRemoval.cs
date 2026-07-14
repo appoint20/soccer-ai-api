@@ -19,6 +19,14 @@ public static class ShinMarginRemoval
         var inv = odds.Select(o => 1.0 / o).ToArray();
         int n = inv.Length;
 
+        // The iterative z-update divides by (n − 2); for two-outcome markets
+        // fall back to proportional margin removal (standard practice).
+        if (n < 3)
+        {
+            var invSum = inv.Sum();
+            return invSum > 0 ? inv.Select(p => p / invSum).ToArray() : inv;
+        }
+
         // Iterative solver for insider parameter z
         double z = 0.05;
         for (int iter = 0; iter < 100; iter++)

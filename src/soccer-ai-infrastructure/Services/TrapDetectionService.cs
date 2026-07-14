@@ -70,11 +70,12 @@ public sealed class TrapDetectionService : ITrapDetectionService
         bool lowScoreTrap = bundle.Poisson.IsValid &&
                             LowScoreDetector.IsLowScoringTrap(lambdaHome, lambdaAway);
 
-        // ── 2. Market disagreement (model vs odds differ > 15 pp) ──
+        // ── 2. Market disagreement (raw model vs market implied differ > 15 pp) ──
         bool marketMismatch = false;
-        if (odds.OddsOver25 > 0 && bundle.MarketCalibrated != null)
+        if (odds.OddsOver25 > 1 && bundle.Poisson.IsValid)
         {
-            marketMismatch = Math.Abs(prediction.Over25Prob - bundle.MarketCalibrated.Over25)
+            var marketImpliedOver25 = 1.0 / odds.OddsOver25.Value;
+            marketMismatch = Math.Abs(bundle.Poisson.Over25 - marketImpliedOver25)
                              > MarketDisagreementThreshold;
         }
 

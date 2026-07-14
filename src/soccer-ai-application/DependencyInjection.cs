@@ -10,9 +10,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<ITeamStatsService, TeamStatsService>();
-        services.AddScoped<IMonteCarloService, MonteCarloService>();
         services.AddScoped<IDixonColesModel, DixonColesModel>();
+        services.AddScoped<IMarketCalibrationService, MarketCalibrator>();
         services.AddOptions<Options.DixonColesOptions>();
+        services.AddOptions<Options.CalibrationOptions>();
         services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
         services.AddScoped<ICombinationService, Services.Combinations.DeterministicCombinationService>();
 

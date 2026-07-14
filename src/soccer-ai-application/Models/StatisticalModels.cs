@@ -43,32 +43,9 @@ public sealed class PoissonModel
 }
 
 /// <summary>
-/// Monte Carlo simulation output - pure math, no decisions, no topScores
-/// </summary>
-public sealed class MonteCarloModel
-{
-    public int SimulationCount { get; init; }
-    
-    // Outcome probabilities
-    public double HomeWin { get; init; }
-    public double Draw { get; init; }
-    public double AwayWin { get; init; }
-    
-    // Market probabilities
-    public double BTTS { get; init; }
-    public double Over25 { get; init; }
-    public double TwoToThreeGoals { get; init; }
-    
-    public bool IsValid => SimulationCount > 0;
-    
-    public static MonteCarloModel Empty => new();
-}
-
-/// <summary>
-/// Statistical models container
+/// Statistical models container. Dixon-Coles is the only model.
 /// </summary>
 public sealed class StatisticalModels
 {
     public PoissonModel Poisson { get; init; } = PoissonModel.Empty;
-    public MonteCarloModel MonteCarlo { get; init; } = MonteCarloModel.Empty;
 }
