@@ -56,12 +56,10 @@ public static class DependencyInjection
         services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
         services.AddScoped<ILeagueVolatilityService, LeagueVolatilityService>();
         services.AddScoped<ITrapDetectionService, TrapDetectionService>();
-        services.AddScoped<IFeatureExtractionService, FeatureExtractionService>();
         services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
         services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
-        
-        // Machine Learning
-        services.AddScoped<IMlPredictionService, MlPredictionService>();
+
+        // Machine Learning (training preparation only — no serving integration yet)
         services.AddScoped<IMlTrainingService, MlTrainingService>();
         services.AddSingleton<MlTrainingDataBuilder>();
 

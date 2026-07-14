@@ -36,7 +36,7 @@ public static class Program
                     await RunBacktestAsync(host.Services, args);
                     return 0;
                 case "train-ml":
-                    await RunMlTrainingAsync(host.Services);
+                    await RunMlTrainingAsync(host.Services, args);
                     return 0;
                 case "sync-league":
                     return await RunLeagueSyncAsync(host.Services, args);
@@ -92,12 +92,25 @@ public static class Program
         Console.WriteLine($"Backtest complete. JSON written to {outputPath}");
     }
 
-    private static async Task RunMlTrainingAsync(IServiceProvider services)
+    private static async Task RunMlTrainingAsync(IServiceProvider services, string[] args)
     {
-        Console.WriteLine("Starting ML.NET model training pipeline...");
+        DateTimeOffset? cutoff = null;
+        var cutoffArg = GetStringOption(args, "--cutoff");
+        if (cutoffArg != null)
+        {
+            if (!DateTimeOffset.TryParse(cutoffArg, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed))
+                throw new ArgumentException($"Invalid --cutoff value: {cutoffArg} (expected e.g. 2026-03-01)");
+            cutoff = parsed;
+        }
+
+        Console.WriteLine(cutoff.HasValue
+            ? $"Starting ML.NET training pipeline (temporal cutoff {cutoff:yyyy-MM-dd})..."
+            : "Starting ML.NET training pipeline (default temporal cutoff)...");
+
         using var scope = services.CreateScope();
         var mlService = scope.ServiceProvider.GetRequiredService<IMlTrainingService>();
-        await mlService.TrainModelsAsync();
+        await mlService.TrainModelsAsync(cutoff);
         Console.WriteLine("ML training complete.");
     }
 
@@ -178,7 +191,9 @@ public static class Program
             Commands:
               backtest     [--weeks=10] [--stake=1.0] [--output=backtest_result.json]
                            Run the backtest pipeline and write the JSON report.
-              train-ml     Train the ML.NET models.
+              train-ml     [--cutoff=yyyy-MM-dd]
+                           Train the ML.NET models with a temporal train/test split.
+                           Rows before the cutoff train; rows on/after it are held out.
               sync-league  --league=<id> [--season=<year>]
                            Sync standings + fixtures for one league.
               sync-ai      [--fixture-id=<id>] [--force]

@@ -18,6 +18,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.14.14" />
+
+    <!-- Direct pin to patch vulnerable transitive dependency (NU1903) -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.9.0" />
   </ItemGroup>
 
   <ItemGroup>

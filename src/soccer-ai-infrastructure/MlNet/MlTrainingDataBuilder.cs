@@ -1,315 +1,219 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SoccerAi.Application.Entities;
+using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Models;
+using SoccerAi.Application.Services;
 using SoccerAi.Infrastructure.MlNet.Models;
 
 namespace SoccerAi.Infrastructure.MlNet;
 
+/// <summary>
+/// Builds ML training rows: ONE row per fixture-market, generated strictly
+/// from data available BEFORE the fixture date.
+///
+/// Features per row: Dixon-Coles probability, Shin-cleaned market probability,
+/// Elo diff, rest days, recent form, league volatility.
+///
+/// Anti-leakage rules:
+/// - Fixtures are processed chronologically; team history is updated only
+///   AFTER a fixture's row has been generated.
+/// - Dixon-Coles probabilities come from IDixonColesModel, whose SQL filter
+///   is strictly Date &lt; fixture date.
+/// - Odds are the fixture's own pre-match odds; Elo is the stored pre-match
+///   snapshot.
+/// </summary>
 public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
 {
-    private const int VenueWindow = 5;
-    private const int OverallWindow = 7;
-    private const int SeasonalWindow = 20;
-    private const int H2hWindow = 5;
-    private const int LeagueWindow = 100;
+    private const int FormWindow = 5;
+    private const int MinHistoryMatches = 5;
+    private const float DefaultRestDays = 10f;
+    private const float MaxRestDays = 14f;
+    private const float NeutralProbability = 0.5f;
+    private const double DefaultElo = 1500.0;
 
-    private struct TeamSeasonState
+    public async Task<List<MarketTrainingRow>> BuildAsync(
+        List<Fixture> finishedFixtures,
+        IDixonColesModel dixonColes,
+        ILeagueVolatilityService volatility,
+        CancellationToken ct = default)
     {
-        public int Points;
-        public int Played;
-    }
-
-    public async Task<List<MatchTrainingData>> BuildTrainingDataAsync(List<Fixture> allFinishedFixtures, CancellationToken ct = default)
-    {
-        logger.LogInformation("Starting fast in-memory ML feature extraction for {Count} fixtures...", allFinishedFixtures.Count);
+        logger.LogInformation("Building fixture-market training rows for {Count} fixtures...",
+            finishedFixtures.Count);
         var sw = Stopwatch.StartNew();
 
-        var trainingData = new List<MatchTrainingData>(allFinishedFixtures.Count);
+        var rows = new List<MarketTrainingRow>(finishedFixtures.Count * MarketTrainingRow.Markets.All.Length);
+        var teamHistory = new Dictionary<int, List<Fixture>>();
+        var processed = 0;
 
-        // State trackers
-        var homeHistory = new Dictionary<int, Queue<Fixture>>();
-        var awayHistory = new Dictionary<int, Queue<Fixture>>();
-        var overallHistory = new Dictionary<int, List<Fixture>>();
-        var h2hHistory = new Dictionary<string, Queue<Fixture>>();
-        var leagueHistory = new Dictionary<int, Queue<Fixture>>();
-        
-        // Track points/played per league/season for motivation approximation
-        var seasonStats = new Dictionary<int, Dictionary<int, TeamSeasonState>>(); // LeagueId -> TeamId -> State
-
-        foreach (var f in allFinishedFixtures.OrderBy(f => f.Date))
+        foreach (var f in finishedFixtures.OrderBy(f => f.Date))
         {
-            // Initialize queues
-            if (!homeHistory.ContainsKey(f.HomeTeamId)) homeHistory[f.HomeTeamId] = new Queue<Fixture>();
-            if (!awayHistory.ContainsKey(f.AwayTeamId)) awayHistory[f.AwayTeamId] = new Queue<Fixture>();
-            if (!overallHistory.ContainsKey(f.HomeTeamId)) overallHistory[f.HomeTeamId] = new List<Fixture>();
-            if (!overallHistory.ContainsKey(f.AwayTeamId)) overallHistory[f.AwayTeamId] = new List<Fixture>();
-            
-            var h2hKey = f.HomeTeamId < f.AwayTeamId ? $"{f.HomeTeamId}_{f.AwayTeamId}" : $"{f.AwayTeamId}_{f.HomeTeamId}";
-            if (!h2hHistory.ContainsKey(h2hKey)) h2hHistory[h2hKey] = new Queue<Fixture>();
-            
-            if (!leagueHistory.ContainsKey(f.LeagueId)) leagueHistory[f.LeagueId] = new Queue<Fixture>();
+            ct.ThrowIfCancellationRequested();
 
-            if (!seasonStats.ContainsKey(f.LeagueId)) seasonStats[f.LeagueId] = new Dictionary<int, TeamSeasonState>();
-            if (!seasonStats[f.LeagueId].ContainsKey(f.HomeTeamId)) seasonStats[f.LeagueId][f.HomeTeamId] = new TeamSeasonState { Points = 0, Played = 0 };
-            if (!seasonStats[f.LeagueId].ContainsKey(f.AwayTeamId)) seasonStats[f.LeagueId][f.AwayTeamId] = new TeamSeasonState { Points = 0, Played = 0 };
+            var homeHist = GetHistory(teamHistory, f.HomeTeamId);
+            var awayHist = GetHistory(teamHistory, f.AwayTeamId);
 
-            // Current historical state BEFORE this match
-            var homeV = homeHistory[f.HomeTeamId].ToList();
-            var awayV = awayHistory[f.AwayTeamId].ToList();
-            var h2h = h2hHistory[h2hKey].ToList();
-            var league = leagueHistory[f.LeagueId].ToList();
-            
-            var homeO = overallHistory[f.HomeTeamId];
-            var awayO = overallHistory[f.AwayTeamId];
-
-            var homeS = seasonStats[f.LeagueId][f.HomeTeamId];
-            var awayS = seasonStats[f.LeagueId][f.AwayTeamId];
-
-            // Only generate training rows if we have at least SOME baseline history (e.g. 5 overall matches)
-            if (homeO.Count >= 5 && awayO.Count >= 5)
+            if (homeHist.Count >= MinHistoryMatches && awayHist.Count >= MinHistoryMatches)
             {
-                var homeRecent = homeO.TakeLast(OverallWindow).ToList();
-                var awayRecent = awayO.TakeLast(OverallWindow).ToList();
-                var homeSeasonal = homeO.TakeLast(SeasonalWindow).ToList();
-                var awaySeasonal = awayO.TakeLast(SeasonalWindow).ToList();
+                // DC model applies its own strict Date < fixture.Date SQL filter.
+                var dc = await dixonColes.CalculateProbabilitiesAsync(
+                    f.LeagueId, f.HomeTeamId, f.AwayTeamId, f.Date, ct);
 
-                var features = BuildFeatures(f, homeV, awayV, h2h, league, homeRecent, awayRecent, homeSeasonal, awaySeasonal, homeS, awayS);
-
-                // Targets
-                int totalGoals = f.HomeGoal + f.AwayGoal;
-                bool btts = f is { HomeGoal: > 0, AwayGoal: > 0 };
-                bool over25 = totalGoals > 2.5;
-                bool goals23 = totalGoals is 2 or 3;
-                string result = f.HomeGoal > f.AwayGoal ? "Home" : (f.HomeGoal == f.AwayGoal ? "Draw" : "Away");
-
-                trainingData.Add(new MatchTrainingData
-                {
-                    Features = features,
-                    TargetBtts = btts,
-                    TargetOver25 = over25,
-                    TargetGoals23 = goals23,
-                    TargetResult = result
-                });
+                if (dc != null)
+                    AddFixtureRows(rows, f, dc, homeHist, awayHist, volatility);
             }
 
-            // --- Update State for NEXT matches ---
-            // Update season stats
-            var homePoints = f.HomeGoal > f.AwayGoal ? 3 : (f.HomeGoal == f.AwayGoal ? 1 : 0);
-            var awayPoints = f.AwayGoal > f.HomeGoal ? 3 : (f.HomeGoal == f.AwayGoal ? 1 : 0);
-            
-            var hs = seasonStats[f.LeagueId][f.HomeTeamId];
-            hs.Points += homePoints;
-            hs.Played += 1;
-            seasonStats[f.LeagueId][f.HomeTeamId] = hs;
+            // Update state only AFTER this fixture produced (or skipped) its rows.
+            homeHist.Add(f);
+            awayHist.Add(f);
 
-            var @as = seasonStats[f.LeagueId][f.AwayTeamId];
-            @as.Points += awayPoints;
-            @as.Played += 1;
-            seasonStats[f.LeagueId][f.AwayTeamId] = @as;
-
-            homeHistory[f.HomeTeamId].Enqueue(f);
-            if (homeHistory[f.HomeTeamId].Count > VenueWindow) homeHistory[f.HomeTeamId].Dequeue();
-
-            awayHistory[f.AwayTeamId].Enqueue(f);
-            if (awayHistory[f.AwayTeamId].Count > VenueWindow) awayHistory[f.AwayTeamId].Dequeue();
-
-            overallHistory[f.HomeTeamId].Add(f);
-            overallHistory[f.AwayTeamId].Add(f);
-            // We can prune overall history to max seasonal window to save memory
-            if (overallHistory[f.HomeTeamId].Count > SeasonalWindow * 2) 
-                overallHistory[f.HomeTeamId] = overallHistory[f.HomeTeamId].TakeLast(SeasonalWindow).ToList();
-            if (overallHistory[f.AwayTeamId].Count > SeasonalWindow * 2) 
-                overallHistory[f.AwayTeamId] = overallHistory[f.AwayTeamId].TakeLast(SeasonalWindow).ToList();
-
-            h2hHistory[h2hKey].Enqueue(f);
-            if (h2hHistory[h2hKey].Count > H2hWindow) h2hHistory[h2hKey].Dequeue();
-
-            leagueHistory[f.LeagueId].Enqueue(f);
-            if (leagueHistory[f.LeagueId].Count > LeagueWindow) leagueHistory[f.LeagueId].Dequeue();
+            if (++processed % 1000 == 0)
+                logger.LogInformation("...{Processed} fixtures processed, {Rows} rows so far",
+                    processed, rows.Count);
         }
 
         sw.Stop();
-        logger.LogInformation("Built {Count} ML training rows in {Ms}ms", trainingData.Count, sw.ElapsedMilliseconds);
-        return trainingData;
+        logger.LogInformation("Built {Rows} fixture-market rows in {Ms}ms", rows.Count, sw.ElapsedMilliseconds);
+        return rows;
     }
 
-    private static float[] BuildFeatures(
-        Fixture fixture,
-        List<Fixture> homeVenue, List<Fixture> awayVenue, List<Fixture> h2h, List<Fixture> league,
-        List<Fixture> homeOverall, List<Fixture> awayOverall, List<Fixture> homeSeasonal, List<Fixture> awaySeasonal,
-        TeamSeasonState homeSeason, TeamSeasonState awaySeason)
+    private static void AddFixtureRows(
+        List<MarketTrainingRow> rows,
+        Fixture f,
+        PoissonProbabilities dc,
+        List<Fixture> homeHist,
+        List<Fixture> awayHist,
+        ILeagueVolatilityService volatility)
     {
-        // ── Home venue stats ──
-        var homeGoals = homeVenue.Select(f => f.HomeGoal).ToList();
-        var homeConceded = homeVenue.Select(f => f.AwayGoal).ToList();
-        var homeXg = homeVenue.Select(f => f.HomeXg).ToList();
-        var homeShots = homeVenue.Select(f => f.HomeShots).ToList();
-        var homeSot = homeVenue.Select(f => f.HomeShotsOnTarget).ToList();
+        // ── Shared pre-match features ──
+        var eloDiff = (float)((f.HomeElo ?? DefaultElo) - (f.AwayElo ?? DefaultElo));
+        var homeRest = RestDays(f.Date, homeHist);
+        var awayRest = RestDays(f.Date, awayHist);
+        var homeForm = Form(homeHist, f.HomeTeamId);
+        var awayForm = Form(awayHist, f.AwayTeamId);
+        var leagueVol = (float)volatility.GetVolatility(f.LeagueId);
 
-        // ── Away venue stats ──
-        var awayGoals = awayVenue.Select(f => f.AwayGoal).ToList();
-        var awayConceded = awayVenue.Select(f => f.HomeGoal).ToList();
-        var awayXg = awayVenue.Select(f => f.AwayXg).ToList();
-        var awayShots = awayVenue.Select(f => f.AwayShots).ToList();
-        var awaySot = awayVenue.Select(f => f.AwayShotsOnTarget).ToList();
+        // ── Shin-cleaned market probabilities ──
+        var market1X2 = MarketProbs1X2(f);
+        var (marketOver, hasOver) = MarketProbOver25(f);
+        var (marketBtts, hasBtts) = MarketProbBtts(f);
 
-        // ── Overall form — home team ──
-        var homeOverallGoals = homeOverall.Select(f => GetTeamGoals(f, fixture.HomeTeamId)).ToList();
-        var homeOverallConceded = homeOverall.Select(f => GetTeamConceded(f, fixture.HomeTeamId)).ToList();
-        var homeOverallXg = homeOverall.Select(f => GetTeamXg(f, fixture.HomeTeamId)).ToList();
-
-        // ── Overall form — away team ──
-        var awayOverallGoals = awayOverall.Select(f => GetTeamGoals(f, fixture.AwayTeamId)).ToList();
-        var awayOverallConceded = awayOverall.Select(f => GetTeamConceded(f, fixture.AwayTeamId)).ToList();
-        var awayOverallXg = awayOverall.Select(f => GetTeamXg(f, fixture.AwayTeamId)).ToList();
-
-        // Mean Reversion
-        float homeSeasonalScoredAvg = SafeAvg(homeSeasonal.Select(f => GetTeamGoals(f, fixture.HomeTeamId)));
-        float homeSeasonalXgAvg = SafeAvgDouble(homeSeasonal.Select(f => GetTeamXg(f, fixture.HomeTeamId)));
-        float homeScoredDiff = SafeAvg(homeOverallGoals) - homeSeasonalScoredAvg;
-        float homeXgDiff = SafeAvgDouble(homeOverallXg) - homeSeasonalXgAvg;
-
-        float awaySeasonalScoredAvg = SafeAvg(awaySeasonal.Select(f => GetTeamGoals(f, fixture.AwayTeamId)));
-        float awaySeasonalXgAvg = SafeAvgDouble(awaySeasonal.Select(f => GetTeamXg(f, fixture.AwayTeamId)));
-        float awayScoredDiff = SafeAvg(awayOverallGoals) - awaySeasonalScoredAvg;
-        float awayXgDiff = SafeAvgDouble(awayOverallXg) - awaySeasonalXgAvg;
-
-        // Streaks
-        float homeUnderStreak = CalculateStreak(EnumerateBackwards(homeSeasonal).ToList(), f => (f.HomeGoal + f.AwayGoal) < 2.5);
-        float homeOverStreak = CalculateStreak(EnumerateBackwards(homeSeasonal).ToList(), f => (f.HomeGoal + f.AwayGoal) > 2.5);
-        float homeBttsStreak = CalculateStreak(EnumerateBackwards(homeSeasonal).ToList(), f => f.HomeGoal > 0 && f.AwayGoal > 0);
-
-        float awayUnderStreak = CalculateStreak(EnumerateBackwards(awaySeasonal).ToList(), f => (f.HomeGoal + f.AwayGoal) < 2.5);
-        float awayOverStreak = CalculateStreak(EnumerateBackwards(awaySeasonal).ToList(), f => (f.HomeGoal + f.AwayGoal) > 2.5);
-        float awayBttsStreak = CalculateStreak(EnumerateBackwards(awaySeasonal).ToList(), f => f.HomeGoal > 0 && f.AwayGoal > 0);
-
-        // ── Motivation & Context ──
-        // Approximate motivation based on points and games played
-        // Safety line approx: 1.1 points per game
-        float homeMotivation = CalculateMotivation(homeSeason.Points, homeSeason.Played, 38);
-        float awayMotivation = CalculateMotivation(awaySeason.Points, awaySeason.Played, 38);
-        float motivationDelta = homeMotivation - awayMotivation;
-
-        // ── Red Card Hangover ──
-        // Check if team had red card in the very last match
-        float homeRedHangover = homeOverall.Count > 0 && homeOverall[^1].HomeTeamId == fixture.HomeTeamId ? (homeOverall[^1].HomeRedCards > 0 ? 1f : 0f) : (homeOverall.Count > 0 && homeOverall[^1].AwayRedCards > 0 ? 1f : 0f);
-        float awayRedHangover = awayOverall.Count > 0 && awayOverall[^1].AwayTeamId == fixture.AwayTeamId ? (awayOverall[^1].AwayRedCards > 0 ? 1f : 0f) : (awayOverall.Count > 0 && awayOverall[^1].HomeRedCards > 0 ? 1f : 0f);
-
-        var features = new float[]
+        // ── Labels ──
+        var totalGoals = f.HomeGoal + f.AwayGoal;
+        var labels = new Dictionary<string, bool>
         {
-            SafeAvg(homeGoals), SafeAvg(homeConceded), SafeAvgDouble(homeXg), SafeAvg(homeShots), SafeAvg(homeSot),
-            Rate(homeVenue.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), homeVenue.Count),
-            Rate(homeVenue.Count(f => f.HomeGoal + f.AwayGoal > 2.5), homeVenue.Count),
-            Rate(homeVenue.Count(f => f.AwayGoal == 0), homeVenue.Count),
-            Rate(homeVenue.Count(f => f.HomeGoal == 0), homeVenue.Count),
-
-            SafeAvg(homeOverallGoals), SafeAvg(homeOverallConceded), SafeAvgDouble(homeOverallXg),
-            Rate(homeOverall.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), homeOverall.Count),
-            Rate(homeOverall.Count(f => f.HomeGoal + f.AwayGoal > 2.5), homeOverall.Count),
-            homeScoredDiff, homeXgDiff, homeUnderStreak, homeOverStreak, homeBttsStreak,
-            homeMotivation, homeRedHangover,
-
-            SafeAvg(awayGoals), SafeAvg(awayConceded), SafeAvgDouble(awayXg), SafeAvg(awayShots), SafeAvg(awaySot),
-            Rate(awayVenue.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), awayVenue.Count),
-            Rate(awayVenue.Count(f => f.HomeGoal + f.AwayGoal > 2.5), awayVenue.Count),
-            Rate(awayVenue.Count(f => f.HomeGoal == 0), awayVenue.Count),
-            Rate(awayVenue.Count(f => f.AwayGoal == 0), awayVenue.Count),
-
-            SafeAvg(awayOverallGoals), SafeAvg(awayOverallConceded), SafeAvgDouble(awayOverallXg),
-            Rate(awayOverall.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), awayOverall.Count),
-            Rate(awayOverall.Count(f => f.HomeGoal + f.AwayGoal > 2.5), awayOverall.Count),
-            awayScoredDiff, awayXgDiff, awayUnderStreak, awayOverStreak, awayBttsStreak,
-            awayMotivation, awayRedHangover,
-
-            motivationDelta,
-            h2h.Count > 0 ? Rate(h2h.Count(f => f.HomeGoal > 0 && f.AwayGoal > 0), h2h.Count) : 0.5f,
-            h2h.Count > 0 ? Rate(h2h.Count(f => f.HomeGoal + f.AwayGoal > 2.5), h2h.Count) : 0.5f,
-
-            SafeAvg(league.Select(l => l.HomeGoal + l.AwayGoal)),
-            Rate(league.Count(l => l.HomeGoal > 0 && l.AwayGoal > 0), league.Count),
-            Rate(league.Count(l => l.HomeGoal + l.AwayGoal > 2.5), league.Count),
-
-            fixture.IsDerby ? 1.0f : 0.0f,
-            fixture.Date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? 1.0f : 0.0f,
-            (float)fixture.Date.DayOfWeek,
-            (float)fixture.Date.Month,
-            (float)((fixture.Date.Month - 8 + 12) % 12),
-
-            (float)(fixture.HomeElo ?? 1500.0), (float)(fixture.AwayElo ?? 1500.0),
-            CalculateRestDays(fixture.Date, homeOverall),
-            CalculateRestDays(fixture.Date, awayOverall),
-            CalculateRestDays(fixture.Date, homeOverall) - CalculateRestDays(fixture.Date, awayOverall),
-            15.0f, 60.0f, 0.0f, // Temp, Humidity, Turf (fake defaults like Python script)
-
-            fixture.HomeWinOdds.HasValue && fixture.HomeWinOdds.Value > 0 ? (float)(1.0 / fixture.HomeWinOdds.Value) : 0f,
-            fixture.DrawOdds.HasValue && fixture.DrawOdds.Value > 0 ? (float)(1.0 / fixture.DrawOdds.Value) : 0f,
-            fixture.AwayWinOdds.HasValue && fixture.AwayWinOdds.Value > 0 ? (float)(1.0 / fixture.AwayWinOdds.Value) : 0f,
-            fixture.Over25Odds.HasValue && fixture.Over25Odds.Value > 0 ? (float)(1.0 / fixture.Over25Odds.Value) : 0f,
-            fixture.BttsYesOdds.HasValue && fixture.BttsYesOdds.Value > 0 ? (float)(1.0 / fixture.BttsYesOdds.Value) : 0f
+            [MarketTrainingRow.Markets.Over25] = totalGoals > 2,
+            [MarketTrainingRow.Markets.Btts] = f is { HomeGoal: > 0, AwayGoal: > 0 },
+            [MarketTrainingRow.Markets.Goals23] = totalGoals is 2 or 3,
+            [MarketTrainingRow.Markets.HomeWin] = f.HomeGoal > f.AwayGoal,
+            [MarketTrainingRow.Markets.AwayWin] = f.AwayGoal > f.HomeGoal
         };
 
-        return features;
-    }
-
-    private static IEnumerable<Fixture> EnumerateBackwards(List<Fixture> source)
-    {
-        for (int i = source.Count - 1; i >= 0; i--)
-            yield return source[i];
-    }
-
-    private static float SafeAvg(IEnumerable<int> source)
-    {
-        var list = source.ToList();
-        return list.Count > 0 ? (float)list.Average() : 2.5f;
-    }
-
-    private static float SafeAvgDouble(IEnumerable<double> source)
-    {
-        var list = source.ToList();
-        return list.Count > 0 ? (float)list.Average() : 1.2f;
-    }
-
-    private static float Rate(int count, int total) => total > 0 ? (float)count / total : 0.5f;
-
-    private static int GetTeamGoals(Fixture f, int teamId) => f.HomeTeamId == teamId ? f.HomeGoal : f.AwayGoal;
-    private static int GetTeamConceded(Fixture f, int teamId) => f.HomeTeamId == teamId ? f.AwayGoal : f.HomeGoal;
-    private static double GetTeamXg(Fixture f, int teamId) => f.HomeTeamId == teamId ? f.HomeXg : f.AwayXg;
-
-    private static float CalculateStreak(List<Fixture> historyRecentFirst, Func<Fixture, bool> condition)
-    {
-        int streak = 0;
-        foreach (var f in historyRecentFirst)
+        var dcProbs = new Dictionary<string, float>
         {
-            if (condition(f)) streak++;
-            else break;
+            [MarketTrainingRow.Markets.Over25] = (float)dc.Over25,
+            [MarketTrainingRow.Markets.Btts] = (float)dc.BothTeamScoredGoal,
+            [MarketTrainingRow.Markets.Goals23] = (float)dc.TwoToThreeGoals,
+            [MarketTrainingRow.Markets.HomeWin] = (float)dc.HomeWin,
+            [MarketTrainingRow.Markets.AwayWin] = (float)dc.AwayWin
+        };
+
+        var marketProbs = new Dictionary<string, (float P, bool Has)>
+        {
+            [MarketTrainingRow.Markets.Over25] = (marketOver, hasOver),
+            [MarketTrainingRow.Markets.Btts] = (marketBtts, hasBtts),
+            [MarketTrainingRow.Markets.Goals23] = (NeutralProbability, false), // no odds market exists
+            [MarketTrainingRow.Markets.HomeWin] = market1X2.HasValue
+                ? ((float)market1X2.Value.Home, true) : (NeutralProbability, false),
+            [MarketTrainingRow.Markets.AwayWin] = market1X2.HasValue
+                ? ((float)market1X2.Value.Away, true) : (NeutralProbability, false)
+        };
+
+        foreach (var market in MarketTrainingRow.Markets.All)
+        {
+            var (marketP, hasMarketP) = marketProbs[market];
+            rows.Add(new MarketTrainingRow
+            {
+                FixtureId = f.Id,
+                LeagueId = f.LeagueId,
+                Date = f.Date.UtcDateTime,
+                Market = market,
+
+                DcProb = dcProbs[market],
+                MarketProb = marketP,
+                HasMarketProb = hasMarketP ? 1f : 0f,
+                DcMarketDelta = dcProbs[market] - marketP,
+                EloDiff = eloDiff,
+                HomeRestDays = homeRest,
+                AwayRestDays = awayRest,
+                RestDaysDiff = homeRest - awayRest,
+                HomeForm = homeForm,
+                AwayForm = awayForm,
+                FormDiff = homeForm - awayForm,
+                LeagueVolatility = leagueVol,
+
+                Label = labels[market]
+            });
         }
-        return streak;
     }
 
-    private static float CalculateRestDays(DateTimeOffset currentDate, List<Fixture> history)
+    // ── Market probability helpers (Shin-margin-removed) ────────────────────
+
+    private static (double Home, double Away)? MarketProbs1X2(Fixture f)
     {
-        if (history.Count == 0) return 10f;
-        var lastDate = history[^1].Date; // Last match is the ultimate element
-        var days = (float)(currentDate - lastDate).TotalDays;
-        return Math.Min(days, 14f);
+        if (!IsValid(f.HomeWinOdds) || !IsValid(f.DrawOdds) || !IsValid(f.AwayWinOdds))
+            return null;
+
+        var probs = ShinMarginRemoval.TrueProbabilities(
+            [f.HomeWinOdds!.Value, f.DrawOdds!.Value, f.AwayWinOdds!.Value]);
+        return (probs[0], probs[2]);
     }
 
-    private static float CalculateMotivation(int points, int played, int totalGames)
+    private static (float P, bool Has) MarketProbOver25(Fixture f)
     {
-        if (played < 10) return 5f; // Early season neutral
-        
-        float ppg = (float)points / played;
-        int remaining = totalGames - played;
-        
-        // Simple heuristic: 
-        // Desperate (relegation fight): ppg between 0.8 and 1.2
-        // Dead (safe): ppg > 1.3 and far from top
-        // Top: ppg > 1.8
-        
-        if (ppg < 1.0f) return 10f; // High motivation (survival)
-        if (ppg > 1.8f) return 9f;  // High motivation (title/Europe)
-        if (ppg > 1.2f && ppg < 1.5f) return 2f; // Low motivation (mid-table "dead")
-        
-        return 5f;
+        if (IsValid(f.Over25Odds) && IsValid(f.Under25Odds))
+            return ((float)ShinMarginRemoval.TrueProbability(f.Over25Odds!.Value, f.Under25Odds!.Value), true);
+        if (IsValid(f.Over25Odds))
+            return ((float)(1.0 / f.Over25Odds!.Value), true);
+        return (NeutralProbability, false);
+    }
+
+    private static (float P, bool Has) MarketProbBtts(Fixture f) =>
+        IsValid(f.BttsYesOdds)
+            ? ((float)(1.0 / f.BttsYesOdds!.Value), true)
+            : (NeutralProbability, false);
+
+    private static bool IsValid(double? odds) => odds is > 1.0;
+
+    // ── History features ─────────────────────────────────────────────────────
+
+    private static List<Fixture> GetHistory(Dictionary<int, List<Fixture>> store, int teamId)
+    {
+        if (!store.TryGetValue(teamId, out var list))
+            store[teamId] = list = [];
+        return list;
+    }
+
+    private static float RestDays(DateTimeOffset date, List<Fixture> history)
+    {
+        if (history.Count == 0) return DefaultRestDays;
+        var days = (float)(date - history[^1].Date).TotalDays;
+        return Math.Clamp(days, 0f, MaxRestDays);
+    }
+
+    /// <summary>Points share over the last FormWindow matches: won points / possible points.</summary>
+    private static float Form(List<Fixture> history, int teamId)
+    {
+        var recent = history.TakeLast(FormWindow).ToList();
+        if (recent.Count == 0) return 0.5f;
+
+        var points = recent.Sum(f =>
+        {
+            var scored = f.HomeTeamId == teamId ? f.HomeGoal : f.AwayGoal;
+            var conceded = f.HomeTeamId == teamId ? f.AwayGoal : f.HomeGoal;
+            return scored > conceded ? 3 : scored == conceded ? 1 : 0;
+        });
+
+        return points / (recent.Count * 3f);
     }
 }

@@ -23,6 +23,10 @@
     <PackageReference Include="OpenAI" Version="2.11.0" />
     <PackageReference Include="System.ClientModel" Version="1.14.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+
+    <!-- Direct pins to patch vulnerable transitive dependencies (NU1903) -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.50.3" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.8" />
   </ItemGroup>
 
   <PropertyGroup>

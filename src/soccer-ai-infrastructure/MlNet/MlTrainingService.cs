@@ -1,129 +1,198 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML;
-using Microsoft.ML.Data;
 using Microsoft.ML.AutoML;
+using Microsoft.ML.Data;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Infrastructure.MlNet.Models;
-using Microsoft.Extensions.DependencyInjection;
-using SoccerAi.Infrastructure.Services;
 
 namespace SoccerAi.Infrastructure.MlNet;
 
-public class MlTrainingService(ILogger<MlTrainingService> logger, MlTrainingDataBuilder dataBuilder, IServiceScopeFactory serviceScopeFactory) : IMlTrainingService
+/// <summary>
+/// Trains one binary model per market on fixture-market rows using a strict
+/// TEMPORAL split: train &lt; cutoff, test ≥ cutoff (no random splitting — that
+/// leaks future information into training).
+///
+/// IMPORTANT: the backtest window must never overlap training data. Pass a
+/// cutoff that lies before the backtest start date; the cutoff used is
+/// persisted in the evaluation report for auditing.
+/// </summary>
+public class MlTrainingService(
+    ILogger<MlTrainingService> logger,
+    MlTrainingDataBuilder dataBuilder,
+    IServiceScopeFactory serviceScopeFactory) : IMlTrainingService
 {
-    // Fix random seed to ensure reproducible evaluations matching Python pipeline 
     private readonly MLContext _mlContext = new(seed: 42);
 
-    public async Task TrainModelsAsync(CancellationToken ct = default)
+    /// <summary>Default temporal cutoff: 80% of rows (by time) train, newest 20% test.</summary>
+    private const double DefaultTrainFraction = 0.80;
+    private const uint ExperimentSecondsPerMarket = 30;
+
+    public Task TrainModelsAsync(CancellationToken ct = default) => TrainModelsAsync(null, ct);
+
+    public async Task TrainModelsAsync(DateTimeOffset? temporalCutoff, CancellationToken ct = default)
     {
-        logger.LogInformation("Starting native C# ML.NET Training Pipeline (with AutoML tuning)...");
+        logger.LogInformation("Starting ML.NET training pipeline (temporal split)...");
 
         using var scope = serviceScopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
-        
+        var dixonColes = scope.ServiceProvider.GetRequiredService<IDixonColesModel>();
+        var volatility = scope.ServiceProvider.GetRequiredService<ILeagueVolatilityService>();
+
         var fixtures = await dbContext.Fixtures.AsNoTracking()
             .Where(f => f.Status == "FT")
             .OrderBy(f => f.Date)
             .ToListAsync(ct);
-            
-        logger.LogInformation("Loaded {Count} finished fixtures from DB for AutoML", fixtures.Count);
+
+        logger.LogInformation("Loaded {Count} finished fixtures", fixtures.Count);
         if (fixtures.Count == 0) return;
 
-        var mlData = await dataBuilder.BuildTrainingDataAsync(fixtures, ct);
-        if (mlData.Count == 0) return;
+        var rows = await dataBuilder.BuildAsync(fixtures, dixonColes, volatility, ct);
+        if (rows.Count == 0)
+        {
+            logger.LogWarning("No training rows produced — aborting");
+            return;
+        }
 
-        var dataView = _mlContext.Data.LoadFromEnumerable(mlData);
-        var split = _mlContext.Data.TrainTestSplit(dataView, testFraction: 0.2);
+        // ── TEMPORAL split ──
+        var cutoff = (temporalCutoff ?? DefaultCutoff(rows)).UtcDateTime;
+        var trainRows = rows.Where(r => r.Date < cutoff).ToList();
+        var testRows = rows.Where(r => r.Date >= cutoff).ToList();
+
+        logger.LogInformation(
+            "Temporal split at {Cutoff:yyyy-MM-dd}: {Train} train rows, {Test} test rows",
+            cutoff, trainRows.Count, testRows.Count);
+
+        if (trainRows.Count == 0 || testRows.Count == 0)
+        {
+            logger.LogWarning("Degenerate temporal split (train={Train}, test={Test}) — aborting",
+                trainRows.Count, testRows.Count);
+            return;
+        }
 
         var outputDir = Path.Combine(Directory.GetCurrentDirectory(), "data", "models");
         Directory.CreateDirectory(outputDir);
-        logger.LogInformation("Models will be saved to: {OutputDir}", outputDir);
 
-        // Binary Classification (AutoML Tuned)
-        TrainBinaryModelTuned(split, "TargetOver25", "target_over25_mlnet.zip", outputDir);
-        TrainBinaryModelTuned(split, "TargetBtts", "target_btts_mlnet.zip", outputDir);
-        TrainBinaryModelTuned(split, "TargetGoals23", "target_goals23_mlnet.zip", outputDir);
+        // ── Train + evaluate one binary model per market ──
+        var allSamples = new List<PredictionSample>();
+        foreach (var market in MarketTrainingRow.Markets.All)
+        {
+            ct.ThrowIfCancellationRequested();
+            var samples = TrainAndEvaluateMarket(
+                market,
+                trainRows.Where(r => r.Market == market).ToList(),
+                testRows.Where(r => r.Market == market).ToList(),
+                outputDir);
+            allSamples.AddRange(samples);
+        }
 
-        // Multiclass Classification (AutoML Tuned)
-        TrainMulticlassModelTuned(split, "TargetResult", "target_result_mlnet.zip", outputDir);
+        // ── Evaluation harness: Brier / log loss / calibration / accuracy ──
+        var slices = EvaluationHarness.Evaluate(allSamples);
+        foreach (var s in slices.Where(s => s.League == "ALL"))
+        {
+            logger.LogInformation(
+                "[{Market}] n={N} Brier={Brier:F4} LogLoss={LogLoss:F4} Accuracy={Acc:P1}",
+                s.Market, s.Samples, s.BrierScore, s.LogLoss, s.Accuracy);
+        }
 
-        logger.LogInformation("All ML.NET models trained successfully.");
+        var report = new
+        {
+            GeneratedAtUtc = DateTimeOffset.UtcNow,
+            TemporalCutoffUtc = cutoff,
+            TrainRows = trainRows.Count,
+            TestRows = testRows.Count,
+            Note = "Backtest window must start at or after TemporalCutoffUtc to avoid overlap with training data.",
+            Slices = slices
+        };
+
+        var reportPath = Path.Combine(outputDir, "evaluation_report.json");
+        await File.WriteAllTextAsync(reportPath,
+            JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }), ct);
+        logger.LogInformation("Evaluation report written to {Path}", reportPath);
     }
 
-    private void TrainBinaryModelTuned(DataOperationsCatalog.TrainTestData split, string labelColumn, string filename, string outputDir)
+    private static DateTimeOffset DefaultCutoff(List<MarketTrainingRow> rows)
+    {
+        var dates = rows.Select(r => r.Date).OrderBy(d => d).ToList();
+        var index = Math.Clamp((int)(dates.Count * DefaultTrainFraction), 0, dates.Count - 1);
+        return new DateTimeOffset(dates[index], TimeSpan.Zero);
+    }
+
+    private List<PredictionSample> TrainAndEvaluateMarket(
+        string market,
+        List<MarketTrainingRow> train,
+        List<MarketTrainingRow> test,
+        string outputDir)
     {
         try
         {
-            logger.LogInformation("Starting AutoML sweep for {Label} (30 seconds)...", labelColumn);
-
-            var experimentSettings = new BinaryExperimentSettings
+            if (train.Count < 100 || test.Count < 20)
             {
-                MaxExperimentTimeInSeconds = 30,
-                OptimizingMetric = BinaryClassificationMetric.AreaUnderRocCurve
-            };
+                logger.LogWarning("[{Market}] Not enough rows (train={Train}, test={Test}) — skipped",
+                    market, train.Count, test.Count);
+                return [];
+            }
 
-            var experiment = _mlContext.Auto().CreateBinaryClassificationExperiment(experimentSettings);
-            var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
-            
-            logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
-            logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
-            logger.LogInformation("Val ROC-AUC: {Val:P2}", result.BestRun.ValidationMetrics.AreaUnderRocCurve);
+            logger.LogInformation("[{Market}] AutoML sweep ({Seconds}s) on {Train} rows...",
+                market, ExperimentSecondsPerMarket, train.Count);
 
-            // Evaluate on Unseen Test Data
-            var predictions = result.BestRun.Model.Transform(split.TestSet);
-            
-            // Use EvaluateNonCalibrated because AutoML may choose an algorithm (like FastForest/Lbfgs)
-            // that produces a 'Score' but no calibrated 'Probability' curve.
-            var metrics = _mlContext.BinaryClassification.EvaluateNonCalibrated(predictions, labelColumnName: labelColumn);
+            var trainView = _mlContext.Data.LoadFromEnumerable(train);
+            var testView = _mlContext.Data.LoadFromEnumerable(test);
 
-            logger.LogInformation("--- {Label} Final Unseen Test Metrics ---", labelColumn);
-            logger.LogInformation("Test Accuracy: {Accuracy:P2}", metrics.Accuracy);
-            logger.LogInformation("Test F1 Score: {F1:P2}", metrics.F1Score);
-            
-            var filepath = Path.Combine(outputDir, filename);
-            _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+            var columnInfo = new ColumnInformation { LabelColumnName = nameof(MarketTrainingRow.Label) };
+            foreach (var meta in MarketTrainingRow.MetadataColumns)
+                columnInfo.IgnoredColumnNames.Add(meta);
+
+            var experiment = _mlContext.Auto().CreateBinaryClassificationExperiment(
+                new BinaryExperimentSettings
+                {
+                    MaxExperimentTimeInSeconds = ExperimentSecondsPerMarket,
+                    OptimizingMetric = BinaryClassificationMetric.AreaUnderRocCurve
+                });
+
+            var result = experiment.Execute(trainView, columnInfo);
+            logger.LogInformation("[{Market}] Best trainer: {Trainer} (val AUC {Auc:F3})",
+                market, result.BestRun.TrainerName, result.BestRun.ValidationMetrics.AreaUnderRocCurve);
+
+            _mlContext.Model.Save(result.BestRun.Model, trainView.Schema,
+                Path.Combine(outputDir, $"{market}_mlnet.zip"));
+
+            // Score held-out rows for the evaluation harness.
+            var scored = result.BestRun.Model.Transform(testView);
+            return ExtractSamples(scored, test);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "AutoML binary training for label {Label} failed. Sync will continue with existing model or skip this target.", labelColumn);
+            logger.LogWarning(ex, "[{Market}] Training failed — market skipped", market);
+            return [];
         }
     }
 
-    private void TrainMulticlassModelTuned(DataOperationsCatalog.TrainTestData split, string labelColumn, string filename, string outputDir)
+    private List<PredictionSample> ExtractSamples(IDataView scored, List<MarketTrainingRow> testRows)
     {
-        try
+        var hasProbability = scored.Schema.Any(c => c.Name == "Probability" && !c.IsHidden);
+
+        var probabilities = hasProbability
+            ? scored.GetColumn<float>("Probability").ToList()
+            : scored.GetColumn<float>("Score").Select(Sigmoid).ToList();
+
+        if (!hasProbability)
+            logger.LogWarning("Model has no calibrated Probability column — applying sigmoid to raw Score");
+
+        var samples = new List<PredictionSample>(testRows.Count);
+        for (var i = 0; i < testRows.Count && i < probabilities.Count; i++)
         {
-            logger.LogInformation("Starting AutoML sweep for {Label} Multiclass (60 seconds)...", labelColumn);
-
-            var experimentSettings = new MulticlassExperimentSettings
-            {
-                MaxExperimentTimeInSeconds = 60,
-                OptimizingMetric = MulticlassClassificationMetric.MacroAccuracy
-            };
-
-            var experiment = _mlContext.Auto().CreateMulticlassClassificationExperiment(experimentSettings);
-            var result = experiment.Execute(split.TrainSet, labelColumnName: labelColumn);
-
-            logger.LogInformation("--- {Label} Best AutoML Model ---", labelColumn);
-            logger.LogInformation("Algorithm: {Algo}", result.BestRun.TrainerName);
-            logger.LogInformation("Val MacroAccuracy: {Val:P2}", result.BestRun.ValidationMetrics.MacroAccuracy);
-
-            // Evaluate on unseen
-            var predictions = result.BestRun.Model.Transform(split.TestSet);
-            var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: labelColumn);
-
-            logger.LogInformation("--- {Label} Metrics (Multiclass) ---", labelColumn);
-            logger.LogInformation("Micro Accuracy: {Accuracy:P2}", metrics.MicroAccuracy);
-            logger.LogInformation("Macro Accuracy: {Macro:P2}", metrics.MacroAccuracy);
-            logger.LogInformation("Log Loss:       {Loss}", metrics.LogLoss);
-
-            var filepath = Path.Combine(outputDir, filename);
-            _mlContext.Model.Save(result.BestRun.Model, split.TrainSet.Schema, filepath);
+            samples.Add(new PredictionSample(
+                testRows[i].Market,
+                (int)testRows[i].LeagueId,
+                Math.Clamp(probabilities[i], 0f, 1f),
+                testRows[i].Label));
         }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "AutoML multiclass training for label {Label} failed. Sync will continue with existing model or skip this target.", labelColumn);
-        }
+
+        return samples;
     }
+
+    private static float Sigmoid(float score) => 1f / (1f + MathF.Exp(-score));
 }
