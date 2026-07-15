@@ -30,6 +30,17 @@ public static class Program
         var command = args[0].ToLowerInvariant();
         try
         {
+            // Same behavior as API startup: make sure the schema is current.
+            // (migrate-data manages its own contexts; the SQLite source stays read-only there.)
+            if (command != "migrate-data")
+            {
+                using var migrationScope = host.Services.CreateScope();
+                var db = migrationScope.ServiceProvider
+                    .GetRequiredService<SoccerAi.Infrastructure.Persistence.ApplicationDbContext>();
+                await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions
+                    .MigrateAsync(db.Database);
+            }
+
             switch (command)
             {
                 case "backtest":
@@ -65,6 +76,14 @@ public static class Program
     {
         var builder = Host.CreateApplicationBuilder(args);
 
+        // Load the appsettings.json shipped next to the binary even when the
+        // process is started from a different working directory (dotnet run).
+        builder.Configuration.AddJsonFile(
+            Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true);
+        builder.Configuration.AddEnvironmentVariables();
+
+        ResolveSqlitePath(builder.Configuration, args);
+
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -74,6 +93,57 @@ public static class Program
         builder.Services.RegisterMediator(mediatorBuilder);
 
         return builder.Build();
+    }
+
+    /// <summary>
+    /// Relative SQLite paths depend on the caller's working directory; when run
+    /// from the repo root the configured "data/soccer.db" would silently create
+    /// an EMPTY database. Resolve --db, or search upward for the existing file
+    /// (including the API project's data folder), and pin the absolute path.
+    /// </summary>
+    private static void ResolveSqlitePath(
+        Microsoft.Extensions.Configuration.IConfigurationManager configuration, string[] args)
+    {
+        var provider = configuration["Database:Provider"] ?? "Sqlite";
+        if (!provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var dbOverride = GetStringOption(args, "--db");
+        if (dbOverride != null)
+        {
+            configuration["ConnectionStrings:DefaultConnection"] = $"Data Source={Path.GetFullPath(dbOverride)}";
+            Console.WriteLine($"Using SQLite database: {Path.GetFullPath(dbOverride)}");
+            return;
+        }
+
+        var configured = configuration.GetConnectionString("DefaultConnection") ?? "Data Source=data/soccer.db";
+        var pathPart = configured.Split('=', 2).ElementAtOrDefault(1)?.Split(';')[0] ?? "data/soccer.db";
+        if (Path.IsPathRooted(pathPart))
+            return;
+
+        var dir = Directory.GetCurrentDirectory();
+        for (var i = 0; i < 5 && dir != null; i++)
+        {
+            foreach (var candidate in new[]
+                     {
+                         Path.Combine(dir, pathPart),
+                         Path.Combine(dir, "src", "soccer-ai-api", pathPart),
+                         Path.Combine(dir, "soccer-ai-api", pathPart)
+                     })
+            {
+                if (File.Exists(candidate))
+                {
+                    var full = Path.GetFullPath(candidate);
+                    configuration["ConnectionStrings:DefaultConnection"] = $"Data Source={full}";
+                    Console.WriteLine($"Using SQLite database: {full}");
+                    return;
+                }
+            }
+            dir = Path.GetDirectoryName(dir);
+        }
+
+        Console.WriteLine($"WARNING: SQLite file '{pathPart}' not found near '{Directory.GetCurrentDirectory()}' — " +
+                          "a new empty database will be created. Pass --db=<path> to use an existing one.");
     }
 
     private static async Task RunBacktestAsync(IServiceProvider services, string[] args)
