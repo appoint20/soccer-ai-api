@@ -1,7 +1,7 @@
-# Render Blueprint (soccer-gpt-api)
+# Render Blueprint (soccer-ai-api)
 # Deploy everything in one go: https://render.com/docs/blueprints
 services:
-  # 1. Main .NET 10 API Service
+  # 1. Main .NET 10 API Service (HTTP only — no background sync)
   - type: web
     name: soccer-ai-api
     env: docker
@@ -20,12 +20,48 @@ services:
         value: "glm-5.1"
       - key: ZAI_API_KEY
         sync: false # Set this manually in the Render dashboard
+      # ── PostgreSQL (provisioned below) is the primary database ──
+      - key: DATABASE__PROVIDER
+        value: Postgres
+      - key: CONNECTIONSTRINGS__POSTGRESCONNECTION
+        fromDatabase:
+          name: soccer-ai-db
+          property: connectionString
+      # Legacy SQLite kept on disk only for the one-time data migration
       - key: CONNECTIONSTRINGS__DEFAULTCONNECTION
         value: "Data Source=/app/data/soccer.db"
     disk:
       name: sqlite-data
       mountPath: /app/data
       sizeGB: 1
+
+  # 2. Sync agent (dedicated worker — fixtures/odds sync, analysis precompute)
+  - type: worker
+    name: soccer-ai-worker
+    env: docker
+    dockerContext: .
+    dockerfilePath: Dockerfile.worker
+    plan: starter
+    region: frankfurt
+    envVars:
+      - key: DOTNET_ENVIRONMENT
+        value: Production
+      - key: API_FOOTBALL_KEY
+        sync: false # Set this manually in the Render dashboard
+      - key: ZAI_API_KEY
+        sync: false
+      - key: DATABASE__PROVIDER
+        value: Postgres
+      - key: CONNECTIONSTRINGS__POSTGRESCONNECTION
+        fromDatabase:
+          name: soccer-ai-db
+          property: connectionString
+      - key: SYNC__SCHEDULEUTC__0
+        value: "03:30"
+      - key: SYNC__SCHEDULEUTC__1
+        value: "15:30"
+      - key: SYNC__GENERATEAINARRATIVES
+        value: "false"
 
 databases:
   - name: soccer-ai-db
