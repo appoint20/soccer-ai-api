@@ -44,6 +44,7 @@ public static class DependencyInjection
         // Core Analysis & Prediction
         services.AddScoped<IMatchAnalysisService, MatchAnalysisService>();
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();
+        services.AddScoped<IAnalysisPrecomputeService, AnalysisPrecomputeService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
         services.AddScoped<ITeamSyncService, TeamSyncService>();

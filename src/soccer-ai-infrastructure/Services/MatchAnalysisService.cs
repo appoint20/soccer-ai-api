@@ -19,16 +19,11 @@ public sealed class MatchAnalysisService(
 {
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, bool refresh = false, CancellationToken ct = default)
     {
-        FixtureAnalysis? aiEntity = null;
-        if (!refresh)
-        {
-            aiEntity = await dbContext.FixtureAnalyses
-                .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
-        }
+        // Always load the persisted analysis row: it carries the AI narrative.
+        // `refresh` only controls whether the MATH is recomputed.
+        var aiEntity = await dbContext.FixtureAnalyses
+            .FirstOrDefaultAsync(a => a.FixtureId == fixture.Id && a.Lang == lang, ct);
 
-        // If AI is missing and it's a critical match (e.g., today), we could trigger it on-demand.
-        // For now, we'll just check if it's there.
-        
         WeightedPrediction? prediction;
         StatisticalModels models;
         TeamStatsResponse? stats = null;
@@ -43,7 +38,7 @@ public sealed class MatchAnalysisService(
         homeRest = data.HomeRestDays;
         awayRest = data.AwayRestDays;
 
-        if (aiEntity is { HomeProb: > 0 })
+        if (!refresh && aiEntity is { HomeProb: > 0 })
         {
             // CACHE HIT: Use stored mathematical probabilities, skip heavy ML models
             prediction = new WeightedPrediction

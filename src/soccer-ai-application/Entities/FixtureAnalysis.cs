@@ -53,6 +53,13 @@ public class FixtureAnalysis
     public string AiBestBet { get; set; } = "";
     public int AiOverallConfidence { get; set; }
 
+    // ── Precomputed response snapshot (Task 1.5) ──────────────────
+    /// <summary>
+    /// Full serialized MatchAnalysis response for this fixture+language,
+    /// computed during sync so GET /api/analyze is a pure DB read.
+    /// </summary>
+    public string? SnapshotJson { get; set; }
+
     // ── Audit ──────────────────────────────────────────────────────
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

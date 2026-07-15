@@ -58,6 +58,28 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
     }
 
     /// <summary>
+    /// Recompute the persisted analysis snapshot for a single fixture.
+    /// The sync agent (or an admin) uses this after data for a fixture changes.
+    /// </summary>
+    [HttpPost("recompute/{fixtureId:int}")]
+    public async Task<IActionResult> RecomputeFixture(
+        int fixtureId,
+        [FromServices] IAnalysisPrecomputeService precomputeService,
+        CancellationToken ct)
+    {
+        var results = await precomputeService.RecomputeFixtureAsync(fixtureId, ct);
+        if (results.Count == 0)
+            return NotFound(ApiResponse<object>.Fail($"Fixture {fixtureId} not found or could not be recomputed."));
+
+        return Ok(ApiResponse<object>.Ok(new
+        {
+            message = $"Recomputed analysis snapshot for fixture {fixtureId}",
+            languages = results.Keys,
+            timestamp = DateTime.UtcNow
+        }));
+    }
+
+    /// <summary>
     /// Sync fixtures only (past results + upcoming) — skips ML and AI analysis.
     /// Use this to quickly refresh match results and upcoming fixture data.
     /// </summary>

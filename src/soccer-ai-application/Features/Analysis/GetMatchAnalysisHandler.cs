@@ -1,33 +1,27 @@
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoccerAi.Application.Helpers;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 using SoccerAi.Application.Services.Analysis;
-using SoccerAi.Application.Entities;
 
 namespace SoccerAi.Application.Features.Analysis;
 
 /// <summary>
-/// Handles match analysis requests with comprehensive prediction pipeline.
+/// Pure DB-read analysis endpoint (precompute architecture).
 ///
-/// Orchestrates analysis workflow:
-/// 1. Fetches fixtures and team data for specified date
-/// 2. Analyzes each fixture through statistical models (Poisson, MC, ML)
-/// 3. Requests AI batch analysis for semantic reasoning
-/// 4. Maps analysis to response DTOs with AI integration
-/// 5. Calculates accuracy summary for completed matches
-///
-/// Refactored for orchestration only. Complex logic delegated to:
-/// - FixtureQueryHelper (data loading)
-/// - AnalysisResponseMapper (DTO mapping)
-/// - IMatchAnalysisService (statistical analysis)
-/// - IAiAnalysisService (AI reasoning)
+/// Snapshots are computed during sync by IAnalysisPrecomputeService and stored
+/// in FixtureAnalysis.SnapshotJson; this handler only deserializes them.
+/// Model computation happens inside a request ONLY as a fallback when a
+/// snapshot is missing or stale (finished fixture with a pre-result snapshot),
+/// or when ?refresh=true explicitly forces a recompute.
 /// </summary>
 public class GetMatchAnalysisHandler(
     FixtureQueryHelper queryHelper,
-    IMatchAnalysisService analysisService,
+    IApplicationDbContext dbContext,
+    IAnalysisPrecomputeService precomputeService,
     IAiSyncService aiSyncService,
     ILogger<GetMatchAnalysisHandler> logger)
     : IRequestHandler<GetMatchAnalysisQuery, GetMatchAnalysisResponse>
@@ -40,67 +34,74 @@ public class GetMatchAnalysisHandler(
         var lang = query.Language ?? "en";
         var date = query.Date ?? DateTimeOffset.UtcNow;
 
-        logger.LogInformation("Analyzing matches for {Date} (UTC) in {Lang}",
-            date.ToString("yyyy-MM-dd"), lang);
-
-        // Step 1: Load fixtures and teams
-        var (fixtures, teams, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(date, query.Page, query.PageSize, query.OnlyAnalyzed, cancellationToken);
-
-        logger.LogInformation("Loaded {Count} fixtures from DB for {Date} (Page: {Page}, PageSize: {PageSize})", 
-            fixtures.Count, date.ToString("yyyy-MM-dd"), query.Page, query.PageSize);
+        // Step 1: Load fixtures + teams (cheap indexed queries)
+        var (fixtures, _, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(
+            date, query.Page, query.PageSize, query.OnlyAnalyzed, cancellationToken);
 
         if (fixtures.Count == 0)
         {
-            logger.LogWarning("No fixtures found in database for date {Date}", date.ToString("yyyy-MM-dd"));
-            return new GetMatchAnalysisResponse 
-            { 
-                Matches = [], 
+            logger.LogInformation("No fixtures found for {Date}", date.ToString("yyyy-MM-dd"));
+            return new GetMatchAnalysisResponse
+            {
+                Matches = [],
                 TotalCount = totalCount,
-                Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 } 
+                Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 }
             };
         }
 
-        // ... (Step 2-4 remains mostly the same, analysis is now limited to the returned fixtures) ...
-        var fixtureAnalysisMap = new Dictionary<int, FixtureAnalysisResult>();
-        int analysisCount = 0;
-        foreach (var fixture in fixtures)
+        // Step 2 (optional, slow, admin use): force AI regeneration first
+        if (query.Refresh)
         {
-            try 
+            foreach (var fixture in fixtures)
             {
-                if (query.Refresh)
+                try
                 {
-                    logger.LogInformation("Forcing AI refresh for fixture {Id}", fixture.Id);
                     await aiSyncService.SyncSingleFixtureAsync(fixture.Id, force: true, cancellationToken);
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "AI refresh failed for fixture {Id}", fixture.Id);
+                }
+            }
+        }
 
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, lang, query.Refresh, cancellationToken);
-                fixtureAnalysisMap[fixture.Id] = analysis;
-                analysisCount++;
+        // Step 3: ONE query loads all snapshots for the page
+        var fixtureIds = fixtures.Select(f => f.Id).ToList();
+        var snapshotRows = await dbContext.FixtureAnalyses
+            .AsNoTracking()
+            .Where(a => fixtureIds.Contains(a.FixtureId) && a.Lang == lang)
+            .ToDictionaryAsync(a => a.FixtureId, cancellationToken);
+
+        // Step 4: deserialize snapshots; recompute only when missing/stale/forced
+        var analysisList = new List<MatchAnalysis>(fixtures.Count);
+        foreach (var fixture in fixtures)
+        {
+            try
+            {
+                var snapshot = query.Refresh
+                    ? null
+                    : AnalysisSnapshotSerializer.Deserialize(
+                        snapshotRows.GetValueOrDefault(fixture.Id)?.SnapshotJson);
+
+                // Stale: the fixture finished after the snapshot was computed.
+                var stale = snapshot is { Result: null } && fixture.Status == "FT";
+
+                if (snapshot == null || stale)
+                {
+                    var recomputed = await precomputeService.RecomputeFixtureAsync(fixture.Id, cancellationToken);
+                    snapshot = recomputed.GetValueOrDefault(lang);
+                }
+
+                if (snapshot != null)
+                    analysisList.Add(snapshot);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to analyze fixture {Id} ({Home} vs {Away})", 
-                    fixture.Id, fixture.HomeTeamId, fixture.AwayTeamId);
+                logger.LogError(ex, "Failed to produce analysis for fixture {Id}", fixture.Id);
             }
         }
 
-        var analysisList = new List<MatchAnalysis>();
-        foreach (var fixture in fixtures)
-        {
-            if (!fixtureAnalysisMap.TryGetValue(fixture.Id, out var analysis)) continue;
-
-            var homeTeam = teams.GetValueOrDefault(fixture.HomeTeamId);
-            var awayTeam = teams.GetValueOrDefault(fixture.AwayTeamId);
-
-            if (homeTeam == null || awayTeam == null) continue;
-
-            var matchAnalysis = AnalysisResponseMapper.MapToResponse(
-                fixture, analysis, homeTeam, awayTeam, analysis.Ai);
-
-            analysisList.Add(matchAnalysis);
-        }
-
-        // Step 5: Calculate summary
+        // Step 5: summary over finished matches
         var summary = AnalysisResponseMapper.CalculateSummary(analysisList);
 
         return new GetMatchAnalysisResponse

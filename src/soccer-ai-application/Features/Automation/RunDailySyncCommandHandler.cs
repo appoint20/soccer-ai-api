@@ -9,9 +9,10 @@ namespace SoccerAi.Application.Features.Automation;
 
 public class RunDailySyncCommandHandler(
     ITeamSyncService teamSyncService, IFixtureSyncService fixtureSyncService,
-    IMlTrainingService mlTrainingService, IAiSyncService aiSyncService, 
+    IMlTrainingService mlTrainingService, IAiSyncService aiSyncService,
+    IAnalysisPrecomputeService precomputeService,
     IMediator mediator,
-    ILogger<RunDailySyncCommandHandler> logger) 
+    ILogger<RunDailySyncCommandHandler> logger)
     : ICommandHandler<RunDailySyncCommand>
 {
     public async Task Handle(IReceiveContext<RunDailySyncCommand> context, CancellationToken cancellationToken)
@@ -32,7 +33,12 @@ public class RunDailySyncCommandHandler(
             // 4. Generate AI Analysis
             await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, false, cancellationToken);
 
-            // 5. Weekly Persistence: Run Backtest Simulation (Mondays) to refresh the cache
+            // 5. Precompute analysis snapshots so GET /api/analyze is a pure DB read
+            var nowUtc = DateTimeOffset.UtcNow;
+            await precomputeService.RecomputeWindowAsync(
+                nowUtc.Date.AddDays(-3), nowUtc.Date.AddDays(4), cancellationToken);
+
+            // 6. Weekly Persistence: Run Backtest Simulation (Mondays) to refresh the cache
             if (DateTime.Today.DayOfWeek == DayOfWeek.Monday)
             {
                 logger.LogInformation("Monday detected: Triggering weekly backtest report refresh...");
