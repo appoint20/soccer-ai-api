@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Combination> Combinations { get; init; }
     public DbSet<User> Users { get; init; }
     public DbSet<BacktestReport> BacktestReports { get; init; }
+    public DbSet<SyncState> SyncStates { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +99,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasKey(r => r.Id);
             entity.HasIndex(r => new { r.WeeksBack, r.Stake, r.CreatedAt });
             entity.ToTable("BacktestReports");
+        });
+
+        // ── SyncState (single-row operational state for the sync worker) ─────
+        modelBuilder.Entity<SyncState>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.ToTable("SyncStates");
         });
 
         // ── User ─────────────────────────────────────────────────────────────

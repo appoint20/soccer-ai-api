@@ -63,9 +63,10 @@ public static class DataMigrationCommand
 
         // Safety: this file enumerates every DbSet explicitly. If the model has
         // grown since, refuse to run rather than silently skip a table.
+        // SyncState is transient operational state — intentionally NOT migrated.
         string[] knownEntities =
             [nameof(Team), nameof(Fixture), nameof(FixtureAnalysis),
-             nameof(Combination), nameof(User), nameof(BacktestReport)];
+             nameof(Combination), nameof(User), nameof(BacktestReport), nameof(SyncState)];
         var modelEntities = target.Model.GetEntityTypes()
             .Select(e => e.ClrType.Name)
             .Distinct()

@@ -210,6 +210,22 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     table.PrimaryKey("PK_BacktestReports", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "SyncStates",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    LastSuccessfulSyncUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastRunStartedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastCompletedStep = table.Column<string>(type: "text", nullable: true),
+                    LastError = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SyncStates", x => x.Id);
+                });
+
             // ── Indexes ──
             migrationBuilder.CreateIndex(name: "IX_Teams_ApiId", table: "Teams", column: "ApiId", unique: true);
             migrationBuilder.CreateIndex(name: "IX_Fixtures_ApiId", table: "Fixtures", column: "ApiId", unique: true);
@@ -235,6 +251,7 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
             migrationBuilder.DropTable(name: "BacktestReports");
             migrationBuilder.DropTable(name: "Fixtures");
             migrationBuilder.DropTable(name: "Teams");
+            migrationBuilder.DropTable(name: "SyncStates");
         }
     }
 }

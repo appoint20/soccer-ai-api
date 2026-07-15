@@ -68,8 +68,8 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<INlpService, NlpService>();
 
-        // Background Automation
-        services.AddHostedService<DailySyncBackgroundService>();
+        // NOTE: background sync now lives in the dedicated soccer-ai-worker
+        // service (SyncWorker); the API host runs no sync loops.
     }
 
     private static void AddPersistence(this IServiceCollection services, IConfiguration configuration)

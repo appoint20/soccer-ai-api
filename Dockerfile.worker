@@ -1,0 +1,19 @@
+# --- STAGE 1: .NET BUILD ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dotnet-build
+WORKDIR /src
+COPY src/soccer-ai-worker/soccer-ai-worker.csproj src/soccer-ai-worker/
+COPY src/soccer-ai-application/soccer-ai-application.csproj src/soccer-ai-application/
+COPY src/soccer-ai-infrastructure/soccer-ai-infrastructure.csproj src/soccer-ai-infrastructure/
+RUN dotnet restore src/soccer-ai-worker/soccer-ai-worker.csproj
+COPY . .
+RUN dotnet publish src/soccer-ai-worker/soccer-ai-worker.csproj -c Release -o /app/publish --no-restore
+
+# --- STAGE 2: FINAL RUNTIME ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=dotnet-build /app/publish .
+
+# Directory for the legacy SQLite volume (when Provider=Sqlite)
+RUN mkdir -p /app/data
+
+ENTRYPOINT ["dotnet", "soccer-ai-worker.dll"]

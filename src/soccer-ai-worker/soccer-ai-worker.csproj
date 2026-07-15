@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SoccerAi.Worker</RootNamespace>
+    <UserSecretsId>b21f7c44-19de-4a51-9c02-7e3fda2a1e60</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Net" Version="5.0.0" />
+    <PackageReference Include="Mediator.Net.MicrosoftDependencyInjection" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\soccer-ai-application\soccer-ai-application.csproj" />
+    <ProjectReference Include="..\soccer-ai-infrastructure\soccer-ai-infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
