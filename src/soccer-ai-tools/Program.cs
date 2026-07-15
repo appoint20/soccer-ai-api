@@ -46,6 +46,8 @@ public static class Program
                 case "sync-full":
                     await RunFullSyncAsync(host.Services, args);
                     return 0;
+                case "migrate-data":
+                    return await RunDataMigrationAsync(host.Services, args);
                 default:
                     Console.Error.WriteLine($"Unknown command: {command}");
                     PrintUsage();
@@ -169,6 +171,25 @@ public static class Program
         Console.WriteLine("Full daily sync orchestration completed.");
     }
 
+    private static async Task<int> RunDataMigrationAsync(IServiceProvider services, string[] args)
+    {
+        var sqlitePath = GetStringOption(args, "--sqlite") ?? Path.Combine("data", "soccer.db");
+
+        var configuration = services.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var postgresConn = GetStringOption(args, "--postgres")
+            ?? Microsoft.Extensions.Configuration.ConfigurationExtensions
+                .GetConnectionString(configuration, "PostgresConnection");
+
+        if (string.IsNullOrWhiteSpace(postgresConn))
+        {
+            Console.Error.WriteLine(
+                "migrate-data requires --postgres=<connection string> or ConnectionStrings:PostgresConnection in config");
+            return 1;
+        }
+
+        return await DataMigrationCommand.RunAsync(sqlitePath, postgresConn);
+    }
+
     private static int CurrentSeason() =>
         DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
 
@@ -200,6 +221,10 @@ public static class Program
                            Generate AI analysis for upcoming (or one) fixture.
               sync-full    [--season=<year>]
                            Run the full daily sync orchestration.
+              migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
+                           One-time zero-loss SQLite → PostgreSQL migration with
+                           row-count + checksum verification (aborts on mismatch;
+                           the SQLite file is opened read-only).
 
             Configuration: appsettings.json next to the executable; override via
             environment variables (e.g. CONNECTIONSTRINGS__DEFAULTCONNECTION).
