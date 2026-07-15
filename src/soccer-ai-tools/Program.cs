@@ -1,5 +1,6 @@
 using Mediator.Net;
 using Mediator.Net.MicrosoftDependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SoccerAi.Application;

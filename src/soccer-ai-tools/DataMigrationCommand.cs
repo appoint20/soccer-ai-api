@@ -114,8 +114,11 @@ public static class DataMigrationCommand
             foreach (var table in new[]
                      { "Teams", "Fixtures", "FixtureAnalyses", "Combinations", "Users", "BacktestReports" })
             {
+                // Table names come from the fixed list above — not user input.
+#pragma warning disable EF1002
                 await target.Database.ExecuteSqlRawAsync(
                     $"""SELECT setval(pg_get_serial_sequence('"{table}"', 'Id'), COALESCE((SELECT MAX("Id") FROM "{table}"), 0) + 1, false);""");
+#pragma warning restore EF1002
             }
 
             await transaction.CommitAsync();
