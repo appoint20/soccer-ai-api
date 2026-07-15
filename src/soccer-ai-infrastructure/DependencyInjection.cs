@@ -167,22 +167,37 @@ public static class DependencyInjection
     private static void RegisterAiAnalysisService(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AiServiceOptions>(configuration.GetSection("AiService"));
+
+        // The LLM only generates narrative text — it must NEVER be required for
+        // the statistical flow (model, calibration, decisions, backtest).
+        // Without a key (or with AiService:Enabled=false) a no-op service is used.
+        var apiKey = ResolveAiApiKey(configuration);
+        var enabled = configuration.GetValue("AiService:Enabled", true) && !string.IsNullOrWhiteSpace(apiKey);
+
+        if (!enabled)
+        {
+            services.AddScoped<IAiAnalysisService, DisabledAiAnalysisService>();
+            return;
+        }
+
         services.AddScoped<IAiAnalysisService, OpenAiAnalysisService>();
-        
-        services.AddScoped<ChatClient>(sp => 
+        services.AddScoped<ChatClient>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<AiServiceOptions>>().Value;
-            
-            if (string.IsNullOrWhiteSpace(options.ApiKey))
-            {
-                throw new InvalidOperationException(
-                    "AI Service API Key is missing. Please ensure 'AiService:ApiKey' is configured in appsettings.json " +
-                    "or set the 'AiService__ApiKey' environment variable in your hosting environment (e.g., Render).");
-            }
+            var key = ResolveAiApiKey(configuration) ?? options.ApiKey;
 
             var clientOptions = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(options.BaseUrl.TrimEnd('/') + "/") };
-            return new ChatClient(options.DefaultModel ?? "glm-4-plus", new System.ClientModel.ApiKeyCredential(options.ApiKey), clientOptions);
+            return new ChatClient(options.DefaultModel ?? "glm-4-plus", new System.ClientModel.ApiKeyCredential(key), clientOptions);
         });
+    }
+
+    /// <summary>AiService:ApiKey (incl. AiService__ApiKey env) with ZAI_API_KEY fallback.</summary>
+    private static string? ResolveAiApiKey(IConfiguration configuration)
+    {
+        var key = configuration["AiService:ApiKey"];
+        return string.IsNullOrWhiteSpace(key)
+            ? Environment.GetEnvironmentVariable("ZAI_API_KEY")
+            : key;
     }
 
 }
