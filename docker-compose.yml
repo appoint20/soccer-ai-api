@@ -10,9 +10,35 @@ services:
     environment:
       - PORT=8080
       - ASPNETCORE_ENVIRONMENT=Development
+      # Switch to Postgres by default when running via compose.
+      # Set DATABASE__PROVIDER=Sqlite to fall back to the legacy SQLite file.
+      - DATABASE__PROVIDER=Postgres
+      - CONNECTIONSTRINGS__POSTGRESCONNECTION=Host=postgres;Port=5432;Database=soccer_ai;Username=postgres;Password=postgres
       - CONNECTIONSTRINGS__DEFAULTCONNECTION=Data Source=/app/data/soccer.db
     volumes:
       - sqlite_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: soccer_ai_postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=soccer_ai
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d soccer_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   sqlite_data:
+  postgres_data:

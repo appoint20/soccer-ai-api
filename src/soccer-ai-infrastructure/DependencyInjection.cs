@@ -74,13 +74,44 @@ public static class DependencyInjection
 
     private static void AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        // Provider selection via config: "Database:Provider" = "Sqlite" (default) | "Postgres"
+        var provider = configuration["Database:Provider"] ?? "Sqlite";
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionString));
+        // The initial Postgres migration (and the SnapshotJson SQLite migration) are
+        // hand-written without designer target models, so EF's pending-model-changes
+        // heuristic cannot compare models; suppress it for Database.Migrate().
+        void ConfigureWarnings(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder options) =>
+            options.ConfigureWarnings(w => w.Ignore(
+                Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 
-        services.AddScoped<IApplicationDbContext>(provider => 
-            provider.GetRequiredService<ApplicationDbContext>());
+        if (provider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+        {
+            var connectionString =
+                configuration.GetConnectionString("PostgresConnection")
+                ?? configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<PostgresDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+                ConfigureWarnings(options);
+            });
+
+            // Everything resolving ApplicationDbContext gets the Postgres context.
+            services.AddScoped<ApplicationDbContext>(sp => sp.GetRequiredService<PostgresDbContext>());
+        }
+        else
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlite(connectionString);
+                ConfigureWarnings(options);
+            });
+        }
+
+        services.AddScoped<IApplicationDbContext>(sp =>
+            sp.GetRequiredService<ApplicationDbContext>());
     }
 
     private static void AddExternalApis(this IServiceCollection services, IConfiguration configuration)

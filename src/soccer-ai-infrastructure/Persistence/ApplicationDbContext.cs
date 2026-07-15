@@ -4,9 +4,13 @@ using SoccerAi.Application.Interfaces;
 
 namespace SoccerAi.Infrastructure.Persistence;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : DbContext(options), IApplicationDbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+    /// <summary>Allows provider-specific derived contexts (e.g. PostgresDbContext).</summary>
+    protected ApplicationDbContext(DbContextOptions options) : base(options) { }
+
     public DbSet<Team> Teams { get; init; }
     public DbSet<Fixture> Fixtures { get; init; }
     public DbSet<FixtureAnalysis> FixtureAnalyses { get; init; }
