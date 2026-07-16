@@ -164,6 +164,45 @@ public static class Program
         var outputPath = GetStringOption(args, "--output") ?? "backtest_result.json";
         await File.WriteAllTextAsync(outputPath, json);
         Console.WriteLine($"Backtest complete. JSON written to {outputPath}");
+
+        PrintBacktestSummary(response);
+    }
+
+    private static void PrintBacktestSummary(GetBacktestReportResponse r)
+    {
+        Console.WriteLine();
+        Console.WriteLine("=== HEADLINE: QUALIFIED PICKS (real odds) ===");
+        var q = r.QualifiedPicks;
+        Console.WriteLine($"  Picks: {q.Count}  Hits: {q.Hits}  Hit rate: {q.HitRate:F1}%  " +
+                          $"Avg odds: {q.AvgOdds:F2}  ROI: {q.RoiPercent:F1}%");
+        foreach (var m in q.PerMarket)
+            Console.WriteLine($"    {m.Market,-14} n={m.Count,-4} hit={m.HitRate,5:F1}%  " +
+                              $"avg odds={m.AvgOdds:F2}  roi={m.RoiPercent,6:F1}%");
+
+        Console.WriteLine();
+        Console.WriteLine("=== MARKET QUALITY (all analyzed fixtures) ===");
+        foreach (var m in r.MarketMetrics)
+            Console.WriteLine($"  {m.Market,-14} n={m.SampleSize,-5} brier={m.BrierScore:F4}  logloss={m.LogLoss:F4}");
+
+        Console.WriteLine();
+        Console.WriteLine("=== CALIBRATION (predicted vs actual) ===");
+        foreach (var market in r.Calibration)
+        {
+            Console.WriteLine($"  {market.Market}:");
+            foreach (var b in market.Buckets.Where(b => b.SampleSize > 0))
+                Console.WriteLine($"    {b.Range,-10} n={b.SampleSize,-4} predicted={b.PredictedAvg:P1}  actual={b.ActualHitRate:P1}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("=== RULE PERFORMANCE (qualified picks, with vs without) ===");
+        foreach (var rule in r.RulePerformance)
+            Console.WriteLine($"  {rule.Market,-14} {rule.RuleId,-38} " +
+                              $"with: n={rule.PicksWith,-4}{rule.HitRateWith,5:F1}%   " +
+                              $"without: n={rule.PicksWithout,-4}{rule.HitRateWithout,5:F1}%");
+
+        Console.WriteLine();
+        Console.WriteLine($"=== COMBOS ===  total={r.Summary.CombosTotal} won={r.Summary.CombosWon} " +
+                          $"roi={r.Summary.TotalRoi:F1}%  legs={r.Summary.CorrectLegs}/{r.Summary.TotalLegs}");
     }
 
     private static async Task RunMlTrainingAsync(IServiceProvider services, string[] args)
