@@ -39,4 +39,7 @@ public sealed class FixtureAnalysisResult
     public double? OddsDraw { get; init; }
     public float? HomeRestDays { get; init; }
     public float? AwayRestDays { get; init; }
+
+    /// <summary>Strategic signal catalog (facts gating decisions — never probabilities).</summary>
+    public Models.Signals.StrategicSignals? Signals { get; init; }
 }

@@ -26,6 +26,9 @@ public interface ILeagueTierService
     /// <summary>League ids the sync pipeline should process.</summary>
     IReadOnlyList<int> GetSyncLeagueIds();
 
+    /// <summary>All configured Tier2 (European cup) league ids, regardless of the IncludeTier2 flag.</summary>
+    IReadOnlyList<int> GetTier2LeagueIds();
+
     /// <summary>Extra qualification-score threshold for this league (0 for Tier1).</summary>
     double GetQualificationThresholdBoost(int leagueId);
 }

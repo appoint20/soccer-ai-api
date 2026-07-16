@@ -15,6 +15,7 @@ public sealed class MatchAnalysisService(
     IMatchDataProvider dataProvider,
     IProbabilityPipeline pipeline,
     IDecisionService decisionService,
+    IStrategicSignalService signalService,
     IApplicationDbContext dbContext) : IMatchAnalysisService
 {
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, bool refresh = false, CancellationToken ct = default)
@@ -96,6 +97,10 @@ public sealed class MatchAnalysisService(
         var odds = BuildMatchContext(fixture, homeRest, awayRest);
         var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, ai);
 
+        // Strategic signal catalog (facts; DC model passed for divergence signals
+        // when it ran this request — cached-math path degrades those gracefully).
+        var signals = await signalService.ComputeAsync(
+            fixture, models.Poisson.IsValid ? models.Poisson : null, ct);
 
         // Build result
         return new FixtureAnalysisResult
@@ -114,7 +119,8 @@ public sealed class MatchAnalysisService(
             OddsDraw = odds.OddsDraw,
             Ai = ai,
             HomeRestDays = homeRest,
-            AwayRestDays = awayRest
+            AwayRestDays = awayRest,
+            Signals = signals
         };
     }
 

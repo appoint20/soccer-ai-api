@@ -42,4 +42,7 @@ public sealed class MatchAnalysis
     public PredictionResponse? Prediction { get; init; }
     public HeadToHeadModel? H2H { get; init; }
     public AiAnalysisDto? Ai { get; set; }
+
+    /// <summary>Strategic signal catalog — persisted in the snapshot; LLM narratives cite the labels.</summary>
+    public Signals.StrategicSignals? Signals { get; init; }
 }

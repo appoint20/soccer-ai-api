@@ -13,9 +13,11 @@ public static class DependencyInjection
         services.AddScoped<IDixonColesModel, DixonColesModel>();
         services.AddScoped<IMarketCalibrationService, MarketCalibrator>();
         services.AddSingleton<ILeagueTierService, LeagueTierService>();
+        services.AddScoped<IStrategicSignalService, Services.Signals.StrategicSignalService>();
         services.AddOptions<Options.DixonColesOptions>();
         services.AddOptions<Options.CalibrationOptions>();
         services.AddOptions<Options.LeagueTierOptions>();
+        services.AddOptions<Options.StrategyOptions>();
         services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
         services.AddScoped<ICombinationService, Services.Combinations.DeterministicCombinationService>();
 

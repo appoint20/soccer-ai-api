@@ -58,9 +58,10 @@ public class AnalysisResponseMapper
                 ? new TrapDecision { IsTrap = true, Reason = aiAnalysis.TrapReason } 
                 : analysis.Decisions.Trap,
             H2H = analysis.H2H,
-            Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0)) 
-                ? new AiAnalysisDto() 
-                : aiAnalysis
+            Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
+                ? new AiAnalysisDto()
+                : aiAnalysis,
+            Signals = analysis.Signals
         };
     }
 

@@ -29,6 +29,8 @@ public sealed class LeagueTierService : ILeagueTierService
         _ => false
     };
 
+    public IReadOnlyList<int> GetTier2LeagueIds() => _options.Tier2;
+
     public IReadOnlyList<int> GetSyncLeagueIds() =>
         _options.IncludeTier2
             ? [.. _options.Tier1, .. _options.Tier2]
