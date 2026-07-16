@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SoccerAi.Infrastructure.MlNet;
+using SoccerAi.Application.Services.Evaluation;
 
 namespace soccer_ai_unit_tests.MlNet;
 

@@ -9,17 +9,30 @@ using SoccerAi.Application.Models;
 using System.Collections.Concurrent;
 using System.Globalization;
 using SoccerAi.Application.Entities;
+using SoccerAi.Application.Services.Combinations;
+using SoccerAi.Application.Services.Evaluation;
 
 namespace SoccerAi.Application.Features.Backtesting;
 
 public class GetBacktestReportHandler(
     IApplicationDbContext dbContext,
     IServiceProvider serviceProvider,
-    IChatCombinationEngine engine,
     ILeagueTierService leagueTiers,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
+    /// <summary>Minimum odds per accumulator leg (unchanged from previous behavior).</summary>
+    private const double MinSelectionOdds = 1.50;
+
+    /// <summary>2-3 Goals has no stored odds — bookmaker-typical price (same default as MatchAnalysis.OddsGoals23).</summary>
+    private const double DefaultGoals23Odds = 1.90;
+
+    private const int LowSampleThreshold = 30;
+
+    private sealed record MarketSampleRow(string Market, string League, double Probability, bool Outcome);
+    private sealed record HdaSampleRow(double[] Probabilities, int ActualIndex);
+    private sealed record QualifiedPickRow(string Market, string League, bool Won, double? Odds);
+
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
         CancellationToken cancellationToken)
@@ -69,6 +82,9 @@ public class GetBacktestReportHandler(
 
         var simulationResults = new ConcurrentBag<SimulationCombo>();
         var leagueResults = new ConcurrentBag<LeaguePredictionResult>();
+        var marketSamples = new ConcurrentBag<MarketSampleRow>();
+        var hdaSamples = new ConcurrentBag<HdaSampleRow>();
+        var qualifiedPicks = new ConcurrentBag<QualifiedPickRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -81,35 +97,69 @@ public class GetBacktestReportHandler(
             {
                 using var scope = serviceProvider.CreateScope();
                 var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
-                var matchAnalyses = new List<MatchAnalysis>();
+                var dayPicks = new List<BacktestPick>();
 
                 foreach (var f in day)
                 {
                     try
                     {
                         var analysisResult = await analysisService.AnalyzeFixtureAsync(f, "en", false, cancellationToken);
-                        if (analysisResult.Prediction != null)
+                        if (analysisResult.Prediction == null) continue;
+
+                        var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
+                        var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
+                        var league = analysisResult.LeagueName;
+
+                        var pred = analysisResult.Prediction;
+                        var totalGoals = f.HomeGoal + f.AwayGoal;
+                        var bttsActual = f is { HomeGoal: > 0, AwayGoal: > 0 };
+                        var over25Actual = totalGoals > 2;
+                        var goals23Actual = totalGoals is 2 or 3;
+                        var hdaActual = f.HomeGoal > f.AwayGoal ? 0 : f.HomeGoal == f.AwayGoal ? 1 : 2;
+                        var pickIsHome = pred.MatchWinner == "home";
+                        var pickWon = pickIsHome ? hdaActual == 0 : hdaActual == 2;
+
+                        // ── Probabilistic quality samples (ALL analyzed fixtures) ──
+                        marketSamples.Add(new MarketSampleRow("btts", league, pred.BTTSProb, bttsActual));
+                        marketSamples.Add(new MarketSampleRow("over25", league, pred.Over25Prob, over25Actual));
+                        marketSamples.Add(new MarketSampleRow("goals_2_3", league, pred.TwoToThreeGoalsProb, goals23Actual));
+                        marketSamples.Add(new MarketSampleRow("match_winner", league, pred.Confidence, pickWon));
+                        hdaSamples.Add(new HdaSampleRow(
+                            [pred.HomeProb, pred.DrawProb, pred.AwayProb], hdaActual));
+
+                        leagueResults.Add(new LeaguePredictionResult
                         {
-                            var home = teams.GetValueOrDefault(f.HomeTeamId) ?? new Team { Name = "Home" };
-                            var away = teams.GetValueOrDefault(f.AwayTeamId) ?? new Team { Name = "Away" };
-                            
-                            var mapped = SoccerAi.Application.Services.Analysis.AnalysisResponseMapper.MapToResponse(
-                                f, analysisResult, home, away, analysisResult.Ai);
-                            
-                            // Track league accuracy for all analyzed matches
-                            var pred = analysisResult.Prediction;
-                            bool bttsActual = f.HomeGoal > 0 && f.AwayGoal > 0;
-                            bool over25Actual = (f.HomeGoal + f.AwayGoal) > 2;
+                            League = league,
+                            BttsHit = pred.BTTS == bttsActual,
+                            Over25Hit = pred.Over25 == over25Actual
+                        });
 
-                            leagueResults.Add(new LeaguePredictionResult
-                            {
-                                League = analysisResult.LeagueName,
-                                BttsHit = pred.BTTS == bttsActual,
-                                Over25Hit = pred.Over25 == over25Actual
-                            });
+                        // ── Qualified picks (headline metric + combo pool) ──
+                        var m = analysisResult.Decisions.Markets;
 
-                            matchAnalyses.Add(mapped);
+                        void AddPick(string market, string selection, bool won, double? odds, double prob)
+                        {
+                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, odds));
+                            if (odds is > 1.0)
+                                dayPicks.Add(new BacktestPick(
+                                    f.Id, league, home.Name, away.Name, selection, prob, odds.Value));
                         }
+
+                        if (m.Over25.IsQualified)
+                            AddPick("over25", "Over 2.5 Goals", over25Actual, f.Over25Odds, pred.Over25Prob);
+                        if (m.BTTS.IsQualified)
+                            AddPick("btts", "BTTS", bttsActual, f.BttsYesOdds, pred.BTTSProb);
+                        if (m.TwoToThreeGoals.IsQualified)
+                            AddPick("goals_2_3", "2-3 Goals", goals23Actual, DefaultGoals23Odds, pred.TwoToThreeGoalsProb);
+                        if (m.MatchWinner.IsQualified)
+                            AddPick("match_winner",
+                                pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
+                                pickWon,
+                                pickIsHome ? f.HomeWinOdds : f.AwayWinOdds,
+                                pred.Confidence);
+                        if (m.LowScoring.IsQualified)
+                            AddPick("low_scoring", "Under 2.5 Goals", totalGoals < 3, f.Under25Odds,
+                                m.LowScoring.Confidence);
                     }
                     catch (Exception ex)
                     {
@@ -117,15 +167,11 @@ public class GetBacktestReportHandler(
                     }
                 }
 
-                if (matchAnalyses.Count >= 5)
+                // Deterministic combination simulation from qualified picks only.
+                // (Previously IChatCombinationEngine → LLM call → empty without an
+                // API key, which is why combos_total was 0.)
                 {
-                    // Simulate the Portfolio Generation
-                    var portfolios = await engine.GenerateCombinationsAsync(matchAnalyses, new ChatCombinationIntent 
-                    { 
-                        MinSelectionOdds = 1.50, // Updated to match relaxed threshold
-                        SourceType = "SYSTEM",
-                        Refresh = true // Ensure variety in backtests
-                    });
+                    var portfolios = BacktestCombinationBuilder.Build(dayPicks, MinSelectionOdds);
 
                     foreach (var combo in portfolios)
                     {
@@ -173,7 +219,10 @@ public class GetBacktestReportHandler(
 
         await Task.WhenAll(tasks);
 
-        var response = CalculateFinalReport(simulationResults.ToList(), leagueResults.ToList(), startDate, query.WeeksBack, query.Stake);
+        var response = CalculateFinalReport(
+            simulationResults.ToList(), leagueResults.ToList(),
+            marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
+            startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -207,12 +256,19 @@ public class GetBacktestReportHandler(
             "Draw" => f.HomeGoal == f.AwayGoal,
             "BTTS" => f.HomeGoal > 0 && f.AwayGoal > 0,
             "Over 2.5 Goals" => goals > 2,
+            "Under 2.5 Goals" => goals < 3,
             "2-3 Goals" => goals == 2 || goals == 3,
             _ => false
         };
     }
 
-    private GetBacktestReportResponse CalculateFinalReport(List<SimulationCombo> results, List<LeaguePredictionResult> leagueResults, DateTimeOffset startDate, int weeks, double stake)
+    private GetBacktestReportResponse CalculateFinalReport(
+        List<SimulationCombo> results,
+        List<LeaguePredictionResult> leagueResults,
+        List<MarketSampleRow> marketSamples,
+        List<HdaSampleRow> hdaSamples,
+        List<QualifiedPickRow> qualifiedPicks,
+        DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
         var weeklyGroups = results.GroupBy(r => ISOWeek.GetWeekOfYear(r.Date))
@@ -257,16 +313,22 @@ public class GetBacktestReportHandler(
                 };
             }).ToList();
 
-        // Calculate League Accuracy
+        // Calculate League Accuracy — n on every row, sorted by n desc, low-sample flag
         var leagueAccuracy = leagueResults.GroupBy(l => l.League)
             .Select(g => new LeagueAccuracy
             {
                 League = g.Key,
+                SampleSize = g.Count(),
+                LowSample = g.Count() < LowSampleThreshold,
                 BttsAccuracy = Math.Round((double)g.Count(x => x.BttsHit) / g.Count() * 100, 1),
                 Over25Accuracy = Math.Round((double)g.Count(x => x.Over25Hit) / g.Count() * 100, 1)
             })
-            .OrderByDescending(l => l.Over25Accuracy)
+            .OrderByDescending(l => l.SampleSize)
             .ToList();
+
+        var marketMetrics = BuildMarketMetrics(marketSamples, hdaSamples);
+        var calibration = BuildCalibration(marketSamples);
+        var qualified = BuildQualifiedPicksReport(qualifiedPicks);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -289,9 +351,112 @@ public class GetBacktestReportHandler(
                 CorrectLegs = correctLegs
             },
             WeeklyBreakdown = weeklyBreakdown,
-            LeagueAccuracy = leagueAccuracy
+            LeagueAccuracy = leagueAccuracy,
+            MarketMetrics = marketMetrics,
+            Calibration = calibration,
+            QualifiedPicks = qualified
         };
     }
+
+    // ── Report sections (Task 2 a-c) ─────────────────────────────────────────
+
+    private static readonly (double Lower, double Upper)[] CalibrationRanges =
+        [(0.50, 0.55), (0.55, 0.60), (0.60, 0.65), (0.65, 1.00)];
+
+    private static readonly string[] BinaryMarkets = ["btts", "over25", "goals_2_3", "match_winner"];
+
+    private static List<MarketMetrics> BuildMarketMetrics(
+        List<MarketSampleRow> marketSamples, List<HdaSampleRow> hdaSamples)
+    {
+        var metrics = new List<MarketMetrics>();
+
+        foreach (var market in BinaryMarkets.Where(m => m != "match_winner"))
+        {
+            var samples = ToHarnessSamples(marketSamples, market);
+            metrics.Add(new MarketMetrics
+            {
+                Market = market,
+                SampleSize = samples.Count,
+                BrierScore = Math.Round(EvaluationHarness.Brier(samples), 4),
+                LogLoss = Math.Round(EvaluationHarness.LogLoss(samples), 4)
+            });
+        }
+
+        // 1X2 as a proper three-way multiclass metric.
+        var hda = hdaSamples.Select(s => (s.Probabilities, s.ActualIndex)).ToList();
+        metrics.Add(new MarketMetrics
+        {
+            Market = "1x2",
+            SampleSize = hda.Count,
+            BrierScore = Math.Round(EvaluationHarness.MulticlassBrier(hda), 4),
+            LogLoss = Math.Round(EvaluationHarness.MulticlassLogLoss(hda), 4)
+        });
+
+        return metrics;
+    }
+
+    private static List<MarketCalibration> BuildCalibration(List<MarketSampleRow> marketSamples)
+    {
+        return BinaryMarkets.Select(market =>
+        {
+            var buckets = EvaluationHarness.CalibrationForRanges(
+                ToHarnessSamples(marketSamples, market), CalibrationRanges);
+
+            return new MarketCalibration
+            {
+                Market = market,
+                Buckets = buckets.Select(b => new CalibrationBucketRow
+                {
+                    Range = b.Upper >= 1.0 ? $"{b.Lower:P0}+" : $"{b.Lower:P0}-{b.Upper:P0}",
+                    SampleSize = b.Count,
+                    PredictedAvg = Math.Round(b.MeanPredicted, 4),
+                    ActualHitRate = Math.Round(b.ObservedRate, 4)
+                }).ToList()
+            };
+        }).ToList();
+    }
+
+    private static QualifiedPicksReport BuildQualifiedPicksReport(List<QualifiedPickRow> picks)
+    {
+        QualifiedMarketRow BuildRow(string market, List<QualifiedPickRow> rows)
+        {
+            var withOdds = rows.Where(p => p.Odds is > 1.0).ToList();
+            var staked = withOdds.Count;
+            var returned = withOdds.Sum(p => p.Won ? p.Odds!.Value : 0);
+            return new QualifiedMarketRow
+            {
+                Market = market,
+                Count = rows.Count,
+                Hits = rows.Count(p => p.Won),
+                HitRate = rows.Count > 0 ? Math.Round((double)rows.Count(p => p.Won) / rows.Count * 100, 1) : 0,
+                AvgOdds = withOdds.Count > 0 ? Math.Round(withOdds.Average(p => p.Odds!.Value), 2) : 0,
+                RoiPercent = staked > 0 ? Math.Round((returned - staked) / staked * 100, 1) : 0
+            };
+        }
+
+        var overall = BuildRow("all", picks);
+        var withOddsAll = picks.Where(p => p.Odds is > 1.0).ToList();
+
+        return new QualifiedPicksReport
+        {
+            Count = picks.Count,
+            Hits = picks.Count(p => p.Won),
+            HitRate = overall.HitRate,
+            AvgOdds = overall.AvgOdds,
+            TotalStaked = withOddsAll.Count,
+            TotalReturned = Math.Round(withOddsAll.Sum(p => p.Won ? p.Odds!.Value : 0), 2),
+            RoiPercent = overall.RoiPercent,
+            PerMarket = picks.GroupBy(p => p.Market)
+                .Select(g => BuildRow(g.Key, g.ToList()))
+                .OrderByDescending(r => r.Count)
+                .ToList()
+        };
+    }
+
+    private static List<PredictionSample> ToHarnessSamples(List<MarketSampleRow> rows, string market) =>
+        rows.Where(r => r.Market == market)
+            .Select(r => new PredictionSample(r.Market, 0, r.Probability, r.Outcome))
+            .ToList();
 
     private class SimulationCombo
     {

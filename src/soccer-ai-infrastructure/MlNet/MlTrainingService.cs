@@ -6,6 +6,7 @@ using Microsoft.ML;
 using Microsoft.ML.AutoML;
 using Microsoft.ML.Data;
 using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Services.Evaluation;
 using SoccerAi.Infrastructure.MlNet.Models;
 
 namespace SoccerAi.Infrastructure.MlNet;

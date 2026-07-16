@@ -1,4 +1,4 @@
-namespace SoccerAi.Infrastructure.MlNet;
+namespace SoccerAi.Application.Services.Evaluation;
 
 /// <summary>One scored prediction on held-out data.</summary>
 public sealed record PredictionSample(string Market, int LeagueId, double Probability, bool Outcome);
@@ -45,6 +45,51 @@ public static class EvaluationHarness
         samples.Count == 0
             ? 0
             : samples.Average(s => (s.Probability >= 0.5) == s.Outcome ? 1.0 : 0.0);
+
+    /// <summary>
+    /// Calibration over custom bucket boundaries, e.g. the product buckets
+    /// [0.50–0.55), [0.55–0.60), [0.60–0.65), [0.65–1.0]. The last bucket is
+    /// upper-inclusive. Samples outside all ranges are ignored.
+    /// </summary>
+    public static IReadOnlyList<CalibrationBucket> CalibrationForRanges(
+        IReadOnlyCollection<PredictionSample> samples,
+        IReadOnlyList<(double Lower, double Upper)> ranges)
+    {
+        var result = new List<CalibrationBucket>(ranges.Count);
+        for (var i = 0; i < ranges.Count; i++)
+        {
+            var (lower, upper) = ranges[i];
+            var last = i == ranges.Count - 1;
+            var inBucket = samples
+                .Where(s => s.Probability >= lower &&
+                            (last ? s.Probability <= upper : s.Probability < upper))
+                .ToList();
+
+            result.Add(new CalibrationBucket(
+                Math.Round(lower, 4),
+                Math.Round(upper, 4),
+                inBucket.Count,
+                inBucket.Count > 0 ? inBucket.Average(s => s.Probability) : 0,
+                inBucket.Count > 0 ? inBucket.Average(s => s.Outcome ? 1.0 : 0.0) : 0));
+        }
+
+        return result;
+    }
+
+    /// <summary>Multiclass Brier: mean over samples of Σ (p_i − y_i)².</summary>
+    public static double MulticlassBrier(IReadOnlyCollection<(double[] Probabilities, int ActualIndex)> samples) =>
+        samples.Count == 0
+            ? 0
+            : samples.Average(s => s.Probabilities
+                .Select((p, i) => Math.Pow(p - (i == s.ActualIndex ? 1.0 : 0.0), 2))
+                .Sum());
+
+    /// <summary>Multiclass log loss: −mean ln p(actual outcome).</summary>
+    public static double MulticlassLogLoss(IReadOnlyCollection<(double[] Probabilities, int ActualIndex)> samples) =>
+        samples.Count == 0
+            ? 0
+            : -samples.Average(s =>
+                Math.Log(Math.Clamp(s.Probabilities[s.ActualIndex], Epsilon, 1 - Epsilon)));
 
     public static IReadOnlyList<CalibrationBucket> Calibration(
         IReadOnlyCollection<PredictionSample> samples,

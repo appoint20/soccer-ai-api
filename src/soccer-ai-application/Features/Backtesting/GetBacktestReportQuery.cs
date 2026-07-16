@@ -15,6 +15,106 @@ public sealed class GetBacktestReportResponse : IResponse
 
     [JsonPropertyName("league_accuracy")]
     public List<LeagueAccuracy> LeagueAccuracy { get; init; } = [];
+
+    /// <summary>Per-market probabilistic quality (BTTS, Over25, 2-3 Goals, 1X2).</summary>
+    [JsonPropertyName("market_metrics")]
+    public List<MarketMetrics> MarketMetrics { get; init; } = [];
+
+    /// <summary>Per-market calibration buckets (50-55, 55-60, 60-65, 65+).</summary>
+    [JsonPropertyName("calibration")]
+    public List<MarketCalibration> Calibration { get; init; } = [];
+
+    /// <summary>Headline product metric: qualified picks only.</summary>
+    [JsonPropertyName("qualified_picks")]
+    public QualifiedPicksReport QualifiedPicks { get; init; } = new();
+}
+
+public sealed class MarketMetrics
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("n")]
+    public int SampleSize { get; init; }
+
+    [JsonPropertyName("brier_score")]
+    public double BrierScore { get; init; }
+
+    [JsonPropertyName("log_loss")]
+    public double LogLoss { get; init; }
+}
+
+public sealed class MarketCalibration
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("buckets")]
+    public List<CalibrationBucketRow> Buckets { get; init; } = [];
+}
+
+public sealed class CalibrationBucketRow
+{
+    [JsonPropertyName("range")]
+    public string Range { get; init; } = "";
+
+    [JsonPropertyName("n")]
+    public int SampleSize { get; init; }
+
+    [JsonPropertyName("predicted_avg")]
+    public double PredictedAvg { get; init; }
+
+    [JsonPropertyName("actual_hit_rate")]
+    public double ActualHitRate { get; init; }
+}
+
+public sealed class QualifiedPicksReport
+{
+    [JsonPropertyName("count")]
+    public int Count { get; init; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_odds")]
+    public double AvgOdds { get; init; }
+
+    [JsonPropertyName("total_staked")]
+    public double TotalStaked { get; init; }
+
+    [JsonPropertyName("total_returned")]
+    public double TotalReturned { get; init; }
+
+    /// <summary>ROI at real odds, percent. Picks without stored odds are excluded from ROI.</summary>
+    [JsonPropertyName("roi_percent")]
+    public double RoiPercent { get; init; }
+
+    [JsonPropertyName("per_market")]
+    public List<QualifiedMarketRow> PerMarket { get; init; } = [];
+}
+
+public sealed class QualifiedMarketRow
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("count")]
+    public int Count { get; init; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_odds")]
+    public double AvgOdds { get; init; }
+
+    [JsonPropertyName("roi_percent")]
+    public double RoiPercent { get; init; }
 }
 
 public sealed class BacktestSummary
@@ -81,6 +181,13 @@ public sealed class LeagueAccuracy
 {
     [JsonPropertyName("league")]
     public string League { get; init; } = "";
+
+    [JsonPropertyName("n")]
+    public int SampleSize { get; init; }
+
+    /// <summary>True when n &lt; 30 — treat accuracies as anecdotal.</summary>
+    [JsonPropertyName("low_sample")]
+    public bool LowSample { get; init; }
 
     [JsonPropertyName("btts_accuracy")]
     public double BttsAccuracy { get; init; }
