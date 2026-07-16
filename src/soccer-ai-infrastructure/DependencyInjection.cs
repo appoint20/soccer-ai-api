@@ -32,6 +32,8 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.LeagueTierOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.StrategyOptions>(
             configuration.GetSection(SoccerAi.Application.Options.StrategyOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.ConfluenceOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.ConfluenceOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -55,14 +57,9 @@ public static class DependencyInjection
         
         // Mathematical Engines
         services.AddScoped<IProbabilityPipeline, ProbabilityPipeline>();
-        services.AddScoped<DecisionService>(); // Register concretely for AiDecisionService to use
-        services.AddScoped<IDecisionService, AiDecisionService>(); // AI-driven implementation
+        services.AddScoped<IDecisionService, DecisionService>(); // Confluence rule engine (no LLM influence)
 
-        services.AddScoped<ILeagueAdjustmentService, LeagueAdjustmentService>();
         services.AddScoped<ILeagueVolatilityService, LeagueVolatilityService>();
-        services.AddScoped<ITrapDetectionService, TrapDetectionService>();
-        services.AddScoped<IFeatureScoringEngine, FeatureScoringEngine>();
-        services.AddScoped<IExpectedValueEngine, ExpectedValueEngine>();
 
         // Machine Learning (training preparation only — no serving integration yet)
         services.AddScoped<IMlTrainingService, MlTrainingService>();

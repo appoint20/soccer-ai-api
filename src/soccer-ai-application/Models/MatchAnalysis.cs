@@ -45,4 +45,8 @@ public sealed class MatchAnalysis
 
     /// <summary>Strategic signal catalog — persisted in the snapshot; LLM narratives cite the labels.</summary>
     public Signals.StrategicSignals? Signals { get; init; }
+
+    /// <summary>Which confirm/veto rules fired per market — the backtest and LLM narratives cite this.</summary>
+    [JsonPropertyName("decision_audit")]
+    public DecisionAudit? DecisionAudit { get; init; }
 }

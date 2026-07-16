@@ -61,7 +61,8 @@ public class AnalysisResponseMapper
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
                 ? new AiAnalysisDto()
                 : aiAnalysis,
-            Signals = analysis.Signals
+            Signals = analysis.Signals,
+            DecisionAudit = analysis.Decisions.Audit
         };
     }
 

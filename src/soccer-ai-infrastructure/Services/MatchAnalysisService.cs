@@ -94,13 +94,14 @@ public sealed class MatchAnalysisService(
             AiOverallConfidence = aiEntity.AiOverallConfidence
         } : new AiAnalysisDto();
 
-        var odds = BuildMatchContext(fixture, homeRest, awayRest);
-        var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, ai);
-
         // Strategic signal catalog (facts; DC model passed for divergence signals
         // when it ran this request — cached-math path degrades those gracefully).
         var signals = await signalService.ComputeAsync(
             fixture, models.Poisson.IsValid ? models.Poisson : null, ct);
+
+        // Confluence decision layer: calibrated probabilities + signals.
+        var odds = BuildMatchContext(fixture, homeRest, awayRest);
+        var decisions = await decisionService.Evaluate(odds, stats, h2h, prediction, models, signals, ai);
 
         // Build result
         return new FixtureAnalysisResult

@@ -27,6 +27,31 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Headline product metric: qualified picks only.</summary>
     [JsonPropertyName("qualified_picks")]
     public QualifiedPicksReport QualifiedPicks { get; init; } = new();
+
+    /// <summary>Per-rule performance among qualified picks (with vs without).</summary>
+    [JsonPropertyName("rule_performance")]
+    public List<RulePerformanceRow> RulePerformance { get; init; } = [];
+}
+
+public sealed class RulePerformanceRow
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("rule_id")]
+    public string RuleId { get; init; } = "";
+
+    [JsonPropertyName("picks_with")]
+    public int PicksWith { get; init; }
+
+    [JsonPropertyName("hit_rate_with")]
+    public double HitRateWith { get; init; }
+
+    [JsonPropertyName("picks_without")]
+    public int PicksWithout { get; init; }
+
+    [JsonPropertyName("hit_rate_without")]
+    public double HitRateWithout { get; init; }
 }
 
 public sealed class MarketMetrics

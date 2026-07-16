@@ -31,7 +31,8 @@ public class GetBacktestReportHandler(
 
     private sealed record MarketSampleRow(string Market, string League, double Probability, bool Outcome);
     private sealed record HdaSampleRow(double[] Probabilities, int ActualIndex);
-    private sealed record QualifiedPickRow(string Market, string League, bool Won, double? Odds);
+    private sealed record QualifiedPickRow(
+        string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -136,10 +137,16 @@ public class GetBacktestReportHandler(
 
                         // ── Qualified picks (headline metric + combo pool) ──
                         var m = analysisResult.Decisions.Markets;
+                        var auditByMarket = analysisResult.Decisions.Audit?.Markets
+                            .ToDictionary(a => a.Market) ?? [];
 
-                        void AddPick(string market, string selection, bool won, double? odds, double prob)
+                        void AddPick(string market, string selection, bool won, double? odds, double prob,
+                            string? auditMarket = null)
                         {
-                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, odds));
+                            var fired = auditByMarket.TryGetValue(auditMarket ?? market, out var audit)
+                                ? audit.FiredConfirmRuleIds.ToList()
+                                : [];
+                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, odds, fired));
                             if (odds is > 1.0)
                                 dayPicks.Add(new BacktestPick(
                                     f.Id, league, home.Name, away.Name, selection, prob, odds.Value));
@@ -159,7 +166,7 @@ public class GetBacktestReportHandler(
                                 pred.Confidence);
                         if (m.LowScoring.IsQualified)
                             AddPick("low_scoring", "Under 2.5 Goals", totalGoals < 3, f.Under25Odds,
-                                m.LowScoring.Confidence);
+                                m.LowScoring.Confidence, auditMarket: "under25");
                     }
                     catch (Exception ex)
                     {
@@ -329,6 +336,7 @@ public class GetBacktestReportHandler(
         var marketMetrics = BuildMarketMetrics(marketSamples, hdaSamples);
         var calibration = BuildCalibration(marketSamples);
         var qualified = BuildQualifiedPicksReport(qualifiedPicks);
+        var rulePerformance = BuildRulePerformance(qualifiedPicks);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -354,8 +362,45 @@ public class GetBacktestReportHandler(
             LeagueAccuracy = leagueAccuracy,
             MarketMetrics = marketMetrics,
             Calibration = calibration,
-            QualifiedPicks = qualified
+            QualifiedPicks = qualified,
+            RulePerformance = rulePerformance
         };
+    }
+
+    /// <summary>
+    /// Per-rule performance among qualified picks: hit rate of picks where the
+    /// rule fired vs qualified picks of the same market where it did not.
+    /// This tells us which rules earn their place.
+    /// </summary>
+    private static List<RulePerformanceRow> BuildRulePerformance(List<QualifiedPickRow> picks)
+    {
+        var rows = new List<RulePerformanceRow>();
+
+        foreach (var marketGroup in picks.GroupBy(p => p.Market))
+        {
+            var marketPicks = marketGroup.ToList();
+            var ruleIds = marketPicks.SelectMany(p => p.FiredRules).Distinct().OrderBy(r => r);
+
+            foreach (var ruleId in ruleIds)
+            {
+                var withRule = marketPicks.Where(p => p.FiredRules.Contains(ruleId)).ToList();
+                var withoutRule = marketPicks.Where(p => !p.FiredRules.Contains(ruleId)).ToList();
+
+                rows.Add(new RulePerformanceRow
+                {
+                    Market = marketGroup.Key,
+                    RuleId = ruleId,
+                    PicksWith = withRule.Count,
+                    HitRateWith = withRule.Count > 0
+                        ? Math.Round((double)withRule.Count(p => p.Won) / withRule.Count * 100, 1) : 0,
+                    PicksWithout = withoutRule.Count,
+                    HitRateWithout = withoutRule.Count > 0
+                        ? Math.Round((double)withoutRule.Count(p => p.Won) / withoutRule.Count * 100, 1) : 0
+                });
+            }
+        }
+
+        return rows.OrderBy(r => r.Market).ThenByDescending(r => r.PicksWith).ToList();
     }
 
     // ── Report sections (Task 2 a-c) ─────────────────────────────────────────
