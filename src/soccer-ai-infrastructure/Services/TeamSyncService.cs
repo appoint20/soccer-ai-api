@@ -9,11 +9,12 @@ namespace SoccerAi.Infrastructure.Services;
 /// Updates Team records.
 /// </summary>
 public class TeamSyncService(
-    IApiFootballService apiService, IApplicationDbContext dbContext, ILogger<TeamSyncService> logger)
+    IApiFootballService apiService,
+    IApplicationDbContext dbContext,
+    ILeagueTierService leagueTiers,
+    ILogger<TeamSyncService> logger)
     : ITeamSyncService
 {
-    // Supported English leagues
-    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 61, 62, 78, 79, 80, 135, 136, 140, 141, 46, 5, 2, 3 ];
 
     private static int GetCurrentSeason() => DateTimeOffset.UtcNow.Month >= 7 
         ? DateTimeOffset.UtcNow.Year 
@@ -27,7 +28,7 @@ public class TeamSyncService(
         var result = new SyncResult();
         logger.LogInformation("Starting standings sync for season {Season}", season);
         
-        foreach (var leagueId in SupportedLeagues)
+        foreach (var leagueId in leagueTiers.GetSyncLeagueIds())
         {
             var targetLeagueId = leagueId;
 

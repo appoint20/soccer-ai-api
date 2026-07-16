@@ -12,6 +12,7 @@ public sealed class DecisionService(
     ITrapDetectionService trapDetection,
     IFeatureScoringEngine scoringEngine,
     ILeagueAdjustmentService leagueAdjuster,
+    ILeagueTierService leagueTiers,
     IExpectedValueEngine evEngine) : IDecisionService
 {
     public Task<DecisionServiceResult> Evaluate(
@@ -286,10 +287,13 @@ public sealed class DecisionService(
 
         double leagueModifier = leagueAdjuster.GetGoalThresholdModifier(context.LeagueName ?? "");
 
+        // Tier2 (cup) fixtures demand stronger evidence to qualify.
+        double tierBoost = leagueTiers.GetQualificationThresholdBoost(context.LeagueId);
+
         if (markets.Over25.IsQualified)
         {
             double finalScore = over25Score + trapResult.PenaltyScore;
-            double threshold = 65.0 + leagueModifier;
+            double threshold = 65.0 + leagueModifier + tierBoost;
             if (finalScore < threshold) 
             {
                 markets.Over25.IsQualified = false;
@@ -305,7 +309,7 @@ public sealed class DecisionService(
         if (markets.BTTS.IsQualified)
         {
             double finalScore = bttsScore + trapResult.PenaltyScore;
-            double threshold = 65.0 + leagueModifier;
+            double threshold = 65.0 + leagueModifier + tierBoost;
             if (finalScore < threshold) 
             {
                 markets.BTTS.IsQualified = false;

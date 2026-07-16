@@ -12,6 +12,7 @@ public class AiSyncService(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
     IAiAnalysisService aiService,
+    ILeagueTierService leagueTiers,
     ILogger<AiSyncService> logger)
     : IAiSyncService
 {
@@ -24,9 +25,10 @@ public class AiSyncService(
 
         logger.LogInformation("[AiSync] Window: {Start} to {End}", startUtc, endUtc);
 
-        // 1. Fetch raw fixtures from DB
+        // 1. Fetch raw fixtures from DB (focus leagues only)
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
         var fixtures = await dbContext.Fixtures
-            .Where(f => f.Date >= startUtc && f.Date < endUtc)
+            .Where(f => f.Date >= startUtc && f.Date < endUtc && scopedLeagueIds.Contains(f.LeagueId))
             .OrderBy(f => f.Date)
             .ToListAsync(cancellationToken);
 

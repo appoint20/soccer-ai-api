@@ -12,8 +12,10 @@ public static class DependencyInjection
         services.AddScoped<ITeamStatsService, TeamStatsService>();
         services.AddScoped<IDixonColesModel, DixonColesModel>();
         services.AddScoped<IMarketCalibrationService, MarketCalibrator>();
+        services.AddSingleton<ILeagueTierService, LeagueTierService>();
         services.AddOptions<Options.DixonColesOptions>();
         services.AddOptions<Options.CalibrationOptions>();
+        services.AddOptions<Options.LeagueTierOptions>();
         services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
         services.AddScoped<ICombinationService, Services.Combinations.DeterministicCombinationService>();
 

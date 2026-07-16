@@ -15,6 +15,7 @@ namespace SoccerAi.Infrastructure.Services;
 public sealed class AnalysisPrecomputeService(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
+    ILeagueTierService leagueTiers,
     ILogger<AnalysisPrecomputeService> logger) : IAnalysisPrecomputeService
 {
     private static readonly string[] Languages = ["en", "de"];
@@ -35,12 +36,13 @@ public sealed class AnalysisPrecomputeService(
     public async Task<int> RecomputeWindowAsync(
         DateTimeOffset startUtc, DateTimeOffset endUtc, CancellationToken ct = default)
     {
+        var leagueIds = leagueTiers.GetSyncLeagueIds().ToList();
         var fixtures = await dbContext.Fixtures
-            .Where(f => f.Date >= startUtc && f.Date < endUtc)
+            .Where(f => f.Date >= startUtc && f.Date < endUtc && leagueIds.Contains(f.LeagueId))
             .OrderBy(f => f.Date)
             .ToListAsync(ct);
 
-        logger.LogInformation("[Precompute] Recomputing {Count} fixtures ({Start:yyyy-MM-dd}..{End:yyyy-MM-dd})",
+        logger.LogInformation("[Precompute] Recomputing {Count} in-scope fixtures ({Start:yyyy-MM-dd}..{End:yyyy-MM-dd})",
             fixtures.Count, startUtc, endUtc);
 
         var done = 0;

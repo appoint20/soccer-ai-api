@@ -16,6 +16,7 @@ public class GetBacktestReportHandler(
     IApplicationDbContext dbContext,
     IServiceProvider serviceProvider,
     IChatCombinationEngine engine,
+    ILeagueTierService leagueTiers,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
@@ -52,8 +53,11 @@ public class GetBacktestReportHandler(
         var startDate = DateTimeOffset.UtcNow.AddDays(-query.WeeksBack * 7);
         var endDate = DateTimeOffset.UtcNow;
 
+        // Scope: Tier1 focus leagues by default; Tier2 only when enabled by flag.
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
         var fixtures = await dbContext.Fixtures
-            .Where(f => f.Status == "FT" && f.Date >= startDate && f.Date <= endDate)
+            .Where(f => f.Status == "FT" && f.Date >= startDate && f.Date <= endDate
+                        && scopedLeagueIds.Contains(f.LeagueId))
             .OrderBy(f => f.Date)
             .ToListAsync(cancellationToken);
 

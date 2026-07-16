@@ -12,6 +12,7 @@ public sealed class MatchContext
 {
     public DateTimeOffset Date { get; init; }
     public TimeSpan Time { get; init; }
+    public int LeagueId { get; init; }
     public string LeagueName { get; init; } = string.Empty;
     public string HomeTeam { get; init; } = string.Empty;
     public string AwayTeam { get; init; } = string.Empty;

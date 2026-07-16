@@ -125,6 +125,7 @@ public sealed class MatchAnalysisService(
     private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null) => new()
     {
         Date = fixture.Date,
+        LeagueId = fixture.LeagueId,
         OddsOver25 = NormalizeOdds(fixture.Over25Odds),
         OddsBttsYes = NormalizeOdds(fixture.BttsYesOdds),
         OddsHome = NormalizeOdds(fixture.HomeWinOdds),
@@ -163,6 +164,7 @@ public sealed class MatchAnalysisService(
         62 => "Ligue 2",
         2 => "Champions League",
         3 => "Europa League",
+        848 => "Conference League",
         _ => $"League {leagueId}"
     };
 }

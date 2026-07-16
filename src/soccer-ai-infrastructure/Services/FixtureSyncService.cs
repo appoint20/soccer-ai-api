@@ -11,11 +11,12 @@ namespace SoccerAi.Infrastructure.Services;
 /// <summary>
 /// Service for syncing fixtures from API-Football.
 /// </summary>
-public class FixtureSyncService(IApiFootballService apiService, 
-    IApplicationDbContext dbContext, ILogger<FixtureSyncService> logger)
+public class FixtureSyncService(IApiFootballService apiService,
+    IApplicationDbContext dbContext,
+    ILeagueTierService leagueTiers,
+    ILogger<FixtureSyncService> logger)
     : IFixtureSyncService
 {
-    private static readonly int[] SupportedLeagues = [ 39, 40, 41, 42, 135, 136, 61, 62, 140, 78, 79, 80, 141, 46, 5, 2, 3 ];
     private HashSet<int>? _existingTeamIds;
 
     /// <summary>
@@ -67,7 +68,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         logger.LogInformation("Starting fixture sync for season {Season} (IsCurrentSeason: {IsCurrent})", 
             season, IsCurrentSeason(season));
 
-        foreach (var leagueId in SupportedLeagues)
+        foreach (var leagueId in leagueTiers.GetSyncLeagueIds())
         {
             var targetLeagueId = leagueId;
             

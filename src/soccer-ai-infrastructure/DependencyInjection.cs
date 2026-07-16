@@ -28,6 +28,8 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.DixonColesOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.CalibrationOptions>(
             configuration.GetSection(SoccerAi.Application.Options.CalibrationOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.LeagueTierOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.LeagueTierOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
