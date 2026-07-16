@@ -151,12 +151,13 @@ public static class Program
     {
         var weeks = GetIntOption(args, "--weeks") ?? 10;
         var stake = GetDoubleOption(args, "--stake") ?? 1.0;
+        var refresh = args.Contains("--refresh");
 
-        Console.WriteLine($"Starting backtest pipeline ({weeks} weeks, stake {stake})...");
+        Console.WriteLine($"Starting backtest pipeline ({weeks} weeks, stake {stake}, refresh: {refresh})...");
         using var scope = services.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var response = await mediator.RequestAsync<GetBacktestReportQuery, GetBacktestReportResponse>(
-            new GetBacktestReportQuery(weeks, stake));
+            new GetBacktestReportQuery(weeks, stake, refresh));
 
         var json = System.Text.Json.JsonSerializer.Serialize(
             response, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
