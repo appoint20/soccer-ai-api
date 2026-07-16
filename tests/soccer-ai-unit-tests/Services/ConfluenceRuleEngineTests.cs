@@ -326,12 +326,16 @@ public class ConfluenceRuleEngineTests
     [Fact]
     public void Under25_DefensiveProfile_QualifiesWithQuietH2H()
     {
+        // Defensive profile must hold in BOTH directions:
+        // (home clean sheets OR away fails to score) → away won't score, AND
+        // (away clean sheets OR home fails to score) → home won't score.
         var signals = new StrategicSignals
         {
             HomeScoring = new ScoringSignals
             {
                 Under25RateLast5Venue = On(0.8),
                 CleanSheetsLast5Venue = On(3),
+                FailedToScoreLast5Venue = On(2), // home also struggles to score
                 AvgTotalGoalsLast5 = Off(1.6)
             },
             AwayScoring = new ScoringSignals
