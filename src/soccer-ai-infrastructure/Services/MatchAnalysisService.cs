@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
+using SoccerAi.Application.Services;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -139,21 +140,18 @@ public sealed class MatchAnalysisService(
     {
         Date = fixture.Date,
         LeagueId = fixture.LeagueId,
-        OddsOver25 = NormalizeOdds(fixture.Over25Odds),
-        OddsBttsYes = NormalizeOdds(fixture.BttsYesOdds),
-        OddsHome = NormalizeOdds(fixture.HomeWinOdds),
-        OddsAway = NormalizeOdds(fixture.AwayWinOdds),
-        OddsDraw = NormalizeOdds(fixture.DrawOdds),
+        // Sanity-guarded raw odds. Corrupted values (locale bug) are surfaced
+        // as null — never rescaled: EV math must only ever see real prices.
+        OddsOver25 = OddsGuard.Sanitize(fixture.Over25Odds),
+        OddsUnder25 = OddsGuard.Sanitize(fixture.Under25Odds),
+        OddsBttsYes = OddsGuard.Sanitize(fixture.BttsYesOdds),
+        OddsHome = OddsGuard.Sanitize(fixture.HomeWinOdds),
+        OddsAway = OddsGuard.Sanitize(fixture.AwayWinOdds),
+        OddsDraw = OddsGuard.Sanitize(fixture.DrawOdds),
         LeagueName = GetLeagueName(fixture.LeagueId),
         HomeRestDays = homeRest,
         AwayRestDays = awayRest
     };
-
-    private static double? NormalizeOdds(double? odds)
-    {
-        if (!odds.HasValue || odds.Value == 0) return null;
-        return odds.Value > 50 ? odds.Value / 100.0 : odds.Value;
-    }
 
     private static string GetLeagueName(int leagueId) => leagueId switch
     {

@@ -13,15 +13,33 @@ public sealed class ConfluenceOptions
     /// <summary>K — minimum confirm rules that must fire.</summary>
     public int MinConfirmations { get; set; } = 2;
 
-    // ── Per-market probability thresholds (calibrated DC probability) ──
-    public double BttsMinProbability { get; set; } = 0.55;
-    public double Over25MinProbability { get; set; } = 0.55;
-    public double Goals23MinProbability { get; set; } = 0.45;
-    public double WinnerMinProbability { get; set; } = 0.55;
-    public double Under25MinProbability { get; set; } = 0.55;
+    // ── Per-market probability FLOORS (v3: EV decides value, the floor only
+    //    keeps coin-flip probabilities out regardless of price) ──
+    public double BttsMinProbability { get; set; } = 0.50;
+    public double Over25MinProbability { get; set; } = 0.50;
+    public double Goals23MinProbability { get; set; } = 0.50;
+    public double WinnerMinProbability { get; set; } = 0.50;
+    public double Under25MinProbability { get; set; } = 0.50;
+    public double DrawMinProbability { get; set; } = 0.30; // draws rarely exceed ~35%
+
+    // ── Per-market minimum edge: EV = p×odds − 1 must reach this ──
+    public double BttsMinEdge { get; set; } = 0.05;
+    public double Over25MinEdge { get; set; } = 0.05;
+    public double Goals23MinEdge { get; set; } = 0.05;
+    public double WinnerMinEdge { get; set; } = 0.05;
+    public double Under25MinEdge { get; set; } = 0.05;
+    public double DrawMinEdge { get; set; } = 0.05;
+
+    /// <summary>Fraction of full Kelly used for reported stakes (quarter Kelly).</summary>
+    public double KellyFraction { get; set; } = 0.25;
 
     /// <summary>Extra probability demanded for Tier2 (cup) fixtures.</summary>
     public double Tier2ExtraProbability { get; set; } = 0.05;
+
+    // ── Draw confirm-rule thresholds ──
+    public double DrawPpgGapMax { get; set; } = 0.30;
+    public double DrawH2HRateConfirm { get; set; } = 0.40;
+    public double DrawLowScoringAvgGoals { get; set; } = 2.5;
 
     // ── Rule thresholds ──
     public int ScoredInVenueConfirmCount { get; set; } = 2;    // of last 3 venue matches

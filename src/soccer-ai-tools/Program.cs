@@ -171,14 +171,22 @@ public static class Program
     private static void PrintBacktestSummary(GetBacktestReportResponse r)
     {
         Console.WriteLine();
-        Console.WriteLine("=== HEADLINE: QUALIFIED PICKS (real odds) ===");
+        Console.WriteLine("=== HEADLINE: QUALIFIED PICKS (valid odds, EV-gated) ===");
         var q = r.QualifiedPicks;
         Console.WriteLine($"  Picks: {q.Count}  Hits: {q.Hits}  Hit rate: {q.HitRate:F1}%  " +
-                          $"Avg odds: {q.AvgOdds:F2}  ROI: {q.RoiPercent:F1}%");
+                          $"Avg odds: {q.AvgOdds:F2}  Avg EV: {q.AvgEv:P1}");
+        Console.WriteLine($"  Flat ROI: {q.RoiPercent:F1}%   Quarter-Kelly ROI: {q.KellyRoiPercent:F1}%");
         foreach (var m in q.PerMarket)
             Console.WriteLine($"    {m.Market,-14} n={m.Count,-4} hit={m.HitRate,5:F1}%  " +
-                              $"avg odds={m.AvgOdds:F2}  roi={m.RoiPercent,6:F1}%  " +
-                              $"thr={m.QualificationThreshold:P0}  valid odds={m.ValidOddsPct:F0}%");
+                              $"odds={m.AvgOdds:F2}  ev={m.AvgEv,6:P1}  flat={m.RoiPercent,6:F1}%  " +
+                              $"kelly={m.KellyRoiPercent,6:F1}%");
+
+        Console.WriteLine();
+        Console.WriteLine("=== QUALIFICATION FUNNEL (why fixtures dropped out) ===");
+        Console.WriteLine($"  {"market",-14} {"total",5} {"noOdds",6} {"minOdds",7} {"minEV",5} {"floor",5} {"veto",5} {"conf",5} {"QUAL",5}");
+        foreach (var f in r.QualificationFunnel)
+            Console.WriteLine($"  {f.Market,-14} {f.Total,5} {f.AnalysisOnlyNoOdds,6} {f.BelowMinOdds,7} " +
+                              $"{f.BelowMinEdge,5} {f.BelowProbabilityFloor,5} {f.Vetoed,5} {f.InsufficientConfirms,5} {f.Qualified,5}");
 
         Console.WriteLine();
         Console.WriteLine("=== MARKET QUALITY (all analyzed fixtures) ===");

@@ -87,6 +87,7 @@ public sealed record HeadToHeadSignals
 {
     [JsonPropertyName("btts_rate_last5")] public SignalValue BttsRateLast5 { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("btts_rate_last10")] public SignalValue BttsRateLast10 { get; init; } = SignalValue.Unavailable("n/a");
+    [JsonPropertyName("draw_rate_last5")] public SignalValue DrawRateLast5 { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("over25_rate_last5")] public SignalValue Over25RateLast5 { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("over25_rate_last10")] public SignalValue Over25RateLast10 { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("avg_total_goals")] public SignalValue AvgTotalGoals { get; init; } = SignalValue.Unavailable("n/a");

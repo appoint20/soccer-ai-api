@@ -31,6 +31,10 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Per-rule performance among qualified picks (with vs without).</summary>
     [JsonPropertyName("rule_performance")]
     public List<RulePerformanceRow> RulePerformance { get; init; } = [];
+
+    /// <summary>Value-gate funnel per market (incl. filtered-by-MinOdds counts).</summary>
+    [JsonPropertyName("qualification_funnel")]
+    public List<QualificationFunnelRow> QualificationFunnel { get; init; } = [];
 }
 
 public sealed class RulePerformanceRow
@@ -121,6 +125,14 @@ public sealed class QualifiedPicksReport
     [JsonPropertyName("roi_percent")]
     public double RoiPercent { get; init; }
 
+    /// <summary>ROI when staking fractional (quarter) Kelly instead of flat.</summary>
+    [JsonPropertyName("kelly_roi_percent")]
+    public double KellyRoiPercent { get; init; }
+
+    /// <summary>Average EV (p×odds − 1) across picks with valid odds.</summary>
+    [JsonPropertyName("avg_ev")]
+    public double AvgEv { get; init; }
+
     [JsonPropertyName("per_market")]
     public List<QualifiedMarketRow> PerMarket { get; init; } = [];
 }
@@ -152,6 +164,44 @@ public sealed class QualifiedMarketRow
     /// <summary>Share of these picks with guard-valid odds (only they enter ROI).</summary>
     [JsonPropertyName("valid_odds_pct")]
     public double ValidOddsPct { get; init; }
+
+    [JsonPropertyName("kelly_roi_percent")]
+    public double KellyRoiPercent { get; init; }
+
+    [JsonPropertyName("avg_ev")]
+    public double AvgEv { get; init; }
+}
+
+/// <summary>Value-gate funnel: where fixtures dropped out per market.</summary>
+public sealed class QualificationFunnelRow
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("total")]
+    public int Total { get; init; }
+
+    [JsonPropertyName("analysis_only_no_odds")]
+    public int AnalysisOnlyNoOdds { get; init; }
+
+    /// <summary>+EV-or-not picks rejected purely by the MinOdds floor.</summary>
+    [JsonPropertyName("below_min_odds")]
+    public int BelowMinOdds { get; init; }
+
+    [JsonPropertyName("below_min_edge")]
+    public int BelowMinEdge { get; init; }
+
+    [JsonPropertyName("below_probability_floor")]
+    public int BelowProbabilityFloor { get; init; }
+
+    [JsonPropertyName("vetoed")]
+    public int Vetoed { get; init; }
+
+    [JsonPropertyName("insufficient_confirms")]
+    public int InsufficientConfirms { get; init; }
+
+    [JsonPropertyName("qualified")]
+    public int Qualified { get; init; }
 }
 
 public sealed class BacktestSummary

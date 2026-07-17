@@ -32,7 +32,9 @@ public class GetBacktestReportHandler(
         string Market, string League, double Probability, bool Outcome, bool OddsValid);
     private sealed record HdaSampleRow(double[] Probabilities, int ActualIndex);
     private sealed record QualifiedPickRow(
-        string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules);
+        string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules,
+        double? Ev, double? KellyStake);
+    private sealed record GateOutcomeRow(string Market, string Outcome);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -86,6 +88,7 @@ public class GetBacktestReportHandler(
         var marketSamples = new ConcurrentBag<MarketSampleRow>();
         var hdaSamples = new ConcurrentBag<HdaSampleRow>();
         var qualifiedPicks = new ConcurrentBag<QualifiedPickRow>();
+        var gateOutcomes = new ConcurrentBag<GateOutcomeRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -117,8 +120,11 @@ public class GetBacktestReportHandler(
                         var over25Actual = totalGoals > 2;
                         var goals23Actual = totalGoals is 2 or 3;
                         var hdaActual = f.HomeGoal > f.AwayGoal ? 0 : f.HomeGoal == f.AwayGoal ? 1 : 2;
-                        var pickIsHome = pred.MatchWinner == "home";
+                        // Winner pick = stronger non-draw side (draw is its own market)
+                        var pickIsHome = pred.HomeProb >= pred.AwayProb;
+                        var winnerProb = Math.Max(pred.HomeProb, pred.AwayProb);
                         var pickWon = pickIsHome ? hdaActual == 0 : hdaActual == 2;
+                        var drawWon = hdaActual == 1;
 
                         // ── Probabilistic quality samples (ALL analyzed fixtures) ──
                         var pickOddsRaw = pickIsHome ? f.HomeWinOdds : f.AwayWinOdds;
@@ -128,8 +134,10 @@ public class GetBacktestReportHandler(
                             Services.OddsGuard.IsValid(f.Over25Odds)));
                         marketSamples.Add(new MarketSampleRow("goals_2_3", league, pred.TwoToThreeGoalsProb, goals23Actual,
                             false)); // no 2-3 Goals odds market is stored
-                        marketSamples.Add(new MarketSampleRow("match_winner", league, pred.Confidence, pickWon,
+                        marketSamples.Add(new MarketSampleRow("match_winner", league, winnerProb, pickWon,
                             Services.OddsGuard.IsValid(pickOddsRaw)));
+                        marketSamples.Add(new MarketSampleRow("draw", league, pred.DrawProb, drawWon,
+                            Services.OddsGuard.IsValid(f.DrawOdds)));
                         hdaSamples.Add(new HdaSampleRow(
                             [pred.HomeProb, pred.DrawProb, pred.AwayProb], hdaActual));
 
@@ -145,6 +153,10 @@ public class GetBacktestReportHandler(
                         var auditByMarket = analysisResult.Decisions.Audit?.Markets
                             .ToDictionary(a => a.Market) ?? [];
 
+                        // Qualification funnel: record every market's gate outcome.
+                        foreach (var marketAudit in auditByMarket.Values)
+                            gateOutcomes.Add(new GateOutcomeRow(marketAudit.Market, marketAudit.GateOutcome));
+
                         void AddPick(string market, string selection, bool won, double? odds, double prob,
                             string? auditMarket = null)
                         {
@@ -152,10 +164,10 @@ public class GetBacktestReportHandler(
                             // EXCLUDED from ROI and combos — never clamped or substituted.
                             var safeOdds = Services.OddsGuard.Sanitize(odds);
 
-                            var fired = auditByMarket.TryGetValue(auditMarket ?? market, out var audit)
-                                ? audit.FiredConfirmRuleIds.ToList()
-                                : [];
-                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, safeOdds, fired));
+                            var audit = auditByMarket.GetValueOrDefault(auditMarket ?? market);
+                            var fired = audit?.FiredConfirmRuleIds.ToList() ?? [];
+                            qualifiedPicks.Add(new QualifiedPickRow(
+                                market, league, won, safeOdds, fired, audit?.Ev, audit?.KellyStake));
                             if (safeOdds is not null)
                                 dayPicks.Add(new BacktestPick(
                                     f.Id, league, home.Name, away.Name, selection, prob, safeOdds.Value));
@@ -174,7 +186,9 @@ public class GetBacktestReportHandler(
                                 pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
                                 pickWon,
                                 pickIsHome ? f.HomeWinOdds : f.AwayWinOdds,
-                                pred.Confidence);
+                                winnerProb);
+                        if (m.Draw.IsQualified)
+                            AddPick("draw", "Draw", drawWon, f.DrawOdds, pred.DrawProb, auditMarket: "draw");
                         if (m.LowScoring.IsQualified)
                             AddPick("low_scoring", "Under 2.5 Goals", totalGoals < 3, f.Under25Odds,
                                 m.LowScoring.Confidence, auditMarket: "under25");
@@ -240,7 +254,7 @@ public class GetBacktestReportHandler(
         var response = CalculateFinalReport(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
-            startDate, query.WeeksBack, query.Stake);
+            gateOutcomes.ToList(), startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -286,6 +300,7 @@ public class GetBacktestReportHandler(
         List<MarketSampleRow> marketSamples,
         List<HdaSampleRow> hdaSamples,
         List<QualifiedPickRow> qualifiedPicks,
+        List<GateOutcomeRow> gateOutcomes,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -348,6 +363,7 @@ public class GetBacktestReportHandler(
         var calibration = BuildCalibration(marketSamples);
         var qualified = BuildQualifiedPicksReport(qualifiedPicks);
         var rulePerformance = BuildRulePerformance(qualifiedPicks);
+        var funnel = BuildQualificationFunnel(gateOutcomes);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -374,8 +390,34 @@ public class GetBacktestReportHandler(
             MarketMetrics = marketMetrics,
             Calibration = calibration,
             QualifiedPicks = qualified,
-            RulePerformance = rulePerformance
+            RulePerformance = rulePerformance,
+            QualificationFunnel = funnel
         };
+    }
+
+    /// <summary>
+    /// Value-gate funnel per market: where fixtures dropped out (no odds,
+    /// MinOdds floor, EV, probability floor, vetoes, confirms) vs qualified.
+    /// The below_min_odds count answers how many +EV picks the floors reject.
+    /// </summary>
+    private static List<QualificationFunnelRow> BuildQualificationFunnel(List<GateOutcomeRow> outcomes)
+    {
+        return outcomes
+            .GroupBy(o => o.Market)
+            .Select(g => new QualificationFunnelRow
+            {
+                Market = g.Key,
+                Total = g.Count(),
+                AnalysisOnlyNoOdds = g.Count(o => o.Outcome == "analysis_only_no_odds"),
+                BelowMinOdds = g.Count(o => o.Outcome == "below_min_odds"),
+                BelowMinEdge = g.Count(o => o.Outcome == "below_min_edge"),
+                BelowProbabilityFloor = g.Count(o => o.Outcome == "below_probability_floor"),
+                Vetoed = g.Count(o => o.Outcome == "vetoed"),
+                InsufficientConfirms = g.Count(o => o.Outcome == "insufficient_confirms"),
+                Qualified = g.Count(o => o.Outcome == "qualified")
+            })
+            .OrderBy(r => r.Market)
+            .ToList();
     }
 
     /// <summary>
@@ -426,7 +468,11 @@ public class GetBacktestReportHandler(
     private static readonly (double Lower, double Upper)[] Goals23CalibrationRanges =
         [(0.35, 0.40), (0.40, 0.45), (0.45, 0.50), (0.50, 0.55), (0.55, 1.00)];
 
-    private static readonly string[] BinaryMarkets = ["btts", "over25", "goals_2_3", "match_winner"];
+    /// <summary>Draw probabilities live in the 20-35% band.</summary>
+    private static readonly (double Lower, double Upper)[] DrawCalibrationRanges =
+        [(0.20, 0.25), (0.25, 0.30), (0.30, 0.35), (0.35, 1.00)];
+
+    private static readonly string[] BinaryMarkets = ["btts", "over25", "goals_2_3", "match_winner", "draw"];
 
     private static List<MarketMetrics> BuildMarketMetrics(
         List<MarketSampleRow> marketSamples, List<HdaSampleRow> hdaSamples)
@@ -468,7 +514,12 @@ public class GetBacktestReportHandler(
     {
         return BinaryMarkets.Select(market =>
         {
-            var ranges = market == "goals_2_3" ? Goals23CalibrationRanges : CalibrationRanges;
+            var ranges = market switch
+            {
+                "goals_2_3" => Goals23CalibrationRanges,
+                "draw" => DrawCalibrationRanges,
+                _ => CalibrationRanges
+            };
             var buckets = EvaluationHarness.CalibrationForRanges(
                 ToHarnessSamples(marketSamples, market), ranges);
 
@@ -496,6 +547,7 @@ public class GetBacktestReportHandler(
             "goals_2_3" => opt.Goals23MinProbability,
             "match_winner" => opt.WinnerMinProbability,
             "low_scoring" => opt.Under25MinProbability,
+            "draw" => opt.DrawMinProbability,
             _ => 0
         };
 
@@ -505,6 +557,14 @@ public class GetBacktestReportHandler(
             var withOdds = rows.Where(p => p.Odds is not null).ToList();
             var staked = withOdds.Count;
             var returned = withOdds.Sum(p => p.Won ? p.Odds!.Value : 0);
+
+            // Kelly ROI: stake = fractional Kelly (bankroll share) per pick.
+            var kellyPicks = withOdds.Where(p => p.KellyStake is > 0).ToList();
+            var kellyStaked = kellyPicks.Sum(p => p.KellyStake!.Value);
+            var kellyReturned = kellyPicks.Sum(p => p.Won ? p.KellyStake!.Value * p.Odds!.Value : 0);
+
+            var withEv = rows.Where(p => p.Ev is not null).ToList();
+
             return new QualifiedMarketRow
             {
                 Market = market,
@@ -513,6 +573,9 @@ public class GetBacktestReportHandler(
                 HitRate = rows.Count > 0 ? Math.Round((double)rows.Count(p => p.Won) / rows.Count * 100, 1) : 0,
                 AvgOdds = withOdds.Count > 0 ? Math.Round(withOdds.Average(p => p.Odds!.Value), 2) : 0,
                 RoiPercent = staked > 0 ? Math.Round((returned - staked) / staked * 100, 1) : 0,
+                KellyRoiPercent = kellyStaked > 0
+                    ? Math.Round((kellyReturned - kellyStaked) / kellyStaked * 100, 1) : 0,
+                AvgEv = withEv.Count > 0 ? Math.Round(withEv.Average(p => p.Ev!.Value), 4) : 0,
                 QualificationThreshold = ThresholdOf(market),
                 ValidOddsPct = rows.Count > 0
                     ? Math.Round((double)withOdds.Count / rows.Count * 100, 1) : 0
@@ -531,6 +594,8 @@ public class GetBacktestReportHandler(
             TotalStaked = withOddsAll.Count,
             TotalReturned = Math.Round(withOddsAll.Sum(p => p.Won ? p.Odds!.Value : 0), 2),
             RoiPercent = overall.RoiPercent,
+            KellyRoiPercent = overall.KellyRoiPercent,
+            AvgEv = overall.AvgEv,
             PerMarket = picks.GroupBy(p => p.Market)
                 .Select(g => BuildRow(g.Key, g.ToList()))
                 .OrderByDescending(r => r.Count)

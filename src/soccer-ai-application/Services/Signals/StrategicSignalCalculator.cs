@@ -319,6 +319,7 @@ public static class StrategicSignalCalculator
         {
             BttsRateLast5 = RateOf(opt.H2HWindow, m => m is { HomeGoal: > 0, AwayGoal: > 0 }, "BTTS"),
             BttsRateLast10 = RateOf(opt.H2HLongWindow, m => m is { HomeGoal: > 0, AwayGoal: > 0 }, "BTTS"),
+            DrawRateLast5 = RateOf(opt.H2HWindow, m => m.HomeGoal == m.AwayGoal, "Draw"),
             Over25RateLast5 = RateOf(opt.H2HWindow, m => m.HomeGoal + m.AwayGoal > 2, "Over 2.5"),
             Over25RateLast10 = RateOf(opt.H2HLongWindow, m => m.HomeGoal + m.AwayGoal > 2, "Over 2.5"),
             AvgTotalGoals = SignalValue.Of(avgGoals, avgGoals >= opt.ChaosAvgGoalsFlag,

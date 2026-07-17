@@ -37,13 +37,14 @@ public sealed class WeightedPrediction
 
     /// <summary>
     /// Builds the prediction directly from the single calibrated probability
-    /// set — no blending, no boosts. Draws are excluded from recommendations
-    /// (existing product rule).
+    /// set — no blending, no boosts. Since v3 the draw is a recommendable
+    /// 1X2 outcome (three-way argmax).
     /// </summary>
     public static WeightedPrediction FromCalibrated(Interfaces.CalibratedProbabilities c)
     {
-        var winner = c.AwayWin > c.HomeWin ? "away" : "home";
-        var confidence = Math.Max(c.HomeWin, c.AwayWin);
+        var winner = c.Draw >= c.HomeWin && c.Draw >= c.AwayWin ? "draw"
+            : c.AwayWin > c.HomeWin ? "away" : "home";
+        var confidence = Math.Max(c.Draw, Math.Max(c.HomeWin, c.AwayWin));
 
         return new WeightedPrediction
         {

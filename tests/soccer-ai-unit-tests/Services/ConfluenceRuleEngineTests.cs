@@ -9,6 +9,9 @@ namespace soccer_ai_unit_tests.Services;
 public class ConfluenceRuleEngineTests
 {
     private static readonly ConfluenceOptions Opt = new();
+    private static readonly StrategyOptions Strat = new();
+    private static readonly SoccerAi.Application.Services.Decisions.MarketPrices DefaultPrices =
+        SoccerAi.Application.Services.Decisions.MarketPrices.FromRaw(2.5, 3.4, 3.1, 1.9, 1.95, 1.85);
 
     private static SignalValue On(double value = 1, string label = "on") => SignalValue.Of(value, true, label);
     private static SignalValue Off(double value = 0, string label = "off") => SignalValue.Of(value, false, label);
@@ -42,7 +45,7 @@ public class ConfluenceRuleEngineTests
     [Fact]
     public void Btts_Qualifies_WithProbabilityAndConfluence_NoVetoes()
     {
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.60, BttsFriendly(), 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.60, BttsFriendly(), 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.ProbabilityPassed.Should().BeTrue();
         audit.ConfirmationsFired.Should().Be(3);
@@ -53,10 +56,10 @@ public class ConfluenceRuleEngineTests
     [Fact]
     public void Btts_ProbabilityBelowThreshold_NeverQualifies()
     {
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.50, BttsFriendly(), 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.45, BttsFriendly(), 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.ProbabilityPassed.Should().BeFalse();
-        audit.Qualified.Should().BeFalse("probability gate failed despite 3 confirms");
+        audit.Qualified.Should().BeFalse("probability floor failed despite 3 confirms");
     }
 
     [Fact]
@@ -70,7 +73,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.VetoesFired.Should().BeGreaterThan(0);
         audit.Qualified.Should().BeFalse("one veto is enough to block");
@@ -90,7 +93,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.ConfirmationsFired.Should().Be(1);
         audit.Qualified.Should().BeFalse();
@@ -108,7 +111,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "btts_confirm_h2h_rate").Fired
             .Should().BeFalse("2 H2H meetings are not evidence");
@@ -138,7 +141,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateOver25(0.65, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateOver25(0.65, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "over25_veto_quiet_h2h").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
@@ -154,7 +157,7 @@ public class ConfluenceRuleEngineTests
             AwayForm = new FormSignals { FormDelta = SignalValue.Of(-0.3, false, "down") }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateOver25(0.65, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateOver25(0.65, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "over25_veto_dead_rubber_flat").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
@@ -175,7 +178,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateOver25(0.62, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateOver25(0.62, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.ConfirmationsFired.Should().Be(2);
         audit.Qualified.Should().BeTrue();
@@ -213,7 +216,7 @@ public class ConfluenceRuleEngineTests
     [Fact]
     public void Winner_CompositeConfirm_TableEdgeTrendingNoRotation()
     {
-        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, WinnerFriendly(), 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, WinnerFriendly(), 0.50, 2.2, 2.1, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "winner_confirm_composite").Fired.Should().BeTrue();
         audit.Rules.Single(r => r.RuleId == "winner_confirm_venue_ppg").Fired.Should().BeTrue();
@@ -232,7 +235,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.50, 2.2, 2.1, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "winner_confirm_composite").Fired.Should().BeFalse();
         audit.Rules.Single(r => r.RuleId == "winner_veto_rotation_risk").Fired.Should().BeTrue();
@@ -247,7 +250,7 @@ public class ConfluenceRuleEngineTests
             Market = new MarketSignals { Trap = On(10, "market against table logic") }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.50, 2.2, 2.1, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "winner_veto_trap").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
@@ -265,7 +268,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.50, 2.2, 2.1, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "winner_veto_opposition_dominance").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
@@ -283,11 +286,12 @@ public class ConfluenceRuleEngineTests
             Confidence = 0.6, MatchWinner = "home"
         };
 
-        var audit = ConfluenceRuleEngine.Evaluate(prediction, BttsFriendly(), 0, Opt);
+        var audit = ConfluenceRuleEngine.Evaluate(
+            prediction, BttsFriendly(), DefaultPrices, 0, Opt, Strat);
 
-        audit.Markets.Should().HaveCount(5);
+        audit.Markets.Should().HaveCount(6);
         audit.Markets.Select(m => m.Market).Should().BeEquivalentTo(
-            ["btts", "over25", "goals_2_3", "match_winner", "under25"]);
+            ["btts", "over25", "goals_2_3", "match_winner", "under25", "draw"]);
         audit.MinConfirmationsRequired.Should().Be(Opt.MinConfirmations);
         audit.Markets.Should().OnlyContain(m => m.Rules.Count > 0,
             "every market must expose its full rule evaluation");
@@ -298,24 +302,24 @@ public class ConfluenceRuleEngineTests
     {
         var prediction = new WeightedPrediction
         {
-            BTTSProb = 0.57, Over25Prob = 0.5, TwoToThreeGoalsProb = 0.4,
+            BTTSProb = 0.52, Over25Prob = 0.5, TwoToThreeGoalsProb = 0.4,
             HomeProb = 0.5, AwayProb = 0.3, DrawProb = 0.2,
             Confidence = 0.5, MatchWinner = "home"
         };
 
-        var tier1 = ConfluenceRuleEngine.Evaluate(prediction, BttsFriendly(), 0, Opt);
-        var tier2 = ConfluenceRuleEngine.Evaluate(prediction, BttsFriendly(), 0.05, Opt);
+        var tier1 = ConfluenceRuleEngine.Evaluate(prediction, BttsFriendly(), DefaultPrices, 0, Opt, Strat);
+        var tier2 = ConfluenceRuleEngine.Evaluate(prediction, BttsFriendly(), DefaultPrices, 0.05, Opt, Strat);
 
         tier1.Markets.Single(m => m.Market == "btts").ProbabilityPassed
-            .Should().BeTrue("0.57 ≥ 0.55");
+            .Should().BeTrue("0.52 ≥ 0.50 floor");
         tier2.Markets.Single(m => m.Market == "btts").ProbabilityPassed
-            .Should().BeFalse("0.57 < 0.60 with the Tier2 uplift");
+            .Should().BeFalse("0.52 < 0.55 with the Tier2 uplift");
     }
 
     [Fact]
     public void Audit_FiredConfirmRuleIds_ExposesOnlyFiredConfirms()
     {
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.60, BttsFriendly(), 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.60, BttsFriendly(), 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.FiredConfirmRuleIds.Should().BeEquivalentTo(
             ["btts_confirm_both_score_venue", "btts_confirm_both_concede_venue", "btts_confirm_h2h_rate"]);
@@ -351,7 +355,7 @@ public class ConfluenceRuleEngineTests
             }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateUnder25(0.62, signals, 0.55, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateUnder25(0.62, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.ConfirmationsFired.Should().Be(3);
         audit.VetoesFired.Should().Be(0);
@@ -367,7 +371,7 @@ public class ConfluenceRuleEngineTests
             AwayScoring = new ScoringSignals { AvgTotalGoalsLast5 = SignalValue.Of(2.5, false, "normal") }
         };
 
-        var audit = ConfluenceRuleEngine.EvaluateGoals23(0.5, signals, 0.45, Opt);
+        var audit = ConfluenceRuleEngine.EvaluateGoals23(0.55, signals, 0.50, 2.0, 1.7, 0.05, Opt);
 
         audit.Rules.Single(r => r.RuleId == "goals23_veto_chaos").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();

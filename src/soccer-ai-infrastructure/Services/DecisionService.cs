@@ -18,7 +18,8 @@ namespace SoccerAi.Infrastructure.Services;
 /// </summary>
 public sealed class DecisionService(
     ILeagueTierService leagueTiers,
-    IOptions<ConfluenceOptions> options) : IDecisionService
+    IOptions<ConfluenceOptions> options,
+    IOptions<StrategyOptions> strategyOptions) : IDecisionService
 {
     public Task<DecisionServiceResult> Evaluate(
         MatchContext context,
@@ -51,8 +52,15 @@ public sealed class DecisionService(
             ? opt.Tier2ExtraProbability
             : 0.0;
 
-        var audit = ConfluenceRuleEngine.Evaluate(prediction, signals, tierExtra, opt);
+        // Guard-sanitized prices — the EV gate only ever sees real odds.
+        var prices = MarketPrices.FromRaw(
+            context.OddsHome, context.OddsDraw, context.OddsAway,
+            context.OddsOver25, context.OddsUnder25, context.OddsBttsYes);
 
+        var audit = ConfluenceRuleEngine.Evaluate(
+            prediction, signals, prices, tierExtra, opt, strategyOptions.Value);
+
+        var drawAudit = audit.Markets.First(m => m.Market == ConfluenceRuleEngine.Markets.Draw);
         var markets = new QualificationDecisions
         {
             BTTS = ToDecision(audit, ConfluenceRuleEngine.Markets.Btts),
@@ -60,7 +68,16 @@ public sealed class DecisionService(
             TwoToThreeGoals = ToDecision(audit, ConfluenceRuleEngine.Markets.Goals23),
             MatchWinner = ToDecision(audit, ConfluenceRuleEngine.Markets.MatchWinner),
             LowScoring = ToDecision(audit, ConfluenceRuleEngine.Markets.Under25),
-            Draw = new DrawDecision { IsQualified = false, Score = 0, Label = "Excluded" }
+            Draw = new DrawDecision
+            {
+                IsQualified = drawAudit.Qualified,
+                IsStrongQualified = drawAudit.Qualified &&
+                    drawAudit.ConfirmationsFired >= opt.MinConfirmations + opt.StrongBetExtraConfirms,
+                Score = drawAudit.Probability,
+                Label = drawAudit.Qualified
+                    ? $"Draw value pick (EV {drawAudit.Ev:P0} at {drawAudit.Odds:F2})"
+                    : $"Draw not qualified ({drawAudit.GateOutcome})"
+            }
         };
 
         // Trap is a market signal now — surfaced for the response, and it also

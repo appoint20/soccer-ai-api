@@ -45,6 +45,13 @@ public sealed class StrategyOptions
     public int CongestionMatchesIn14Days { get; set; } = 4;
     public int Tier2ProximityDays { get; set; } = 4;
 
+    // ── Minimum odds floors (below floor = "analysis only", never a pick) ──
+    public double MinOddsBtts { get; set; } = 1.70;
+    public double MinOddsOver25 { get; set; } = 1.70;
+    public double MinOddsUnder25 { get; set; } = 1.70;
+    public double MinOddsGoals23 { get; set; } = 1.70;
+    public double MinOdds1X2 { get; set; } = 2.10;
+
     // ── G. Market flags ──
     public double ModelMarketDivergenceFlag { get; set; } = 0.15;
     public double HeavyFavoriteOdds { get; set; } = 1.40;

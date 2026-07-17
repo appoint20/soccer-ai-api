@@ -24,6 +24,26 @@ public sealed record MarketRuleAudit(
     [property: JsonPropertyName("qualified")] bool Qualified,
     [property: JsonPropertyName("rules")] IReadOnlyList<RuleResult> Rules)
 {
+    // ── Value gate (v3): EV-based qualification ──
+
+    /// <summary>Guard-valid odds used for EV; null = analysis only.</summary>
+    [JsonPropertyName("odds")] public double? Odds { get; init; }
+
+    /// <summary>Minimum odds floor applied to this market.</summary>
+    [JsonPropertyName("min_odds")] public double MinOdds { get; init; }
+
+    /// <summary>EV = p × odds − 1 (null without valid odds).</summary>
+    [JsonPropertyName("ev")] public double? Ev { get; init; }
+
+    /// <summary>Per-market minimum edge required.</summary>
+    [JsonPropertyName("min_edge")] public double MinEdge { get; init; }
+
+    /// <summary>Fractional (quarter) Kelly stake as bankroll share (null unless qualified).</summary>
+    [JsonPropertyName("kelly_stake")] public double? KellyStake { get; init; }
+
+    /// <summary>Which gate stopped (or passed) this market — see GateOutcome.</summary>
+    [JsonPropertyName("gate_outcome")] public string GateOutcome { get; init; } = "";
+
     [JsonIgnore]
     public IEnumerable<string> FiredConfirmRuleIds =>
         Rules.Where(r => r is { Kind: RuleResult.Confirm, Fired: true }).Select(r => r.RuleId);
