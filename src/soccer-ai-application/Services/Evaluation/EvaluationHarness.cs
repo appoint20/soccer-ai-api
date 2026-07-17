@@ -24,7 +24,14 @@ public sealed record EvaluationSlice(
 /// </summary>
 public static class EvaluationHarness
 {
-    private const double Epsilon = 1e-15;
+    /// <summary>
+    /// Log-loss probability clipping. A hard 1e-15 floor lets a single
+    /// saturated 0/1 probability contribute −ln(1e-15) ≈ 34.5 and dominate the
+    /// average; [0.01, 0.99] bounds one sample's contribution at ≈ 4.6.
+    /// </summary>
+    public const double LogLossClipLow = 0.01;
+    public const double LogLossClipHigh = 0.99;
+
     public const int DefaultCalibrationBuckets = 10;
 
     public static double Brier(IReadOnlyCollection<PredictionSample> samples) =>
@@ -37,7 +44,7 @@ public static class EvaluationHarness
             ? 0
             : -samples.Average(s =>
             {
-                var p = Math.Clamp(s.Probability, Epsilon, 1 - Epsilon);
+                var p = Math.Clamp(s.Probability, LogLossClipLow, LogLossClipHigh);
                 return s.Outcome ? Math.Log(p) : Math.Log(1 - p);
             });
 
@@ -89,7 +96,7 @@ public static class EvaluationHarness
         samples.Count == 0
             ? 0
             : -samples.Average(s =>
-                Math.Log(Math.Clamp(s.Probabilities[s.ActualIndex], Epsilon, 1 - Epsilon)));
+                Math.Log(Math.Clamp(s.Probabilities[s.ActualIndex], LogLossClipLow, LogLossClipHigh)));
 
     public static IReadOnlyList<CalibrationBucket> Calibration(
         IReadOnlyCollection<PredictionSample> samples,

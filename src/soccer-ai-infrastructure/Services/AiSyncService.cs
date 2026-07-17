@@ -79,6 +79,7 @@ public class AiSyncService(
                     ModelAwayWin = analysis.Models.Poisson.AwayWin,
                     ModelOver25 = analysis.Models.Poisson.Over25,
                     ModelBTTS = analysis.Models.Poisson.BTTS,
+                    ModelGoals23 = analysis.Models.Poisson.TwoToThreeGoals,
                     OddsHomeWin = analysis.OddsHomeWin,
                     OddsDraw = analysis.OddsDraw,
                     OddsAwayWin = analysis.OddsAwayWin,
@@ -134,7 +135,8 @@ public class AiSyncService(
                         HomeProb = originalAnalysis.ModelHomeWin,
                         Over25Prob = originalAnalysis.ModelOver25,
                         BTTSProb = originalAnalysis.ModelBTTS,
-                        DrawProb = 0.0, // Explicitly excluded
+                        DrawProb = originalAnalysis.ModelDraw,       // real value — zeroing it broke 1X2 log loss
+                        TwoToThreeGoalsProb = originalAnalysis.ModelGoals23,
                         AwayProb = originalAnalysis.ModelAwayWin,
                     };
 
@@ -211,6 +213,7 @@ public class AiSyncService(
             ModelAwayWin = analysis.Models.Poisson.AwayWin,
             ModelOver25 = analysis.Models.Poisson.Over25,
             ModelBTTS = analysis.Models.Poisson.BTTS,
+            ModelGoals23 = analysis.Models.Poisson.TwoToThreeGoals,
             OddsHomeWin = analysis.OddsHomeWin,
             OddsDraw = analysis.OddsDraw,
             OddsAwayWin = analysis.OddsAwayWin,
@@ -255,10 +258,11 @@ public class AiSyncService(
             
             // MATH CACHE
             existing.HomeProb            = math.HomeProb;
-            existing.DrawProb            = 0.0; // Explicitly excluded
+            existing.DrawProb            = math.DrawProb;
             existing.AwayProb            = math.AwayProb;
             existing.Over25Prob          = math.Over25Prob;
             existing.BttsProb            = math.BTTSProb;
+            existing.Goals23Prob         = math.TwoToThreeGoalsProb;
             
             // Unified AI Decision Layer
             existing.AiOver25Qualified    = aiResult.Over25Qualified;
@@ -293,10 +297,11 @@ public class AiSyncService(
                 
                 // MATH CACHE
                 HomeProb            = math.HomeProb,
-                DrawProb            = 0.0,
+                DrawProb            = math.DrawProb,
                 AwayProb            = math.AwayProb,
                 Over25Prob          = math.Over25Prob,
                 BttsProb            = math.BTTSProb,
+                Goals23Prob         = math.TwoToThreeGoalsProb,
                 
                 // Unified AI Decision Layer
                 AiOver25Qualified   = aiResult.Over25Qualified,

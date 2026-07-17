@@ -131,7 +131,8 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                     if (val.ValueKind == JsonValueKind.String)
                     {
                         var str = val.GetString()?.Replace("%", "") ?? "0";
-                        return int.TryParse(str, out var n) ? n : 0;
+                        return int.TryParse(str, System.Globalization.NumberStyles.Integer,
+                            System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : 0;
                     }
                 }
             }
@@ -147,7 +148,8 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                     var val = s.GetProperty("value");
                     if (val.ValueKind == JsonValueKind.Number)
                         return val.GetDouble();
-                    if (val.ValueKind == JsonValueKind.String && double.TryParse(val.GetString(), out var d))
+                    if (val.ValueKind == JsonValueKind.String && double.TryParse(val.GetString(),
+                            System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d))
                         return d;
                 }
             }
@@ -207,7 +209,8 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                     foreach (var v in values.EnumerateArray())
                     {
                         var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), out var o) ? o : (double?)null;
+                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
                         if (val == "Home") homeWin = odd;
                         else if (val == "Draw") draw = odd;
                         else if (val == "Away") awayWin = odd;
@@ -218,7 +221,8 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                     foreach (var v in values.EnumerateArray())
                     {
                         var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), out var o) ? o : (double?)null;
+                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
                         if (val == "Over 2.5") over25 = odd;
                         else if (val == "Under 2.5") under25 = odd;
                     }
@@ -228,7 +232,8 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
                     foreach (var v in values.EnumerateArray())
                     {
                         var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), out var o) ? o : (double?)null;
+                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
                         if (val == "Yes") bttsYes = odd;
                         else if (val == "No") bttsNo = odd;
                     }

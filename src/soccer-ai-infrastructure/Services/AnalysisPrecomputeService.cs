@@ -119,6 +119,7 @@ public sealed class AnalysisPrecomputeService(
             row.AwayProb = prediction.AwayProb;
             row.Over25Prob = prediction.Over25Prob;
             row.BttsProb = prediction.BTTSProb;
+            row.Goals23Prob = prediction.TwoToThreeGoalsProb;
         }
     }
 }

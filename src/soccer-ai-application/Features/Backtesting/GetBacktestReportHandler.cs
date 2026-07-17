@@ -18,18 +18,18 @@ public class GetBacktestReportHandler(
     IApplicationDbContext dbContext,
     IServiceProvider serviceProvider,
     ILeagueTierService leagueTiers,
+    Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.ConfluenceOptions> confluenceOptions,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
     /// <summary>Minimum odds per accumulator leg (unchanged from previous behavior).</summary>
     private const double MinSelectionOdds = 1.50;
 
-    /// <summary>2-3 Goals has no stored odds — bookmaker-typical price (same default as MatchAnalysis.OddsGoals23).</summary>
-    private const double DefaultGoals23Odds = 1.90;
-
     private const int LowSampleThreshold = 30;
 
-    private sealed record MarketSampleRow(string Market, string League, double Probability, bool Outcome);
+    /// <summary>OddsValid: the market's stored odds pass the sanity guard (1.01-15.0).</summary>
+    private sealed record MarketSampleRow(
+        string Market, string League, double Probability, bool Outcome, bool OddsValid);
     private sealed record HdaSampleRow(double[] Probabilities, int ActualIndex);
     private sealed record QualifiedPickRow(
         string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules);
@@ -121,10 +121,15 @@ public class GetBacktestReportHandler(
                         var pickWon = pickIsHome ? hdaActual == 0 : hdaActual == 2;
 
                         // ── Probabilistic quality samples (ALL analyzed fixtures) ──
-                        marketSamples.Add(new MarketSampleRow("btts", league, pred.BTTSProb, bttsActual));
-                        marketSamples.Add(new MarketSampleRow("over25", league, pred.Over25Prob, over25Actual));
-                        marketSamples.Add(new MarketSampleRow("goals_2_3", league, pred.TwoToThreeGoalsProb, goals23Actual));
-                        marketSamples.Add(new MarketSampleRow("match_winner", league, pred.Confidence, pickWon));
+                        var pickOddsRaw = pickIsHome ? f.HomeWinOdds : f.AwayWinOdds;
+                        marketSamples.Add(new MarketSampleRow("btts", league, pred.BTTSProb, bttsActual,
+                            Services.OddsGuard.IsValid(f.BttsYesOdds)));
+                        marketSamples.Add(new MarketSampleRow("over25", league, pred.Over25Prob, over25Actual,
+                            Services.OddsGuard.IsValid(f.Over25Odds)));
+                        marketSamples.Add(new MarketSampleRow("goals_2_3", league, pred.TwoToThreeGoalsProb, goals23Actual,
+                            false)); // no 2-3 Goals odds market is stored
+                        marketSamples.Add(new MarketSampleRow("match_winner", league, pred.Confidence, pickWon,
+                            Services.OddsGuard.IsValid(pickOddsRaw)));
                         hdaSamples.Add(new HdaSampleRow(
                             [pred.HomeProb, pred.DrawProb, pred.AwayProb], hdaActual));
 
@@ -143,13 +148,17 @@ public class GetBacktestReportHandler(
                         void AddPick(string market, string selection, bool won, double? odds, double prob,
                             string? auditMarket = null)
                         {
+                            // Sanity guard: invalid odds (e.g. 185 instead of 1.85) are
+                            // EXCLUDED from ROI and combos — never clamped or substituted.
+                            var safeOdds = Services.OddsGuard.Sanitize(odds);
+
                             var fired = auditByMarket.TryGetValue(auditMarket ?? market, out var audit)
                                 ? audit.FiredConfirmRuleIds.ToList()
                                 : [];
-                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, odds, fired));
-                            if (odds is > 1.0)
+                            qualifiedPicks.Add(new QualifiedPickRow(market, league, won, safeOdds, fired));
+                            if (safeOdds is not null)
                                 dayPicks.Add(new BacktestPick(
-                                    f.Id, league, home.Name, away.Name, selection, prob, odds.Value));
+                                    f.Id, league, home.Name, away.Name, selection, prob, safeOdds.Value));
                         }
 
                         if (m.Over25.IsQualified)
@@ -157,7 +166,9 @@ public class GetBacktestReportHandler(
                         if (m.BTTS.IsQualified)
                             AddPick("btts", "BTTS", bttsActual, f.BttsYesOdds, pred.BTTSProb);
                         if (m.TwoToThreeGoals.IsQualified)
-                            AddPick("goals_2_3", "2-3 Goals", goals23Actual, DefaultGoals23Odds, pred.TwoToThreeGoalsProb);
+                            // No 2-3 Goals odds are stored — pick is tracked for hit
+                            // rate but excluded from ROI (no substituted price).
+                            AddPick("goals_2_3", "2-3 Goals", goals23Actual, null, pred.TwoToThreeGoalsProb);
                         if (m.MatchWinner.IsQualified)
                             AddPick("match_winner",
                                 pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
@@ -408,6 +419,13 @@ public class GetBacktestReportHandler(
     private static readonly (double Lower, double Upper)[] CalibrationRanges =
         [(0.50, 0.55), (0.55, 0.60), (0.60, 0.65), (0.65, 1.00)];
 
+    /// <summary>
+    /// 2-3 Goals probabilities peak near 40-50% (its qualification threshold is
+    /// 45%) — the standard 50%+ buckets would be empty for it.
+    /// </summary>
+    private static readonly (double Lower, double Upper)[] Goals23CalibrationRanges =
+        [(0.35, 0.40), (0.40, 0.45), (0.45, 0.50), (0.50, 0.55), (0.55, 1.00)];
+
     private static readonly string[] BinaryMarkets = ["btts", "over25", "goals_2_3", "match_winner"];
 
     private static List<MarketMetrics> BuildMarketMetrics(
@@ -417,24 +435,30 @@ public class GetBacktestReportHandler(
 
         foreach (var market in BinaryMarkets.Where(m => m != "match_winner"))
         {
+            var rows = marketSamples.Where(r => r.Market == market).ToList();
             var samples = ToHarnessSamples(marketSamples, market);
             metrics.Add(new MarketMetrics
             {
                 Market = market,
                 SampleSize = samples.Count,
                 BrierScore = Math.Round(EvaluationHarness.Brier(samples), 4),
-                LogLoss = Math.Round(EvaluationHarness.LogLoss(samples), 4)
+                LogLoss = Math.Round(EvaluationHarness.LogLoss(samples), 4),
+                ValidOddsPct = rows.Count > 0
+                    ? Math.Round((double)rows.Count(r => r.OddsValid) / rows.Count * 100, 1) : 0
             });
         }
 
         // 1X2 as a proper three-way multiclass metric.
         var hda = hdaSamples.Select(s => (s.Probabilities, s.ActualIndex)).ToList();
+        var winnerRows = marketSamples.Where(r => r.Market == "match_winner").ToList();
         metrics.Add(new MarketMetrics
         {
             Market = "1x2",
             SampleSize = hda.Count,
             BrierScore = Math.Round(EvaluationHarness.MulticlassBrier(hda), 4),
-            LogLoss = Math.Round(EvaluationHarness.MulticlassLogLoss(hda), 4)
+            LogLoss = Math.Round(EvaluationHarness.MulticlassLogLoss(hda), 4),
+            ValidOddsPct = winnerRows.Count > 0
+                ? Math.Round((double)winnerRows.Count(r => r.OddsValid) / winnerRows.Count * 100, 1) : 0
         });
 
         return metrics;
@@ -444,8 +468,9 @@ public class GetBacktestReportHandler(
     {
         return BinaryMarkets.Select(market =>
         {
+            var ranges = market == "goals_2_3" ? Goals23CalibrationRanges : CalibrationRanges;
             var buckets = EvaluationHarness.CalibrationForRanges(
-                ToHarnessSamples(marketSamples, market), CalibrationRanges);
+                ToHarnessSamples(marketSamples, market), ranges);
 
             return new MarketCalibration
             {
@@ -461,11 +486,23 @@ public class GetBacktestReportHandler(
         }).ToList();
     }
 
-    private static QualifiedPicksReport BuildQualifiedPicksReport(List<QualifiedPickRow> picks)
+    private QualifiedPicksReport BuildQualifiedPicksReport(List<QualifiedPickRow> picks)
     {
+        var opt = confluenceOptions.Value;
+        double ThresholdOf(string market) => market switch
+        {
+            "btts" => opt.BttsMinProbability,
+            "over25" => opt.Over25MinProbability,
+            "goals_2_3" => opt.Goals23MinProbability,
+            "match_winner" => opt.WinnerMinProbability,
+            "low_scoring" => opt.Under25MinProbability,
+            _ => 0
+        };
+
         QualifiedMarketRow BuildRow(string market, List<QualifiedPickRow> rows)
         {
-            var withOdds = rows.Where(p => p.Odds is > 1.0).ToList();
+            // Odds are pre-sanitized: null = missing OR outside the 1.01-15.0 guard.
+            var withOdds = rows.Where(p => p.Odds is not null).ToList();
             var staked = withOdds.Count;
             var returned = withOdds.Sum(p => p.Won ? p.Odds!.Value : 0);
             return new QualifiedMarketRow
@@ -475,12 +512,15 @@ public class GetBacktestReportHandler(
                 Hits = rows.Count(p => p.Won),
                 HitRate = rows.Count > 0 ? Math.Round((double)rows.Count(p => p.Won) / rows.Count * 100, 1) : 0,
                 AvgOdds = withOdds.Count > 0 ? Math.Round(withOdds.Average(p => p.Odds!.Value), 2) : 0,
-                RoiPercent = staked > 0 ? Math.Round((returned - staked) / staked * 100, 1) : 0
+                RoiPercent = staked > 0 ? Math.Round((returned - staked) / staked * 100, 1) : 0,
+                QualificationThreshold = ThresholdOf(market),
+                ValidOddsPct = rows.Count > 0
+                    ? Math.Round((double)withOdds.Count / rows.Count * 100, 1) : 0
             };
         }
 
         var overall = BuildRow("all", picks);
-        var withOddsAll = picks.Where(p => p.Odds is > 1.0).ToList();
+        var withOddsAll = picks.Where(p => p.Odds is not null).ToList();
 
         return new QualifiedPicksReport
         {

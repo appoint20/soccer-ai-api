@@ -67,6 +67,10 @@ public sealed class MarketMetrics
 
     [JsonPropertyName("log_loss")]
     public double LogLoss { get; init; }
+
+    /// <summary>Share of analyzed fixtures whose stored odds pass the 1.01-15.0 sanity guard.</summary>
+    [JsonPropertyName("valid_odds_pct")]
+    public double ValidOddsPct { get; init; }
 }
 
 public sealed class MarketCalibration
@@ -140,6 +144,14 @@ public sealed class QualifiedMarketRow
 
     [JsonPropertyName("roi_percent")]
     public double RoiPercent { get; init; }
+
+    /// <summary>The probability threshold that gated qualification for this market.</summary>
+    [JsonPropertyName("qualification_threshold")]
+    public double QualificationThreshold { get; init; }
+
+    /// <summary>Share of these picks with guard-valid odds (only they enter ROI).</summary>
+    [JsonPropertyName("valid_odds_pct")]
+    public double ValidOddsPct { get; init; }
 }
 
 public sealed class BacktestSummary

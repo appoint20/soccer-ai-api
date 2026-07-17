@@ -393,18 +393,18 @@ public static class StrategicSignalCalculator
 
         // Over 2.5 divergence (Shin pair when both sides exist)
         var divOver = SignalValue.Unavailable("No Over/Under odds");
-        if (dc != null && f.Over25Odds is > 1 && f.Under25Odds is > 1)
+        if (dc != null && OddsGuard.IsValid(f.Over25Odds) && OddsGuard.IsValid(f.Under25Odds))
         {
             var market = ShinMarginRemovalProxy(f.Over25Odds.Value, f.Under25Odds.Value);
             divOver = Divergence(dc.Over25, market, "Over 2.5");
         }
 
         var divBtts = SignalValue.Unavailable("No BTTS odds");
-        if (dc != null && f.BttsYesOdds is > 1)
+        if (dc != null && OddsGuard.IsValid(f.BttsYesOdds))
             divBtts = Divergence(dc.BTTS, 1.0 / f.BttsYesOdds.Value, "BTTS");
 
         var div1X2 = SignalValue.Unavailable("No 1X2 odds");
-        if (dc != null && f.HomeWinOdds is > 1 && f.DrawOdds is > 1 && f.AwayWinOdds is > 1)
+        if (dc != null && OddsGuard.IsValid(f.HomeWinOdds) && OddsGuard.IsValid(f.DrawOdds) && OddsGuard.IsValid(f.AwayWinOdds))
         {
             var probs = Services.ShinMarginRemoval.TrueProbabilities(
                 [f.HomeWinOdds.Value, f.DrawOdds.Value, f.AwayWinOdds.Value]);
@@ -417,7 +417,7 @@ public static class StrategicSignalCalculator
         // Favorite band
         var favBand = SignalValue.Unavailable("No 1X2 odds");
         SignalValue trap = SignalValue.Unavailable("No 1X2 odds or standings");
-        if (f.HomeWinOdds is > 1 && f.AwayWinOdds is > 1)
+        if (OddsGuard.IsValid(f.HomeWinOdds) && OddsGuard.IsValid(f.AwayWinOdds))
         {
             var favIsHome = f.HomeWinOdds.Value <= f.AwayWinOdds.Value;
             var favOdds = Math.Min(f.HomeWinOdds.Value, f.AwayWinOdds.Value);

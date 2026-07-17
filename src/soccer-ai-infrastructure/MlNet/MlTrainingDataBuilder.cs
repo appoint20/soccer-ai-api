@@ -183,7 +183,7 @@ public class MlTrainingDataBuilder(ILogger<MlTrainingDataBuilder> logger)
             ? ((float)(1.0 / f.BttsYesOdds!.Value), true)
             : (NeutralProbability, false);
 
-    private static bool IsValid(double? odds) => odds is > 1.0;
+    private static bool IsValid(double? odds) => SoccerAi.Application.Services.OddsGuard.IsValid(odds);
 
     // ── History features ─────────────────────────────────────────────────────
 

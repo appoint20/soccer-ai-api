@@ -39,22 +39,28 @@ public sealed class MatchAnalysisService(
         homeRest = data.HomeRestDays;
         awayRest = data.AwayRestDays;
 
-        if (!refresh && aiEntity is { HomeProb: > 0 })
+        // Math cache is only trusted when COMPLETE. Legacy rows have
+        // DrawProb hard-zeroed and no Goals23Prob — using them saturates
+        // 1X2 and goals_2_3 log loss with fake 0-probabilities.
+        var cacheComplete = aiEntity is { HomeProb: > 0, DrawProb: > 0, Goals23Prob: > 0 };
+
+        if (!refresh && cacheComplete)
         {
-            // CACHE HIT: Use stored mathematical probabilities, skip heavy ML models
+            // CACHE HIT: Use stored mathematical probabilities, skip the models
             prediction = new WeightedPrediction
             {
-                HomeProb = aiEntity.HomeProb,
+                HomeProb = aiEntity!.HomeProb,
                 DrawProb = aiEntity.DrawProb,
                 AwayProb = aiEntity.AwayProb,
                 Over25Prob = aiEntity.Over25Prob,
                 BTTSProb = aiEntity.BttsProb,
+                TwoToThreeGoalsProb = aiEntity.Goals23Prob,
                 Confidence = aiEntity.Confidence,
-                MatchWinner = aiEntity.Recommendation.ToLower().Contains("home") ? "home" : 
+                MatchWinner = aiEntity.Recommendation.ToLower().Contains("home") ? "home" :
                              aiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
             };
-            
-            models = new StatisticalModels(); 
+
+            models = new StatisticalModels();
         }
         else
         {

@@ -85,5 +85,6 @@ public sealed class MarketCalibrator(IOptions<CalibrationOptions> options) : IMa
 
     private static double NaiveImplied(double odds) => 1.0 / odds;
 
-    private static bool IsValidOdd(double? odds) => odds is > 1.0;
+    // Corrupted odds (e.g. 185 instead of 1.85) must never reach the blend.
+    private static bool IsValidOdd(double? odds) => OddsGuard.IsValid(odds);
 }

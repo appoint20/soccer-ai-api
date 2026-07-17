@@ -22,6 +22,7 @@ public class FixtureAnalysis
     public double AwayProb { get; set; }
     public double Over25Prob { get; set; }
     public double BttsProb { get; set; }
+    public double Goals23Prob { get; set; }
 
     /// <summary>2-4 key factors behind the recommendation</summary>
     public string PredictionReason { get; set; } = "";

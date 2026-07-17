@@ -177,12 +177,14 @@ public static class Program
                           $"Avg odds: {q.AvgOdds:F2}  ROI: {q.RoiPercent:F1}%");
         foreach (var m in q.PerMarket)
             Console.WriteLine($"    {m.Market,-14} n={m.Count,-4} hit={m.HitRate,5:F1}%  " +
-                              $"avg odds={m.AvgOdds:F2}  roi={m.RoiPercent,6:F1}%");
+                              $"avg odds={m.AvgOdds:F2}  roi={m.RoiPercent,6:F1}%  " +
+                              $"thr={m.QualificationThreshold:P0}  valid odds={m.ValidOddsPct:F0}%");
 
         Console.WriteLine();
         Console.WriteLine("=== MARKET QUALITY (all analyzed fixtures) ===");
         foreach (var m in r.MarketMetrics)
-            Console.WriteLine($"  {m.Market,-14} n={m.SampleSize,-5} brier={m.BrierScore:F4}  logloss={m.LogLoss:F4}");
+            Console.WriteLine($"  {m.Market,-14} n={m.SampleSize,-5} brier={m.BrierScore:F4}  " +
+                              $"logloss={m.LogLoss:F4}  valid odds={m.ValidOddsPct:F0}%");
 
         Console.WriteLine();
         Console.WriteLine("=== CALIBRATION (predicted vs actual) ===");

@@ -1,0 +1,517 @@
+{
+  "summary": {
+    "start_date": "2026-02-27T10:30:25.305965+00:00",
+    "total_roi": 4039680.2,
+    "total_staked": 90,
+    "total_returned": 3635802.22,
+    "combination_accuracy": 30,
+    "win_rate": 30,
+    "combos_total": 90,
+    "combos_won": 27,
+    "match_analysis_accuracy": 50.7,
+    "total_legs": 201,
+    "correct_legs": 121
+  },
+  "weekly_breakdown": [
+    {
+      "week": "Week 18",
+      "date_range": "Mai 01 - Mai 02",
+      "total_combinations": 5,
+      "combinations_won": 3,
+      "stake_amount": 5,
+      "profit_loss": 86440,
+      "roi_percent": 1728800
+    },
+    {
+      "week": "Week 17",
+      "date_range": "Apr. 21 - Apr. 26",
+      "total_combinations": 11,
+      "combinations_won": 0,
+      "stake_amount": 11,
+      "profit_loss": -11,
+      "roi_percent": -100
+    },
+    {
+      "week": "Week 16",
+      "date_range": "Apr. 13 - Apr. 19",
+      "total_combinations": 9,
+      "combinations_won": 5,
+      "stake_amount": 9,
+      "profit_loss": 3463491,
+      "roi_percent": 38483233.3
+    },
+    {
+      "week": "Week 15",
+      "date_range": "Apr. 06 - Apr. 12",
+      "total_combinations": 11,
+      "combinations_won": 6,
+      "stake_amount": 11,
+      "profit_loss": 917.25,
+      "roi_percent": 8338.6
+    },
+    {
+      "week": "Week 14",
+      "date_range": "Apr. 03 - Apr. 05",
+      "total_combinations": 9,
+      "combinations_won": 2,
+      "stake_amount": 9,
+      "profit_loss": 196.85,
+      "roi_percent": 2187.2
+    },
+    {
+      "week": "Week 13",
+      "date_range": "M\u00E4rz 28 - M\u00E4rz 28",
+      "total_combinations": 4,
+      "combinations_won": 1,
+      "stake_amount": 4,
+      "profit_loss": -0.39,
+      "roi_percent": -9.8
+    },
+    {
+      "week": "Week 12",
+      "date_range": "M\u00E4rz 21 - M\u00E4rz 22",
+      "total_combinations": 8,
+      "combinations_won": 1,
+      "stake_amount": 8,
+      "profit_loss": -4.39,
+      "roi_percent": -54.9
+    },
+    {
+      "week": "Week 11",
+      "date_range": "M\u00E4rz 09 - M\u00E4rz 15",
+      "total_combinations": 12,
+      "combinations_won": 1,
+      "stake_amount": 12,
+      "profit_loss": 29213,
+      "roi_percent": 243441.7
+    },
+    {
+      "week": "Week 10",
+      "date_range": "M\u00E4rz 02 - M\u00E4rz 08",
+      "total_combinations": 12,
+      "combinations_won": 6,
+      "stake_amount": 12,
+      "profit_loss": 55187.53,
+      "roi_percent": 459896.1
+    },
+    {
+      "week": "Week 9",
+      "date_range": "Feb. 27 - M\u00E4rz 01",
+      "total_combinations": 9,
+      "combinations_won": 2,
+      "stake_amount": 9,
+      "profit_loss": 282.37,
+      "roi_percent": 3137.4
+    }
+  ],
+  "league_accuracy": [
+    {
+      "league": "League Two",
+      "n": 158,
+      "low_sample": false,
+      "btts_accuracy": 47.5,
+      "over25_accuracy": 48.7
+    },
+    {
+      "league": "League One",
+      "n": 158,
+      "low_sample": false,
+      "btts_accuracy": 48.1,
+      "over25_accuracy": 50
+    },
+    {
+      "league": "Championship",
+      "n": 145,
+      "low_sample": false,
+      "btts_accuracy": 44.8,
+      "over25_accuracy": 49
+    },
+    {
+      "league": "La Liga 2",
+      "n": 116,
+      "low_sample": false,
+      "btts_accuracy": 46.6,
+      "over25_accuracy": 50.9
+    },
+    {
+      "league": "Serie B",
+      "n": 110,
+      "low_sample": false,
+      "btts_accuracy": 52.7,
+      "over25_accuracy": 51.8
+    },
+    {
+      "league": "3. Liga",
+      "n": 107,
+      "low_sample": false,
+      "btts_accuracy": 46.7,
+      "over25_accuracy": 56.1
+    },
+    {
+      "league": "La Liga",
+      "n": 85,
+      "low_sample": false,
+      "btts_accuracy": 57.6,
+      "over25_accuracy": 54.1
+    },
+    {
+      "league": "Serie A",
+      "n": 84,
+      "low_sample": false,
+      "btts_accuracy": 51.2,
+      "over25_accuracy": 56
+    },
+    {
+      "league": "Ligue 2",
+      "n": 81,
+      "low_sample": false,
+      "btts_accuracy": 53.1,
+      "over25_accuracy": 48.1
+    },
+    {
+      "league": "Bundesliga",
+      "n": 79,
+      "low_sample": false,
+      "btts_accuracy": 45.6,
+      "over25_accuracy": 55.7
+    },
+    {
+      "league": "2. Bundesliga",
+      "n": 76,
+      "low_sample": false,
+      "btts_accuracy": 52.6,
+      "over25_accuracy": 55.3
+    },
+    {
+      "league": "Ligue 1",
+      "n": 74,
+      "low_sample": false,
+      "btts_accuracy": 44.6,
+      "over25_accuracy": 51.4
+    },
+    {
+      "league": "Premier League",
+      "n": 74,
+      "low_sample": false,
+      "btts_accuracy": 54.1,
+      "over25_accuracy": 59.5
+    }
+  ],
+  "market_metrics": [
+    {
+      "market": "btts",
+      "n": 1347,
+      "brier_score": 0.2644,
+      "log_loss": 0.7251
+    },
+    {
+      "market": "over25",
+      "n": 1347,
+      "brier_score": 0.2445,
+      "log_loss": 0.6819
+    },
+    {
+      "market": "goals_2_3",
+      "n": 1347,
+      "brier_score": 0.2797,
+      "log_loss": 3.135
+    },
+    {
+      "market": "1x2",
+      "n": 1347,
+      "brier_score": 0.6286,
+      "log_loss": 2.5578
+    }
+  ],
+  "calibration": [
+    {
+      "market": "btts",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 327,
+          "predicted_avg": 0.5266,
+          "actual_hit_rate": 0.5382
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 284,
+          "predicted_avg": 0.5722,
+          "actual_hit_rate": 0.5634
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 140,
+          "predicted_avg": 0.6208,
+          "actual_hit_rate": 0.6357
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 40,
+          "predicted_avg": 0.6747,
+          "actual_hit_rate": 0.675
+        }
+      ]
+    },
+    {
+      "market": "over25",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 304,
+          "predicted_avg": 0.5236,
+          "actual_hit_rate": 0.5066
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 213,
+          "predicted_avg": 0.5731,
+          "actual_hit_rate": 0.6244
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 108,
+          "predicted_avg": 0.622,
+          "actual_hit_rate": 0.6574
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 48,
+          "predicted_avg": 0.6816,
+          "actual_hit_rate": 0.7083
+        }
+      ]
+    },
+    {
+      "market": "goals_2_3",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        }
+      ]
+    },
+    {
+      "market": "match_winner",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 130,
+          "predicted_avg": 0.5178,
+          "actual_hit_rate": 0.4923
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 62,
+          "predicted_avg": 0.5718,
+          "actual_hit_rate": 0.5806
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 40,
+          "predicted_avg": 0.6128,
+          "actual_hit_rate": 0.725
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 29,
+          "predicted_avg": 0.6928,
+          "actual_hit_rate": 0.8276
+        }
+      ]
+    }
+  ],
+  "qualified_picks": {
+    "count": 473,
+    "hits": 273,
+    "hit_rate": 57.7,
+    "avg_odds": 49.27,
+    "total_staked": 403,
+    "total_returned": 11643.31,
+    "roi_percent": 2789.2,
+    "per_market": [
+      {
+        "market": "goals_2_3",
+        "count": 144,
+        "hits": 76,
+        "hit_rate": 52.8,
+        "avg_odds": 1.9,
+        "roi_percent": 0.3
+      },
+      {
+        "market": "over25",
+        "count": 108,
+        "hits": 61,
+        "hit_rate": 56.5,
+        "avg_odds": 83.88,
+        "roi_percent": 4603
+      },
+      {
+        "market": "btts",
+        "count": 90,
+        "hits": 52,
+        "hit_rate": 57.8,
+        "avg_odds": 54.66,
+        "roi_percent": 3176.1
+      },
+      {
+        "market": "low_scoring",
+        "count": 87,
+        "hits": 55,
+        "hit_rate": 63.2,
+        "avg_odds": 92.58,
+        "roi_percent": 5253.8
+      },
+      {
+        "market": "match_winner",
+        "count": 44,
+        "hits": 29,
+        "hit_rate": 65.9,
+        "avg_odds": 65.33,
+        "roi_percent": 4271.3
+      }
+    ]
+  },
+  "rule_performance": [
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_both_concede_venue",
+      "picks_with": 90,
+      "hit_rate_with": 57.8,
+      "picks_without": 0,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_both_score_venue",
+      "picks_with": 90,
+      "hit_rate_with": 57.8,
+      "picks_without": 0,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_h2h_rate",
+      "picks_with": 39,
+      "hit_rate_with": 53.8,
+      "picks_without": 51,
+      "hit_rate_without": 60.8
+    },
+    {
+      "market": "goals_2_3",
+      "rule_id": "goals23_confirm_h2h_band",
+      "picks_with": 142,
+      "hit_rate_with": 53.5,
+      "picks_without": 2,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "goals_2_3",
+      "rule_id": "goals23_confirm_moderate_totals",
+      "picks_with": 140,
+      "hit_rate_with": 52.1,
+      "picks_without": 4,
+      "hit_rate_without": 75
+    },
+    {
+      "market": "goals_2_3",
+      "rule_id": "goals23_confirm_tight_games",
+      "picks_with": 13,
+      "hit_rate_with": 38.5,
+      "picks_without": 131,
+      "hit_rate_without": 54.2
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_defensive_profile",
+      "picks_with": 80,
+      "hit_rate_with": 61.3,
+      "picks_without": 7,
+      "hit_rate_without": 85.7
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_both_venue_rates",
+      "picks_with": 77,
+      "hit_rate_with": 62.3,
+      "picks_without": 10,
+      "hit_rate_without": 70
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_quiet_h2h",
+      "picks_with": 31,
+      "hit_rate_with": 64.5,
+      "picks_without": 56,
+      "hit_rate_without": 62.5
+    },
+    {
+      "market": "match_winner",
+      "rule_id": "winner_confirm_composite",
+      "picks_with": 37,
+      "hit_rate_with": 62.2,
+      "picks_without": 7,
+      "hit_rate_without": 85.7
+    },
+    {
+      "market": "match_winner",
+      "rule_id": "winner_confirm_venue_ppg",
+      "picks_with": 37,
+      "hit_rate_with": 64.9,
+      "picks_without": 7,
+      "hit_rate_without": 71.4
+    },
+    {
+      "market": "match_winner",
+      "rule_id": "winner_confirm_h2h_dominance",
+      "picks_with": 17,
+      "hit_rate_with": 70.6,
+      "picks_without": 27,
+      "hit_rate_without": 63
+    },
+    {
+      "market": "over25",
+      "rule_id": "over25_confirm_both_venue_rates",
+      "picks_with": 101,
+      "hit_rate_with": 55.4,
+      "picks_without": 7,
+      "hit_rate_without": 71.4
+    },
+    {
+      "market": "over25",
+      "rule_id": "over25_confirm_h2h_goals",
+      "picks_with": 86,
+      "hit_rate_with": 55.8,
+      "picks_without": 22,
+      "hit_rate_without": 59.1
+    },
+    {
+      "market": "over25",
+      "rule_id": "over25_confirm_league_deviation",
+      "picks_with": 59,
+      "hit_rate_with": 61,
+      "picks_without": 49,
+      "hit_rate_without": 51
+    }
+  ]
+}

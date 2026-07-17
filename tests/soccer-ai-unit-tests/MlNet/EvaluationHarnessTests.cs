@@ -43,12 +43,14 @@ public class EvaluationHarnessTests
     }
 
     [Fact]
-    public void LogLoss_ClampsExtremeProbabilities_NoInfinity()
+    public void LogLoss_ClipsExtremeProbabilitiesAtOnePercent()
     {
+        // Clipping to [0.01, 0.99] bounds a saturated wrong prediction at −ln(0.01) ≈ 4.605
         var samples = new[] { S(0.0, true), S(1.0, false) };
         var loss = EvaluationHarness.LogLoss(samples);
-        double.IsFinite(loss).Should().BeTrue("probabilities are clamped away from 0/1");
-        loss.Should().BeGreaterThan(10, "confidently wrong predictions are punished hard");
+        double.IsFinite(loss).Should().BeTrue();
+        loss.Should().BeApproximately(4.60517, 1e-4,
+            "one 0/1-saturated sample must not dominate the average");
     }
 
     // ── Accuracy ─────────────────────────────────────────────────────────────
