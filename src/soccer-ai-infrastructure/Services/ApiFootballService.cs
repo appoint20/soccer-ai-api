@@ -171,81 +171,85 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
     /// </summary>
     public async Task<FixtureOdds?> GetFixtureOddsAsync(int fixtureId)
     {
+        var quotes = await GetFixtureOddsQuotesAsync(fixtureId);
+        if (quotes.Count == 0) return null;
+        return SoccerAi.Application.Services.OddsQuoteAggregator.BestPrices(quotes);
+    }
+
+    /// <summary>
+    /// ALL bookmakers' prices for 1X2, Over/Under 2.5 and BTTS.
+    /// Previously only Bet365 (or the first bookmaker) was read — one missing
+    /// bookmaker meant no odds at all. Line shopping across every listed
+    /// bookmaker both raises coverage and gives the best available price.
+    /// </summary>
+    public async Task<List<OddsQuote>> GetFixtureOddsQuotesAsync(int fixtureId)
+    {
+        var quotes = new List<OddsQuote>();
         try
         {
             var response = await GetApiResponseAsync($"/odds?fixture={fixtureId}");
             if (response is null)
-                return null;
-            
+                return quotes;
+
             if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
-                return null;
+                return quotes;
 
             var bookmakers = data[0].GetProperty("bookmakers");
-            if (bookmakers.GetArrayLength() == 0) return null;
 
-            // Try to find Bet365 first, then fallback to first bookmaker
-            JsonElement? targetBookmaker = null;
             foreach (var bm in bookmakers.EnumerateArray())
             {
-                if (bm.GetProperty("name").GetString() == "Bet365")
-                {
-                    targetBookmaker = bm;
-                    break;
-                }
-            }
-            targetBookmaker ??= bookmakers[0];
+                var bookmaker = bm.GetProperty("name").GetString() ?? "unknown";
 
-            double? homeWin = null, draw = null, awayWin = null;
-            double? over25 = null, under25 = null;
-            double? bttsYes = null, bttsNo = null;
+                foreach (var bet in bm.GetProperty("bets").EnumerateArray())
+                {
+                    var betName = bet.GetProperty("name").GetString();
+                    var values = bet.GetProperty("values");
 
-            foreach (var bet in targetBookmaker.Value.GetProperty("bets").EnumerateArray())
-            {
-                var betName = bet.GetProperty("name").GetString();
-                var values = bet.GetProperty("values");
-
-                if (betName == "Match Winner")
-                {
-                    foreach (var v in values.EnumerateArray())
+                    switch (betName)
                     {
-                        var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
-                        if (val == "Home") homeWin = odd;
-                        else if (val == "Draw") draw = odd;
-                        else if (val == "Away") awayWin = odd;
-                    }
-                }
-                else if (betName == "Goals Over/Under" || betName == "Over/Under 2.5")
-                {
-                    foreach (var v in values.EnumerateArray())
-                    {
-                        var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
-                        if (val == "Over 2.5") over25 = odd;
-                        else if (val == "Under 2.5") under25 = odd;
-                    }
-                }
-                else if (betName == "Both Teams Score")
-                {
-                    foreach (var v in values.EnumerateArray())
-                    {
-                        var val = v.GetProperty("value").GetString();
-                        var odd = double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out var o) ? o : (double?)null;
-                        if (val == "Yes") bttsYes = odd;
-                        else if (val == "No") bttsNo = odd;
+                        case "Match Winner":
+                            AddQuotes(quotes, bookmaker, values,
+                                ("Home", OddsMarkets.HomeWin),
+                                ("Draw", OddsMarkets.Draw),
+                                ("Away", OddsMarkets.AwayWin));
+                            break;
+                        case "Goals Over/Under":
+                        case "Over/Under 2.5":
+                            AddQuotes(quotes, bookmaker, values,
+                                ("Over 2.5", OddsMarkets.Over25),
+                                ("Under 2.5", OddsMarkets.Under25));
+                            break;
+                        case "Both Teams Score":
+                            AddQuotes(quotes, bookmaker, values,
+                                ("Yes", OddsMarkets.BttsYes),
+                                ("No", OddsMarkets.BttsNo));
+                            break;
                     }
                 }
             }
-
-            return new FixtureOdds(homeWin, draw, awayWin, over25, under25, bttsYes, bttsNo);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to fetch odds for fixture {FixtureId}", fixtureId);
-            return null;
+            logger.LogWarning(ex, "Failed to fetch odds quotes for fixture {FixtureId}", fixtureId);
+        }
+        return quotes;
+    }
+
+    private static void AddQuotes(
+        List<OddsQuote> quotes, string bookmaker, JsonElement values,
+        params (string ApiValue, string Market)[] mapping)
+    {
+        foreach (var v in values.EnumerateArray())
+        {
+            var val = v.GetProperty("value").GetString();
+            var match = mapping.FirstOrDefault(m => m.ApiValue == val);
+            if (match.Market is null) continue;
+
+            if (double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var odd))
+            {
+                quotes.Add(new OddsQuote(bookmaker, match.Market, odd));
+            }
         }
     }
 

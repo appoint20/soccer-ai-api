@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<User> Users { get; init; }
     public DbSet<BacktestReport> BacktestReports { get; init; }
     public DbSet<SyncState> SyncStates { get; init; }
+    public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +100,23 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasKey(r => r.Id);
             entity.HasIndex(r => new { r.WeeksBack, r.Stake, r.CreatedAt });
             entity.ToTable("BacktestReports");
+        });
+
+        // ── FixtureOddsQuote (per-bookmaker odds history) ────────────────────
+        modelBuilder.Entity<FixtureOddsQuote>(entity =>
+        {
+            entity.HasKey(q => q.Id);
+            entity.Property(q => q.Bookmaker).HasMaxLength(60).IsRequired();
+            entity.Property(q => q.Market).HasMaxLength(20).IsRequired();
+
+            entity.HasIndex(q => new { q.FixtureId, q.Market });
+
+            entity.HasOne<Fixture>()
+                .WithMany()
+                .HasForeignKey(q => q.FixtureId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.ToTable("FixtureOddsQuotes");
         });
 
         // ── SyncState (single-row operational state for the sync worker) ─────

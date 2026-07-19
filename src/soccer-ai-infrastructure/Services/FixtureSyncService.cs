@@ -238,9 +238,12 @@ public class FixtureSyncService(IApiFootballService apiService,
                         result.Updated++;
                     }
                     
-                    if (existingFixture.HomeWinOdds == null && isWithinOddsWindow)
+                    // Refresh odds when: no guard-valid odds yet, OR the match is
+                    // still upcoming (capture line movement + best price).
+                    var needsOdds = !Application.Services.OddsGuard.IsValid(existingFixture.HomeWinOdds);
+                    var isUpcoming = apiFixture.Date >= DateTimeOffset.UtcNow;
+                    if (isWithinOddsWindow && (needsOdds || isUpcoming))
                     {
-                        // Missing odds, still within window - try to fetch
                         await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
                         result.Updated++;
                     }
@@ -257,6 +260,9 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         // Phase 3: Sync Coaches for all teams in the league (once per season sync to keep it fresh)
         await SyncLeagueCoachesAsync(targetLeagueId, ct);
+
+        // Odds coverage report for this league (target ≥85%)
+        await LogOddsCoverageAsync(targetLeagueId, ct);
 
         await dbContext.SaveChangesAsync(ct);
         result.LeaguesSynced = 1;
@@ -316,19 +322,87 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// <summary>
     /// Update fixture with odds only
     /// </summary>
+    /// <summary>
+    /// Coverage over the recent + upcoming window (last 30d and forward):
+    /// share of fixtures with guard-valid odds per market. Target ≥85%.
+    /// </summary>
+    private async Task LogOddsCoverageAsync(int leagueId, CancellationToken ct)
+    {
+        try
+        {
+            var windowStart = DateTimeOffset.UtcNow.AddDays(-30);
+            var rows = await dbContext.Fixtures
+                .Where(f => f.LeagueId == leagueId && f.Date >= windowStart)
+                .Select(f => new { f.HomeWinOdds, f.DrawOdds, f.AwayWinOdds, f.Over25Odds, f.Under25Odds, f.BttsYesOdds })
+                .ToListAsync(ct);
+
+            if (rows.Count == 0) return;
+
+            var p1X2 = Math.Round(rows.Count(r =>
+                Application.Services.OddsGuard.IsValid(r.HomeWinOdds) &&
+                Application.Services.OddsGuard.IsValid(r.DrawOdds) &&
+                Application.Services.OddsGuard.IsValid(r.AwayWinOdds)) * 100.0 / rows.Count, 1);
+            var pOu = Math.Round(rows.Count(r =>
+                Application.Services.OddsGuard.IsValid(r.Over25Odds) &&
+                Application.Services.OddsGuard.IsValid(r.Under25Odds)) * 100.0 / rows.Count, 1);
+            var pBtts = Math.Round(rows.Count(r =>
+                Application.Services.OddsGuard.IsValid(r.BttsYesOdds)) * 100.0 / rows.Count, 1);
+
+            var level = p1X2 >= 85 && pOu >= 85 && pBtts >= 85 ? LogLevel.Information : LogLevel.Warning;
+            logger.Log(level,
+                "[OddsCoverage] League {LeagueId}: n={N} (last 30d + upcoming) — 1X2 {P1X2}%, O/U2.5 {POu}%, BTTS {PBtts}% (target ≥85%)",
+                leagueId, rows.Count, p1X2, pOu, pBtts);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Odds coverage report failed for league {LeagueId}", leagueId);
+        }
+    }
+
     private async Task UpdateFixtureOddsAsync(Fixture fixture, int apiId)
     {
-        var apiOdds = await apiService.GetFixtureOddsAsync(apiId);
-        if (apiOdds != null)
+        // ALL bookmakers (line shopping). Quotes are stored per bookmaker;
+        // the fixture columns carry the BEST guard-valid price per market.
+        var quotes = await apiService.GetFixtureOddsQuotesAsync(apiId);
+        if (quotes.Count == 0) return;
+
+        // Persist openings + movements only (dedupe against latest stored quote).
+        if (fixture.Id != 0)
         {
-            fixture.HomeWinOdds = apiOdds.HomeWin;
-            fixture.DrawOdds = apiOdds.Draw;
-            fixture.AwayWinOdds = apiOdds.AwayWin;
-            fixture.Over25Odds = apiOdds.Over25;
-            fixture.Under25Odds = apiOdds.Under25;
-            fixture.BttsYesOdds = apiOdds.BttsYes;
-            fixture.UpdatedAt = DateTimeOffset.UtcNow;
+            var stored = await dbContext.FixtureOddsQuotes
+                .Where(q => q.FixtureId == fixture.Id)
+                .OrderBy(q => q.CapturedAtUtc)
+                .Select(q => new { q.Bookmaker, q.Market, q.Price })
+                .ToListAsync();
+
+            var latestStored = stored
+                .GroupBy(q => (q.Bookmaker, q.Market))
+                .Select(g => (g.Key.Bookmaker, g.Key.Market, g.Last().Price))
+                .ToList();
+
+            foreach (var quote in Application.Services.OddsQuoteAggregator.NewOrChanged(quotes, latestStored))
+            {
+                dbContext.FixtureOddsQuotes.Add(new FixtureOddsQuote
+                {
+                    FixtureId = fixture.Id,
+                    Bookmaker = quote.Bookmaker,
+                    Market = quote.Market,
+                    Price = quote.Price,
+                    CapturedAtUtc = DateTimeOffset.UtcNow
+                });
+            }
         }
+
+        var best = Application.Services.OddsQuoteAggregator.BestPrices(quotes);
+
+        // Never null-out an existing valid price with a missing market.
+        fixture.HomeWinOdds = best.HomeWin ?? fixture.HomeWinOdds;
+        fixture.DrawOdds = best.Draw ?? fixture.DrawOdds;
+        fixture.AwayWinOdds = best.AwayWin ?? fixture.AwayWinOdds;
+        fixture.Over25Odds = best.Over25 ?? fixture.Over25Odds;
+        fixture.Under25Odds = best.Under25 ?? fixture.Under25Odds;
+        fixture.BttsYesOdds = best.BttsYes ?? fixture.BttsYesOdds;
+        fixture.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>

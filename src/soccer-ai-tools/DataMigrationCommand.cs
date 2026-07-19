@@ -65,7 +65,7 @@ public static class DataMigrationCommand
         // grown since, refuse to run rather than silently skip a table.
         // SyncState is transient operational state — intentionally NOT migrated.
         string[] knownEntities =
-            [nameof(Team), nameof(Fixture), nameof(FixtureAnalysis),
+            [nameof(Team), nameof(Fixture), nameof(FixtureAnalysis), nameof(FixtureOddsQuote),
              nameof(Combination), nameof(User), nameof(BacktestReport), nameof(SyncState)];
         var modelEntities = target.Model.GetEntityTypes()
             .Select(e => e.ClrType.Name)
@@ -97,6 +97,7 @@ public static class DataMigrationCommand
             reports.Add(await MigrateTableAsync<Team>(source, target, "Teams", e => e.Id));
             reports.Add(await MigrateTableAsync<Fixture>(source, target, "Fixtures", e => e.Id));
             reports.Add(await MigrateTableAsync<FixtureAnalysis>(source, target, "FixtureAnalyses", e => e.Id));
+            reports.Add(await MigrateTableAsync<FixtureOddsQuote>(source, target, "FixtureOddsQuotes", e => e.Id));
             reports.Add(await MigrateTableAsync<Combination>(source, target, "Combinations", e => e.Id));
             reports.Add(await MigrateTableAsync<User>(source, target, "Users", e => e.Id));
             reports.Add(await MigrateTableAsync<BacktestReport>(source, target, "BacktestReports", e => e.Id));
@@ -112,7 +113,7 @@ public static class DataMigrationCommand
 
             // Resync identity sequences after explicit-Id inserts.
             foreach (var table in new[]
-                     { "Teams", "Fixtures", "FixtureAnalyses", "Combinations", "Users", "BacktestReports" })
+                     { "Teams", "Fixtures", "FixtureAnalyses", "FixtureOddsQuotes", "Combinations", "Users", "BacktestReports" })
             {
                 // Table names come from the fixed list above — not user input.
 #pragma warning disable EF1002

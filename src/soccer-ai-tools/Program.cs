@@ -60,6 +60,8 @@ public static class Program
                     return 0;
                 case "migrate-data":
                     return await RunDataMigrationAsync(host.Services, args);
+                case "odds-coverage":
+                    return await OddsCoverageCommand.RunAsync(host.Services);
                 default:
                     Console.Error.WriteLine($"Unknown command: {command}");
                     PrintUsage();
@@ -342,6 +344,9 @@ public static class Program
                            Generate AI analysis for upcoming (or one) fixture.
               sync-full    [--season=<year>]
                            Run the full daily sync orchestration.
+              odds-coverage
+                           Coverage + cause diagnosis per league/season (never
+                           fetched vs market missing vs corrupted legacy).
               migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
                            One-time zero-loss SQLite → PostgreSQL migration with
                            row-count + checksum verification (aborts on mismatch;
