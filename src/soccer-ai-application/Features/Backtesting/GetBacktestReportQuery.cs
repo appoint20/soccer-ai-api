@@ -39,6 +39,32 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Would-be performance of picks the price gates rejected (measurement only).</summary>
     [JsonPropertyName("shadow_cohorts")]
     public List<ShadowCohortRow> ShadowCohorts { get; init; } = [];
+
+    /// <summary>Avg |model − market| divergence per league — where edge can exist.</summary>
+    [JsonPropertyName("league_divergence")]
+    public List<LeagueDivergenceRow> LeagueDivergence { get; init; } = [];
+}
+
+public sealed class LeagueDivergenceRow
+{
+    [JsonPropertyName("league")]
+    public string League { get; init; } = "";
+
+    [JsonPropertyName("n")]
+    public int SampleSize { get; init; }
+
+    /// <summary>Mean |p_model − p_market| across all sampled markets.</summary>
+    [JsonPropertyName("avg_divergence")]
+    public double AvgDivergence { get; init; }
+
+    [JsonPropertyName("over25")]
+    public double Over25 { get; init; }
+
+    [JsonPropertyName("btts")]
+    public double Btts { get; init; }
+
+    [JsonPropertyName("match_winner")]
+    public double MatchWinner { get; init; }
 }
 
 public sealed class ShadowCohortRow
@@ -208,11 +234,15 @@ public sealed class QualifiedMarketRow
     public double AvgEv { get; init; }
 }
 
-/// <summary>Value-gate funnel: where fixtures dropped out per market.</summary>
+/// <summary>Value-gate funnel: where fixtures dropped out per market/league.</summary>
 public sealed class QualificationFunnelRow
 {
     [JsonPropertyName("market")]
     public string Market { get; init; } = "";
+
+    /// <summary>"ALL" = all leagues; "all" market = league aggregate.</summary>
+    [JsonPropertyName("league")]
+    public string League { get; init; } = "ALL";
 
     [JsonPropertyName("total")]
     public int Total { get; init; }

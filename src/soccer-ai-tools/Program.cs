@@ -186,9 +186,19 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine("=== QUALIFICATION FUNNEL (why fixtures dropped out) ===");
         Console.WriteLine($"  {"market",-14} {"total",5} {"noOdds",6} {"minOdds",7} {"minEV",5} {"floor",5} {"veto",5} {"conf",5} {"QUAL",5}");
-        foreach (var f in r.QualificationFunnel)
+        foreach (var f in r.QualificationFunnel.Where(f => f.League == "ALL"))
             Console.WriteLine($"  {f.Market,-14} {f.Total,5} {f.AnalysisOnlyNoOdds,6} {f.BelowMinOdds,7} " +
                               $"{f.BelowMinEdge,5} {f.BelowProbabilityFloor,5} {f.Vetoed,5} {f.InsufficientConfirms,5} {f.Qualified,5}");
+        Console.WriteLine("  -- per league (aggregated over markets) --");
+        foreach (var f in r.QualificationFunnel.Where(f => f.Market == "all"))
+            Console.WriteLine($"  {f.League,-22} {f.Total,5} {f.AnalysisOnlyNoOdds,6} {f.BelowMinOdds,7} " +
+                              $"{f.BelowMinEdge,5} {f.BelowProbabilityFloor,5} {f.Vetoed,5} {f.InsufficientConfirms,5} {f.Qualified,5}");
+
+        Console.WriteLine();
+        Console.WriteLine("=== LEAGUE DIVERGENCE (avg |model − market|, where edge lives) ===");
+        foreach (var d in r.LeagueDivergence)
+            Console.WriteLine($"  {d.League,-22} n={d.SampleSize,-5} avg={d.AvgDivergence:P1}  " +
+                              $"o25={d.Over25:P1}  btts={d.Btts:P1}  1x2={d.MatchWinner:P1}");
 
         Console.WriteLine();
         Console.WriteLine("=== MARKET QUALITY (all analyzed fixtures) ===");

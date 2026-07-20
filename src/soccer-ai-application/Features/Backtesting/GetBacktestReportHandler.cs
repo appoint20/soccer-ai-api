@@ -19,6 +19,7 @@ public class GetBacktestReportHandler(
     IServiceProvider serviceProvider,
     ILeagueTierService leagueTiers,
     Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.ConfluenceOptions> confluenceOptions,
+    Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.CalibrationOptions> calibrationOptions,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
@@ -34,9 +35,10 @@ public class GetBacktestReportHandler(
     private sealed record QualifiedPickRow(
         string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules,
         double? Ev, double? KellyStake);
-    private sealed record GateOutcomeRow(string Market, string Outcome);
+    private sealed record GateOutcomeRow(string Market, string Outcome, string League);
     private sealed record ShadowPickRow(
         string Cohort, string Market, string League, bool Won, double Odds, double? Ev);
+    private sealed record DivergenceRow(string League, string Market, double AbsModelMarketDivergence);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -92,6 +94,7 @@ public class GetBacktestReportHandler(
         var qualifiedPicks = new ConcurrentBag<QualifiedPickRow>();
         var gateOutcomes = new ConcurrentBag<GateOutcomeRow>();
         var shadowPicks = new ConcurrentBag<ShadowPickRow>();
+        var divergences = new ConcurrentBag<DivergenceRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -156,9 +159,33 @@ public class GetBacktestReportHandler(
                         var auditByMarket = analysisResult.Decisions.Audit?.Markets
                             .ToDictionary(a => a.Market) ?? [];
 
-                        // Qualification funnel: record every market's gate outcome.
+                        // Qualification funnel: record every market's gate outcome (per league).
                         foreach (var marketAudit in auditByMarket.Values)
-                            gateOutcomes.Add(new GateOutcomeRow(marketAudit.Market, marketAudit.GateOutcome));
+                            gateOutcomes.Add(new GateOutcomeRow(marketAudit.Market, marketAudit.GateOutcome, league));
+
+                        // ── Model-market divergence (recovered through the calibration blend) ──
+                        var w = calibrationOptions.Value.MarketWeight;
+                        if (Services.OddsGuard.IsValid(f.Over25Odds) && Services.OddsGuard.IsValid(f.Under25Odds))
+                        {
+                            var mkt = Services.ShinMarginRemoval.TrueProbability(f.Over25Odds!.Value, f.Under25Odds!.Value);
+                            divergences.Add(new DivergenceRow(league, "over25",
+                                CalibrationDivergence.RecoverModelDivergence(pred.Over25Prob, mkt, w)));
+                        }
+                        if (Services.OddsGuard.IsValid(f.BttsYesOdds))
+                        {
+                            divergences.Add(new DivergenceRow(league, "btts",
+                                CalibrationDivergence.RecoverModelDivergence(
+                                    pred.BTTSProb, 1.0 / f.BttsYesOdds!.Value, w)));
+                        }
+                        if (Services.OddsGuard.IsValid(f.HomeWinOdds) && Services.OddsGuard.IsValid(f.DrawOdds) &&
+                            Services.OddsGuard.IsValid(f.AwayWinOdds))
+                        {
+                            var probs = Services.ShinMarginRemoval.TrueProbabilities(
+                                [f.HomeWinOdds!.Value, f.DrawOdds!.Value, f.AwayWinOdds!.Value]);
+                            var mktWinner = pickIsHome ? probs[0] : probs[2];
+                            divergences.Add(new DivergenceRow(league, "match_winner",
+                                CalibrationDivergence.RecoverModelDivergence(winnerProb, mktWinner, w)));
+                        }
 
                         // ── Shadow cohorts: what the price gates rejected ──
                         bool MarketWon(string market) => market switch
@@ -293,7 +320,8 @@ public class GetBacktestReportHandler(
         var response = CalculateFinalReport(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
-            gateOutcomes.ToList(), shadowPicks.ToList(), startDate, query.WeeksBack, query.Stake);
+            gateOutcomes.ToList(), shadowPicks.ToList(), divergences.ToList(),
+            startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -341,6 +369,7 @@ public class GetBacktestReportHandler(
         List<QualifiedPickRow> qualifiedPicks,
         List<GateOutcomeRow> gateOutcomes,
         List<ShadowPickRow> shadowPicks,
+        List<DivergenceRow> divergences,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -405,6 +434,7 @@ public class GetBacktestReportHandler(
         var rulePerformance = BuildRulePerformance(qualifiedPicks);
         var funnel = BuildQualificationFunnel(gateOutcomes);
         var shadow = BuildShadowCohorts(shadowPicks);
+        var leagueDivergence = BuildLeagueDivergence(divergences);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -433,8 +463,38 @@ public class GetBacktestReportHandler(
             QualifiedPicks = qualified,
             RulePerformance = rulePerformance,
             QualificationFunnel = funnel,
-            ShadowCohorts = shadow
+            ShadowCohorts = shadow,
+            LeagueDivergence = leagueDivergence
         };
+    }
+
+    /// <summary>
+    /// Avg |p_model − p_market| per league (divergence recovered through the
+    /// calibration blend factor) — shows WHERE the model disagrees with the
+    /// market, i.e. where edge can exist at all.
+    /// </summary>
+    private static List<LeagueDivergenceRow> BuildLeagueDivergence(List<DivergenceRow> divergences)
+    {
+        double Avg(IEnumerable<DivergenceRow> rows, string market)
+        {
+            var vals = rows.Where(d => d.Market == market)
+                .Select(d => d.AbsModelMarketDivergence).ToList();
+            return vals.Count > 0 ? Math.Round(vals.Average(), 4) : 0;
+        }
+
+        return divergences
+            .GroupBy(d => d.League)
+            .Select(g => new LeagueDivergenceRow
+            {
+                League = g.Key,
+                SampleSize = g.Count(),
+                AvgDivergence = Math.Round(g.Average(d => d.AbsModelMarketDivergence), 4),
+                Over25 = Avg(g, "over25"),
+                Btts = Avg(g, "btts"),
+                MatchWinner = Avg(g, "match_winner")
+            })
+            .OrderByDescending(r => r.AvgDivergence)
+            .ToList();
     }
 
     /// <summary>
@@ -486,22 +546,35 @@ public class GetBacktestReportHandler(
     /// </summary>
     private static List<QualificationFunnelRow> BuildQualificationFunnel(List<GateOutcomeRow> outcomes)
     {
-        return outcomes
-            .GroupBy(o => o.Market)
-            .Select(g => new QualificationFunnelRow
-            {
-                Market = g.Key,
-                Total = g.Count(),
-                AnalysisOnlyNoOdds = g.Count(o => o.Outcome == "analysis_only_no_odds"),
-                BelowMinOdds = g.Count(o => o.Outcome == "below_min_odds"),
-                BelowMinEdge = g.Count(o => o.Outcome == "below_min_edge"),
-                BelowProbabilityFloor = g.Count(o => o.Outcome == "below_probability_floor"),
-                Vetoed = g.Count(o => o.Outcome == "vetoed"),
-                InsufficientConfirms = g.Count(o => o.Outcome == "insufficient_confirms"),
-                Qualified = g.Count(o => o.Outcome == "qualified")
-            })
-            .OrderBy(r => r.Market)
-            .ToList();
+        QualificationFunnelRow Build(string market, string league, List<GateOutcomeRow> rows) => new()
+        {
+            Market = market,
+            League = league,
+            Total = rows.Count,
+            AnalysisOnlyNoOdds = rows.Count(o => o.Outcome == "analysis_only_no_odds"),
+            BelowMinOdds = rows.Count(o => o.Outcome == "below_min_odds"),
+            BelowMinEdge = rows.Count(o => o.Outcome == "below_min_edge"),
+            BelowProbabilityFloor = rows.Count(o => o.Outcome == "below_probability_floor"),
+            Vetoed = rows.Count(o => o.Outcome == "vetoed"),
+            InsufficientConfirms = rows.Count(o => o.Outcome == "insufficient_confirms"),
+            Qualified = rows.Count(o => o.Outcome == "qualified")
+        };
+
+        var result = new List<QualificationFunnelRow>();
+
+        // Per-market totals across all leagues
+        foreach (var g in outcomes.GroupBy(o => o.Market).OrderBy(g => g.Key))
+            result.Add(Build(g.Key, "ALL", g.ToList()));
+
+        // Per-league breakdown (markets aggregated + per market)
+        foreach (var lg in outcomes.GroupBy(o => o.League).OrderBy(g => g.Key))
+        {
+            result.Add(Build("all", lg.Key, lg.ToList()));
+            foreach (var mg in lg.GroupBy(o => o.Market).OrderBy(g => g.Key))
+                result.Add(Build(mg.Key, lg.Key, mg.ToList()));
+        }
+
+        return result;
     }
 
     /// <summary>
