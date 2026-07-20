@@ -35,6 +35,8 @@ public class GetBacktestReportHandler(
         string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules,
         double? Ev, double? KellyStake);
     private sealed record GateOutcomeRow(string Market, string Outcome);
+    private sealed record ShadowPickRow(
+        string Cohort, string Market, string League, bool Won, double Odds, double? Ev);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -89,6 +91,7 @@ public class GetBacktestReportHandler(
         var hdaSamples = new ConcurrentBag<HdaSampleRow>();
         var qualifiedPicks = new ConcurrentBag<QualifiedPickRow>();
         var gateOutcomes = new ConcurrentBag<GateOutcomeRow>();
+        var shadowPicks = new ConcurrentBag<ShadowPickRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -156,6 +159,42 @@ public class GetBacktestReportHandler(
                         // Qualification funnel: record every market's gate outcome.
                         foreach (var marketAudit in auditByMarket.Values)
                             gateOutcomes.Add(new GateOutcomeRow(marketAudit.Market, marketAudit.GateOutcome));
+
+                        // ── Shadow cohorts: what the price gates rejected ──
+                        bool MarketWon(string market) => market switch
+                        {
+                            "btts" => bttsActual,
+                            "over25" => over25Actual,
+                            "goals_2_3" => goals23Actual,
+                            "match_winner" => pickWon,
+                            "under25" => totalGoals < 3,
+                            "draw" => drawWon,
+                            _ => false
+                        };
+
+                        var minConfirms = analysisResult.Decisions.Audit?.MinConfirmationsRequired
+                            ?? confluenceOptions.Value.MinConfirmations;
+                        foreach (var marketAudit in auditByMarket.Values)
+                        {
+                            foreach (var cohort in Services.Decisions.ShadowCohorts.Classify(marketAudit, minConfirms))
+                            {
+                                shadowPicks.Add(new ShadowPickRow(
+                                    cohort, marketAudit.Market, league,
+                                    MarketWon(marketAudit.Market),
+                                    marketAudit.Odds!.Value, marketAudit.Ev));
+                            }
+                        }
+
+                        // Named hypothesis: favorites p≥62% at odds 1.40-2.10
+                        var pickOddsSafe = Services.OddsGuard.Sanitize(pickOddsRaw);
+                        if (Services.Decisions.ShadowCohorts.InWinnerBand(
+                                winnerProb, pickOddsSafe, confluenceOptions.Value))
+                        {
+                            shadowPicks.Add(new ShadowPickRow(
+                                Services.Decisions.ShadowCohorts.WinnerBand, "match_winner", league,
+                                pickWon, pickOddsSafe!.Value,
+                                Math.Round(winnerProb * pickOddsSafe.Value - 1, 4)));
+                        }
 
                         void AddPick(string market, string selection, bool won, double? odds, double prob,
                             string? auditMarket = null)
@@ -254,7 +293,7 @@ public class GetBacktestReportHandler(
         var response = CalculateFinalReport(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
-            gateOutcomes.ToList(), startDate, query.WeeksBack, query.Stake);
+            gateOutcomes.ToList(), shadowPicks.ToList(), startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -301,6 +340,7 @@ public class GetBacktestReportHandler(
         List<HdaSampleRow> hdaSamples,
         List<QualifiedPickRow> qualifiedPicks,
         List<GateOutcomeRow> gateOutcomes,
+        List<ShadowPickRow> shadowPicks,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -364,6 +404,7 @@ public class GetBacktestReportHandler(
         var qualified = BuildQualifiedPicksReport(qualifiedPicks);
         var rulePerformance = BuildRulePerformance(qualifiedPicks);
         var funnel = BuildQualificationFunnel(gateOutcomes);
+        var shadow = BuildShadowCohorts(shadowPicks);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -391,8 +432,51 @@ public class GetBacktestReportHandler(
             Calibration = calibration,
             QualifiedPicks = qualified,
             RulePerformance = rulePerformance,
-            QualificationFunnel = funnel
+            QualificationFunnel = funnel,
+            ShadowCohorts = shadow
         };
+    }
+
+    /// <summary>
+    /// Shadow cohort performance: hit rate + would-be flat ROI of picks the
+    /// price gates rejected. Per cohort×market with an ALL row, plus per-league
+    /// rows. Measurement only — these never were and never become real picks.
+    /// </summary>
+    private static List<ShadowCohortRow> BuildShadowCohorts(List<ShadowPickRow> picks)
+    {
+        ShadowCohortRow Build(string cohort, string market, string league, List<ShadowPickRow> rows)
+        {
+            var returned = rows.Sum(p => p.Won ? p.Odds : 0);
+            var withEv = rows.Where(p => p.Ev is not null).ToList();
+            return new ShadowCohortRow
+            {
+                Cohort = cohort,
+                Market = market,
+                League = league,
+                Count = rows.Count,
+                Hits = rows.Count(p => p.Won),
+                HitRate = rows.Count > 0 ? Math.Round((double)rows.Count(p => p.Won) / rows.Count * 100, 1) : 0,
+                AvgOdds = rows.Count > 0 ? Math.Round(rows.Average(p => p.Odds), 2) : 0,
+                AvgEv = withEv.Count > 0 ? Math.Round(withEv.Average(p => p.Ev!.Value), 4) : 0,
+                WouldBeRoiPercent = rows.Count > 0
+                    ? Math.Round((returned - rows.Count) / rows.Count * 100, 1) : 0
+            };
+        }
+
+        var result = new List<ShadowCohortRow>();
+        foreach (var group in picks.GroupBy(p => (p.Cohort, p.Market)))
+        {
+            var rows = group.ToList();
+            result.Add(Build(group.Key.Cohort, group.Key.Market, "ALL", rows));
+            result.AddRange(rows.GroupBy(p => p.League)
+                .OrderByDescending(g => g.Count())
+                .Select(g => Build(group.Key.Cohort, group.Key.Market, g.Key, g.ToList())));
+        }
+
+        return result
+            .OrderBy(r => r.Cohort).ThenBy(r => r.Market)
+            .ThenByDescending(r => r.League == "ALL").ThenByDescending(r => r.Count)
+            .ToList();
     }
 
     /// <summary>

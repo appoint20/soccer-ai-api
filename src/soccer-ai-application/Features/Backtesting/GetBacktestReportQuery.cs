@@ -35,6 +35,42 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Value-gate funnel per market (incl. filtered-by-MinOdds counts).</summary>
     [JsonPropertyName("qualification_funnel")]
     public List<QualificationFunnelRow> QualificationFunnel { get; init; } = [];
+
+    /// <summary>Would-be performance of picks the price gates rejected (measurement only).</summary>
+    [JsonPropertyName("shadow_cohorts")]
+    public List<ShadowCohortRow> ShadowCohorts { get; init; } = [];
+}
+
+public sealed class ShadowCohortRow
+{
+    [JsonPropertyName("cohort")]
+    public string Cohort { get; init; } = "";
+
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    /// <summary>"ALL" = cohort×market total; otherwise the league name.</summary>
+    [JsonPropertyName("league")]
+    public string League { get; init; } = "";
+
+    [JsonPropertyName("n")]
+    public int Count { get; init; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_odds")]
+    public double AvgOdds { get; init; }
+
+    [JsonPropertyName("avg_ev")]
+    public double AvgEv { get; init; }
+
+    /// <summary>Flat 1-unit ROI these picks WOULD have produced.</summary>
+    [JsonPropertyName("would_be_roi_percent")]
+    public double WouldBeRoiPercent { get; init; }
 }
 
 public sealed class RulePerformanceRow

@@ -36,6 +36,11 @@ public sealed class ConfluenceOptions
     /// <summary>Extra probability demanded for Tier2 (cup) fixtures.</summary>
     public double Tier2ExtraProbability { get; set; } = 0.05;
 
+    // ── Shadow cohort: named winner-band hypothesis ──
+    public double ShadowWinnerMinProbability { get; set; } = 0.62;
+    public double ShadowWinnerOddsMin { get; set; } = 1.40;
+    public double ShadowWinnerOddsMax { get; set; } = 2.10;
+
     // ── Draw confirm-rule thresholds ──
     public double DrawPpgGapMax { get; set; } = 0.30;
     public double DrawH2HRateConfirm { get; set; } = 0.40;

@@ -206,6 +206,12 @@ public static class Program
         }
 
         Console.WriteLine();
+        Console.WriteLine("=== SHADOW COHORTS (what the price gates rejected — would-be results) ===");
+        foreach (var s in r.ShadowCohorts.Where(s => s.League == "ALL"))
+            Console.WriteLine($"  {s.Cohort,-26} {s.Market,-14} n={s.Count,-5} hit={s.HitRate,5:F1}%  " +
+                              $"odds={s.AvgOdds:F2}  ev={s.AvgEv,6:P1}  would-be roi={s.WouldBeRoiPercent,6:F1}%");
+
+        Console.WriteLine();
         Console.WriteLine("=== RULE PERFORMANCE (qualified picks, with vs without) ===");
         foreach (var rule in r.RulePerformance)
             Console.WriteLine($"  {rule.Market,-14} {rule.RuleId,-38} " +
