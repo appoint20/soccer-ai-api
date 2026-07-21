@@ -62,7 +62,8 @@ public class AnalysisResponseMapper
                 ? new AiAnalysisDto()
                 : aiAnalysis,
             Signals = analysis.Signals,
-            DecisionAudit = analysis.Decisions.Audit
+            DecisionAudit = analysis.Decisions.Audit,
+            CalibrationTrace = analysis.CalibrationTrace
         };
     }
 

@@ -89,7 +89,9 @@ public sealed class AnalysisPrecomputeService(
                 fixture, analysis, homeTeam, awayTeam, analysis.Ai);
             results[lang] = mapped;
 
-            await UpsertSnapshotAsync(fixture.Id, lang, mapped, analysis.Prediction, ct);
+            // Math cache stores the RAW prediction — it is the isotonic layer's
+            // training data; persisting calibrated values would self-correct.
+            await UpsertSnapshotAsync(fixture.Id, lang, mapped, analysis.RawPrediction ?? analysis.Prediction, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

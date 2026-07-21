@@ -144,8 +144,13 @@ public sealed class MarketCalibration
     [JsonPropertyName("market")]
     public string Market { get; init; } = "";
 
+    /// <summary>Post-isotonic (what the EV gate consumed).</summary>
     [JsonPropertyName("buckets")]
     public List<CalibrationBucketRow> Buckets { get; init; } = [];
+
+    /// <summary>Pre-isotonic — side-by-side comparison per acceptance criteria.</summary>
+    [JsonPropertyName("raw_buckets")]
+    public List<CalibrationBucketRow> RawBuckets { get; init; } = [];
 }
 
 public sealed class CalibrationBucketRow

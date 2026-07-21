@@ -90,6 +90,7 @@ public class GetBacktestReportHandler(
         var simulationResults = new ConcurrentBag<SimulationCombo>();
         var leagueResults = new ConcurrentBag<LeaguePredictionResult>();
         var marketSamples = new ConcurrentBag<MarketSampleRow>();
+        var rawMarketSamples = new ConcurrentBag<MarketSampleRow>();
         var hdaSamples = new ConcurrentBag<HdaSampleRow>();
         var qualifiedPicks = new ConcurrentBag<QualifiedPickRow>();
         var gateOutcomes = new ConcurrentBag<GateOutcomeRow>();
@@ -144,6 +145,17 @@ public class GetBacktestReportHandler(
                             Services.OddsGuard.IsValid(pickOddsRaw)));
                         marketSamples.Add(new MarketSampleRow("draw", league, pred.DrawProb, drawWon,
                             Services.OddsGuard.IsValid(f.DrawOdds)));
+
+                        // Raw (pre-isotonic) samples for the side-by-side calibration table
+                        var raw = analysisResult.RawPrediction ?? pred;
+                        var rawPickIsHome = raw.HomeProb >= raw.AwayProb;
+                        rawMarketSamples.Add(new MarketSampleRow("btts", league, raw.BTTSProb, bttsActual, false));
+                        rawMarketSamples.Add(new MarketSampleRow("over25", league, raw.Over25Prob, over25Actual, false));
+                        rawMarketSamples.Add(new MarketSampleRow("goals_2_3", league, raw.TwoToThreeGoalsProb, goals23Actual, false));
+                        rawMarketSamples.Add(new MarketSampleRow("match_winner", league,
+                            Math.Max(raw.HomeProb, raw.AwayProb),
+                            rawPickIsHome ? hdaActual == 0 : hdaActual == 2, false));
+                        rawMarketSamples.Add(new MarketSampleRow("draw", league, raw.DrawProb, drawWon, false));
                         hdaSamples.Add(new HdaSampleRow(
                             [pred.HomeProb, pred.DrawProb, pred.AwayProb], hdaActual));
 
@@ -321,7 +333,7 @@ public class GetBacktestReportHandler(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
             gateOutcomes.ToList(), shadowPicks.ToList(), divergences.ToList(),
-            startDate, query.WeeksBack, query.Stake);
+            rawMarketSamples.ToList(), startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -370,6 +382,7 @@ public class GetBacktestReportHandler(
         List<GateOutcomeRow> gateOutcomes,
         List<ShadowPickRow> shadowPicks,
         List<DivergenceRow> divergences,
+        List<MarketSampleRow> rawMarketSamples,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -429,7 +442,7 @@ public class GetBacktestReportHandler(
             .ToList();
 
         var marketMetrics = BuildMarketMetrics(marketSamples, hdaSamples);
-        var calibration = BuildCalibration(marketSamples);
+        var calibration = BuildCalibration(marketSamples, rawMarketSamples);
         var qualified = BuildQualifiedPicksReport(qualifiedPicks);
         var rulePerformance = BuildRulePerformance(qualifiedPicks);
         var funnel = BuildQualificationFunnel(gateOutcomes);
@@ -667,8 +680,20 @@ public class GetBacktestReportHandler(
         return metrics;
     }
 
-    private static List<MarketCalibration> BuildCalibration(List<MarketSampleRow> marketSamples)
+    private static List<MarketCalibration> BuildCalibration(
+        List<MarketSampleRow> marketSamples, List<MarketSampleRow> rawMarketSamples)
     {
+        List<CalibrationBucketRow> Buckets(List<MarketSampleRow> source, string market,
+            (double Lower, double Upper)[] ranges) =>
+            EvaluationHarness.CalibrationForRanges(ToHarnessSamples(source, market), ranges)
+                .Select(b => new CalibrationBucketRow
+                {
+                    Range = b.Upper >= 1.0 ? $"{b.Lower:P0}+" : $"{b.Lower:P0}-{b.Upper:P0}",
+                    SampleSize = b.Count,
+                    PredictedAvg = Math.Round(b.MeanPredicted, 4),
+                    ActualHitRate = Math.Round(b.ObservedRate, 4)
+                }).ToList();
+
         return BinaryMarkets.Select(market =>
         {
             var ranges = market switch
@@ -677,19 +702,12 @@ public class GetBacktestReportHandler(
                 "draw" => DrawCalibrationRanges,
                 _ => CalibrationRanges
             };
-            var buckets = EvaluationHarness.CalibrationForRanges(
-                ToHarnessSamples(marketSamples, market), ranges);
 
             return new MarketCalibration
             {
                 Market = market,
-                Buckets = buckets.Select(b => new CalibrationBucketRow
-                {
-                    Range = b.Upper >= 1.0 ? $"{b.Lower:P0}+" : $"{b.Lower:P0}-{b.Upper:P0}",
-                    SampleSize = b.Count,
-                    PredictedAvg = Math.Round(b.MeanPredicted, 4),
-                    ActualHitRate = Math.Round(b.ObservedRate, 4)
-                }).ToList()
+                Buckets = Buckets(marketSamples, market, ranges),
+                RawBuckets = Buckets(rawMarketSamples, market, ranges)
             };
         }).ToList();
     }

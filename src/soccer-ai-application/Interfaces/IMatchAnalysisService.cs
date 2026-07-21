@@ -29,6 +29,13 @@ public sealed class FixtureAnalysisResult
     public required StatisticalModels Models { get; init; }
     public required HeadToHeadModel H2H { get; init; }
     public WeightedPrediction? Prediction { get; init; }
+
+    /// <summary>Pre-isotonic probabilities (what the math cache stores — training data).</summary>
+    public WeightedPrediction? RawPrediction { get; init; }
+
+    /// <summary>Raw vs calibrated per market (persisted in the snapshot).</summary>
+    public IReadOnlyList<CalibrationTraceEntry>? CalibrationTrace { get; init; }
+
     public required DecisionServiceResult Decisions { get; init; }
     public required string LeagueName { get; init; }
     public AiAnalysisDto? Ai { get; init; }

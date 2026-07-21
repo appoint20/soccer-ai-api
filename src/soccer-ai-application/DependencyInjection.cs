@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IMarketCalibrationService, MarketCalibrator>();
         services.AddSingleton<ILeagueTierService, LeagueTierService>();
         services.AddScoped<IStrategicSignalService, Services.Signals.StrategicSignalService>();
+        services.AddScoped<IProbabilityCalibrationService, Services.Calibration.ProbabilityCalibrationService>();
         services.AddOptions<Options.DixonColesOptions>();
         services.AddOptions<Options.CalibrationOptions>();
         services.AddOptions<Options.LeagueTierOptions>();

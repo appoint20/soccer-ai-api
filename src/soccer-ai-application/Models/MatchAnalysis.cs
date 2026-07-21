@@ -49,4 +49,8 @@ public sealed class MatchAnalysis
     /// <summary>Which confirm/veto rules fired per market — the backtest and LLM narratives cite this.</summary>
     [JsonPropertyName("decision_audit")]
     public DecisionAudit? DecisionAudit { get; init; }
+
+    /// <summary>Raw vs isotonic-calibrated probability per market.</summary>
+    [JsonPropertyName("calibration_trace")]
+    public IReadOnlyList<Interfaces.CalibrationTraceEntry>? CalibrationTrace { get; init; }
 }

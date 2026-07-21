@@ -207,12 +207,19 @@ public static class Program
                               $"logloss={m.LogLoss:F4}  valid odds={m.ValidOddsPct:F0}%");
 
         Console.WriteLine();
-        Console.WriteLine("=== CALIBRATION (predicted vs actual) ===");
+        Console.WriteLine("=== CALIBRATION (raw → isotonic-calibrated, vs actual) ===");
         foreach (var market in r.Calibration)
         {
             Console.WriteLine($"  {market.Market}:");
-            foreach (var b in market.Buckets.Where(b => b.SampleSize > 0))
-                Console.WriteLine($"    {b.Range,-10} n={b.SampleSize,-4} predicted={b.PredictedAvg:P1}  actual={b.ActualHitRate:P1}");
+            Console.WriteLine($"    {"range",-10} {"n",-5} {"raw pred",-9} {"raw act",-9} | {"cal n",-5} {"cal pred",-9} {"cal act",-9}");
+            var rawByRange = market.RawBuckets.ToDictionary(b => b.Range);
+            foreach (var b in market.Buckets)
+            {
+                var raw = rawByRange.GetValueOrDefault(b.Range);
+                if (b.SampleSize == 0 && (raw?.SampleSize ?? 0) == 0) continue;
+                Console.WriteLine($"    {b.Range,-10} {raw?.SampleSize ?? 0,-5} {raw?.PredictedAvg ?? 0,-9:P1} {raw?.ActualHitRate ?? 0,-9:P1} | " +
+                                  $"{b.SampleSize,-5} {b.PredictedAvg,-9:P1} {b.ActualHitRate,-9:P1}");
+            }
         }
 
         Console.WriteLine();

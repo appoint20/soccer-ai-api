@@ -17,6 +17,7 @@ public sealed class MatchAnalysisService(
     IProbabilityPipeline pipeline,
     IDecisionService decisionService,
     IStrategicSignalService signalService,
+    IProbabilityCalibrationService calibrationService,
     IApplicationDbContext dbContext) : IMatchAnalysisService
 {
     public async Task<FixtureAnalysisResult> AnalyzeFixtureAsync(Fixture fixture, string lang, bool refresh = false, CancellationToken ct = default)
@@ -101,6 +102,17 @@ public sealed class MatchAnalysisService(
             AiOverallConfidence = aiEntity.AiOverallConfidence
         } : new AiAnalysisDto();
 
+        // Walk-forward isotonic calibration: RAW probabilities stay in the math
+        // cache (training data); decisions and product output use calibrated.
+        var rawPrediction = prediction;
+        IReadOnlyList<CalibrationTraceEntry>? calibrationTrace = null;
+        if (prediction != null)
+        {
+            var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct);
+            prediction = calibration.Calibrated;
+            calibrationTrace = calibration.Trace;
+        }
+
         // Strategic signal catalog (facts; DC model passed for divergence signals
         // when it ran this request — cached-math path degrades those gracefully).
         var signals = await signalService.ComputeAsync(
@@ -128,7 +140,9 @@ public sealed class MatchAnalysisService(
             Ai = ai,
             HomeRestDays = homeRest,
             AwayRestDays = awayRest,
-            Signals = signals
+            Signals = signals,
+            RawPrediction = rawPrediction,
+            CalibrationTrace = calibrationTrace
         };
     }
 
