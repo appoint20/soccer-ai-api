@@ -24,4 +24,10 @@ public sealed class SyncOptions
     /// <summary>Precompute window around today, in days (past / future).</summary>
     public int RecomputeDaysBack { get; set; } = 3;
     public int RecomputeDaysAhead { get; set; } = 4;
+
+    /// <summary>
+    /// Interval for the T-schedule odds capture loop (first availability,
+    /// T-24h, T-1h snapshots). 0 disables the loop.
+    /// </summary>
+    public int OddsCaptureIntervalMinutes { get; set; } = 30;
 }

@@ -19,6 +19,7 @@ builder.Services.RegisterMediator(mediatorBuilder);
 builder.Services.Configure<SyncOptions>(builder.Configuration.GetSection(SyncOptions.SectionName));
 builder.Services.AddSingleton<SyncPipeline>();
 builder.Services.AddHostedService<SyncWorker>();
+builder.Services.AddHostedService<OddsCaptureWorker>();
 
 var host = builder.Build();
 await host.RunAsync();

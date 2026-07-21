@@ -33,8 +33,21 @@ public sealed class ConfluenceOptions
     /// <summary>Fraction of full Kelly used for reported stakes (quarter Kelly).</summary>
     public double KellyFraction { get; set; } = 0.25;
 
+    /// <summary>
+    /// Backtest ROI sections only include fixture weeks whose odds coverage
+    /// reaches this share — low-coverage (blackout) weeks distort ROI.
+    /// Brier/calibration always use all fixtures.
+    /// </summary>
+    public double RoiMinWeeklyOddsCoverage { get; set; } = 0.60;
+
     /// <summary>Extra probability demanded for Tier2 (cup) fixtures.</summary>
     public double Tier2ExtraProbability { get; set; } = 0.05;
+
+    /// <summary>
+    /// Markets that are permanently analysis-only: API-Football offers no odds
+    /// for them, so they can never be priced picks. Full analysis still runs.
+    /// </summary>
+    public string[] InformationalOnlyMarkets { get; set; } = ["goals_2_3"];
 
     // ── Shadow cohort: named winner-band hypothesis ──
     public double ShadowWinnerMinProbability { get; set; } = 0.62;

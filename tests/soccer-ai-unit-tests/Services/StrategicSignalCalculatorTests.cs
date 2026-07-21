@@ -528,11 +528,26 @@ public class StrategicSignalCalculatorTests
     }
 
     [Fact]
-    public void OpeningDrift_DegradesGracefully()
+    public void OpeningDrift_DegradesGracefully_WithoutQuoteHistory()
     {
         var s = StrategicSignalCalculator.Compute(Inputs(), Opt);
         s.Market.OpeningDrift.Flag.Should().BeFalse();
-        s.Market.OpeningDrift.Label.Should().Contain("not stored");
+        s.Market.OpeningDrift.Label.Should().Contain("drift unavailable");
+    }
+
+    [Fact]
+    public void OpeningDrift_FromQuoteHistory_FlagsBigMoves()
+    {
+        var drift = new SoccerAi.Application.Services.OddsDriftResult(
+            FavoriteDriftPct: -0.12, Over25DriftPct: 0.03,
+            FavoriteDirection: "shortening (money on favorite)");
+
+        var inputs = Inputs() with { OddsDrift = drift };
+        var s = StrategicSignalCalculator.Compute(inputs, Opt);
+
+        s.Market.OpeningDrift.Value.Should().Be(-0.12);
+        s.Market.OpeningDrift.Flag.Should().BeTrue("12% move exceeds the 10% flag threshold");
+        s.Market.OpeningDrift.Label.Should().Contain("shortening");
     }
 
     // ── H. League profile ────────────────────────────────────────────────────

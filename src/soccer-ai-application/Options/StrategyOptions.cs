@@ -54,6 +54,9 @@ public sealed class StrategyOptions
 
     // ── G. Market flags ──
     public double ModelMarketDivergenceFlag { get; set; } = 0.15;
+
+    /// <summary>|opening→latest| relative price move that flags the drift signal.</summary>
+    public double OpeningDriftFlagPct { get; set; } = 0.10;
     public double HeavyFavoriteOdds { get; set; } = 1.40;
     public double ModerateFavoriteOdds { get; set; } = 2.00;
     public double BalancedFavoriteOdds { get; set; } = 2.75;

@@ -43,6 +43,29 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Avg |model − market| divergence per league — where edge can exist.</summary>
     [JsonPropertyName("league_divergence")]
     public List<LeagueDivergenceRow> LeagueDivergence { get; init; } = [];
+
+    /// <summary>Odds coverage per fixture ISO week; ROI restricts to eligible weeks.</summary>
+    [JsonPropertyName("odds_coverage_weekly")]
+    public List<OddsCoverageWeeklyRow> OddsCoverageWeekly { get; init; } = [];
+}
+
+public sealed class OddsCoverageWeeklyRow
+{
+    [JsonPropertyName("week_start")]
+    public DateTime WeekStart { get; init; }
+
+    [JsonPropertyName("fixtures")]
+    public int Fixtures { get; init; }
+
+    [JsonPropertyName("with_odds")]
+    public int WithOdds { get; init; }
+
+    [JsonPropertyName("coverage_pct")]
+    public double CoveragePct { get; init; }
+
+    /// <summary>True when coverage ≥ threshold — ROI sections include this week.</summary>
+    [JsonPropertyName("roi_eligible")]
+    public bool RoiEligible { get; init; }
 }
 
 public sealed class LeagueDivergenceRow
@@ -182,6 +205,10 @@ public sealed class QualifiedPicksReport
     [JsonPropertyName("avg_odds")]
     public double AvgOdds { get; init; }
 
+    /// <summary>Picks with odds excluded from ROI (their week's coverage below threshold).</summary>
+    [JsonPropertyName("excluded_from_roi")]
+    public int ExcludedFromRoi { get; init; }
+
     [JsonPropertyName("total_staked")]
     public double TotalStaked { get; init; }
 
@@ -270,6 +297,10 @@ public sealed class QualificationFunnelRow
 
     [JsonPropertyName("insufficient_confirms")]
     public int InsufficientConfirms { get; init; }
+
+    /// <summary>Market is permanently no-odds/informational (e.g. goals_2_3).</summary>
+    [JsonPropertyName("informational_only")]
+    public int InformationalOnly { get; init; }
 
     [JsonPropertyName("qualified")]
     public int Qualified { get; init; }

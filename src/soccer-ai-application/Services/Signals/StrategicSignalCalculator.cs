@@ -20,7 +20,8 @@ public sealed record SignalInputs(
     bool HomeTier2Within4Days,
     bool AwayTier2Within4Days,
     PoissonModel? DcModel,
-    double LeagueVolatility);
+    double LeagueVolatility,
+    OddsDriftResult? OddsDrift = null);
 
 /// <summary>
 /// Pure, stateless signal computation (fully unit-testable with synthetic
@@ -41,7 +42,7 @@ public static class StrategicSignalCalculator
             H2H = ComputeH2H(f, inputs.H2HHistory, inputs.HomeHistory, inputs.AwayHistory, opt),
             Schedule = ComputeSchedule(f, inputs, opt),
             Availability = new AvailabilitySignals(), // graceful degradation: not synced yet
-            Market = ComputeMarket(f, inputs.HomeTeam, inputs.AwayTeam, inputs.DcModel, opt),
+            Market = ComputeMarket(f, inputs.HomeTeam, inputs.AwayTeam, inputs.DcModel, inputs.OddsDrift, opt),
             League = ComputeLeague(f, inputs, opt),
             ComputedAtUtc = DateTimeOffset.UtcNow
         };
@@ -382,7 +383,8 @@ public static class StrategicSignalCalculator
     // ── G. Market signals ────────────────────────────────────────────────────
 
     private static MarketSignals ComputeMarket(
-        Fixture f, Team? home, Team? away, PoissonModel? dc, StrategyOptions opt)
+        Fixture f, Team? home, Team? away, PoissonModel? dc,
+        SoccerAi.Application.Services.OddsDriftResult? drift, StrategyOptions opt)
     {
         SignalValue Divergence(double? modelP, double marketP, string market)
         {
@@ -444,7 +446,12 @@ public static class StrategicSignalCalculator
 
         return new MarketSignals
         {
-            OpeningDrift = SignalValue.Unavailable("Opening odds not stored — drift unavailable"),
+            OpeningDrift = drift?.FavoriteDriftPct is not null
+                ? SignalValue.Of(drift.FavoriteDriftPct.Value,
+                    Math.Abs(drift.FavoriteDriftPct.Value) >= opt.OpeningDriftFlagPct,
+                    $"Favorite {drift.FavoriteDirection}: {drift.FavoriteDriftPct.Value:P1} since opening" +
+                    (drift.Over25DriftPct is not null ? $"; O2.5 drift {drift.Over25DriftPct.Value:P1}" : ""))
+                : SignalValue.Unavailable("No multi-snapshot quote history yet — drift unavailable"),
             DivergenceOver25 = divOver,
             DivergenceBtts = divBtts,
             Divergence1X2 = div1X2,

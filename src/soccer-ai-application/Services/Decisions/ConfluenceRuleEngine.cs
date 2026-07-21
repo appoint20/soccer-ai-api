@@ -342,7 +342,8 @@ public static class ConfluenceRuleEngine
         var ev = odds is not null ? (double?)Math.Round(ValueMath.Ev(probability, odds.Value), 4) : null;
 
         var outcome =
-            odds is null ? GateOutcome.AnalysisOnlyNoOdds
+            opt.InformationalOnlyMarkets.Contains(market) ? GateOutcome.InformationalOnly
+            : odds is null ? GateOutcome.AnalysisOnlyNoOdds
             : odds < minOdds ? GateOutcome.BelowMinOdds
             : ev < minEdge ? GateOutcome.BelowMinEdge
             : !probabilityPassed ? GateOutcome.BelowProbabilityFloor

@@ -25,6 +25,9 @@ public sealed record MarketPrices(
 /// <summary>Outcome of the value-gate chain, in evaluation order.</summary>
 public static class GateOutcome
 {
+    /// <summary>Market flagged informational-only (no odds exist at source, ever).</summary>
+    public const string InformationalOnly = "informational_only";
+
     public const string AnalysisOnlyNoOdds = "analysis_only_no_odds";
     public const string BelowMinOdds = "below_min_odds";
     public const string BelowMinEdge = "below_min_edge";

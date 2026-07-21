@@ -34,10 +34,10 @@ public class GetBacktestReportHandler(
     private sealed record HdaSampleRow(double[] Probabilities, int ActualIndex);
     private sealed record QualifiedPickRow(
         string Market, string League, bool Won, double? Odds, IReadOnlyList<string> FiredRules,
-        double? Ev, double? KellyStake);
+        double? Ev, double? KellyStake, bool RoiEligible);
     private sealed record GateOutcomeRow(string Market, string Outcome, string League);
     private sealed record ShadowPickRow(
-        string Cohort, string Market, string League, bool Won, double Odds, double? Ev);
+        string Cohort, string Market, string League, bool Won, double Odds, double? Ev, bool RoiEligible);
     private sealed record DivergenceRow(string League, string Market, double AbsModelMarketDivergence);
 
     public async Task<GetBacktestReportResponse> Handle(
@@ -87,6 +87,41 @@ public class GetBacktestReportHandler(
             .Where(t => teamIds.Contains(t.ApiId))
             .ToDictionaryAsync(t => t.ApiId, t => t, cancellationToken);
 
+        // ── Weekly odds coverage: which fixture weeks are ROI-representative ──
+        bool HasAnyValidOdds(Fixture f) =>
+            (SoccerAi.Application.Services.OddsGuard.IsValid(f.HomeWinOdds) &&
+             SoccerAi.Application.Services.OddsGuard.IsValid(f.DrawOdds) &&
+             SoccerAi.Application.Services.OddsGuard.IsValid(f.AwayWinOdds)) ||
+            (SoccerAi.Application.Services.OddsGuard.IsValid(f.Over25Odds) &&
+             SoccerAi.Application.Services.OddsGuard.IsValid(f.Under25Odds)) ||
+            SoccerAi.Application.Services.OddsGuard.IsValid(f.BttsYesOdds);
+
+        var weeklyCoverage = fixtures
+            .GroupBy(f => SoccerAi.Application.Services.Calibration.ProbabilityCalibrationService.IsoWeekStartUtc(f.Date))
+            .Select(g => new
+            {
+                WeekStart = g.Key,
+                Total = g.Count(),
+                Covered = g.Count(HasAnyValidOdds)
+            })
+            .OrderBy(w => w.WeekStart)
+            .ToList();
+
+        var coverageThreshold = confluenceOptions.Value.RoiMinWeeklyOddsCoverage;
+        var roiEligibleWeeks = weeklyCoverage
+            .Where(w => w.Total > 0 && (double)w.Covered / w.Total >= coverageThreshold)
+            .Select(w => w.WeekStart)
+            .ToHashSet();
+
+        var oddsCoverageWeekly = weeklyCoverage.Select(w => new OddsCoverageWeeklyRow
+        {
+            WeekStart = w.WeekStart,
+            Fixtures = w.Total,
+            WithOdds = w.Covered,
+            CoveragePct = w.Total > 0 ? Math.Round(w.Covered * 100.0 / w.Total, 1) : 0,
+            RoiEligible = roiEligibleWeeks.Contains(w.WeekStart)
+        }).ToList();
+
         var simulationResults = new ConcurrentBag<SimulationCombo>();
         var leagueResults = new ConcurrentBag<LeaguePredictionResult>();
         var marketSamples = new ConcurrentBag<MarketSampleRow>();
@@ -122,6 +157,8 @@ public class GetBacktestReportHandler(
                         var league = analysisResult.LeagueName;
 
                         var pred = analysisResult.Prediction;
+                        var roiEligible = roiEligibleWeeks.Contains(
+                            SoccerAi.Application.Services.Calibration.ProbabilityCalibrationService.IsoWeekStartUtc(f.Date));
                         var totalGoals = f.HomeGoal + f.AwayGoal;
                         var bttsActual = f is { HomeGoal: > 0, AwayGoal: > 0 };
                         var over25Actual = totalGoals > 2;
@@ -220,7 +257,7 @@ public class GetBacktestReportHandler(
                                 shadowPicks.Add(new ShadowPickRow(
                                     cohort, marketAudit.Market, league,
                                     MarketWon(marketAudit.Market),
-                                    marketAudit.Odds!.Value, marketAudit.Ev));
+                                    marketAudit.Odds!.Value, marketAudit.Ev, roiEligible));
                             }
                         }
 
@@ -232,7 +269,7 @@ public class GetBacktestReportHandler(
                             shadowPicks.Add(new ShadowPickRow(
                                 Services.Decisions.ShadowCohorts.WinnerBand, "match_winner", league,
                                 pickWon, pickOddsSafe!.Value,
-                                Math.Round(winnerProb * pickOddsSafe.Value - 1, 4)));
+                                Math.Round(winnerProb * pickOddsSafe.Value - 1, 4), roiEligible));
                         }
 
                         void AddPick(string market, string selection, bool won, double? odds, double prob,
@@ -245,8 +282,9 @@ public class GetBacktestReportHandler(
                             var audit = auditByMarket.GetValueOrDefault(auditMarket ?? market);
                             var fired = audit?.FiredConfirmRuleIds.ToList() ?? [];
                             qualifiedPicks.Add(new QualifiedPickRow(
-                                market, league, won, safeOdds, fired, audit?.Ev, audit?.KellyStake));
-                            if (safeOdds is not null)
+                                market, league, won, safeOdds, fired, audit?.Ev, audit?.KellyStake, roiEligible));
+                            // Combos only from ROI-representative weeks
+                            if (safeOdds is not null && roiEligible)
                                 dayPicks.Add(new BacktestPick(
                                     f.Id, league, home.Name, away.Name, selection, prob, safeOdds.Value));
                         }
@@ -333,7 +371,7 @@ public class GetBacktestReportHandler(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
             gateOutcomes.ToList(), shadowPicks.ToList(), divergences.ToList(),
-            rawMarketSamples.ToList(), startDate, query.WeeksBack, query.Stake);
+            rawMarketSamples.ToList(), oddsCoverageWeekly, startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -383,6 +421,7 @@ public class GetBacktestReportHandler(
         List<ShadowPickRow> shadowPicks,
         List<DivergenceRow> divergences,
         List<MarketSampleRow> rawMarketSamples,
+        List<OddsCoverageWeeklyRow> oddsCoverageWeeklyRows,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -477,7 +516,8 @@ public class GetBacktestReportHandler(
             RulePerformance = rulePerformance,
             QualificationFunnel = funnel,
             ShadowCohorts = shadow,
-            LeagueDivergence = leagueDivergence
+            LeagueDivergence = leagueDivergence,
+            OddsCoverageWeekly = oddsCoverageWeeklyRows
         };
     }
 
@@ -515,8 +555,10 @@ public class GetBacktestReportHandler(
     /// price gates rejected. Per cohort×market with an ALL row, plus per-league
     /// rows. Measurement only — these never were and never become real picks.
     /// </summary>
-    private static List<ShadowCohortRow> BuildShadowCohorts(List<ShadowPickRow> picks)
+    private static List<ShadowCohortRow> BuildShadowCohorts(List<ShadowPickRow> allPicks)
     {
+        // Shadow sections are would-be ROI — same weekly-coverage restriction applies.
+        var picks = allPicks.Where(p => p.RoiEligible).ToList();
         ShadowCohortRow Build(string cohort, string market, string league, List<ShadowPickRow> rows)
         {
             var returned = rows.Sum(p => p.Won ? p.Odds : 0);
@@ -570,6 +612,7 @@ public class GetBacktestReportHandler(
             BelowProbabilityFloor = rows.Count(o => o.Outcome == "below_probability_floor"),
             Vetoed = rows.Count(o => o.Outcome == "vetoed"),
             InsufficientConfirms = rows.Count(o => o.Outcome == "insufficient_confirms"),
+            InformationalOnly = rows.Count(o => o.Outcome == "informational_only"),
             Qualified = rows.Count(o => o.Outcome == "qualified")
         };
 
@@ -728,8 +771,9 @@ public class GetBacktestReportHandler(
 
         QualifiedMarketRow BuildRow(string market, List<QualifiedPickRow> rows)
         {
-            // Odds are pre-sanitized: null = missing OR outside the 1.01-15.0 guard.
-            var withOdds = rows.Where(p => p.Odds is not null).ToList();
+            // ROI only over picks from ROI-representative weeks (coverage ≥ threshold);
+            // counts and hit rate stay over ALL picks.
+            var withOdds = rows.Where(p => p.Odds is not null && p.RoiEligible).ToList();
             var staked = withOdds.Count;
             var returned = withOdds.Sum(p => p.Won ? p.Odds!.Value : 0);
 
@@ -758,7 +802,7 @@ public class GetBacktestReportHandler(
         }
 
         var overall = BuildRow("all", picks);
-        var withOddsAll = picks.Where(p => p.Odds is not null).ToList();
+        var withOddsAll = picks.Where(p => p.Odds is not null && p.RoiEligible).ToList();
 
         return new QualifiedPicksReport
         {
@@ -766,6 +810,7 @@ public class GetBacktestReportHandler(
             Hits = picks.Count(p => p.Won),
             HitRate = overall.HitRate,
             AvgOdds = overall.AvgOdds,
+            ExcludedFromRoi = picks.Count(p => p.Odds is not null && !p.RoiEligible),
             TotalStaked = withOddsAll.Count,
             TotalReturned = Math.Round(withOddsAll.Sum(p => p.Won ? p.Odds!.Value : 0), 2),
             RoiPercent = overall.RoiPercent,

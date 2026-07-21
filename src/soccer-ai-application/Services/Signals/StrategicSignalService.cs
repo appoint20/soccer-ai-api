@@ -59,6 +59,12 @@ public sealed class StrategicSignalService(
             var homeTier2 = await Tier2WithinAsync(fixture.HomeTeamId, kickoff, ct);
             var awayTier2 = await Tier2WithinAsync(fixture.AwayTeamId, kickoff, ct);
 
+            // Opening-vs-latest drift from timestamped quotes (pre-kickoff only)
+            var quotes = await dbContext.FixtureOddsQuotes.AsNoTracking()
+                .Where(q => q.FixtureId == fixture.Id && q.CapturedAtUtc < kickoff)
+                .ToListAsync(ct);
+            var drift = OddsDriftCalculator.Compute(quotes);
+
             var inputs = new SignalInputs(
                 fixture,
                 teams.GetValueOrDefault(fixture.HomeTeamId),
@@ -70,7 +76,8 @@ public sealed class StrategicSignalService(
                 homeTier2,
                 awayTier2,
                 dcModel,
-                volatility.GetVolatility(fixture.LeagueId));
+                volatility.GetVolatility(fixture.LeagueId),
+                drift);
 
             return StrategicSignalCalculator.Compute(inputs, options.Value);
         }

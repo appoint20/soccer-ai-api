@@ -223,6 +223,13 @@ public static class Program
         }
 
         Console.WriteLine();
+        Console.WriteLine("=== ODDS COVERAGE BY WEEK (ROI restricted to ≥ threshold weeks) ===");
+        foreach (var wk in r.OddsCoverageWeekly)
+            Console.WriteLine($"  {wk.WeekStart:yyyy-MM-dd}  n={wk.Fixtures,-4} withOdds={wk.WithOdds,-4} " +
+                              $"{wk.CoveragePct,5:F1}%  {(wk.RoiEligible ? "ROI ✓" : "excluded")}");
+        Console.WriteLine($"  (qualified picks excluded from ROI by coverage: {r.QualifiedPicks.ExcludedFromRoi})");
+
+        Console.WriteLine();
         Console.WriteLine("=== SHADOW COHORTS (what the price gates rejected — would-be results) ===");
         foreach (var s in r.ShadowCohorts.Where(s => s.League == "ALL"))
             Console.WriteLine($"  {s.Cohort,-26} {s.Market,-14} n={s.Count,-5} hit={s.HitRate,5:F1}%  " +

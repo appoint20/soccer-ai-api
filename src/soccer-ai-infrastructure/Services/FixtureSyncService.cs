@@ -323,6 +323,65 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// Update fixture with odds only
     /// </summary>
     /// <summary>
+    /// T-schedule odds capture: first availability, then T-24h and T-1h
+    /// snapshots (timestamped quote rows feed the opening-vs-latest drift
+    /// signal). Bounded per run to stay inside API quota.
+    /// </summary>
+    public async Task<int> CaptureUpcomingOddsAsync(CancellationToken ct)
+    {
+        const int maxFixturesPerRun = 100;
+        var now = DateTimeOffset.UtcNow;
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+
+        var upcoming = await dbContext.Fixtures
+            .Where(f => scopedLeagueIds.Contains(f.LeagueId) &&
+                        f.Status == "NS" &&
+                        f.Date > now && f.Date <= now.AddHours(26))
+            .OrderBy(f => f.Date)
+            .Take(maxFixturesPerRun)
+            .ToListAsync(ct);
+
+        if (upcoming.Count == 0) return 0;
+
+        var fixtureIds = upcoming.Select(f => f.Id).ToList();
+        var latestCaptures = await dbContext.FixtureOddsQuotes
+            .Where(q => fixtureIds.Contains(q.FixtureId))
+            .GroupBy(q => q.FixtureId)
+            .Select(g => new { FixtureId = g.Key, Latest = g.Max(q => q.CapturedAtUtc) })
+            .ToDictionaryAsync(x => x.FixtureId, x => x.Latest, ct);
+
+        var captured = 0;
+        foreach (var fixture in upcoming)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var latest = latestCaptures.GetValueOrDefault(fixture.Id, DateTimeOffset.MinValue);
+            var t24 = fixture.Date.AddHours(-24);
+            var t1 = fixture.Date.AddHours(-1);
+
+            var due =
+                latest == DateTimeOffset.MinValue ||        // first availability
+                (now >= t24 && latest < t24) ||             // T-24h snapshot missing
+                (now >= t1 && latest < t1);                 // T-1h snapshot missing
+
+            if (!due) continue;
+
+            await UpdateFixtureOddsAsync(fixture, fixture.ApiId);
+            captured++;
+            await Task.Delay(150, ct); // API-quota friendliness
+        }
+
+        if (captured > 0)
+        {
+            await dbContext.SaveChangesAsync(ct);
+            logger.LogInformation("[OddsCapture] Captured odds for {Count}/{Total} upcoming fixtures",
+                captured, upcoming.Count);
+        }
+
+        return captured;
+    }
+
+    /// <summary>
     /// Coverage over the recent + upcoming window (last 30d and forward):
     /// share of fixtures with guard-valid odds per market. Target ≥85%.
     /// </summary>
