@@ -243,7 +243,16 @@ public static class Program
                               $"without: n={rule.PicksWithout,-4}{rule.HitRateWithout,5:F1}%");
 
         Console.WriteLine();
-        Console.WriteLine($"=== COMBOS ===  total={r.Summary.CombosTotal} won={r.Summary.CombosWon} " +
+        Console.WriteLine("=== TICKETS (ticket-level floors + Kelly) ===");
+        var t = r.Tickets.Overall;
+        Console.WriteLine($"  overall: n={t.Count} won={t.Won} hit={t.HitRate:F1}%  odds={t.AvgOdds:F2}  " +
+                          $"ev={t.AvgEv:P1}  flat={t.FlatRoiPercent:F1}%  kelly={t.KellyRoiPercent:F1}%");
+        foreach (var k in r.Tickets.PerKind.Where(k => k.Count > 0))
+            Console.WriteLine($"    {k.Kind,-8} n={k.Count,-4} won={k.Won,-4} hit={k.HitRate,5:F1}%  " +
+                              $"odds={k.AvgOdds:F2}  ev={k.AvgEv,6:P1}  flat={k.FlatRoiPercent,6:F1}%  kelly={k.KellyRoiPercent,6:F1}%");
+
+        Console.WriteLine();
+        Console.WriteLine($"=== LEGACY COMBOS ===  total={r.Summary.CombosTotal} won={r.Summary.CombosWon} " +
                           $"roi={r.Summary.TotalRoi:F1}%  legs={r.Summary.CorrectLegs}/{r.Summary.TotalLegs}");
     }
 

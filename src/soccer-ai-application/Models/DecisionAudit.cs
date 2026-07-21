@@ -44,6 +44,9 @@ public sealed record MarketRuleAudit(
     /// <summary>Which gate stopped (or passed) this market — see GateOutcome.</summary>
     [JsonPropertyName("gate_outcome")] public string GateOutcome { get; init; } = "";
 
+    /// <summary>EV &gt; 0 + full confluence: usable as a combo-ticket leg (v5).</summary>
+    [JsonPropertyName("combo_eligible")] public bool ComboEligible { get; init; }
+
     [JsonIgnore]
     public IEnumerable<string> FiredConfirmRuleIds =>
         Rules.Where(r => r is { Kind: RuleResult.Confirm, Fired: true }).Select(r => r.RuleId);

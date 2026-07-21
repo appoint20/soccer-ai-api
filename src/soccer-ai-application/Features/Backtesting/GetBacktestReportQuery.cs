@@ -47,6 +47,46 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Odds coverage per fixture ISO week; ROI restricts to eligible weeks.</summary>
     [JsonPropertyName("odds_coverage_weekly")]
     public List<OddsCoverageWeeklyRow> OddsCoverageWeekly { get; init; } = [];
+
+    /// <summary>Ticket economics: singles + 2-3 leg combos, ticket-level Kelly.</summary>
+    [JsonPropertyName("tickets")]
+    public TicketsReport Tickets { get; init; } = new();
+}
+
+public sealed class TicketsReport
+{
+    [JsonPropertyName("overall")]
+    public TicketKindRow Overall { get; init; } = new();
+
+    [JsonPropertyName("per_kind")]
+    public List<TicketKindRow> PerKind { get; init; } = [];
+}
+
+public sealed class TicketKindRow
+{
+    [JsonPropertyName("kind")]
+    public string Kind { get; init; } = "";
+
+    [JsonPropertyName("count")]
+    public int Count { get; init; }
+
+    [JsonPropertyName("won")]
+    public int Won { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_odds")]
+    public double AvgOdds { get; init; }
+
+    [JsonPropertyName("avg_ev")]
+    public double AvgEv { get; init; }
+
+    [JsonPropertyName("flat_roi_percent")]
+    public double FlatRoiPercent { get; init; }
+
+    [JsonPropertyName("kelly_roi_percent")]
+    public double KellyRoiPercent { get; init; }
 }
 
 public sealed class OddsCoverageWeeklyRow

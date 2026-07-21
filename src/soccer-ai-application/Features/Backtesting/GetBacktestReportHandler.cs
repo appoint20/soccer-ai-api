@@ -20,12 +20,10 @@ public class GetBacktestReportHandler(
     ILeagueTierService leagueTiers,
     Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.ConfluenceOptions> confluenceOptions,
     Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.CalibrationOptions> calibrationOptions,
+    Microsoft.Extensions.Options.IOptions<SoccerAi.Application.Options.StrategyOptions> strategyOptions,
     ILogger<GetBacktestReportHandler> logger)
     : IRequestHandler<GetBacktestReportQuery, GetBacktestReportResponse>
 {
-    /// <summary>Minimum odds per accumulator leg (unchanged from previous behavior).</summary>
-    private const double MinSelectionOdds = 1.50;
-
     private const int LowSampleThreshold = 30;
 
     /// <summary>OddsValid: the market's stored odds pass the sanity guard (1.01-15.0).</summary>
@@ -39,6 +37,8 @@ public class GetBacktestReportHandler(
     private sealed record ShadowPickRow(
         string Cohort, string Market, string League, bool Won, double Odds, double? Ev, bool RoiEligible);
     private sealed record DivergenceRow(string League, string Market, double AbsModelMarketDivergence);
+    private sealed record TicketResultRow(
+        int Legs, double TotalOdds, double CombinedP, double Ev, double KellyStake, bool Won);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -131,6 +131,7 @@ public class GetBacktestReportHandler(
         var gateOutcomes = new ConcurrentBag<GateOutcomeRow>();
         var shadowPicks = new ConcurrentBag<ShadowPickRow>();
         var divergences = new ConcurrentBag<DivergenceRow>();
+        var ticketRows = new ConcurrentBag<TicketResultRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -143,7 +144,8 @@ public class GetBacktestReportHandler(
             {
                 using var scope = serviceProvider.CreateScope();
                 var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
-                var dayPicks = new List<BacktestPick>();
+                var daySingles = new List<(Services.Decisions.TicketLeg Leg, bool Won)>();
+                var dayComboLegs = new List<(Services.Decisions.TicketLeg Leg, bool Won)>();
 
                 foreach (var f in day)
                 {
@@ -272,6 +274,28 @@ public class GetBacktestReportHandler(
                                 Math.Round(winnerProb * pickOddsSafe.Value - 1, 4), roiEligible));
                         }
 
+                        // ── Combo-leg pool (EV > 0 + confluence; MinOdds is ticket-level) ──
+                        if (roiEligible)
+                        {
+                            string SelectionOf(string market) => market switch
+                            {
+                                "btts" => "BTTS",
+                                "over25" => "Over 2.5 Goals",
+                                "under25" => "Under 2.5 Goals",
+                                "match_winner" => pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
+                                "draw" => "Draw",
+                                _ => market
+                            };
+
+                            foreach (var marketAudit in auditByMarket.Values.Where(a => a.ComboEligible))
+                            {
+                                dayComboLegs.Add((new Services.Decisions.TicketLeg(
+                                    f.Id, league, marketAudit.Market, SelectionOf(marketAudit.Market),
+                                    marketAudit.Probability, marketAudit.Odds!.Value, marketAudit.Ev ?? 0),
+                                    MarketWon(marketAudit.Market)));
+                            }
+                        }
+
                         void AddPick(string market, string selection, bool won, double? odds, double prob,
                             string? auditMarket = null)
                         {
@@ -283,10 +307,11 @@ public class GetBacktestReportHandler(
                             var fired = audit?.FiredConfirmRuleIds.ToList() ?? [];
                             qualifiedPicks.Add(new QualifiedPickRow(
                                 market, league, won, safeOdds, fired, audit?.Ev, audit?.KellyStake, roiEligible));
-                            // Combos only from ROI-representative weeks
+                            // Ticket legs only from ROI-representative weeks
                             if (safeOdds is not null && roiEligible)
-                                dayPicks.Add(new BacktestPick(
-                                    f.Id, league, home.Name, away.Name, selection, prob, safeOdds.Value));
+                                daySingles.Add((new Services.Decisions.TicketLeg(
+                                    f.Id, league, market, selection, prob, safeOdds.Value,
+                                    audit?.Ev ?? 0), won));
                         }
 
                         if (m.Over25.IsQualified)
@@ -315,47 +340,43 @@ public class GetBacktestReportHandler(
                     }
                 }
 
-                // Deterministic combination simulation from qualified picks only.
-                // (Previously IChatCombinationEngine → LLM call → empty without an
-                // API key, which is why combos_total was 0.)
+                // ── Ticket economics (v5): singles + 2-3 leg combos via TicketBuilder ──
                 {
-                    var portfolios = BacktestCombinationBuilder.Build(dayPicks, MinSelectionOdds);
+                    var wonByKey = daySingles.Concat(dayComboLegs)
+                        .GroupBy(x => (x.Leg.FixtureId, x.Leg.Market))
+                        .ToDictionary(g => g.Key, g => g.First().Won);
 
-                    foreach (var combo in portfolios)
+                    var built = Services.Decisions.TicketBuilder.Build(
+                        daySingles.Select(x => x.Leg).ToList(),
+                        dayComboLegs.Select(x => x.Leg).ToList(),
+                        strategyOptions.Value,
+                        confluenceOptions.Value);
+
+                    foreach (var ticket in built)
                     {
-                        var legResults = new List<LegResult>();
-                        bool isFullWin = true;
-                        foreach (var leg in combo.Matches)
+                        var legWins = ticket.Legs
+                            .Select(l => wonByKey.GetValueOrDefault((l.FixtureId, l.Market), false))
+                            .ToList();
+                        var isFullWin = legWins.All(w => w);
+
+                        ticketRows.Add(new TicketResultRow(
+                            ticket.Legs.Count, ticket.TotalOdds, ticket.CombinedProbability,
+                            ticket.Ev, ticket.KellyStake, isFullWin));
+
+                        // Legacy combo summary/weekly sections track multi-leg tickets.
+                        if (!ticket.IsSingle)
                         {
-                            var fix = fixtures.FirstOrDefault(fx => fx.Id == leg.FixtureId);
-                            if (fix == null)
+                            simulationResults.Add(new SimulationCombo
                             {
-                                logger.LogWarning("[Backtest] AI returned unknown fixture ID {Id}. Skipping leg.", leg.FixtureId);
-                                isFullWin = false;
-                                continue;
-                            }
-
-                            bool legWon = IsLegWon(leg.Selection, fix);
-                            legResults.Add(new LegResult { IsWon = legWon });
-                            
-                            if (!legWon)
-                            {
-                                isFullWin = false;
-                            }
+                                Date = day.Key,
+                                Odds = ticket.TotalOdds,
+                                IsWon = isFullWin,
+                                Stake = query.Stake,
+                                Return = isFullWin ? ticket.TotalOdds * query.Stake : 0,
+                                AverageConfidence = ticket.CombinedProbability,
+                                Legs = legWins.Select(w => new LegResult { IsWon = w }).ToList()
+                            });
                         }
-
-                        double avgConfidence = combo.Matches.Any() ? combo.Matches.Average(m => m.Confidence) : 0;
-                        
-                        simulationResults.Add(new SimulationCombo 
-                        { 
-                            Date = day.Key, 
-                            Odds = combo.TotalOdds, 
-                            IsWon = isFullWin, 
-                            Stake = query.Stake,
-                            Return = isFullWin ? combo.TotalOdds * query.Stake : 0,
-                            AverageConfidence = avgConfidence,
-                            Legs = legResults
-                        });
                     }
                 }
             }
@@ -371,7 +392,7 @@ public class GetBacktestReportHandler(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
             gateOutcomes.ToList(), shadowPicks.ToList(), divergences.ToList(),
-            rawMarketSamples.ToList(), oddsCoverageWeekly, startDate, query.WeeksBack, query.Stake);
+            rawMarketSamples.ToList(), oddsCoverageWeekly, ticketRows.ToList(), startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -422,6 +443,7 @@ public class GetBacktestReportHandler(
         List<DivergenceRow> divergences,
         List<MarketSampleRow> rawMarketSamples,
         List<OddsCoverageWeeklyRow> oddsCoverageWeeklyRows,
+        List<TicketResultRow> ticketRows,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -487,6 +509,7 @@ public class GetBacktestReportHandler(
         var funnel = BuildQualificationFunnel(gateOutcomes);
         var shadow = BuildShadowCohorts(shadowPicks);
         var leagueDivergence = BuildLeagueDivergence(divergences);
+        var ticketsReport = BuildTicketsReport(ticketRows);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -517,7 +540,49 @@ public class GetBacktestReportHandler(
             QualificationFunnel = funnel,
             ShadowCohorts = shadow,
             LeagueDivergence = leagueDivergence,
-            OddsCoverageWeekly = oddsCoverageWeeklyRows
+            OddsCoverageWeekly = oddsCoverageWeeklyRows,
+            Tickets = ticketsReport
+        };
+    }
+
+    /// <summary>
+    /// Ticket economics (v5): singles + 2-3 leg combos with ticket-level
+    /// floors and ticket-level Kelly. Overall plus per-size rows.
+    /// </summary>
+    private static TicketsReport BuildTicketsReport(List<TicketResultRow> rows)
+    {
+        TicketKindRow Build(string kind, List<TicketResultRow> subset)
+        {
+            var staked = subset.Count;
+            var returned = subset.Sum(t => t.Won ? t.TotalOdds : 0);
+            var kellyStaked = subset.Sum(t => t.KellyStake);
+            var kellyReturned = subset.Sum(t => t.Won ? t.KellyStake * t.TotalOdds : 0);
+
+            return new TicketKindRow
+            {
+                Kind = kind,
+                Count = subset.Count,
+                Won = subset.Count(t => t.Won),
+                HitRate = subset.Count > 0
+                    ? Math.Round((double)subset.Count(t => t.Won) / subset.Count * 100, 1) : 0,
+                AvgOdds = subset.Count > 0 ? Math.Round(subset.Average(t => t.TotalOdds), 2) : 0,
+                AvgEv = subset.Count > 0 ? Math.Round(subset.Average(t => t.Ev), 4) : 0,
+                FlatRoiPercent = staked > 0
+                    ? Math.Round((returned - staked) / staked * 100, 1) : 0,
+                KellyRoiPercent = kellyStaked > 0
+                    ? Math.Round((kellyReturned - kellyStaked) / kellyStaked * 100, 1) : 0
+            };
+        }
+
+        return new TicketsReport
+        {
+            Overall = Build("all", rows),
+            PerKind =
+            [
+                Build("single", rows.Where(t => t.Legs == 1).ToList()),
+                Build("2_leg", rows.Where(t => t.Legs == 2).ToList()),
+                Build("3_leg", rows.Where(t => t.Legs == 3).ToList())
+            ]
         };
     }
 

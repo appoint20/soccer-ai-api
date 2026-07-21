@@ -341,10 +341,10 @@ public static class ConfluenceRuleEngine
 
         var ev = odds is not null ? (double?)Math.Round(ValueMath.Ev(probability, odds.Value), 4) : null;
 
+        // v5: MinOdds is enforced at TICKET level (TicketBuilder), not per leg.
         var outcome =
             opt.InformationalOnlyMarkets.Contains(market) ? GateOutcome.InformationalOnly
             : odds is null ? GateOutcome.AnalysisOnlyNoOdds
-            : odds < minOdds ? GateOutcome.BelowMinOdds
             : ev < minEdge ? GateOutcome.BelowMinEdge
             : !probabilityPassed ? GateOutcome.BelowProbabilityFloor
             : vetoes > 0 ? GateOutcome.Vetoed
@@ -352,6 +352,13 @@ public static class ConfluenceRuleEngine
             : GateOutcome.Qualified;
 
         var qualified = outcome == GateOutcome.Qualified;
+
+        // Combo-leg eligibility: any positive edge + full confluence. Weaker than
+        // 'qualified' (no MinEdge/floor) — sub-floor favorites become combo legs.
+        var comboEligible =
+            !opt.InformationalOnlyMarkets.Contains(market) &&
+            odds is not null && ev > 0 &&
+            vetoes == 0 && confirms >= opt.MinConfirmations;
 
         return new MarketRuleAudit(
             market,
@@ -370,7 +377,8 @@ public static class ConfluenceRuleEngine
             KellyStake = qualified && odds is not null
                 ? ValueMath.FractionalKelly(probability, odds.Value, opt.KellyFraction)
                 : null,
-            GateOutcome = outcome
+            GateOutcome = outcome,
+            ComboEligible = comboEligible
         };
     }
 }

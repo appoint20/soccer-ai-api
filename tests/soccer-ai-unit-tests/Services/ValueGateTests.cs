@@ -41,14 +41,32 @@ public class ValueGateTests
     }
 
     [Fact]
-    public void OddsBelowMinOddsFloor_Rejected()
+    public void SubFloorOdds_NoLongerRejectLegs_MinOddsIsTicketLevel()
     {
-        // 1.50 < 1.70 floor, even though EV = 0.65×1.5−1 < MinEdge anyway;
-        // the MinOdds gate fires FIRST (funnel must attribute it correctly).
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, 1.50, 1.70, 0.05, Opt);
+        // v5: odds 1.65 < the 1.70 floor, but EV = 0.65×1.65−1 = 0.0725 ≥ 0.05 —
+        // the pick qualifies; the floor is enforced when building TICKETS.
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, 1.65, 1.70, 0.05, Opt);
 
-        audit.GateOutcome.Should().Be(GateOutcome.BelowMinOdds);
+        audit.GateOutcome.Should().Be(GateOutcome.Qualified);
+        audit.ComboEligible.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ComboEligible_NeedsOnlyPositiveEvAndConfluence()
+    {
+        // EV = 0.65×1.60−1 = 0.04: below MinEdge (no single pick) but positive → combo leg.
+        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, 1.60, 1.70, 0.05, Opt);
+
+        audit.GateOutcome.Should().Be(GateOutcome.BelowMinEdge);
         audit.Qualified.Should().BeFalse();
+        audit.ComboEligible.Should().BeTrue("EV > 0 with full confluence makes a valid combo leg");
+    }
+
+    [Fact]
+    public void ComboEligible_False_WithNegativeEvOrVeto()
+    {
+        var negativeEv = ConfluenceRuleEngine.EvaluateBtts(0.55, ConfluentBtts(), 0.50, 1.60, 1.70, 0.05, Opt);
+        negativeEv.ComboEligible.Should().BeFalse("EV = 0.55×1.60−1 < 0");
     }
 
     [Fact]
