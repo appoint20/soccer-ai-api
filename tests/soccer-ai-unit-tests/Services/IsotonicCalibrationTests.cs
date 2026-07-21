@@ -128,7 +128,9 @@ public class ProbabilityCalibrationServiceTests : IDisposable
     [Fact]
     public async Task BelowMinSamples_PassesThrough()
     {
-        await SeedOverconfidentOver25Async(50, AsOf); // < 300
+        // Newest row a full week back: ALL 50 land strictly before the as-of
+        // ISO week start (rows inside the week would be walk-forward-excluded).
+        await SeedOverconfidentOver25Async(50, AsOf.AddDays(-7)); // < 300
 
         var result = await _sut.ApplyAsync(Raw(), AsOf);
 
@@ -139,7 +141,7 @@ public class ProbabilityCalibrationServiceTests : IDisposable
     [Fact]
     public async Task WithEnoughHistory_OverconfidentMarketPulledDown()
     {
-        await SeedOverconfidentOver25Async(400, AsOf);
+        await SeedOverconfidentOver25Async(400, AsOf.AddDays(-7));
 
         var result = await _sut.ApplyAsync(Raw(), AsOf);
 
@@ -167,12 +169,13 @@ public class ProbabilityCalibrationServiceTests : IDisposable
     [Fact]
     public async Task Calibrated1X2_RemainsADistribution()
     {
-        await SeedOverconfidentOver25Async(400, AsOf);
+        await SeedOverconfidentOver25Async(400, AsOf.AddDays(-7));
 
         var result = await _sut.ApplyAsync(Raw(), AsOf);
         var p = result.Calibrated;
 
-        (p.HomeProb + p.DrawProb + p.AwayProb).Should().BeApproximately(1.0, 1e-6);
+        // 1e-3 tolerance: components are rounded to 4 decimals after renormalization
+        (p.HomeProb + p.DrawProb + p.AwayProb).Should().BeApproximately(1.0, 1e-3);
     }
 
     [Fact]
@@ -183,7 +186,7 @@ public class ProbabilityCalibrationServiceTests : IDisposable
             _db,
             Microsoft.Extensions.Options.Options.Create(new CalibrationOptions { IsotonicEnabled = false }),
             new Mock<ILogger<ProbabilityCalibrationService>>().Object);
-        await SeedOverconfidentOver25Async(400, AsOf);
+        await SeedOverconfidentOver25Async(400, AsOf.AddDays(-7));
 
         var result = await sut.ApplyAsync(Raw(), AsOf);
 
