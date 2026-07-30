@@ -80,8 +80,12 @@ public static class TicketBuilder
         var combos = new List<Ticket>();
         ComposeCombos(pool, [], 0, strat, opt, combos);
 
+        // Preference applies to the FINAL ranking, not just the pool: pure-EV
+        // ordering would always favor 3-leg longshot products over favorite
+        // combos (EV multiplies), silently deleting the ≥65% preference.
         tickets.AddRange(combos
-            .OrderByDescending(t => t.Ev)
+            .OrderByDescending(t => t.Legs.Any(l => l.Probability >= PreferredFavoriteProbability))
+            .ThenByDescending(t => t.Ev)
             .Take(MaxComboTicketsPerDay));
 
         return tickets;
