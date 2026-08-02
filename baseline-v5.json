@@ -1,0 +1,2852 @@
+{
+  "summary": {
+    "start_date": "2026-01-04T13:18:48.874435+00:00",
+    "total_roi": 10.7,
+    "total_staked": 40,
+    "total_returned": 44.27,
+    "combination_accuracy": 32.5,
+    "win_rate": 32.5,
+    "combos_total": 40,
+    "combos_won": 13,
+    "match_analysis_accuracy": 55.4,
+    "total_legs": 94,
+    "correct_legs": 55
+  },
+  "weekly_breakdown": [
+    {
+      "week": "Week 15",
+      "date_range": "Apr. 06 - Apr. 12",
+      "total_combinations": 7,
+      "combinations_won": 3,
+      "stake_amount": 7,
+      "profit_loss": 2.54,
+      "roi_percent": 36.3
+    },
+    {
+      "week": "Week 14",
+      "date_range": "Apr. 03 - Apr. 05",
+      "total_combinations": 6,
+      "combinations_won": 2,
+      "stake_amount": 6,
+      "profit_loss": 0.48,
+      "roi_percent": 8
+    },
+    {
+      "week": "Week 10",
+      "date_range": "M\u00E4rz 07 - M\u00E4rz 08",
+      "total_combinations": 8,
+      "combinations_won": 4,
+      "stake_amount": 8,
+      "profit_loss": 5.55,
+      "roi_percent": 69.4
+    },
+    {
+      "week": "Week 9",
+      "date_range": "Feb. 24 - M\u00E4rz 01",
+      "total_combinations": 9,
+      "combinations_won": 1,
+      "stake_amount": 9,
+      "profit_loss": -5.71,
+      "roi_percent": -63.4
+    },
+    {
+      "week": "Week 8",
+      "date_range": "Feb. 17 - Feb. 22",
+      "total_combinations": 10,
+      "combinations_won": 3,
+      "stake_amount": 10,
+      "profit_loss": 1.41,
+      "roi_percent": 14.1
+    }
+  ],
+  "league_accuracy": [
+    {
+      "league": "League One",
+      "n": 271,
+      "low_sample": false,
+      "btts_accuracy": 55,
+      "over25_accuracy": 52.8
+    },
+    {
+      "league": "League Two",
+      "n": 262,
+      "low_sample": false,
+      "btts_accuracy": 49.2,
+      "over25_accuracy": 48.9
+    },
+    {
+      "league": "Championship",
+      "n": 252,
+      "low_sample": false,
+      "btts_accuracy": 55.6,
+      "over25_accuracy": 53.2
+    },
+    {
+      "league": "La Liga 2",
+      "n": 197,
+      "low_sample": false,
+      "btts_accuracy": 52.8,
+      "over25_accuracy": 50.3
+    },
+    {
+      "league": "Serie B",
+      "n": 190,
+      "low_sample": false,
+      "btts_accuracy": 51.1,
+      "over25_accuracy": 52.1
+    },
+    {
+      "league": "Serie A",
+      "n": 171,
+      "low_sample": false,
+      "btts_accuracy": 50.9,
+      "over25_accuracy": 52
+    },
+    {
+      "league": "3. Liga",
+      "n": 167,
+      "low_sample": false,
+      "btts_accuracy": 64.7,
+      "over25_accuracy": 64.7
+    },
+    {
+      "league": "La Liga",
+      "n": 158,
+      "low_sample": false,
+      "btts_accuracy": 61.4,
+      "over25_accuracy": 55.1
+    },
+    {
+      "league": "Bundesliga",
+      "n": 150,
+      "low_sample": false,
+      "btts_accuracy": 67.3,
+      "over25_accuracy": 67.3
+    },
+    {
+      "league": "Premier League",
+      "n": 150,
+      "low_sample": false,
+      "btts_accuracy": 58,
+      "over25_accuracy": 54.7
+    },
+    {
+      "league": "Ligue 2",
+      "n": 136,
+      "low_sample": false,
+      "btts_accuracy": 54.4,
+      "over25_accuracy": 51.5
+    },
+    {
+      "league": "Ligue 1",
+      "n": 133,
+      "low_sample": false,
+      "btts_accuracy": 52.6,
+      "over25_accuracy": 58.6
+    },
+    {
+      "league": "2. Bundesliga",
+      "n": 130,
+      "low_sample": false,
+      "btts_accuracy": 64.6,
+      "over25_accuracy": 59.2
+    }
+  ],
+  "market_metrics": [
+    {
+      "market": "btts",
+      "n": 2367,
+      "brier_score": 0.2441,
+      "log_loss": 0.6811,
+      "valid_odds_pct": 29
+    },
+    {
+      "market": "over25",
+      "n": 2367,
+      "brier_score": 0.2473,
+      "log_loss": 0.6877,
+      "valid_odds_pct": 30.2
+    },
+    {
+      "market": "goals_2_3",
+      "n": 2367,
+      "brier_score": 0.2484,
+      "log_loss": 0.69,
+      "valid_odds_pct": 0
+    },
+    {
+      "market": "draw",
+      "n": 2367,
+      "brier_score": 0.1938,
+      "log_loss": 0.5759,
+      "valid_odds_pct": 31.7
+    },
+    {
+      "market": "1x2",
+      "n": 2367,
+      "brier_score": 0.6193,
+      "log_loss": 1.0311,
+      "valid_odds_pct": 31.7
+    }
+  ],
+  "calibration": [
+    {
+      "market": "btts",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 760,
+          "predicted_avg": 0.5257,
+          "actual_hit_rate": 0.5263
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 650,
+          "predicted_avg": 0.5732,
+          "actual_hit_rate": 0.5892
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 347,
+          "predicted_avg": 0.6217,
+          "actual_hit_rate": 0.6023
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 117,
+          "predicted_avg": 0.675,
+          "actual_hit_rate": 0.7265
+        }
+      ],
+      "raw_buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 761,
+          "predicted_avg": 0.5257,
+          "actual_hit_rate": 0.5269
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 649,
+          "predicted_avg": 0.5732,
+          "actual_hit_rate": 0.5886
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 347,
+          "predicted_avg": 0.6217,
+          "actual_hit_rate": 0.6023
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 117,
+          "predicted_avg": 0.675,
+          "actual_hit_rate": 0.7265
+        }
+      ]
+    },
+    {
+      "market": "over25",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 523,
+          "predicted_avg": 0.5247,
+          "actual_hit_rate": 0.543
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 315,
+          "predicted_avg": 0.5737,
+          "actual_hit_rate": 0.6032
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 188,
+          "predicted_avg": 0.6219,
+          "actual_hit_rate": 0.633
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 82,
+          "predicted_avg": 0.6872,
+          "actual_hit_rate": 0.7195
+        }
+      ],
+      "raw_buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 523,
+          "predicted_avg": 0.5247,
+          "actual_hit_rate": 0.543
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 316,
+          "predicted_avg": 0.5738,
+          "actual_hit_rate": 0.6044
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 187,
+          "predicted_avg": 0.622,
+          "actual_hit_rate": 0.631
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 82,
+          "predicted_avg": 0.6872,
+          "actual_hit_rate": 0.7195
+        }
+      ]
+    },
+    {
+      "market": "goals_2_3",
+      "buckets": [
+        {
+          "range": "35 %-40 %",
+          "n": 17,
+          "predicted_avg": 0.3826,
+          "actual_hit_rate": 0.2941
+        },
+        {
+          "range": "40 %-45 %",
+          "n": 217,
+          "predicted_avg": 0.4342,
+          "actual_hit_rate": 0.4286
+        },
+        {
+          "range": "45 %-50 %",
+          "n": 2130,
+          "predicted_avg": 0.4789,
+          "actual_hit_rate": 0.4732
+        },
+        {
+          "range": "50 %-55 %",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        },
+        {
+          "range": "55 %\u002B",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        }
+      ],
+      "raw_buckets": [
+        {
+          "range": "35 %-40 %",
+          "n": 17,
+          "predicted_avg": 0.3826,
+          "actual_hit_rate": 0.2941
+        },
+        {
+          "range": "40 %-45 %",
+          "n": 219,
+          "predicted_avg": 0.4344,
+          "actual_hit_rate": 0.4292
+        },
+        {
+          "range": "45 %-50 %",
+          "n": 2128,
+          "predicted_avg": 0.479,
+          "actual_hit_rate": 0.4732
+        },
+        {
+          "range": "50 %-55 %",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        },
+        {
+          "range": "55 %\u002B",
+          "n": 0,
+          "predicted_avg": 0,
+          "actual_hit_rate": 0
+        }
+      ]
+    },
+    {
+      "market": "match_winner",
+      "buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 244,
+          "predicted_avg": 0.5195,
+          "actual_hit_rate": 0.5533
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 119,
+          "predicted_avg": 0.5702,
+          "actual_hit_rate": 0.5966
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 74,
+          "predicted_avg": 0.6163,
+          "actual_hit_rate": 0.7297
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 42,
+          "predicted_avg": 0.6922,
+          "actual_hit_rate": 0.8333
+        }
+      ],
+      "raw_buckets": [
+        {
+          "range": "50 %-55 %",
+          "n": 250,
+          "predicted_avg": 0.5181,
+          "actual_hit_rate": 0.556
+        },
+        {
+          "range": "55 %-60 %",
+          "n": 122,
+          "predicted_avg": 0.5688,
+          "actual_hit_rate": 0.5984
+        },
+        {
+          "range": "60 %-65 %",
+          "n": 76,
+          "predicted_avg": 0.6155,
+          "actual_hit_rate": 0.7237
+        },
+        {
+          "range": "65 %\u002B",
+          "n": 42,
+          "predicted_avg": 0.6917,
+          "actual_hit_rate": 0.8333
+        }
+      ]
+    },
+    {
+      "market": "draw",
+      "buckets": [
+        {
+          "range": "20 %-25 %",
+          "n": 213,
+          "predicted_avg": 0.2312,
+          "actual_hit_rate": 0.2441
+        },
+        {
+          "range": "25 %-30 %",
+          "n": 1434,
+          "predicted_avg": 0.2755,
+          "actual_hit_rate": 0.2622
+        },
+        {
+          "range": "30 %-35 %",
+          "n": 698,
+          "predicted_avg": 0.3095,
+          "actual_hit_rate": 0.2751
+        },
+        {
+          "range": "35 %\u002B",
+          "n": 1,
+          "predicted_avg": 0.35,
+          "actual_hit_rate": 0
+        }
+      ],
+      "raw_buckets": [
+        {
+          "range": "20 %-25 %",
+          "n": 195,
+          "predicted_avg": 0.2296,
+          "actual_hit_rate": 0.2462
+        },
+        {
+          "range": "25 %-30 %",
+          "n": 1411,
+          "predicted_avg": 0.2745,
+          "actual_hit_rate": 0.2636
+        },
+        {
+          "range": "30 %-35 %",
+          "n": 739,
+          "predicted_avg": 0.3088,
+          "actual_hit_rate": 0.2706
+        },
+        {
+          "range": "35 %\u002B",
+          "n": 1,
+          "predicted_avg": 0.35,
+          "actual_hit_rate": 0
+        }
+      ]
+    }
+  ],
+  "qualified_picks": {
+    "count": 11,
+    "hits": 7,
+    "hit_rate": 63.6,
+    "avg_odds": 1.91,
+    "excluded_from_roi": 2,
+    "total_staked": 9,
+    "total_returned": 11.1,
+    "roi_percent": 23.3,
+    "kelly_roi_percent": 17.9,
+    "avg_ev": 0.0794,
+    "per_market": [
+      {
+        "market": "btts",
+        "count": 6,
+        "hits": 4,
+        "hit_rate": 66.7,
+        "avg_odds": 1.79,
+        "roi_percent": 35,
+        "qualification_threshold": 0.5,
+        "valid_odds_pct": 66.7,
+        "kelly_roi_percent": 37.2,
+        "avg_ev": 0.0739
+      },
+      {
+        "market": "low_scoring",
+        "count": 5,
+        "hits": 3,
+        "hit_rate": 60,
+        "avg_odds": 2,
+        "roi_percent": 14,
+        "qualification_threshold": 0.5,
+        "valid_odds_pct": 100,
+        "kelly_roi_percent": 1.7,
+        "avg_ev": 0.0861
+      }
+    ]
+  },
+  "rule_performance": [
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_both_concede_venue",
+      "picks_with": 6,
+      "hit_rate_with": 66.7,
+      "picks_without": 0,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_both_score_venue",
+      "picks_with": 6,
+      "hit_rate_with": 66.7,
+      "picks_without": 0,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "btts",
+      "rule_id": "btts_confirm_h2h_rate",
+      "picks_with": 2,
+      "hit_rate_with": 100,
+      "picks_without": 4,
+      "hit_rate_without": 50
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_defensive_profile",
+      "picks_with": 5,
+      "hit_rate_with": 60,
+      "picks_without": 0,
+      "hit_rate_without": 0
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_both_venue_rates",
+      "picks_with": 3,
+      "hit_rate_with": 66.7,
+      "picks_without": 2,
+      "hit_rate_without": 50
+    },
+    {
+      "market": "low_scoring",
+      "rule_id": "under25_confirm_quiet_h2h",
+      "picks_with": 2,
+      "hit_rate_with": 50,
+      "picks_without": 3,
+      "hit_rate_without": 66.7
+    }
+  ],
+  "qualification_funnel": [
+    {
+      "market": "btts",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 1680,
+      "below_min_odds": 0,
+      "below_min_edge": 649,
+      "below_probability_floor": 8,
+      "vetoed": 24,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 6
+    },
+    {
+      "market": "draw",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 1617,
+      "below_min_odds": 0,
+      "below_min_edge": 715,
+      "below_probability_floor": 35,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 2367,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 1617,
+      "below_min_odds": 0,
+      "below_min_edge": 737,
+      "below_probability_floor": 13,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 1652,
+      "below_min_odds": 0,
+      "below_min_edge": 694,
+      "below_probability_floor": 14,
+      "vetoed": 1,
+      "insufficient_confirms": 6,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "ALL",
+      "total": 2367,
+      "analysis_only_no_odds": 1652,
+      "below_min_odds": 0,
+      "below_min_edge": 674,
+      "below_probability_floor": 24,
+      "vetoed": 7,
+      "insufficient_confirms": 5,
+      "informational_only": 0,
+      "qualified": 5
+    },
+    {
+      "market": "all",
+      "league": "2. Bundesliga",
+      "total": 780,
+      "analysis_only_no_odds": 470,
+      "below_min_odds": 0,
+      "below_min_edge": 177,
+      "below_probability_floor": 2,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 130,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 35,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 35,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 130,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 36,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 36,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "2. Bundesliga",
+      "total": 130,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 35,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "3. Liga",
+      "total": 1002,
+      "analysis_only_no_odds": 835,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 167,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 167,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 167,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 167,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 167,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 167,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "3. Liga",
+      "total": 167,
+      "analysis_only_no_odds": 167,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "Bundesliga",
+      "total": 900,
+      "analysis_only_no_odds": 470,
+      "below_min_odds": 0,
+      "below_min_edge": 264,
+      "below_probability_floor": 9,
+      "vetoed": 3,
+      "insufficient_confirms": 2,
+      "informational_only": 150,
+      "qualified": 2
+    },
+    {
+      "market": "btts",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 52,
+      "below_probability_floor": 0,
+      "vetoed": 2,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 2
+    },
+    {
+      "market": "draw",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 54,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 150,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 55,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 51,
+      "below_probability_floor": 2,
+      "vetoed": 1,
+      "insufficient_confirms": 2,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Bundesliga",
+      "total": 150,
+      "analysis_only_no_odds": 94,
+      "below_min_odds": 0,
+      "below_min_edge": 52,
+      "below_probability_floor": 4,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "Championship",
+      "total": 1512,
+      "analysis_only_no_odds": 802,
+      "below_min_odds": 0,
+      "below_min_edge": 431,
+      "below_probability_floor": 16,
+      "vetoed": 4,
+      "insufficient_confirms": 4,
+      "informational_only": 252,
+      "qualified": 3
+    },
+    {
+      "market": "btts",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 166,
+      "below_min_odds": 0,
+      "below_min_edge": 83,
+      "below_probability_floor": 1,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 1
+    },
+    {
+      "market": "draw",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 159,
+      "below_min_odds": 0,
+      "below_min_edge": 83,
+      "below_probability_floor": 10,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 252,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 159,
+      "below_min_odds": 0,
+      "below_min_edge": 91,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 159,
+      "below_min_odds": 0,
+      "below_min_edge": 91,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 2,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Championship",
+      "total": 252,
+      "analysis_only_no_odds": 159,
+      "below_min_odds": 0,
+      "below_min_edge": 83,
+      "below_probability_floor": 3,
+      "vetoed": 3,
+      "insufficient_confirms": 2,
+      "informational_only": 0,
+      "qualified": 2
+    },
+    {
+      "market": "all",
+      "league": "La Liga",
+      "total": 948,
+      "analysis_only_no_odds": 490,
+      "below_min_odds": 0,
+      "below_min_edge": 278,
+      "below_probability_floor": 17,
+      "vetoed": 3,
+      "insufficient_confirms": 0,
+      "informational_only": 158,
+      "qualified": 2
+    },
+    {
+      "market": "btts",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 98,
+      "below_min_odds": 0,
+      "below_min_edge": 54,
+      "below_probability_floor": 2,
+      "vetoed": 2,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 2
+    },
+    {
+      "market": "draw",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 98,
+      "below_min_odds": 0,
+      "below_min_edge": 56,
+      "below_probability_floor": 4,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 158,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 98,
+      "below_min_odds": 0,
+      "below_min_edge": 60,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 98,
+      "below_min_odds": 0,
+      "below_min_edge": 56,
+      "below_probability_floor": 4,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "La Liga",
+      "total": 158,
+      "analysis_only_no_odds": 98,
+      "below_min_odds": 0,
+      "below_min_edge": 52,
+      "below_probability_floor": 7,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "La Liga 2",
+      "total": 1182,
+      "analysis_only_no_odds": 825,
+      "below_min_odds": 0,
+      "below_min_edge": 157,
+      "below_probability_floor": 3,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 197,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 165,
+      "below_min_odds": 0,
+      "below_min_edge": 31,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 165,
+      "below_min_odds": 0,
+      "below_min_edge": 32,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 197,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 165,
+      "below_min_odds": 0,
+      "below_min_edge": 32,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 165,
+      "below_min_odds": 0,
+      "below_min_edge": 30,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "La Liga 2",
+      "total": 197,
+      "analysis_only_no_odds": 165,
+      "below_min_odds": 0,
+      "below_min_edge": 32,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "League One",
+      "total": 1626,
+      "analysis_only_no_odds": 970,
+      "below_min_odds": 0,
+      "below_min_edge": 380,
+      "below_probability_floor": 2,
+      "vetoed": 3,
+      "insufficient_confirms": 0,
+      "informational_only": 271,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 200,
+      "below_min_odds": 0,
+      "below_min_edge": 68,
+      "below_probability_floor": 0,
+      "vetoed": 3,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 191,
+      "below_min_odds": 0,
+      "below_min_edge": 80,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 271,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 191,
+      "below_min_odds": 0,
+      "below_min_edge": 78,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 194,
+      "below_min_odds": 0,
+      "below_min_edge": 77,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "League One",
+      "total": 271,
+      "analysis_only_no_odds": 194,
+      "below_min_odds": 0,
+      "below_min_edge": 77,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "League Two",
+      "total": 1572,
+      "analysis_only_no_odds": 945,
+      "below_min_odds": 0,
+      "below_min_edge": 358,
+      "below_probability_floor": 3,
+      "vetoed": 2,
+      "insufficient_confirms": 1,
+      "informational_only": 262,
+      "qualified": 1
+    },
+    {
+      "market": "btts",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 189,
+      "below_min_odds": 0,
+      "below_min_edge": 72,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 189,
+      "below_min_odds": 0,
+      "below_min_edge": 71,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 262,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 189,
+      "below_min_odds": 0,
+      "below_min_edge": 73,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 189,
+      "below_min_odds": 0,
+      "below_min_edge": 72,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "League Two",
+      "total": 262,
+      "analysis_only_no_odds": 189,
+      "below_min_odds": 0,
+      "below_min_edge": 70,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 1,
+      "informational_only": 0,
+      "qualified": 1
+    },
+    {
+      "market": "all",
+      "league": "Ligue 1",
+      "total": 798,
+      "analysis_only_no_odds": 370,
+      "below_min_odds": 0,
+      "below_min_edge": 272,
+      "below_probability_floor": 15,
+      "vetoed": 7,
+      "insufficient_confirms": 1,
+      "informational_only": 133,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 74,
+      "below_min_odds": 0,
+      "below_min_edge": 52,
+      "below_probability_floor": 0,
+      "vetoed": 7,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 74,
+      "below_min_odds": 0,
+      "below_min_edge": 53,
+      "below_probability_floor": 6,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 133,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 74,
+      "below_min_odds": 0,
+      "below_min_edge": 57,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 74,
+      "below_min_odds": 0,
+      "below_min_edge": 57,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 1,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Ligue 1",
+      "total": 133,
+      "analysis_only_no_odds": 74,
+      "below_min_odds": 0,
+      "below_min_edge": 53,
+      "below_probability_floor": 6,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "Ligue 2",
+      "total": 816,
+      "analysis_only_no_odds": 425,
+      "below_min_odds": 0,
+      "below_min_edge": 248,
+      "below_probability_floor": 2,
+      "vetoed": 2,
+      "insufficient_confirms": 2,
+      "informational_only": 136,
+      "qualified": 1
+    },
+    {
+      "market": "btts",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 85,
+      "below_min_odds": 0,
+      "below_min_edge": 50,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 85,
+      "below_min_odds": 0,
+      "below_min_edge": 50,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 136,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 85,
+      "below_min_odds": 0,
+      "below_min_edge": 51,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 85,
+      "below_min_odds": 0,
+      "below_min_edge": 49,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 1,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Ligue 2",
+      "total": 136,
+      "analysis_only_no_odds": 85,
+      "below_min_odds": 0,
+      "below_min_edge": 48,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 1,
+      "informational_only": 0,
+      "qualified": 1
+    },
+    {
+      "market": "all",
+      "league": "Premier League",
+      "total": 900,
+      "analysis_only_no_odds": 435,
+      "below_min_odds": 0,
+      "below_min_edge": 305,
+      "below_probability_floor": 8,
+      "vetoed": 2,
+      "insufficient_confirms": 0,
+      "informational_only": 150,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 99,
+      "below_min_odds": 0,
+      "below_min_edge": 50,
+      "below_probability_floor": 0,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 84,
+      "below_min_odds": 0,
+      "below_min_edge": 61,
+      "below_probability_floor": 5,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 150,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 84,
+      "below_min_odds": 0,
+      "below_min_edge": 65,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 84,
+      "below_min_odds": 0,
+      "below_min_edge": 66,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Premier League",
+      "total": 150,
+      "analysis_only_no_odds": 84,
+      "below_min_odds": 0,
+      "below_min_edge": 63,
+      "below_probability_floor": 2,
+      "vetoed": 1,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "all",
+      "league": "Serie A",
+      "total": 1026,
+      "analysis_only_no_odds": 520,
+      "below_min_odds": 0,
+      "below_min_edge": 313,
+      "below_probability_floor": 14,
+      "vetoed": 5,
+      "insufficient_confirms": 1,
+      "informational_only": 171,
+      "qualified": 2
+    },
+    {
+      "market": "btts",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 104,
+      "below_min_odds": 0,
+      "below_min_edge": 57,
+      "below_probability_floor": 4,
+      "vetoed": 5,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 1
+    },
+    {
+      "market": "draw",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 104,
+      "below_min_odds": 0,
+      "below_min_edge": 63,
+      "below_probability_floor": 4,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 171,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 104,
+      "below_min_odds": 0,
+      "below_min_edge": 64,
+      "below_probability_floor": 3,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 104,
+      "below_min_odds": 0,
+      "below_min_edge": 64,
+      "below_probability_floor": 3,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Serie A",
+      "total": 171,
+      "analysis_only_no_odds": 104,
+      "below_min_odds": 0,
+      "below_min_edge": 65,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 1,
+      "informational_only": 0,
+      "qualified": 1
+    },
+    {
+      "market": "all",
+      "league": "Serie B",
+      "total": 1140,
+      "analysis_only_no_odds": 661,
+      "below_min_odds": 0,
+      "below_min_edge": 286,
+      "below_probability_floor": 3,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 190,
+      "qualified": 0
+    },
+    {
+      "market": "btts",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 145,
+      "below_min_odds": 0,
+      "below_min_edge": 45,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "draw",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 113,
+      "below_min_odds": 0,
+      "below_min_edge": 77,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "goals_2_3",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 0,
+      "below_min_odds": 0,
+      "below_min_edge": 0,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 190,
+      "qualified": 0
+    },
+    {
+      "market": "match_winner",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 113,
+      "below_min_odds": 0,
+      "below_min_edge": 75,
+      "below_probability_floor": 2,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "over25",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 145,
+      "below_min_odds": 0,
+      "below_min_edge": 45,
+      "below_probability_floor": 0,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    },
+    {
+      "market": "under25",
+      "league": "Serie B",
+      "total": 190,
+      "analysis_only_no_odds": 145,
+      "below_min_odds": 0,
+      "below_min_edge": 44,
+      "below_probability_floor": 1,
+      "vetoed": 0,
+      "insufficient_confirms": 0,
+      "informational_only": 0,
+      "qualified": 0
+    }
+  ],
+  "shadow_cohorts": [
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "ALL",
+      "n": 57,
+      "hits": 34,
+      "hit_rate": 59.6,
+      "avg_odds": 1.67,
+      "avg_ev": -0.0105,
+      "would_be_roi_percent": -1.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "La Liga",
+      "n": 11,
+      "hits": 8,
+      "hit_rate": 72.7,
+      "avg_odds": 1.73,
+      "avg_ev": -0.0074,
+      "would_be_roi_percent": 25.5
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "League One",
+      "n": 8,
+      "hits": 5,
+      "hit_rate": 62.5,
+      "avg_odds": 1.66,
+      "avg_ev": -0.0306,
+      "would_be_roi_percent": 2.2
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Bundesliga",
+      "n": 7,
+      "hits": 4,
+      "hit_rate": 57.1,
+      "avg_odds": 1.57,
+      "avg_ev": 0.0096,
+      "would_be_roi_percent": -13.9
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "2. Bundesliga",
+      "n": 7,
+      "hits": 5,
+      "hit_rate": 71.4,
+      "avg_odds": 1.55,
+      "avg_ev": -0.0158,
+      "would_be_roi_percent": 9.4
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Championship",
+      "n": 6,
+      "hits": 3,
+      "hit_rate": 50,
+      "avg_odds": 1.67,
+      "avg_ev": -0.017,
+      "would_be_roi_percent": -19.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Premier League",
+      "n": 6,
+      "hits": 2,
+      "hit_rate": 33.3,
+      "avg_odds": 1.64,
+      "avg_ev": -0.0103,
+      "would_be_roi_percent": -48.2
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Serie A",
+      "n": 5,
+      "hits": 2,
+      "hit_rate": 40,
+      "avg_odds": 1.82,
+      "avg_ev": 0.0019,
+      "would_be_roi_percent": -22.8
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "La Liga 2",
+      "n": 3,
+      "hits": 1,
+      "hit_rate": 33.3,
+      "avg_odds": 1.69,
+      "avg_ev": -0.0063,
+      "would_be_roi_percent": -50
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "League Two",
+      "n": 2,
+      "hits": 2,
+      "hit_rate": 100,
+      "avg_odds": 1.86,
+      "avg_ev": 0.02,
+      "would_be_roi_percent": 85.5
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Ligue 2",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.73,
+      "avg_ev": -0.0547,
+      "would_be_roi_percent": 73
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "btts",
+      "league": "Serie B",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.85,
+      "avg_ev": -0.0413,
+      "would_be_roi_percent": 85
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "ALL",
+      "n": 33,
+      "hits": 11,
+      "hit_rate": 33.3,
+      "avg_odds": 3.12,
+      "avg_ev": -0.0418,
+      "would_be_roi_percent": 2.8
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Championship",
+      "n": 6,
+      "hits": 1,
+      "hit_rate": 16.7,
+      "avg_odds": 3.18,
+      "avg_ev": -0.0263,
+      "would_be_roi_percent": -51.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "League One",
+      "n": 4,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 3.16,
+      "avg_ev": -0.0277,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Serie A",
+      "n": 4,
+      "hits": 1,
+      "hit_rate": 25,
+      "avg_odds": 3.1,
+      "avg_ev": -0.0482,
+      "would_be_roi_percent": -15
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "La Liga",
+      "n": 3,
+      "hits": 1,
+      "hit_rate": 33.3,
+      "avg_odds": 3.03,
+      "avg_ev": -0.051,
+      "would_be_roi_percent": 0
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Ligue 1",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 3.07,
+      "avg_ev": -0.0462,
+      "would_be_roi_percent": 103.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Ligue 2",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 2.96,
+      "avg_ev": -0.0624,
+      "would_be_roi_percent": 92.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "League Two",
+      "n": 3,
+      "hits": 1,
+      "hit_rate": 33.3,
+      "avg_odds": 3.23,
+      "avg_ev": -0.03,
+      "would_be_roi_percent": 6.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Serie B",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 3.15,
+      "avg_ev": -0.0343,
+      "would_be_roi_percent": 111.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "La Liga 2",
+      "n": 3,
+      "hits": 1,
+      "hit_rate": 33.3,
+      "avg_odds": 3.12,
+      "avg_ev": -0.0583,
+      "would_be_roi_percent": 6.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "draw",
+      "league": "Bundesliga",
+      "n": 1,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 3.1,
+      "avg_ev": -0.07,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "ALL",
+      "n": 45,
+      "hits": 26,
+      "hit_rate": 57.8,
+      "avg_odds": 1.5,
+      "avg_ev": -0.1192,
+      "would_be_roi_percent": -14.4
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "League One",
+      "n": 9,
+      "hits": 8,
+      "hit_rate": 88.9,
+      "avg_odds": 1.57,
+      "avg_ev": -0.1038,
+      "would_be_roi_percent": 39.6
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Serie B",
+      "n": 7,
+      "hits": 6,
+      "hit_rate": 85.7,
+      "avg_odds": 1.55,
+      "avg_ev": -0.0965,
+      "would_be_roi_percent": 31.4
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "League Two",
+      "n": 6,
+      "hits": 3,
+      "hit_rate": 50,
+      "avg_odds": 1.53,
+      "avg_ev": -0.0967,
+      "would_be_roi_percent": -23.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "La Liga",
+      "n": 6,
+      "hits": 2,
+      "hit_rate": 33.3,
+      "avg_odds": 1.46,
+      "avg_ev": -0.1187,
+      "would_be_roi_percent": -59.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Championship",
+      "n": 5,
+      "hits": 2,
+      "hit_rate": 40,
+      "avg_odds": 1.51,
+      "avg_ev": -0.1346,
+      "would_be_roi_percent": -43.6
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Bundesliga",
+      "n": 3,
+      "hits": 1,
+      "hit_rate": 33.3,
+      "avg_odds": 1.4,
+      "avg_ev": -0.1549,
+      "would_be_roi_percent": -63
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "2. Bundesliga",
+      "n": 3,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.45,
+      "avg_ev": -0.1569,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Premier League",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 1.47,
+      "avg_ev": -0.1411,
+      "would_be_roi_percent": -0.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Ligue 1",
+      "n": 2,
+      "hits": 1,
+      "hit_rate": 50,
+      "avg_odds": 1.32,
+      "avg_ev": -0.1355,
+      "would_be_roi_percent": -30
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "match_winner",
+      "league": "Ligue 2",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.45,
+      "avg_ev": -0.159,
+      "would_be_roi_percent": 45
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "ALL",
+      "n": 60,
+      "hits": 34,
+      "hit_rate": 56.7,
+      "avg_odds": 1.61,
+      "avg_ev": -0.0558,
+      "would_be_roi_percent": -11.2
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Bundesliga",
+      "n": 10,
+      "hits": 8,
+      "hit_rate": 80,
+      "avg_odds": 1.48,
+      "avg_ev": -0.0402,
+      "would_be_roi_percent": 17.4
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "League One",
+      "n": 8,
+      "hits": 5,
+      "hit_rate": 62.5,
+      "avg_odds": 1.77,
+      "avg_ev": -0.047,
+      "would_be_roi_percent": 6.2
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "2. Bundesliga",
+      "n": 8,
+      "hits": 3,
+      "hit_rate": 37.5,
+      "avg_odds": 1.6,
+      "avg_ev": -0.0637,
+      "would_be_roi_percent": -39.4
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "La Liga",
+      "n": 7,
+      "hits": 5,
+      "hit_rate": 71.4,
+      "avg_odds": 1.5,
+      "avg_ev": -0.0781,
+      "would_be_roi_percent": 3.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Ligue 1",
+      "n": 7,
+      "hits": 5,
+      "hit_rate": 71.4,
+      "avg_odds": 1.53,
+      "avg_ev": -0.0507,
+      "would_be_roi_percent": 4.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Premier League",
+      "n": 6,
+      "hits": 3,
+      "hit_rate": 50,
+      "avg_odds": 1.59,
+      "avg_ev": -0.0875,
+      "would_be_roi_percent": -21.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Championship",
+      "n": 5,
+      "hits": 2,
+      "hit_rate": 40,
+      "avg_odds": 1.69,
+      "avg_ev": -0.0422,
+      "would_be_roi_percent": -26.6
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "League Two",
+      "n": 4,
+      "hits": 2,
+      "hit_rate": 50,
+      "avg_odds": 1.76,
+      "avg_ev": -0.0392,
+      "would_be_roi_percent": -8.5
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Serie B",
+      "n": 2,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.74,
+      "avg_ev": -0.094,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Ligue 2",
+      "n": 1,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.65,
+      "avg_ev": -0.0579,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "Serie A",
+      "n": 1,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.8,
+      "avg_ev": 0.0049,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "over25",
+      "league": "La Liga 2",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.6,
+      "avg_ev": -0.0277,
+      "would_be_roi_percent": 60
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "ALL",
+      "n": 60,
+      "hits": 39,
+      "hit_rate": 65,
+      "avg_odds": 1.74,
+      "avg_ev": -0.0194,
+      "would_be_roi_percent": 12.9
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "League Two",
+      "n": 15,
+      "hits": 9,
+      "hit_rate": 60,
+      "avg_odds": 1.8,
+      "avg_ev": -0.0204,
+      "would_be_roi_percent": 8
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Championship",
+      "n": 10,
+      "hits": 5,
+      "hit_rate": 50,
+      "avg_odds": 1.74,
+      "avg_ev": -0.004,
+      "would_be_roi_percent": -14.9
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "League One",
+      "n": 9,
+      "hits": 7,
+      "hit_rate": 77.8,
+      "avg_odds": 1.72,
+      "avg_ev": -0.0062,
+      "would_be_roi_percent": 34.1
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Ligue 2",
+      "n": 6,
+      "hits": 3,
+      "hit_rate": 50,
+      "avg_odds": 1.74,
+      "avg_ev": -0.0012,
+      "would_be_roi_percent": -11.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Ligue 1",
+      "n": 5,
+      "hits": 4,
+      "hit_rate": 80,
+      "avg_odds": 1.68,
+      "avg_ev": -0.0461,
+      "would_be_roi_percent": 33.2
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Serie B",
+      "n": 4,
+      "hits": 3,
+      "hit_rate": 75,
+      "avg_odds": 1.63,
+      "avg_ev": -0.0349,
+      "would_be_roi_percent": 22.3
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "La Liga",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 1.69,
+      "avg_ev": -0.0498,
+      "would_be_roi_percent": 17.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Serie A",
+      "n": 3,
+      "hits": 3,
+      "hit_rate": 100,
+      "avg_odds": 1.8,
+      "avg_ev": -0.0068,
+      "would_be_roi_percent": 79.7
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "La Liga 2",
+      "n": 3,
+      "hits": 2,
+      "hit_rate": 66.7,
+      "avg_odds": 1.68,
+      "avg_ev": -0.045,
+      "would_be_roi_percent": 9
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Premier League",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.91,
+      "avg_ev": 0.0127,
+      "would_be_roi_percent": 91
+    },
+    {
+      "cohort": "rejected_by_min_ev",
+      "market": "under25",
+      "league": "Bundesliga",
+      "n": 1,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.67,
+      "avg_ev": -0.0929,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "ALL",
+      "n": 15,
+      "hits": 11,
+      "hit_rate": 73.3,
+      "avg_odds": 1.43,
+      "avg_ev": -0.0957,
+      "would_be_roi_percent": 4.5
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "Serie B",
+      "n": 3,
+      "hits": 3,
+      "hit_rate": 100,
+      "avg_odds": 1.41,
+      "avg_ev": -0.0988,
+      "would_be_roi_percent": 41.3
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "Premier League",
+      "n": 2,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.42,
+      "avg_ev": -0.0934,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "Bundesliga",
+      "n": 2,
+      "hits": 2,
+      "hit_rate": 100,
+      "avg_odds": 1.47,
+      "avg_ev": -0.0814,
+      "would_be_roi_percent": 47
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "League One",
+      "n": 2,
+      "hits": 2,
+      "hit_rate": 100,
+      "avg_odds": 1.42,
+      "avg_ev": -0.0932,
+      "would_be_roi_percent": 42
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "Serie A",
+      "n": 2,
+      "hits": 2,
+      "hit_rate": 100,
+      "avg_odds": 1.41,
+      "avg_ev": -0.0908,
+      "would_be_roi_percent": 41
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "La Liga",
+      "n": 2,
+      "hits": 1,
+      "hit_rate": 50,
+      "avg_odds": 1.44,
+      "avg_ev": -0.0849,
+      "would_be_roi_percent": -28
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "League Two",
+      "n": 1,
+      "hits": 0,
+      "hit_rate": 0,
+      "avg_odds": 1.42,
+      "avg_ev": -0.1196,
+      "would_be_roi_percent": -100
+    },
+    {
+      "cohort": "winner_p62_odds_140_210",
+      "market": "match_winner",
+      "league": "Championship",
+      "n": 1,
+      "hits": 1,
+      "hit_rate": 100,
+      "avg_odds": 1.4,
+      "avg_ev": -0.132,
+      "would_be_roi_percent": 40
+    }
+  ],
+  "league_divergence": [
+    {
+      "league": "Championship",
+      "n": 271,
+      "avg_divergence": 0.0663,
+      "over25": 0.0559,
+      "btts": 0.0497,
+      "match_winner": 0.0924
+    },
+    {
+      "league": "Ligue 2",
+      "n": 153,
+      "avg_divergence": 0.0604,
+      "over25": 0.0549,
+      "btts": 0.0494,
+      "match_winner": 0.077
+    },
+    {
+      "league": "Premier League",
+      "n": 183,
+      "avg_divergence": 0.0591,
+      "over25": 0.0383,
+      "btts": 0.0362,
+      "match_winner": 0.0977
+    },
+    {
+      "league": "Serie A",
+      "n": 201,
+      "avg_divergence": 0.0591,
+      "over25": 0.0423,
+      "btts": 0.0401,
+      "match_winner": 0.095
+    },
+    {
+      "league": "League Two",
+      "n": 219,
+      "avg_divergence": 0.058,
+      "over25": 0.0458,
+      "btts": 0.0482,
+      "match_winner": 0.0801
+    },
+    {
+      "league": "League One",
+      "n": 228,
+      "avg_divergence": 0.0555,
+      "over25": 0.0457,
+      "btts": 0.0458,
+      "match_winner": 0.0736
+    },
+    {
+      "league": "Ligue 1",
+      "n": 176,
+      "avg_divergence": 0.0551,
+      "over25": 0.0456,
+      "btts": 0.0342,
+      "match_winner": 0.0862
+    },
+    {
+      "league": "La Liga",
+      "n": 179,
+      "avg_divergence": 0.0499,
+      "over25": 0.0491,
+      "btts": 0.0333,
+      "match_winner": 0.0677
+    },
+    {
+      "league": "Bundesliga",
+      "n": 167,
+      "avg_divergence": 0.0487,
+      "over25": 0.0439,
+      "btts": 0.0317,
+      "match_winner": 0.0708
+    },
+    {
+      "league": "2. Bundesliga",
+      "n": 108,
+      "avg_divergence": 0.0479,
+      "over25": 0.0366,
+      "btts": 0.0337,
+      "match_winner": 0.0735
+    },
+    {
+      "league": "Serie B",
+      "n": 167,
+      "avg_divergence": 0.0478,
+      "over25": 0.036,
+      "btts": 0.0371,
+      "match_winner": 0.0609
+    },
+    {
+      "league": "La Liga 2",
+      "n": 96,
+      "avg_divergence": 0.0413,
+      "over25": 0.0355,
+      "btts": 0.029,
+      "match_winner": 0.0594
+    }
+  ],
+  "odds_coverage_weekly": [
+    {
+      "week_start": "2025-12-29T00:00:00Z",
+      "fixtures": 33,
+      "with_odds": 17,
+      "coverage_pct": 51.5,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-01-05T00:00:00Z",
+      "fixtures": 70,
+      "with_odds": 11,
+      "coverage_pct": 15.7,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-01-12T00:00:00Z",
+      "fixtures": 143,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-01-19T00:00:00Z",
+      "fixtures": 146,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-01-26T00:00:00Z",
+      "fixtures": 157,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-02-02T00:00:00Z",
+      "fixtures": 142,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-02-09T00:00:00Z",
+      "fixtures": 144,
+      "with_odds": 59,
+      "coverage_pct": 41,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-02-16T00:00:00Z",
+      "fixtures": 160,
+      "with_odds": 113,
+      "coverage_pct": 70.6,
+      "roi_eligible": true
+    },
+    {
+      "week_start": "2026-02-23T00:00:00Z",
+      "fixtures": 152,
+      "with_odds": 141,
+      "coverage_pct": 92.8,
+      "roi_eligible": true
+    },
+    {
+      "week_start": "2026-03-02T00:00:00Z",
+      "fixtures": 163,
+      "with_odds": 132,
+      "coverage_pct": 81,
+      "roi_eligible": true
+    },
+    {
+      "week_start": "2026-03-09T00:00:00Z",
+      "fixtures": 152,
+      "with_odds": 51,
+      "coverage_pct": 33.6,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-03-16T00:00:00Z",
+      "fixtures": 173,
+      "with_odds": 2,
+      "coverage_pct": 1.2,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-03-23T00:00:00Z",
+      "fixtures": 28,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-03-30T00:00:00Z",
+      "fixtures": 116,
+      "with_odds": 77,
+      "coverage_pct": 66.4,
+      "roi_eligible": true
+    },
+    {
+      "week_start": "2026-04-06T00:00:00Z",
+      "fixtures": 186,
+      "with_odds": 129,
+      "coverage_pct": 69.4,
+      "roi_eligible": true
+    },
+    {
+      "week_start": "2026-04-13T00:00:00Z",
+      "fixtures": 136,
+      "with_odds": 18,
+      "coverage_pct": 13.2,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-04-20T00:00:00Z",
+      "fixtures": 160,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    },
+    {
+      "week_start": "2026-04-27T00:00:00Z",
+      "fixtures": 106,
+      "with_odds": 0,
+      "coverage_pct": 0,
+      "roi_eligible": false
+    }
+  ],
+  "tickets": {
+    "overall": {
+      "kind": "all",
+      "count": 66,
+      "won": 26,
+      "hit_rate": 39.4,
+      "avg_odds": 5.19,
+      "avg_ev": 0.0902,
+      "flat_roi_percent": 48.9,
+      "kelly_roi_percent": 29.1
+    },
+    "per_kind": [
+      {
+        "kind": "single",
+        "count": 8,
+        "won": 5,
+        "hit_rate": 62.5,
+        "avg_odds": 1.94,
+        "avg_ev": 0.0772,
+        "flat_roi_percent": 18.5,
+        "kelly_roi_percent": 8.8
+      },
+      {
+        "kind": "2_leg",
+        "count": 33,
+        "won": 17,
+        "hit_rate": 51.5,
+        "avg_odds": 3.82,
+        "avg_ev": 0.0675,
+        "flat_roi_percent": 70.4,
+        "kelly_roi_percent": 73.4
+      },
+      {
+        "kind": "3_leg",
+        "count": 25,
+        "won": 4,
+        "hit_rate": 16,
+        "avg_odds": 8.03,
+        "avg_ev": 0.1244,
+        "flat_roi_percent": 30.4,
+        "kelly_roi_percent": -22.7
+      }
+    ]
+  }
+}
