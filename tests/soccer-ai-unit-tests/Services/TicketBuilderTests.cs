@@ -116,6 +116,33 @@ public class TicketBuilderTests
     }
 
     [Fact]
+    public void ByDefault_NoTicketHasMoreThanTwoLegs()
+    {
+        var legs = Enumerable.Range(1, 6)
+            .Select(i => Leg(i, $"League{i}", p: 0.62, odds: 1.85, ev: 0.147))
+            .ToList();
+
+        var tickets = TicketBuilder.Build([], legs, Strat, Opt);
+
+        tickets.Should().NotBeEmpty();
+        tickets.Should().OnlyContain(t => t.Legs.Count <= 2,
+            "3-leg tickets measured 16% hit / −22.7% Kelly in baseline v5");
+    }
+
+    [Fact]
+    public void ThreeLegs_StillPossible_WhenConfigured()
+    {
+        var opt = new ConfluenceOptions { MaxComboLegs = 3 };
+        var legs = Enumerable.Range(1, 6)
+            .Select(i => Leg(i, $"League{i}", p: 0.62, odds: 1.85, ev: 0.147))
+            .ToList();
+
+        var tickets = TicketBuilder.Build([], legs, Strat, opt);
+
+        tickets.Should().Contain(t => t.Legs.Count == 3);
+    }
+
+    [Fact]
     public void MarketFloor_Mapping()
     {
         TicketBuilder.MarketFloor("match_winner", Strat).Should().Be(2.10);

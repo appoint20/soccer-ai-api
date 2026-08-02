@@ -36,7 +36,10 @@ public sealed record Ticket(
 public static class TicketBuilder
 {
     public const int MinComboLegs = 2;
-    public const int MaxComboLegs = 3;
+
+    /// <summary>Hard ceiling; the effective limit is ConfluenceOptions.MaxComboLegs.</summary>
+    public const int MaxSupportedComboLegs = 3;
+
     public const int MaxComboTicketsPerDay = 5;
     public const double PreferredFavoriteProbability = 0.65;
 
@@ -106,7 +109,8 @@ public static class TicketBuilder
             }
         }
 
-        if (current.Count == MaxComboLegs || results.Count >= 200) return;
+        var maxLegs = Math.Clamp(opt.MaxComboLegs, MinComboLegs, MaxSupportedComboLegs);
+        if (current.Count == maxLegs || results.Count >= 200) return;
 
         for (var i = start; i < pool.Count; i++)
         {

@@ -34,6 +34,13 @@ public sealed class ConfluenceOptions
     public double KellyFraction { get; set; } = 0.25;
 
     /// <summary>
+    /// Maximum legs per combo ticket. Baseline v5 measured 3-leg tickets at a
+    /// 16% hit rate and −22.7% Kelly ROI vs 2-leg at 51.5% / +73.4%, so the
+    /// default caps combos at 2 legs.
+    /// </summary>
+    public int MaxComboLegs { get; set; } = 2;
+
+    /// <summary>
     /// Backtest ROI sections only include fixture weeks whose odds coverage
     /// reaches this share — low-coverage (blackout) weeks distort ROI.
     /// Brier/calibration always use all fixtures.

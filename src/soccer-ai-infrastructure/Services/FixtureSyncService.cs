@@ -90,6 +90,12 @@ public class FixtureSyncService(IApiFootballService apiService,
                 result.Created += leagueResult.Created;
                 result.LeaguesSynced++;
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                // Graceful shutdown (Ctrl+C) — not an error.
+                logger.LogInformation("Fixture sync interrupted by shutdown at league {LeagueId}", leagueId);
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to sync fixtures for league {LeagueId}", leagueId);
