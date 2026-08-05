@@ -38,7 +38,8 @@ public class GetBacktestReportHandler(
         string Cohort, string Market, string League, bool Won, double Odds, double? Ev, bool RoiEligible);
     private sealed record DivergenceRow(string League, string Market, double AbsModelMarketDivergence);
     private sealed record TicketResultRow(
-        int Legs, double TotalOdds, double CombinedP, double Ev, double KellyStake, bool Won);
+        int Legs, double TotalOdds, double CombinedP, double Ev, double KellyStake, bool Won,
+        bool IsSameMatchPair = false, bool ContainsGoals = false);
 
     public async Task<GetBacktestReportResponse> Handle(
         IReceiveContext<GetBacktestReportQuery> context,
@@ -146,6 +147,7 @@ public class GetBacktestReportHandler(
                 var analysisService = scope.ServiceProvider.GetRequiredService<IMatchAnalysisService>();
                 var daySingles = new List<(Services.Decisions.TicketLeg Leg, bool Won)>();
                 var dayComboLegs = new List<(Services.Decisions.TicketLeg Leg, bool Won)>();
+                var daySameMatchPairs = new List<(Services.Decisions.SameMatchPair Pair, bool Won)>();
 
                 foreach (var f in day)
                 {
@@ -274,6 +276,22 @@ public class GetBacktestReportHandler(
                                 Math.Round(winnerProb * pickOddsSafe.Value - 1, 4), roiEligible));
                         }
 
+                        // ── Same-match BTTS+Over2.5 pair (rescues sub-floor "sure" matches) ──
+                        // Uses the TRUE joint probability from the DC score matrix,
+                        // never p_btts × p_over25 (those markets are correlated).
+                        var jointP = analysisResult.Models.Poisson.BttsAndOver25;
+                        if (roiEligible && jointP > 0 &&
+                            Services.OddsGuard.IsValid(f.BttsYesOdds) &&
+                            Services.OddsGuard.IsValid(f.Over25Odds) &&
+                            auditByMarket.GetValueOrDefault("btts")?.ComboEligible == true &&
+                            auditByMarket.GetValueOrDefault("over25")?.ComboEligible == true)
+                        {
+                            daySameMatchPairs.Add((
+                                new Services.Decisions.SameMatchPair(
+                                    f.Id, league, jointP, f.BttsYesOdds!.Value, f.Over25Odds!.Value),
+                                bttsActual && over25Actual));
+                        }
+
                         // ── Combo-leg pool (EV > 0 + confluence; MinOdds is ticket-level) ──
                         if (roiEligible)
                         {
@@ -346,22 +364,31 @@ public class GetBacktestReportHandler(
                         .GroupBy(x => (x.Leg.FixtureId, x.Leg.Market))
                         .ToDictionary(g => g.Key, g => g.First().Won);
 
+                    var pairWonByFixture = daySameMatchPairs
+                        .GroupBy(x => x.Pair.FixtureId)
+                        .ToDictionary(g => g.Key, g => g.First().Won);
+
                     var built = Services.Decisions.TicketBuilder.Build(
                         daySingles.Select(x => x.Leg).ToList(),
                         dayComboLegs.Select(x => x.Leg).ToList(),
                         strategyOptions.Value,
-                        confluenceOptions.Value);
+                        confluenceOptions.Value,
+                        daySameMatchPairs.Select(x => x.Pair).ToList());
 
                     foreach (var ticket in built)
                     {
-                        var legWins = ticket.Legs
-                            .Select(l => wonByKey.GetValueOrDefault((l.FixtureId, l.Market), false))
-                            .ToList();
+                        var legWins = ticket.IsSameMatchPair
+                            ? [pairWonByFixture.GetValueOrDefault(ticket.Legs[0].FixtureId, false)]
+                            : ticket.Legs
+                                .Select(l => wonByKey.GetValueOrDefault((l.FixtureId, l.Market), false))
+                                .ToList();
                         var isFullWin = legWins.All(w => w);
 
                         ticketRows.Add(new TicketResultRow(
-                            ticket.Legs.Count, ticket.TotalOdds, ticket.CombinedProbability,
-                            ticket.Ev, ticket.KellyStake, isFullWin));
+                            ticket.IsSameMatchPair ? 1 : ticket.Legs.Count,
+                            ticket.TotalOdds, ticket.CombinedProbability,
+                            ticket.Ev, ticket.KellyStake, isFullWin,
+                            ticket.IsSameMatchPair, ticket.ContainsGoalsMarket));
 
                         // Legacy combo summary/weekly sections track multi-leg tickets.
                         if (!ticket.IsSingle)
@@ -579,9 +606,11 @@ public class GetBacktestReportHandler(
             Overall = Build("all", rows),
             PerKind =
             [
-                Build("single", rows.Where(t => t.Legs == 1).ToList()),
+                Build("single", rows.Where(t => t is { Legs: 1, IsSameMatchPair: false }).ToList()),
+                Build("same_match_goals", rows.Where(t => t.IsSameMatchPair).ToList()),
                 Build("2_leg", rows.Where(t => t.Legs == 2).ToList()),
-                Build("3_leg", rows.Where(t => t.Legs == 3).ToList())
+                Build("3_leg", rows.Where(t => t.Legs == 3).ToList()),
+                Build("contains_goals_market", rows.Where(t => t.ContainsGoals).ToList())
             ]
         };
     }

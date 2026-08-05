@@ -33,6 +33,9 @@ public sealed class PoissonModel
     public double BTTS { get; init; }
     public double Over25 { get; init; }
     public double TwoToThreeGoals { get; init; }
+
+    /// <summary>P(BTTS AND Over 2.5) — for same-match goals tickets.</summary>
+    public double BttsAndOver25 { get; init; }
     
     // High-scoring draw profile (1-1 + 2-2)
     public double ScoringDrawProb { get; init; }

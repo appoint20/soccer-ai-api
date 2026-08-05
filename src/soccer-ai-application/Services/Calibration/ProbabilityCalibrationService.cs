@@ -132,12 +132,15 @@ public sealed class ProbabilityCalibrationService(
                 })
             .ToListAsync();
 
-        var winnerSamples = rows.Select(r =>
-        {
-            var pickIsHome = r.HomeProb >= r.AwayProb;
-            var won = pickIsHome ? r.HomeGoal > r.AwayGoal : r.AwayGoal > r.HomeGoal;
-            return (Math.Max(r.HomeProb, r.AwayProb), won);
-        }).ToList();
+        // Side-win model: pool BOTH sides so the map covers the full probability
+        // range. Training only on the favourite (max) probability left the model
+        // blind below ~0.33 while it was still being applied to underdog
+        // probabilities at prediction time — the v6 overcorrection.
+        var winnerSamples = rows
+            .Select(r => (r.HomeProb, Won: r.HomeGoal > r.AwayGoal))
+            .Concat(rows.Select(r => (r.AwayProb, Won: r.AwayGoal > r.HomeGoal)))
+            .Select(s => (s.Item1, s.Won))
+            .ToList();
 
         var models = new Dictionary<string, FittedMarket>
         {
@@ -161,6 +164,7 @@ public sealed class ProbabilityCalibrationService(
         if (samples.Count < minSamples)
             return new FittedMarket(null, samples.Count);
 
+        // Shrinkage inside the model keeps thin probability ranges close to raw.
         var model = IsotonicRegression.Fit(samples.Select(s => (s.P, s.Y)).ToList());
         return new FittedMarket(model, samples.Count);
     }

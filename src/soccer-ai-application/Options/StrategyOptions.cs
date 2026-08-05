@@ -52,6 +52,13 @@ public sealed class StrategyOptions
     public double MinOddsGoals23 { get; set; } = 1.70;
     public double MinOdds1X2 { get; set; } = 2.10;
 
+    /// <summary>
+    /// Minimum price for a same-match BTTS+Over2.5 pair. Higher than the plain
+    /// goals floor because the pair exists to rescue "sure" matches priced
+    /// below 1.70 — it must clear a worthwhile price to be sellable.
+    /// </summary>
+    public double MinOddsSameMatchPair { get; set; } = 1.85;
+
     // ── G. Market flags ──
     public double ModelMarketDivergenceFlag { get; set; } = 0.15;
 

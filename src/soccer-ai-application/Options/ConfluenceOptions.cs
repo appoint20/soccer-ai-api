@@ -41,6 +41,12 @@ public sealed class ConfluenceOptions
     public int MaxComboLegs { get; set; } = 2;
 
     /// <summary>
+    /// Guaranteed daily slots for tickets containing BTTS or Over 2.5 — the
+    /// focus markets. They are selected before any other combo.
+    /// </summary>
+    public int MinGoalsMarketTickets { get; set; } = 3;
+
+    /// <summary>
     /// Backtest ROI sections only include fixture weeks whose odds coverage
     /// reaches this share — low-coverage (blackout) weeks distort ROI.
     /// Brier/calibration always use all fixtures.

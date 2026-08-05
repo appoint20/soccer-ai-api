@@ -41,6 +41,7 @@ public sealed class ProbabilityPipeline(
             BTTS = dc.BothTeamScoredGoal,
             Over25 = dc.Over25,
             TwoToThreeGoals = dc.TwoToThreeGoals,
+            BttsAndOver25 = dc.BttsAndOver25,
             IsValid = true
         };
 

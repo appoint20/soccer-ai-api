@@ -70,7 +70,7 @@ public static class DixonColesMath
     /// </summary>
     public static MatrixMarkets ComputeMarkets(double[,] matrix)
     {
-        double homeWin = 0, draw = 0, awayWin = 0, over25 = 0, btts = 0, goals23 = 0;
+        double homeWin = 0, draw = 0, awayWin = 0, over25 = 0, btts = 0, goals23 = 0, bttsAndOver25 = 0;
 
         var maxH = matrix.GetLength(0) - 1;
         var maxA = matrix.GetLength(1) - 1;
@@ -88,9 +88,14 @@ public static class DixonColesMath
             if (totalGoals >= 3) over25 += p;
             if (totalGoals is 2 or 3) goals23 += p;
             if (h >= 1 && a >= 1) btts += p;
+
+            // Joint BTTS ∧ Over 2.5 — read directly off the matrix. These two
+            // markets are strongly correlated, so p_btts × p_over25 would badly
+            // understate the true chance of a same-match double.
+            if (h >= 1 && a >= 1 && totalGoals >= 3) bttsAndOver25 += p;
         }
 
-        return new MatrixMarkets(homeWin, draw, awayWin, over25, btts, goals23);
+        return new MatrixMarkets(homeWin, draw, awayWin, over25, btts, goals23, bttsAndOver25);
     }
 }
 
@@ -101,4 +106,5 @@ public readonly record struct MatrixMarkets(
     double AwayWin,
     double Over25,
     double Btts,
-    double TwoToThreeGoals);
+    double TwoToThreeGoals,
+    double BttsAndOver25);

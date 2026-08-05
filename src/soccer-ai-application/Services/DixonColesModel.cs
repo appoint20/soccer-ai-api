@@ -72,6 +72,7 @@ public sealed class DixonColesModel(
                 Over25 = markets.Over25,
                 BothTeamScoredGoal = markets.Btts,
                 TwoToThreeGoals = markets.TwoToThreeGoals,
+                BttsAndOver25 = markets.BttsAndOver25,
                 HomeExpectedGoals = lambdaHome,
                 AwayExpectedGoals = lambdaAway
             };
