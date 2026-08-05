@@ -16,15 +16,32 @@ public class IsotonicRegressionTests
     [Fact]
     public void Fit_OverconfidentPredictions_PulledTowardObservedRate()
     {
-        // Model says 80% but hits only ~50%
+        // Model says 80% but hits only ~50%. priorStrength 0 = pure PAV, so this
+        // asserts the underlying maths; shrinkage is covered by IsotonicShrinkageTests.
+        var samples = Enumerable.Range(0, 200)
+            .Select(i => (0.80 + (i % 10) * 0.001, i % 2 == 0))
+            .ToList();
+
+        var model = IsotonicRegression.Fit(
+            samples.Select(s => (s.Item1, s.Item2)).ToList(), priorStrength: 0);
+
+        model.Predict(0.80).Should().BeApproximately(0.50, 0.05,
+            "isotonic maps overconfident predictions down to observed frequency");
+    }
+
+    [Fact]
+    public void Fit_WithDefaultShrinkage_MovesPartwayOnly()
+    {
+        // Same data, default prior (50): trust = 200/250 = 0.8
+        // → 0.8 × 0.50 + 0.2 × 0.80 = 0.56
         var samples = Enumerable.Range(0, 200)
             .Select(i => (0.80 + (i % 10) * 0.001, i % 2 == 0))
             .ToList();
 
         var model = IsotonicRegression.Fit(samples.Select(s => (s.Item1, s.Item2)).ToList());
 
-        model.Predict(0.80).Should().BeApproximately(0.50, 0.05,
-            "isotonic maps overconfident predictions down to observed frequency");
+        model.Predict(0.80).Should().BeApproximately(0.56, 0.02,
+            "the correction is weighted by how much data supports it");
     }
 
     [Fact]
@@ -63,12 +80,24 @@ public class IsotonicRegressionTests
     [Fact]
     public void Fit_KnownPavExample_PoolsViolators()
     {
-        // (0.1,F) (0.2,T) (0.3,F) (0.4,T): the 0.2T/0.3F violation pools to 0.5
-        var model = IsotonicRegression.Fit([(0.1, false), (0.2, true), (0.3, false), (0.4, true)]);
+        // (0.1,F) (0.2,T) (0.3,F) (0.4,T): the 0.2T/0.3F violation pools to 0.5.
+        // priorStrength 0 isolates the PAV maths from the small-sample brake.
+        var model = IsotonicRegression.Fit(
+            [(0.1, false), (0.2, true), (0.3, false), (0.4, true)], priorStrength: 0);
 
         model.Predict(0.25).Should().BeApproximately(0.5, 1e-9);
         model.Predict(0.05).Should().BeApproximately(0.01, 1e-9, "leading all-false block clamps to floor");
         model.Predict(0.9).Should().BeApproximately(0.99, 1e-9, "trailing all-true block clamps to ceiling");
+    }
+
+    [Fact]
+    public void Fit_FourSamples_WithDefaultShrinkage_BarelyMovesTheInput()
+    {
+        // The whole point of the brake: 4 observations must not rewrite a probability.
+        var model = IsotonicRegression.Fit([(0.1, false), (0.2, true), (0.3, false), (0.4, true)]);
+
+        model.Predict(0.25).Should().BeApproximately(0.25, 0.03,
+            "with n=2 in the covering block the raw value is kept almost entirely");
     }
 }
 
