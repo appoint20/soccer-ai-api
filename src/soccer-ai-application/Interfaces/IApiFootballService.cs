@@ -62,10 +62,29 @@ public record TeamCoach(
     string Name,
     DateTimeOffset? Appointed);
 
+/// <summary>Stats + red cards for one fixture, from a single batched response.</summary>
+public record FixtureDetail(
+    int FixtureId,
+    FixtureStats? HomeStats,
+    FixtureStats? AwayStats,
+    int HomeRedCards,
+    int AwayRedCards);
+
 public interface IApiFootballService
 {
     Task<List<ApiFixture>> GetFixturesAsync(int leagueId, int season);
     Task<(FixtureStats? Home, FixtureStats? Away)> GetBothTeamStatsAsync(int fixtureId);
+
+    /// <summary>
+    /// Batched fixture details: up to 20 fixtures per request via /fixtures?ids=,
+    /// returning statistics AND events (red cards) in ONE call instead of two
+    /// calls per fixture. Keyed by API fixture id.
+    /// </summary>
+    Task<Dictionary<int, FixtureDetail>> GetFixtureDetailsBatchAsync(
+        IReadOnlyCollection<int> fixtureIds, CancellationToken ct = default);
+
+    /// <summary>Whether the league+season provides odds (from /leagues coverage).</summary>
+    Task<bool> HasOddsCoverageAsync(int leagueId, int season, CancellationToken ct = default);
     Task<FixtureOdds?> GetFixtureOddsAsync(int fixtureId);
 
     /// <summary>ALL bookmakers' prices for the supported markets (line shopping).</summary>

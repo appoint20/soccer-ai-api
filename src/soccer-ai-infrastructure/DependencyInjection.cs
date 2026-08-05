@@ -145,6 +145,9 @@ public static class DependencyInjection
 
     private static void AddExternalApis(this IServiceCollection services, IConfiguration configuration)
     {
+        // Quota is per API key — one tracker for the whole process.
+        services.AddSingleton<IApiQuotaTracker, ApiQuotaTracker>();
+
         services.AddHttpClient<IApiFootballService, ApiFootballService>((provider, client) =>
         {
             var options = configuration.GetSection("ApiFootball").Get<FootballApiOptions>();

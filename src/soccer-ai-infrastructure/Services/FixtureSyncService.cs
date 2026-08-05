@@ -14,10 +14,18 @@ namespace SoccerAi.Infrastructure.Services;
 public class FixtureSyncService(IApiFootballService apiService,
     IApplicationDbContext dbContext,
     ILeagueTierService leagueTiers,
+    IApiQuotaTracker quota,
     ILogger<FixtureSyncService> logger)
     : IFixtureSyncService
 {
     private HashSet<int>? _existingTeamIds;
+
+    /// <summary>
+    /// Odds-coverage cache per (league, season). Checked ONCE via /leagues before
+    /// spending calls on /odds for a competition the API never prices.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int League, int Season), bool>
+        OddsCoverageCache = new();
 
     /// <summary>
     /// Get current football season (starts in July)
@@ -136,6 +144,13 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", targetLeagueId, season);
 
+        // Coverage check (one call per league+season, cached): skip odds work
+        // entirely for competitions API-Football does not price.
+        var hasOddsCoverage = await HasOddsCoverageCachedAsync(targetLeagueId, season, ct);
+        if (!hasOddsCoverage)
+            logger.LogWarning("[Coverage] League {LeagueId} season {Season} has no odds coverage — skipping all odds calls",
+                targetLeagueId, season);
+
         // Define status categories
         var completedStatuses = new[] { "FT", "AET", "PEN", "ABD", "AWD", "WO" };
         var liveStatuses = new[] { "1H", "HT", "2H", "ET", "BT", "P", "LIVE" };
@@ -171,7 +186,7 @@ public class FixtureSyncService(IApiFootballService apiService,
                 dbContext.Fixtures.Add(fixture);
                 result.Created++;
             }
-            else if (existingFixture.HomeWinOdds == null)
+            else if (existingFixture.HomeWinOdds == null && hasOddsCoverage)
             {
                 // Existing but no odds yet - try to fetch
                 await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
@@ -193,6 +208,19 @@ public class FixtureSyncService(IApiFootballService apiService,
                         liveStatuses.Contains(f.StatusShort) ||
                         cancelledStatuses.Contains(f.StatusShort))
             .ToList();
+
+        // ── Batched detail prefetch: ONE /fixtures?ids= call per 20 fixtures
+        //    replaces 2 calls (statistics + events) PER fixture. ──
+        var detailCandidates = recentOrActiveFixtures
+            .Where(f => completedStatuses.Contains(f.StatusShort) || liveStatuses.Contains(f.StatusShort))
+            .Select(f => f.ApiId)
+            .ToList();
+
+        Dictionary<int, FixtureDetail> batchedDetails = [];
+        if (quota.IsDailyQuotaCritical)
+            logger.LogWarning("[Quota] Daily budget critical — skipping fixture detail enrichment this run");
+        else
+            batchedDetails = await apiService.GetFixtureDetailsBatchAsync(detailCandidates, ct);
 
         // Pre-fetch existing team IDs globally and cache per request to avoid duplicate team errors
         if (_existingTeamIds == null)
@@ -221,7 +249,9 @@ public class FixtureSyncService(IApiFootballService apiService,
                 if (existingFixture == null)
                 {
                     // Fixture we never captured - create with full enrichment
-                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, targetLeagueId, season, ct, fetchOdds: isWithinOddsWindow);
+                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, targetLeagueId, season, ct,
+                        fetchOdds: isWithinOddsWindow && hasOddsCoverage,
+                        prefetched: batchedDetails.GetValueOrDefault(apiFixture.ApiId));
                     if (fixture != null)
                     {
                         dbContext.Fixtures.Add(fixture);
@@ -240,7 +270,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                     // 3. it's very recent (within 48h) to ensure we get final stats/odds corrections
                     if (statusChanged || scoreChanged || liveStatuses.Contains(apiFixture.StatusShort) || isVeryRecent)
                     {
-                        await UpdateCompletedFixtureAsync(existingFixture, apiFixture, targetLeagueId, ct);
+                        await UpdateCompletedFixtureAsync(existingFixture, apiFixture, targetLeagueId, ct,
+                            batchedDetails.GetValueOrDefault(apiFixture.ApiId));
                         result.Updated++;
                     }
                     
@@ -248,7 +279,7 @@ public class FixtureSyncService(IApiFootballService apiService,
                     // still upcoming (capture line movement + best price).
                     var needsOdds = !Application.Services.OddsGuard.IsValid(existingFixture.HomeWinOdds);
                     var isUpcoming = apiFixture.Date >= DateTimeOffset.UtcNow;
-                    if (isWithinOddsWindow && (needsOdds || isUpcoming))
+                    if (hasOddsCoverage && isWithinOddsWindow && (needsOdds || isUpcoming))
                     {
                         await UpdateFixtureOddsAsync(existingFixture, apiFixture.ApiId);
                         result.Updated++;
@@ -260,8 +291,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                 logger.LogWarning(ex, "Failed to process recent/active fixture {ApiId} — skipping.", apiFixture.ApiId);
             }
 
-            // Rate limiting
-            await Task.Delay(50, ct);
+            // Quota-aware spacing (grows as the per-minute budget shrinks)
+            await Task.Delay(quota.SuggestedDelay, ct);
         }
 
         // Phase 3: Sync Coaches for all teams in the league (once per season sync to keep it fresh)
@@ -374,7 +405,7 @@ public class FixtureSyncService(IApiFootballService apiService,
 
             await UpdateFixtureOddsAsync(fixture, fixture.ApiId);
             captured++;
-            await Task.Delay(150, ct); // API-quota friendliness
+            await Task.Delay(quota.SuggestedDelay, ct); // quota-aware spacing
         }
 
         if (captured > 0)
@@ -422,6 +453,17 @@ public class FixtureSyncService(IApiFootballService apiService,
         {
             logger.LogWarning(ex, "Odds coverage report failed for league {LeagueId}", leagueId);
         }
+    }
+
+    /// <summary>One /leagues coverage call per league+season, cached for the process lifetime.</summary>
+    private async Task<bool> HasOddsCoverageCachedAsync(int leagueId, int season, CancellationToken ct)
+    {
+        if (OddsCoverageCache.TryGetValue((leagueId, season), out var cached))
+            return cached;
+
+        var covered = await apiService.HasOddsCoverageAsync(leagueId, season, ct);
+        OddsCoverageCache[(leagueId, season)] = covered;
+        return covered;
     }
 
     private async Task UpdateFixtureOddsAsync(Fixture fixture, int apiId)
@@ -473,7 +515,7 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// <summary>
     /// Update previously captured fixture with match results (preserve odds)
     /// </summary>
-    private async Task UpdateCompletedFixtureAsync(Fixture fixture, ApiFixture apiFixture, int leagueId, CancellationToken ct)
+    private async Task UpdateCompletedFixtureAsync(Fixture fixture, ApiFixture apiFixture, int leagueId, CancellationToken ct, FixtureDetail? prefetched = null)
     {
         // Always update score and status — even if stats API fails (rate limits etc.)
         fixture.Status = apiFixture.StatusShort; // preserve AET/PEN/FT accurately
@@ -491,25 +533,36 @@ public class FixtureSyncService(IApiFootballService apiService,
         fixture.HtHomeGoalAvg = avgs.HtHomeGoalAvg;
         fixture.HtAwayGoalAvg = avgs.HtAwayGoalAvg;
 
-        // Fetch detailed stats — if this fails (API rate limits etc.) we still keep the score above
+        // Stats + red cards come from the batched /fixtures?ids= prefetch (1 call
+        // per 20 fixtures). Only fall back to per-fixture calls when the batch had
+        // no row for this fixture AND quota allows it.
         try
         {
-            var stats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
-            fixture.HomeShots = stats.Home?.TotalShots ?? 0;
-            fixture.AwayShots = stats.Away?.TotalShots ?? 0;
-            fixture.HomeShotsOnTarget = stats.Home?.ShotsOnGoal ?? 0;
-            fixture.AwayShotsOnTarget = stats.Away?.ShotsOnGoal ?? 0;
-            fixture.HomeBallPossession = stats.Home?.BallPossession;
-            fixture.AwayBallPossession = stats.Away?.BallPossession;
-            fixture.HomePassesAccurate = stats.Home?.PassesAccurate;
-            fixture.AwayPassesAccurate = stats.Away?.PassesAccurate;
-            fixture.HomeXg = stats.Home?.ExpectedGoals ?? 0;
-            fixture.AwayXg = stats.Away?.ExpectedGoals ?? 0;
+            var detail = prefetched;
+            if (detail is null && !quota.IsDailyQuotaCritical)
+            {
+                var stats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
+                var redCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
+                detail = new FixtureDetail(apiFixture.ApiId, stats.Home, stats.Away,
+                    redCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0),
+                    redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0));
+            }
 
-            // Fetch Red Cards
-            var redCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
-            fixture.HomeRedCards = redCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0);
-            fixture.AwayRedCards = redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0);
+            if (detail is not null)
+            {
+                fixture.HomeShots = detail.HomeStats?.TotalShots ?? 0;
+                fixture.AwayShots = detail.AwayStats?.TotalShots ?? 0;
+                fixture.HomeShotsOnTarget = detail.HomeStats?.ShotsOnGoal ?? 0;
+                fixture.AwayShotsOnTarget = detail.AwayStats?.ShotsOnGoal ?? 0;
+                fixture.HomeBallPossession = detail.HomeStats?.BallPossession;
+                fixture.AwayBallPossession = detail.AwayStats?.BallPossession;
+                fixture.HomePassesAccurate = detail.HomeStats?.PassesAccurate;
+                fixture.AwayPassesAccurate = detail.AwayStats?.PassesAccurate;
+                fixture.HomeXg = detail.HomeStats?.ExpectedGoals ?? 0;
+                fixture.AwayXg = detail.AwayStats?.ExpectedGoals ?? 0;
+                fixture.HomeRedCards = detail.HomeRedCards;
+                fixture.AwayRedCards = detail.AwayRedCards;
+            }
         }
         catch (Exception ex)
         {
@@ -525,26 +578,31 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// <param name="apiFixture"></param>
     /// <param name="leagueId"></param>
     /// <param name="season"></param>
-    private async Task<Fixture?> CreateEnrichedFixtureAsync(ApiFixture apiFixture, int leagueId, int season, CancellationToken ct, bool fetchOdds = true)
+    private async Task<Fixture?> CreateEnrichedFixtureAsync(ApiFixture apiFixture, int leagueId, int season, CancellationToken ct, bool fetchOdds = true, FixtureDetail? prefetched = null)
     {
         try
         {
-            // 1. Fetch all data in parallel where possible (or sequentially if simple)
-            var stats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
-            
+            // 1. Stats + red cards from the batched prefetch when available
+            var detail = prefetched;
+            if (detail is null && !quota.IsDailyQuotaCritical)
+            {
+                var fetchedStats = await apiService.GetBothTeamStatsAsync(apiFixture.ApiId);
+                var fetchedCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
+                detail = new FixtureDetail(apiFixture.ApiId, fetchedStats.Home, fetchedStats.Away,
+                    fetchedCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0),
+                    fetchedCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0));
+            }
+
+            var stats = (detail?.HomeStats, detail?.AwayStats);
             var apiOdds = fetchOdds ? await apiService.GetFixtureOddsAsync(apiFixture.ApiId) : null;
 
             // 2. Process data (Domain Logic)
             var averages = await CalculateAveragesAsync(
                 apiFixture.HomeTeamApiId, apiFixture.AwayTeamApiId, leagueId, apiFixture.Date, ct);
 
-            // 3. Fetch Red Cards
-            var redCards = await apiService.GetFixtureRedCardsAsync(apiFixture.ApiId);
-            var homeRed = redCards.GetValueOrDefault(apiFixture.HomeTeamApiId, 0);
-            var awayRed = redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0);
-
-            // 4. Build Entity
-            return BuildFixtureEntity(apiFixture, leagueId, season, stats, apiOdds, averages, homeRed, awayRed);
+            // 3. Build Entity
+            return BuildFixtureEntity(apiFixture, leagueId, season, stats, apiOdds, averages,
+                detail?.HomeRedCards ?? 0, detail?.AwayRedCards ?? 0);
         }
         catch (Exception ex)
         {
@@ -652,6 +710,12 @@ public class FixtureSyncService(IApiFootballService apiService,
             .Where(t => t.LeagueId == leagueId)
             .ToListAsync(ct);
 
+        if (quota.IsDailyQuotaCritical)
+        {
+            logger.LogWarning("[Quota] Daily budget critical — skipping coach sync for league {LeagueId}", leagueId);
+            return;
+        }
+
         foreach (var team in teams)
         {
             // Only sync if never synced or synced more than 7 days ago
@@ -665,8 +729,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                     team.UpdatedAt = DateTimeOffset.UtcNow;
                 }
                 
-                // Be careful with rate limits
-                await Task.Delay(100, ct);
+                // Quota-aware spacing
+                await Task.Delay(quota.SuggestedDelay, ct);
             }
         }
     }

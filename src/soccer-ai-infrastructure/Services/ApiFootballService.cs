@@ -7,7 +7,10 @@ using SoccerAi.Application.Models;
 
 namespace SoccerAi.Infrastructure.Services;
 
-public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> logger) : IApiFootballService
+public class ApiFootballService(
+    HttpClient client,
+    IApiQuotaTracker quota,
+    ILogger<ApiFootballService> logger) : IApiFootballService
 {
     /// <summary>
     /// Fetch completed fixtures for a league/season
@@ -111,6 +114,117 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         {
             logger.LogWarning(ex, "Failed to fetch stats for fixture {FixtureId}", fixtureId);
             return (null, null);
+        }
+    }
+
+    /// <summary>Max fixture ids per /fixtures?ids= request (API-Football limit).</summary>
+    public const int MaxFixtureIdsPerBatch = 20;
+
+    public async Task<Dictionary<int, FixtureDetail>> GetFixtureDetailsBatchAsync(
+        IReadOnlyCollection<int> fixtureIds, CancellationToken ct = default)
+    {
+        var result = new Dictionary<int, FixtureDetail>();
+        if (fixtureIds.Count == 0) return result;
+
+        foreach (var batch in fixtureIds.Distinct().Chunk(MaxFixtureIdsPerBatch))
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                var ids = string.Join('-', batch);
+                var response = await GetApiResponseAsync($"/fixtures?ids={ids}", ct);
+                if (response is null) continue;
+
+                if (!response.Value.TryGetProperty("response", out var data)) continue;
+
+                foreach (var item in data.EnumerateArray())
+                {
+                    if (!item.TryGetProperty("fixture", out var fx) ||
+                        !fx.TryGetProperty("id", out var idEl)) continue;
+
+                    var fixtureId = idEl.GetInt32();
+                    var homeTeamId = item.GetProperty("teams").GetProperty("home").GetProperty("id").GetInt32();
+
+                    // ── statistics (present when the plan/coverage includes them) ──
+                    FixtureStats? home = null, away = null;
+                    if (item.TryGetProperty("statistics", out var statsArray) &&
+                        statsArray.ValueKind == JsonValueKind.Array &&
+                        statsArray.GetArrayLength() >= 2)
+                    {
+                        home = ParseTeamStats(statsArray[0]);
+                        away = ParseTeamStats(statsArray[1]);
+                    }
+
+                    // ── events → red cards per side ──
+                    int homeRed = 0, awayRed = 0;
+                    if (item.TryGetProperty("events", out var events) &&
+                        events.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var ev in events.EnumerateArray())
+                        {
+                            if (!ev.TryGetProperty("detail", out var detailEl)) continue;
+                            var detail = detailEl.GetString() ?? "";
+                            if (!detail.Contains("Red Card", StringComparison.OrdinalIgnoreCase)) continue;
+
+                            var teamId = ev.GetProperty("team").GetProperty("id").GetInt32();
+                            if (teamId == homeTeamId) homeRed++;
+                            else awayRed++;
+                        }
+                    }
+
+                    result[fixtureId] = new FixtureDetail(fixtureId, home, away, homeRed, awayRed);
+                }
+            }
+            catch (Application.Exceptions.ExternalApiException)
+            {
+                throw; // rate limit — let the caller abort cleanly
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Batched fixture detail fetch failed for {Count} ids", batch.Length);
+            }
+        }
+
+        logger.LogInformation(
+            "[ApiBatch] Fetched details for {Found}/{Requested} fixtures in {Calls} call(s) (was {Old} calls)",
+            result.Count, fixtureIds.Count,
+            (int)Math.Ceiling(fixtureIds.Count / (double)MaxFixtureIdsPerBatch), fixtureIds.Count * 2);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Coverage check: does this league+season actually provide odds?
+    /// Prevents pointless /odds calls for leagues the API never prices.
+    /// </summary>
+    public async Task<bool> HasOddsCoverageAsync(int leagueId, int season, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync($"/leagues?id={leagueId}&season={season}", ct);
+            if (response is null) return true; // unknown → don't block syncing
+
+            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+                return true;
+
+            foreach (var seasonEl in data[0].GetProperty("seasons").EnumerateArray())
+            {
+                if (seasonEl.GetProperty("year").GetInt32() != season) continue;
+                if (!seasonEl.TryGetProperty("coverage", out var coverage)) return true;
+                if (!coverage.TryGetProperty("odds", out var odds)) return true;
+                return odds.ValueKind != JsonValueKind.False;
+            }
+
+            return true;
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Coverage check failed for league {LeagueId} season {Season}", leagueId, season);
+            return true; // fail open
         }
     }
 
@@ -504,6 +618,10 @@ public class ApiFootballService(HttpClient client, ILogger<ApiFootballService> l
         try
         {
             using var response = await client.GetAsync(relativeUrl, ct);
+
+            // Quota headers first: they tell us how close we are BEFORE a 429.
+            quota.Update(name =>
+                response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null);
 
             // Rate-limit detection
             if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
