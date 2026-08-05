@@ -6,14 +6,16 @@
 
 ## Short answer
 
-**The engine is finished. The product is not.**
+**The engine works and the product now exposes it.** Blockers 1 and 2 are closed.
+Blocker 3 is odds coverage, which is calendar time, not code.
 
-The maths, the calibration, the rules and the ticket builder all work and are tested.
-But they only run inside the **backtest**. A real user calling the API today does
-**not** get them. That is the gap.
+`GET /api/picks` serves the day's tickets and confidence picks. Selection runs
+through `PickSelector` — the same component the backtest measures — so what a
+user sees and what the report measured are one code path, not two that happen
+to agree.
 
-**My estimate: 3 blockers stand between you and go-live.** None of them is maths.
-All three are plumbing and data.
+**What is left before real money:** result tracking, enough odds coverage to
+fill a daily board, and a re-run of the backtest at the new 3% edge.
 
 ---
 
@@ -28,13 +30,13 @@ All three are plumbing and data.
 | Strategic signals (A–H) | ✅ Done | gate only — never touch probabilities |
 | Confluence rule engine | ✅ Done | confirm / veto / audit trail |
 | EV + Kelly staking | ✅ Done | quarter-Kelly |
-| Ticket builder | ⚠️ Built, **not wired** | only called by the backtest |
-| Confidence picks (Product 2) | ⚠️ Built, **not wired** | only computed in the backtest report |
+| Ticket builder | ✅ Wired | `PickSelector` → `TicketBuilder`, shared by backtest and API |
+| Confidence picks (Product 2) | ✅ Wired | served by `/api/picks` |
 | Backtest report | ✅ Done | 12 sections, 30-week runs |
 | Sync worker | ✅ Running | 03:30 + 15:30 UTC, resumable |
 | Odds capture worker | ✅ Running | 30-min loop, T-24h / T-1h |
 | CLI tools | ✅ Done | backtest, sync, backfill, odds-coverage |
-| REST API | ⚠️ Partial | 6 controllers, but no "today's picks" endpoint |
+| REST API | ✅ Done | 7 controllers incl. `GET /api/picks` |
 | Auth | ⚠️ Basic | login only — untouched by design |
 | Tests | ✅ 190 tests | 21 files, maths core well covered |
 
@@ -54,65 +56,73 @@ All three are plumbing and data.
 | Upcoming fixtures (not started) | 312 |
 | Database size | 228 MB (SQLite) |
 
-### Odds coverage — this is the problem
+### Odds coverage — the remaining blocker
 
-| Market | Snapshots with a price | Coverage |
-|---|---|---|
-| Home win | 3,676 | **35.5 %** |
-| Over 2.5 | 3,606 | **34.8 %** |
-| BTTS | 1,418 | **13.7 %** |
-| Under 2.5 | 0 | **0.0 %** |
+Measured on the `Fixtures` table (the source the gate actually reads):
 
-**No odds = no EV = no pick.** Your two main markets are the two worst covered.
-BTTS at 13.7 % means the model can only look at 1 match in 7.
+| Market | Fixtures with a valid price | All history | Last 2,000 finished |
+|---|---|---|---|
+| Home / Draw / Away | ~10,800 | 44 % | 35 % |
+| Over 2.5 | 10,797 | 44 % | 35 % |
+| Under 2.5 | 10,797 | 44 % | 35 % |
+| BTTS | 737 | **3 %** | 35 % |
 
-Live odds table right now: **79 quotes for 1 fixture.** The capture worker started
-today, so this grows on its own — but it needs weeks, not days.
+**No odds = no EV = no pick.** BTTS is the weak one historically (3 %), which is
+why the backtest sees so few BTTS tickets. Recent weeks are healthy at 35 %,
+because the newer sync path captures it — so this improves on its own as data
+accumulates.
+
+Live odds quote table right now: **79 quotes for 1 fixture.** The capture worker
+started recently. This needs weeks, not days.
+
+> An earlier draft of this document reported Under 2.5 coverage as 0 %. That was
+> wrong: it measured the snapshot JSON, which did not serialize `OddsUnder25`.
+> The gate always received the price. The snapshot gap is now fixed.
 
 ---
 
-## 3. The 3 blockers before go-live
+## 3. The 3 blockers
 
-### 🔴 Blocker 1 — The API does not serve the picks
+### ✅ Blocker 1 — The API now serves the picks
 
-`TicketBuilder` is called in exactly one place:
+Before, `TicketBuilder` was called in exactly one place: the backtest handler.
+The model found a good ticket, computed it, and threw it away.
+
+**Now:** `GET /api/picks?date=YYYY-MM-DD` returns singles, same-match pairs,
+combos and confidence picks, plus a coverage block.
+
+The design point that matters: per-fixture selection was extracted out of the
+backtest into `PickSelector`, a pure component with no I/O and no knowledge of
+outcomes. The backtest joins results back on `(FixtureId, Market)` afterwards.
+Both callers now run identical selection code — the only way published picks can
+be trusted to match measured ones.
 
 ```
-src/soccer-ai-application/Features/Backtesting/GetBacktestReportHandler.cs:422
+PickSelector ──┬── GetBacktestReportHandler   (measures)
+               └── DailyPickService           (sells)
 ```
 
-That is it. Nowhere else. Same for confidence picks.
+### ✅ Blocker 2 — The LLM no longer decides
 
-So today: your model finds a good ticket → the ticket is computed → and then it is
-thrown away, because nothing serves it.
+`GetMatchCombinationHandler` called `IChatCombinationEngine`, which asked a
+language model to assemble the portfolios. That broke the project's own rule
+(the LLM writes text, never decides), produced parlays nobody could backtest,
+and returned nothing at all when no model API key was configured — which is why
+`combos_total` was 0.
 
-**What is needed:** a `GET /api/picks?date=...` endpoint that runs the same code on
-*upcoming* fixtures and returns:
+It now builds from the same board as `/api/picks`. No model call in the path.
 
-- qualified singles (EV picks)
-- 2-leg combos, goals-market first
-- same-match BTTS+Over2.5 pairs
-- confidence picks (Product 2)
+### 🔴 Blocker 3 — Odds coverage is still too thin
 
-This is the single most important missing piece. Without it there is no product.
+BTTS sits at 3 % across history and 35 % in recent weeks. At that level some days
+produce zero tickets. The capture worker fixes this by running, not by coding.
 
-### 🔴 Blocker 2 — The combinations endpoint is LLM-driven
+**Remaining action:** let it run 4–6 weeks, then re-measure with `odds-coverage`.
 
-`POST /api/combinations` → `ChatCombinationEngine` → `aiService.BuildCombinationsAsync(...)`
-
-The LLM is picking the combinations. **This breaks your own rule:** the LLM writes
-text, never decides. It is also why `combos_total` was 0 without an API key.
-
-**What is needed:** point this endpoint at `TicketBuilder`. Keep the LLM only to
-write the sentence explaining the ticket.
-
-### 🔴 Blocker 3 — Odds coverage is too thin to launch
-
-At 13.7 % BTTS coverage you cannot deliver daily picks reliably. Some days you will
-have zero.
-
-**What is needed:** let the capture worker run for 4–6 weeks, then re-measure with
-`odds-coverage`. There is no shortcut — this is waiting, not coding.
+One real bug found and fixed on the way: the snapshot serializer never persisted
+`OddsUnder25` or the BTTS∧Over 2.5 joint probability. The joint matters — a
+same-match double priced as `p_btts × p_over25` is badly understated, because the
+two markets are positively correlated.
 
 ---
 
@@ -120,8 +130,7 @@ have zero.
 
 | Item | Why | Effort |
 |---|---|---|
-| Under 2.5 odds = 0 % | Market can never qualify. Check the parser is reading the right API label. | Small |
-| Result tracking | Nothing records whether a *live* pick won. You cannot prove ROI to a customer without it. | Medium |
+| Result tracking | Nothing records whether a *live* pick won. You cannot prove ROI to a customer without it, and every day without it is a day of evidence lost. | Medium |
 | Publish measured, not modelled, probability | Confidence picks are upward biased (Over 2.5: says 66 %, delivers 55 %). The fix exists in the report — use those numbers in the UI. | Small |
 | Postgres switch | You are on a 228 MB SQLite file. Provider exists, migrations exist, just untested under load. | Medium |
 | Auth hardening | Login works, but nothing else. Fine for a private beta, not for paying users. | Medium |
@@ -129,17 +138,17 @@ have zero.
 
 ---
 
-## 5. Suggested order
+## 5. What is left
 
-1. **Wire the picks endpoint** (Blocker 1) — turns the engine into a product
-2. **Replace the LLM combination engine** (Blocker 2) — one file, big correctness win
-3. **Fix Under 2.5 odds parsing** — small, and unlocks a whole market
-4. **Add result tracking** — start collecting proof now, so in 6 weeks you have it
-5. **Wait on odds coverage** (Blocker 3) — runs in the background while 1–4 happen
-6. **Re-run the backtest at 3 % MinEdge** — confirm the change I just applied
-7. Postgres + auth + rate limiting — before you charge anyone
+1. ~~Wire the picks endpoint~~ ✅
+2. ~~Replace the LLM combination engine~~ ✅
+3. **Add result tracking** — start collecting proof now, so in 6 weeks you have it
+4. **Wait on odds coverage** (Blocker 3) — runs in the background
+5. **Re-run the backtest at 3 % MinEdge** — confirm the config change
+6. Postgres + auth + rate limiting — before you charge anyone
 
-Steps 1–4 are real coding work. Step 5 is calendar time, and it runs in parallel.
+Step 3 is the only substantial coding left before launch. Step 4 is calendar
+time and runs in parallel.
 
 ---
 
@@ -156,8 +165,32 @@ Steps 1–4 are real coding work. Step 5 is calendar time, and it runs in parall
 
 ---
 
-## 7. What I need from you
+## 7. On using an LLM to pick the matches
 
-- Run `dotnet build && dotnet test` — I cannot run .NET here, so the last two
-  commits are unverified on your machine.
-- Confirm you want me to start on **Blocker 1** (the picks endpoint).
+The proposal was to let a large model read the data and decide the market itself,
+with no filtering. Three reasons that does not work here, and one way it does:
+
+**It cannot produce a calibrated number.** The whole product is `EV = p × odds − 1`.
+That needs a `p` that means something: when the model says 62 %, the thing must
+happen 62 % of the time. Dixon-Coles plus isotonic calibration gives that, and
+the backtest measures it — Brier score, log loss, calibration buckets. A language
+model asked for "62 %" is producing a plausible-sounding token, not an estimate
+with a track record.
+
+**It cannot be backtested.** Same fixture, two runs, two answers. Nothing to
+measure, nothing to improve, and no way to answer a customer asking why.
+
+**The bookmaker already read the news.** The price contains the market's
+information. Beating it requires a systematic, measurable edge — which is what
+the shadow cohorts and the EV sweep exist to find.
+
+**Where a model genuinely helps:** turning unstructured text into structured
+facts — injuries, suspensions, manager quotes, rotation news — that then feed the
+signal catalog as ordinary features and get measured like any other signal. And
+writing the narrative, which it already does.
+
+**If you want to test the idea properly:** run it in shadow mode. Have the model
+produce a pick for every fixture, store it, act on none of it, and after ~500
+fixtures compare its Brier score against the model's. That costs you nothing but
+API calls and answers the question with evidence. Say the word and I will build
+it as a shadow cohort — it fits the existing reporting.

@@ -1,31 +1,26 @@
-using Mediator.Net;
 using Mediator.Net.Context;
 using Mediator.Net.Contracts;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SoccerAi.Application.Entities;
-using SoccerAi.Application.Features.Analysis;
 using SoccerAi.Application.Interfaces;
-using SoccerAi.Application.Models;
-
-using SoccerAi.Application.Exceptions;
+using SoccerAi.Application.Services.Decisions;
 
 namespace SoccerAi.Application.Features.Combinations;
 
 /// <summary>
-/// Handles combination portfolio generation requests directly from JSON Analysis payloads.
+/// Builds the day's combination portfolios.
 ///
-/// Orchestrates the combination pipeline:
-/// 1. Fetches full Match Analysis JSON objects via Mediator GetMatchAnalysisQuery 
-/// 2. Ranks matches by highest overall internal confidence 
-/// 3. Batches matches and yields straight to AI service
-/// 4. Returns structured combination DTOs combining the raw JSON elements
+/// Selection is statistical end to end: Dixon-Coles probabilities, isotonic
+/// calibration, the confluence gate, then <see cref="TicketBuilder"/> for
+/// pricing and shape. The language model is not consulted here and never was
+/// allowed to be — it writes narrative text elsewhere, it does not choose bets.
 ///
-/// Refactored to bypass mathematical portfolio generators.
+/// Before this handler was rewritten it delegated selection to
+/// <c>IChatCombinationEngine</c>, which asked an LLM to assemble the portfolios.
+/// That produced combinations nobody could backtest, and returned nothing at all
+/// when no model API key was configured.
 /// </summary>
 public class GetMatchCombinationHandler(
-    IMediator mediator,
-    IChatCombinationEngine combinationEngine,
+    IDailyPickService pickService,
     ILogger<GetMatchCombinationHandler> logger)
     : IRequestHandler<GetMatchCombinationQuery, GetMatchCombinationResponse>
 {
@@ -34,52 +29,58 @@ public class GetMatchCombinationHandler(
         CancellationToken cancellationToken)
     {
         var query = context.Message;
-        logger.LogInformation("[Combinations] Generating SYSTEM portfolios for {Date}. Pure live math.", query.Date.ToString("yyyy-MM-dd"));
+        var date = DateOnly.FromDateTime(query.Date.UtcDateTime);
 
-        // Step 1: Request ONLY analyzed Match Analysis from the orchestrator
-        // We use OnlyAnalyzed = true and a large PageSize to get all qualified matches efficiently
-        var analysisQuery = new GetMatchAnalysisQuery 
-        { 
-            Date = query.Date, 
-            Language = query.Language,
-            OnlyAnalyzed = true,
-            Page = 1,
-            PageSize = 250 // Sufficient for any single day's analyzed matches
-        };
-        var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
+        var board = await pickService.GetBoardAsync(date, query.Language, cancellationToken);
 
-        if (analysisResponse.Matches == null || analysisResponse.Matches.Count == 0)
-        {
-            return new GetMatchCombinationResponse([]);
-        }
+        var combinations = board.Tickets
+            .Select((ticket, index) => ToDto(ticket, index + 1, board.Fixtures))
+            .ToList();
 
-        // Step 2: Determine Intent (SYSTEM or USER)
-        bool isUser = !string.IsNullOrWhiteSpace(query.UserMessage);
-        var intent = new ChatCombinationIntent
-        {
-            SourceType = isUser ? "USER" : "SYSTEM",
-            Refresh = query.Refresh,
-            UserMessage = query.UserMessage
-        };
+        logger.LogInformation(
+            "[Combinations] {Date}: {Count} portfolios from {Priced}/{Fixtures} priced fixtures",
+            date, combinations.Count, board.Coverage.Priced, board.Coverage.Fixtures);
 
-        if (isUser)
-        {
-            // Optional: Parse natural language into structured intent if the engine needs specific filters
-            // For now, the engine (AI) will handle the query directly inside BuildCombinationsAsync if we adapt it.
-            // But the current BuildCombinationsAsync doesn't take the user message.
-            // I should update IAiAnalysisService.BuildCombinationsAsync to accept the context/message.
-            logger.LogInformation("[Combinations] USER chat request: {Query}", query.UserMessage);
-        }
-
-        // Step 3: Call the AI-driven Engine
-        var portfolios = await combinationEngine.GenerateCombinationsAsync(analysisResponse.Matches, intent);
-
-        // Re-index for consistent IDs
-        for (int i = 0; i < portfolios.Count; i++)
-        {
-            portfolios[i].CombinationId = i + 1;
-        }
-
-        return new GetMatchCombinationResponse(portfolios);
+        return new GetMatchCombinationResponse(combinations);
     }
+
+    private static CombinationDto ToDto(
+        Ticket ticket, int id, IReadOnlyDictionary<int, FixtureRef> fixtures) =>
+        new()
+        {
+            CombinationId = id,
+            Type = TypeOf(ticket),
+            SourceType = "SYSTEM",
+            TotalOdds = ticket.TotalOdds,
+            TotalCount = ticket.Legs.Count,
+            Reason = DescribeValue(ticket),
+            Matches = [.. ticket.Legs.Select(leg => ToDto(leg, fixtures.GetValueOrDefault(leg.FixtureId)))]
+        };
+
+    private static string TypeOf(Ticket ticket) =>
+        ticket.IsSameMatchPair ? "same_match_pair"
+        : ticket.IsSingle ? "single"
+        : $"{ticket.Legs.Count}_leg_combo";
+
+    /// <summary>
+    /// States the edge in the terms it was actually computed in, so a reader can
+    /// check the claim: price offered versus price the model considers fair.
+    /// </summary>
+    private static string DescribeValue(Ticket ticket) =>
+        $"Model probability {ticket.CombinedProbability:P1} implies a fair price of "
+        + $"{ticket.FairOdds:0.00}; the offered {ticket.TotalOdds:0.00} carries "
+        + $"{ticket.Ev:P1} expected value.";
+
+    private static CombinationMatchDto ToDto(TicketLeg leg, FixtureRef? fixture) =>
+        new()
+        {
+            FixtureId = leg.FixtureId,
+            League = leg.League,
+            HomeTeam = fixture?.HomeTeam ?? string.Empty,
+            AwayTeam = fixture?.AwayTeam ?? string.Empty,
+            Selection = leg.Selection,
+            Odds = leg.Odds,
+            Confidence = Math.Round(leg.Probability, 4),
+            Reasoning = $"EV {leg.Ev:P1} at {leg.Odds:0.00}."
+        };
 }

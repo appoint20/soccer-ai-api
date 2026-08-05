@@ -133,6 +133,7 @@ public sealed class MatchAnalysisService(
             Decisions = decisions,
             LeagueName = GetLeagueName(fixture.LeagueId),
             OddsOver25 = odds.OddsOver25,
+            OddsUnder25 = odds.OddsUnder25,
             OddsBttsYes = odds.OddsBttsYes,
             OddsHomeWin = odds.OddsHome,
             OddsAwayWin = odds.OddsAway,

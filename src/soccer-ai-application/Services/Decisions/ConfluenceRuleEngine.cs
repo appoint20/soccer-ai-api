@@ -25,6 +25,21 @@ public static class ConfluenceRuleEngine
     }
 
     /// <summary>
+    /// Display labels for the bet each market evaluates. The 1X2 market has two
+    /// of them because only the stronger side is ever evaluated.
+    /// </summary>
+    public static class Selections
+    {
+        public const string Btts = "BTTS";
+        public const string Over25 = "Over 2.5 Goals";
+        public const string Goals23 = "2-3 Goals";
+        public const string MatchWinnerHome = "Match Winner (Home)";
+        public const string MatchWinnerAway = "Match Winner (Away)";
+        public const string Under25 = "Under 2.5 Goals";
+        public const string Draw = "Draw";
+    }
+
+    /// <summary>
     /// Evaluate all markets for one fixture through the value gate:
     /// valid odds → odds ≥ MinOdds → EV ≥ MinEdge → p ≥ floor → confluence.
     /// No valid odds = "analysis only", never a pick.
@@ -93,7 +108,8 @@ public static class ConfluenceRuleEngine
                 $"{s.HomeScoring.FailedToScoreLast5Venue.Label}; {s.AwayScoring.FailedToScoreLast5Venue.Label}")
         };
 
-        return Assemble(Markets.Btts, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.Btts, Selections.Btts,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── Over 2.5 ─────────────────────────────────────────────────────────────
@@ -138,7 +154,8 @@ public static class ConfluenceRuleEngine
                 $"{s.HomeScoring.Under25RateLast5Venue.Label}; {s.AwayScoring.Under25RateLast5Venue.Label}")
         };
 
-        return Assemble(Markets.Over25, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.Over25, Selections.Over25,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── 2-3 Goals ────────────────────────────────────────────────────────────
@@ -178,7 +195,8 @@ public static class ConfluenceRuleEngine
                 s.H2H.AvgTotalGoals.Label)
         };
 
-        return Assemble(Markets.Goals23, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.Goals23, Selections.Goals23,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── Match winner ─────────────────────────────────────────────────────────
@@ -231,7 +249,9 @@ public static class ConfluenceRuleEngine
                 favTier2.Label)
         };
 
-        return Assemble(Markets.MatchWinner, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.MatchWinner,
+            favoriteIsHome ? Selections.MatchWinnerHome : Selections.MatchWinnerAway,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── Under 2.5 (low scoring) ──────────────────────────────────────────────
@@ -266,7 +286,8 @@ public static class ConfluenceRuleEngine
                 $"{s.HomeScoring.AttackTrend.Label}; {s.AwayScoring.AttackTrend.Label}")
         };
 
-        return Assemble(Markets.Under25, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.Under25, Selections.Under25,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── Draw (1X2 draw outcome — recommendable since v3) ────────────────────
@@ -310,7 +331,8 @@ public static class ConfluenceRuleEngine
                 s.H2H.Dominance.Label)
         };
 
-        return Assemble(Markets.Draw, probability, threshold, odds, minOdds, minEdge, rules, opt);
+        return Assemble(Markets.Draw, Selections.Draw,
+            probability, threshold, odds, minOdds, minEdge, rules, opt);
     }
 
     // ── Assembly ─────────────────────────────────────────────────────────────
@@ -331,7 +353,7 @@ public static class ConfluenceRuleEngine
     /// 6. ≥ K confirms
     /// </summary>
     private static MarketRuleAudit Assemble(
-        string market, double probability, double threshold,
+        string market, string selection, double probability, double threshold,
         double? odds, double minOdds, double minEdge,
         List<RuleResult> rules, ConfluenceOptions opt)
     {
@@ -378,7 +400,8 @@ public static class ConfluenceRuleEngine
                 ? ValueMath.FractionalKelly(probability, odds.Value, opt.KellyFraction)
                 : null,
             GateOutcome = outcome,
-            ComboEligible = comboEligible
+            ComboEligible = comboEligible,
+            Selection = selection
         };
     }
 }

@@ -47,6 +47,15 @@ public sealed record MarketRuleAudit(
     /// <summary>EV &gt; 0 + full confluence: usable as a combo-ticket leg (v5).</summary>
     [JsonPropertyName("combo_eligible")] public bool ComboEligible { get; init; }
 
+    /// <summary>
+    /// Human-readable bet this audit refers to, e.g. "Match Winner (Home)".
+    /// The market alone is ambiguous for 1X2 — the side that was evaluated is
+    /// the stronger one, and only the rule engine knows which that was. Empty
+    /// on snapshots written before this field existed; callers fall back to
+    /// <see cref="Services.Decisions.PickSelector.DefaultSelectionFor"/>.
+    /// </summary>
+    [JsonPropertyName("selection")] public string Selection { get; init; } = "";
+
     [JsonIgnore]
     public IEnumerable<string> FiredConfirmRuleIds =>
         Rules.Where(r => r is { Kind: RuleResult.Confirm, Fired: true }).Select(r => r.RuleId);

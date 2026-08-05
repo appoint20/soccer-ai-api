@@ -40,6 +40,7 @@ public sealed class FixtureAnalysisResult
     public required string LeagueName { get; init; }
     public AiAnalysisDto? Ai { get; init; }
     public double? OddsOver25 { get; init; }
+    public double? OddsUnder25 { get; init; }
     public double? OddsBttsYes { get; init; }
     public double? OddsHomeWin { get; init; }
     public double? OddsAwayWin { get; init; }

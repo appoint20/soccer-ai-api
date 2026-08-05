@@ -46,6 +46,33 @@ graph TD
 
 The backend exposes several distinct "areas" of endpoints that the frontend App can safely query:
 
+### 0. Picks (`/api/picks`) — the product surface
+
+`GET /api/picks?date=YYYY-MM-DD&language=en`
+
+Returns the day's stakeable output in four parts:
+
+| Field | Meaning |
+|---|---|
+| `singles` | One qualified selection, priced above its market floor. |
+| `same_match_pairs` | BTTS + Over 2.5 on the same fixture, priced off the true joint probability. Rescues a fixture the model likes but the book prices below the single-bet floor. |
+| `combos` | Two- to three-leg accumulators. BTTS/Over 2.5 tickets get guaranteed slots. |
+| `confidence_picks` | Product 2: the most likely market per fixture, no odds required. |
+| `coverage` | How many of the day's fixtures could be analyzed and priced. |
+
+Two properties are worth stating plainly:
+
+1. **Selection runs through `PickSelector`, the same component the backtest
+   uses.** Published picks and measured picks are the same code path, not two
+   implementations that agree by inspection.
+2. **No language model participates.** Probabilities come from Dixon-Coles plus
+   calibration; selection comes from the confluence gate and EV maths.
+
+On `confidence_picks.model_probability`: it is the maximum across several
+market estimates, and a maximum sits above the average of what it was chosen
+from, so it reads high. Publish the measured bucket hit rates from the backtest
+report instead.
+
 ### 1. Automation (`/api/automation`)
 Automates the system background state.
 - **Sync Daily Data**: Pulls yesterday's results to determine if predictions won or lost. Next, it downloads today's active fixtures.
@@ -56,8 +83,9 @@ Fetches detailed statistics for individual matches.
 - Returns comprehensive data including historical Head-to-Head metrics, expected goals per team, defensive statistics, and algorithmic win-probabilities.
 
 ### 3. Combinations & Tickets (`/api/combinations`)
-Builds complex betting configurations.
-- Calculates dynamic parlays (combinations of matches) based on specific confidence thresholds (e.g., only include "High Confidence" predictions). Ensures tickets meet predefined risk criteria.
+Legacy shape of the same board served by `/api/picks`, kept for existing clients.
+- Selection is statistical: Dixon-Coles → calibration → confluence gate → `TicketBuilder`.
+- It previously delegated selection to a language model, which produced parlays that could not be backtested and returned nothing when no model API key was configured. New clients should use `/api/picks`.
 
 ### 4. Backtesting (`/api/backtest`)
 Analyzes the ML models against the real world.

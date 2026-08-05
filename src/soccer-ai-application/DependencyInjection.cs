@@ -22,6 +22,11 @@ public static class DependencyInjection
         services.AddScoped<IChatCombinationEngine, Services.Combinations.ChatCombinationEngine>();
         services.AddScoped<ICombinationService, Services.Combinations.DeterministicCombinationService>();
 
+        // Selection layer: the single source of the picks the product sells.
+        // ConfluenceOptions/StrategyOptions are bound from configuration in the
+        // infrastructure layer, which owns configuration binding.
+        services.AddScoped<IDailyPickService, Services.Decisions.DailyPickService>();
+
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();
         services.AddScoped<Services.Analysis.AnalysisResponseMapper>();

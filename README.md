@@ -33,7 +33,11 @@ flowchart LR
 
     subgraph api [soccer-ai-api]
         GET[GET /api/analyze] -->|pure DB read| SNAP
+        PICKS[GET /api/picks] -->|pure DB read| SNAP
+        PICKS --> SEL[PickSelector + TicketBuilder]
     end
+
+    BT[Backtest] --> SEL
 
     DB[(PostgreSQL / SQLite legacy)] --- worker
     DB --- api

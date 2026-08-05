@@ -49,7 +49,13 @@ public class AnalysisResponseMapper
             OddsDraw = analysis.OddsDraw,
             OddsAwayWin = analysis.OddsAwayWin,
             OddsOver25 = analysis.OddsOver25,
+            OddsUnder25 = analysis.OddsUnder25,
             OddsBttsYes = analysis.OddsBttsYes,
+            // Same-match doubles are priced off the joint, and Models is not
+            // serialized into the snapshot — so carry the joint explicitly.
+            BttsAndOver25Probability = analysis.Models.Poisson is { IsValid: true } poisson
+                ? poisson.BttsAndOver25
+                : null,
             HomeStats = analysis.TeamStats.Home,
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,

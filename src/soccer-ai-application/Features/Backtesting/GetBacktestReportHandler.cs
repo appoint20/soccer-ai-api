@@ -250,31 +250,24 @@ public class GetBacktestReportHandler(
                                 CalibrationDivergence.RecoverModelDivergence(winnerProb, mktWinner, w)));
                         }
 
-                        bool MarketWonLocal(string market) => market switch
-                        {
-                            "btts" => bttsActual,
-                            "over25" => over25Actual,
-                            "goals_2_3" => goals23Actual,
-                            "match_winner" => pickWon,
-                            "under25" => totalGoals < 3,
-                            "draw" => drawWon,
-                            _ => false
-                        };
+                        // ── Selection: identical code to the live picks endpoint ──
+                        // Running the shared selector here is what makes the
+                        // published board and the measured board the same thing.
+                        // Outcomes are joined on (FixtureId, Market) afterwards,
+                        // so the selector itself never sees a result.
+                        var selection = Services.Decisions.PickSelector.Select(
+                            new Services.Decisions.FixtureRef(
+                                f.Id, league, home.Name, away.Name, f.Date),
+                            analysisResult.Decisions.Audit,
+                            analysisResult.Models.Poisson.BttsAndOver25,
+                            confluenceOptions.Value);
 
                         // ── Product 2: confidence picks (no odds required) ──
-                        // Best market for this fixture by calibrated probability.
-                        var confidenceCandidates = new (string Market, double P)[]
-                        {
-                            ("btts", pred.BTTSProb),
-                            ("over25", pred.Over25Prob),
-                            ("under25", 1 - pred.Over25Prob),
-                            ("match_winner", winnerProb)
-                        };
-                        var best = confidenceCandidates.OrderByDescending(c => c.P).First();
-                        if (best.P >= confluenceOptions.Value.ConfidencePickMinProbability)
+                        if (selection.ConfidencePick is { } confidence)
                         {
                             confidencePicks.Add(new ConfidencePickRow(
-                                f.Date.Date, best.Market, league, best.P, MarketWonLocal(best.Market)));
+                                f.Date.Date, confidence.Market, league,
+                                confidence.Probability, MarketWon(confidence.Market)));
                         }
 
                         // ── EV sweep candidates: passed everything except (maybe) EV ──
@@ -288,10 +281,11 @@ public class GetBacktestReportHandler(
 
                             evCandidates.Add(new EvCandidateRow(
                                 ma.Market, league, ma.Ev.Value, ma.Odds.Value,
-                                MarketWonLocal(ma.Market), roiEligible));
+                                MarketWon(ma.Market), roiEligible));
                         }
 
-                        // ── Shadow cohorts: what the price gates rejected ──
+                        // Did this market's selection actually land? One definition,
+                        // used by every section below.
                         bool MarketWon(string market) => market switch
                         {
                             "btts" => bttsActual,
@@ -327,81 +321,47 @@ public class GetBacktestReportHandler(
                                 Math.Round(winnerProb * pickOddsSafe.Value - 1, 4), roiEligible));
                         }
 
-                        // ── Same-match BTTS+Over2.5 pair (rescues sub-floor "sure" matches) ──
-                        // Uses the TRUE joint probability from the DC score matrix,
-                        // never p_btts × p_over25 (those markets are correlated).
-                        var jointP = analysisResult.Models.Poisson.BttsAndOver25;
-                        if (roiEligible && jointP > 0 &&
-                            Services.OddsGuard.IsValid(f.BttsYesOdds) &&
-                            Services.OddsGuard.IsValid(f.Over25Odds) &&
-                            auditByMarket.GetValueOrDefault("btts")?.ComboEligible == true &&
-                            auditByMarket.GetValueOrDefault("over25")?.ComboEligible == true)
-                        {
-                            daySameMatchPairs.Add((
-                                new Services.Decisions.SameMatchPair(
-                                    f.Id, league, jointP, f.BttsYesOdds!.Value, f.Over25Odds!.Value),
-                                bttsActual && over25Actual));
-                        }
-
-                        // ── Combo-leg pool (EV > 0 + confluence; MinOdds is ticket-level) ──
+                        // ── Ticket inputs ──
+                        // Only weeks with representative odds coverage may feed
+                        // ROI: pricing a ticket from a week where half the board
+                        // had no odds would measure the gaps, not the strategy.
                         if (roiEligible)
                         {
-                            string SelectionOf(string market) => market switch
-                            {
-                                "btts" => "BTTS",
-                                "over25" => "Over 2.5 Goals",
-                                "under25" => "Under 2.5 Goals",
-                                "match_winner" => pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
-                                "draw" => "Draw",
-                                _ => market
-                            };
+                            foreach (var leg in selection.QualifiedLegs)
+                                daySingles.Add((leg, MarketWon(leg.Market)));
 
-                            foreach (var marketAudit in auditByMarket.Values.Where(a => a.ComboEligible))
-                            {
-                                dayComboLegs.Add((new Services.Decisions.TicketLeg(
-                                    f.Id, league, marketAudit.Market, SelectionOf(marketAudit.Market),
-                                    marketAudit.Probability, marketAudit.Odds!.Value, marketAudit.Ev ?? 0),
-                                    MarketWon(marketAudit.Market)));
-                            }
+                            if (selection.SameMatchPair is { } pair)
+                                daySameMatchPairs.Add((pair, bttsActual && over25Actual));
+
+                            foreach (var leg in selection.ComboEligibleLegs)
+                                dayComboLegs.Add((leg, MarketWon(leg.Market)));
                         }
 
-                        void AddPick(string market, string selection, bool won, double? odds, double prob,
-                            string? auditMarket = null)
+                        // ── Reporting rows ──
+                        // Every qualified market, including those with no priced
+                        // odds (2-3 Goals). Those are excluded from ROI above but
+                        // still worth measuring for hit rate.
+                        void AddPick(string market, bool won, double? odds, string? auditMarket = null)
                         {
                             // Sanity guard: invalid odds (e.g. 185 instead of 1.85) are
                             // EXCLUDED from ROI and combos — never clamped or substituted.
                             var safeOdds = Services.OddsGuard.Sanitize(odds);
-
                             var audit = auditByMarket.GetValueOrDefault(auditMarket ?? market);
-                            var fired = audit?.FiredConfirmRuleIds.ToList() ?? [];
+
                             qualifiedPicks.Add(new QualifiedPickRow(
-                                market, league, won, safeOdds, fired, audit?.Ev, audit?.KellyStake, roiEligible));
-                            // Ticket legs only from ROI-representative weeks
-                            if (safeOdds is not null && roiEligible)
-                                daySingles.Add((new Services.Decisions.TicketLeg(
-                                    f.Id, league, market, selection, prob, safeOdds.Value,
-                                    audit?.Ev ?? 0), won));
+                                market, league, won, safeOdds,
+                                audit?.FiredConfirmRuleIds.ToList() ?? [],
+                                audit?.Ev, audit?.KellyStake, roiEligible));
                         }
 
-                        if (m.Over25.IsQualified)
-                            AddPick("over25", "Over 2.5 Goals", over25Actual, f.Over25Odds, pred.Over25Prob);
-                        if (m.BTTS.IsQualified)
-                            AddPick("btts", "BTTS", bttsActual, f.BttsYesOdds, pred.BTTSProb);
-                        if (m.TwoToThreeGoals.IsQualified)
-                            // No 2-3 Goals odds are stored — pick is tracked for hit
-                            // rate but excluded from ROI (no substituted price).
-                            AddPick("goals_2_3", "2-3 Goals", goals23Actual, null, pred.TwoToThreeGoalsProb);
+                        if (m.Over25.IsQualified) AddPick("over25", over25Actual, f.Over25Odds);
+                        if (m.BTTS.IsQualified) AddPick("btts", bttsActual, f.BttsYesOdds);
+                        if (m.TwoToThreeGoals.IsQualified) AddPick("goals_2_3", goals23Actual, null);
                         if (m.MatchWinner.IsQualified)
-                            AddPick("match_winner",
-                                pickIsHome ? "Match Winner (Home)" : "Match Winner (Away)",
-                                pickWon,
-                                pickIsHome ? f.HomeWinOdds : f.AwayWinOdds,
-                                winnerProb);
-                        if (m.Draw.IsQualified)
-                            AddPick("draw", "Draw", drawWon, f.DrawOdds, pred.DrawProb, auditMarket: "draw");
+                            AddPick("match_winner", pickWon, pickIsHome ? f.HomeWinOdds : f.AwayWinOdds);
+                        if (m.Draw.IsQualified) AddPick("draw", drawWon, f.DrawOdds);
                         if (m.LowScoring.IsQualified)
-                            AddPick("low_scoring", "Under 2.5 Goals", totalGoals < 3, f.Under25Odds,
-                                m.LowScoring.Confidence, auditMarket: "under25");
+                            AddPick("low_scoring", totalGoals < 3, f.Under25Odds, auditMarket: "under25");
                     }
                     catch (Exception ex)
                     {

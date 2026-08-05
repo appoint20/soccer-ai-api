@@ -25,8 +25,18 @@ public sealed class MatchAnalysis
     public double? OddsDraw { get; init; }
     public double? OddsAwayWin { get; init; }
     public double? OddsOver25 { get; init; }
+    public double? OddsUnder25 { get; init; }
     public double? OddsBttsYes { get; init; }
     public double? OddsGoals23 { get; init; } = 1.90;
+
+    /// <summary>
+    /// True joint P(BTTS ∧ Over 2.5) from the Dixon-Coles score matrix, needed
+    /// to price same-match doubles. Persisted because <see cref="Models"/> is
+    /// excluded from the snapshot, and the product of the two market
+    /// probabilities is not a valid substitute — they are correlated.
+    /// </summary>
+    [JsonPropertyName("btts_and_over25_probability")]
+    public double? BttsAndOver25Probability { get; init; }
 
     
     // Flattened Weighted Stats
