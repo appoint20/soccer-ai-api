@@ -62,6 +62,8 @@ public static class Program
                     return await RunDataMigrationAsync(host.Services, args);
                 case "odds-coverage":
                     return await OddsCoverageCommand.RunAsync(host.Services);
+                case "backfill-analysis":
+                    return await BackfillAnalysisCommand.RunAsync(host.Services, args);
                 default:
                     Console.Error.WriteLine($"Unknown command: {command}");
                     PrintUsage();
@@ -386,6 +388,9 @@ public static class Program
               odds-coverage
                            Coverage + cause diagnosis per league/season (never
                            fetched vs market missing vs corrupted legacy).
+              backfill-analysis [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--chunk-days=7]
+                           Recompute analysis for historical finished fixtures so
+                           the calibration layer gets training data. 0 API calls.
               migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
                            One-time zero-loss SQLite → PostgreSQL migration with
                            row-count + checksum verification (aborts on mismatch;
