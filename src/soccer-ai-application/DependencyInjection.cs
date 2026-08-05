@@ -26,6 +26,7 @@ public static class DependencyInjection
         // ConfluenceOptions/StrategyOptions are bound from configuration in the
         // infrastructure layer, which owns configuration binding.
         services.AddScoped<IDailyPickService, Services.Decisions.DailyPickService>();
+        services.AddScoped<IPickLedger, Services.Decisions.PickLedger>();
 
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();

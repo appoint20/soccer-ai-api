@@ -284,18 +284,16 @@ public class GetBacktestReportHandler(
                                 MarketWon(ma.Market), roiEligible));
                         }
 
-                        // Did this market's selection actually land? One definition,
-                        // used by every section below.
-                        bool MarketWon(string market) => market switch
-                        {
-                            "btts" => bttsActual,
-                            "over25" => over25Actual,
-                            "goals_2_3" => goals23Actual,
-                            "match_winner" => pickWon,
-                            "under25" => totalGoals < 3,
-                            "draw" => drawWon,
-                            _ => false
-                        };
+                        // Did this market's selection land? Delegates to the same
+                        // rules the live ledger settles with, so the backtest and
+                        // the published record cannot disagree on what "won"
+                        // means. Only finished fixtures reach here.
+                        bool MarketWon(string market) => Services.Decisions.MarketOutcome.Won(
+                            market,
+                            pickIsHome
+                                ? Services.Decisions.ConfluenceRuleEngine.Selections.MatchWinnerHome
+                                : Services.Decisions.ConfluenceRuleEngine.Selections.MatchWinnerAway,
+                            f.HomeGoal, f.AwayGoal) ?? false;
 
                         var minConfirms = analysisResult.Decisions.Audit?.MinConfirmationsRequired
                             ?? confluenceOptions.Value.MinConfirmations;
@@ -454,22 +452,6 @@ public class GetBacktestReportHandler(
         }
 
         return response;
-    }
-
-    private bool IsLegWon(string selection, Fixture f)
-    {
-        var goals = f.HomeGoal + f.AwayGoal;
-        return selection switch
-        {
-            "Match Winner (Home)" => f.HomeGoal > f.AwayGoal,
-            "Match Winner (Away)" => f.AwayGoal > f.HomeGoal,
-            "Draw" => f.HomeGoal == f.AwayGoal,
-            "BTTS" => f.HomeGoal > 0 && f.AwayGoal > 0,
-            "Over 2.5 Goals" => goals > 2,
-            "Under 2.5 Goals" => goals < 3,
-            "2-3 Goals" => goals == 2 || goals == 3,
-            _ => false
-        };
     }
 
     private GetBacktestReportResponse CalculateFinalReport(

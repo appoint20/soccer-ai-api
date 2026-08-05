@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<BacktestReport> BacktestReports { get; init; }
     public DbSet<SyncState> SyncStates { get; init; }
     public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
+    public DbSet<PublishedTicket> PublishedTickets { get; init; }
+    public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -117,6 +119,39 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.ToTable("FixtureOddsQuotes");
+        });
+
+        // ── PublishedTicket (the live results ledger) ────────────────────────
+        modelBuilder.Entity<PublishedTicket>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Kind).HasMaxLength(30).IsRequired();
+            entity.Property(t => t.Fingerprint).HasMaxLength(64).IsRequired();
+            entity.Property(t => t.Status).HasMaxLength(10).IsRequired();
+
+            // Republishing a board must never duplicate a ticket.
+            entity.HasIndex(t => t.Fingerprint).IsUnique();
+            entity.HasIndex(t => new { t.BoardDateUtc, t.Status });
+
+            entity.HasMany(t => t.Legs)
+                .WithOne()
+                .HasForeignKey(l => l.PublishedTicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.ToTable("PublishedTickets");
+        });
+
+        modelBuilder.Entity<PublishedTicketLeg>(entity =>
+        {
+            entity.HasKey(l => l.Id);
+            entity.Property(l => l.League).HasMaxLength(100).IsRequired();
+            entity.Property(l => l.Market).HasMaxLength(20).IsRequired();
+            entity.Property(l => l.Selection).HasMaxLength(60).IsRequired();
+            entity.Property(l => l.Status).HasMaxLength(10).IsRequired();
+
+            entity.HasIndex(l => l.FixtureId);
+
+            entity.ToTable("PublishedTicketLegs");
         });
 
         // ── SyncState (single-row operational state for the sync worker) ─────

@@ -25,13 +25,27 @@ public sealed class SyncPipeline(
     ILogger<SyncPipeline> logger)
 {
     private static readonly string[] StepOrder =
-        [Steps.Standings, Steps.FixturesAndOdds, Steps.RecomputeAnalysis, Steps.AiNarratives];
+    [
+        Steps.Standings,
+        Steps.FixturesAndOdds,
+        Steps.RecomputeAnalysis,
+        Steps.SettlePicks,
+        Steps.PublishPicks,
+        Steps.AiNarratives
+    ];
 
     public static class Steps
     {
         public const string Standings = "standings";
         public const string FixturesAndOdds = "fixtures_odds";
         public const string RecomputeAnalysis = "recompute_analysis";
+
+        /// <summary>Settle yesterday's published tickets against fresh results.</summary>
+        public const string SettlePicks = "settle_picks";
+
+        /// <summary>Freeze today's board into the ledger at the prices shown.</summary>
+        public const string PublishPicks = "publish_picks";
+
         public const string AiNarratives = "ai_narratives";
     }
 
@@ -149,6 +163,20 @@ public sealed class SyncPipeline(
                         nowUtc.Date.AddDays(opt.RecomputeDaysAhead), ct);
                 break;
 
+            // Settle before publishing: results that just arrived belong to
+            // yesterday's board, and settling first keeps the two concerns from
+            // interleaving on the same run.
+            case Steps.SettlePicks:
+                await services.GetRequiredService<IPickLedger>().SettleAsync(ct);
+                break;
+
+            // Freeze today's board at the prices currently shown. The ledger is
+            // idempotent, so a second run of the day adds only genuinely new
+            // tickets and never rewrites a recorded price.
+            case Steps.PublishPicks:
+                await PublishPicksAsync(services, nowUtc, opt, ct);
+                break;
+
             case Steps.AiNarratives:
                 await services.GetRequiredService<IAiSyncService>()
                     .SyncUpcomingFixturesAsync(nowUtc.UtcDateTime, force: false, ct);
@@ -156,6 +184,28 @@ public sealed class SyncPipeline(
 
             default:
                 throw new InvalidOperationException($"Unknown sync step: {step}");
+        }
+    }
+
+    /// <summary>
+    /// Records the boards inside the recompute-ahead window, so a ticket for a
+    /// fixture two days out is captured at today's price rather than whatever it
+    /// has drifted to by kickoff.
+    /// </summary>
+    private static async Task PublishPicksAsync(
+        IServiceProvider services, DateTimeOffset nowUtc, SyncOptions opt, CancellationToken ct)
+    {
+        var pickService = services.GetRequiredService<IDailyPickService>();
+        var ledger = services.GetRequiredService<IPickLedger>();
+
+        var today = DateOnly.FromDateTime(nowUtc.UtcDateTime);
+
+        for (var offset = 0; offset <= opt.RecomputeDaysAhead; offset++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var board = await pickService.GetBoardAsync(today.AddDays(offset), "en", ct);
+            await ledger.RecordAsync(board, ct);
         }
     }
 

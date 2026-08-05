@@ -34,4 +34,21 @@ public class PicksController(IMediator mediator) : ControllerBase
 
         return Ok(ApiResponse<GetDailyPicksResponse>.Ok(response));
     }
+
+    /// <summary>
+    /// What published tickets actually returned. Unlike the backtest, these are
+    /// live results at the prices customers were shown.
+    /// </summary>
+    /// <param name="query">Optional date range; defaults to the last 90 days.</param>
+    /// <param name="ct">Cancellation token.</param>
+    [HttpGet("performance")]
+    [ProducesResponseType<ApiResponse<GetPickPerformanceResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPerformance(
+        [FromQuery] GetPickPerformanceQuery query, CancellationToken ct = default)
+    {
+        var response = await mediator
+            .RequestAsync<GetPickPerformanceQuery, GetPickPerformanceResponse>(query, ct);
+
+        return Ok(ApiResponse<GetPickPerformanceResponse>.Ok(response));
+    }
 }

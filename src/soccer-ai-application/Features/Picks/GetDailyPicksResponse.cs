@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Mediator.Net.Contracts;
 
 namespace SoccerAi.Application.Features.Picks;
 
@@ -77,7 +78,7 @@ public sealed record PickCoverageDto
     [JsonPropertyName("priced_pct")] public required double PricedPct { get; init; }
 }
 
-public sealed record GetDailyPicksResponse
+public sealed record GetDailyPicksResponse : IResponse
 {
     [JsonPropertyName("date")] public required DateOnly Date { get; init; }
     [JsonPropertyName("singles")] public required IReadOnlyList<TicketDto> Singles { get; init; }

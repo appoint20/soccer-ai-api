@@ -14,8 +14,13 @@ through `PickSelector` — the same component the backtest measures — so what 
 user sees and what the report measured are one code path, not two that happen
 to agree.
 
-**What is left before real money:** result tracking, enough odds coverage to
-fill a daily board, and a re-run of the backtest at the new 3% edge.
+Result tracking is in: every published ticket is recorded at the price shown and
+settled once the fixture finishes, so `GET /api/picks/performance` reports what
+the strategy *did* return, not what a backtest says it would have.
+
+**What is left before real money:** enough odds coverage to fill a daily board,
+a re-run of the backtest at the new 3% edge, and a few weeks of the ledger
+filling up so the performance numbers mean something.
 
 ---
 
@@ -33,7 +38,8 @@ fill a daily board, and a re-run of the backtest at the new 3% edge.
 | Ticket builder | ✅ Wired | `PickSelector` → `TicketBuilder`, shared by backtest and API |
 | Confidence picks (Product 2) | ✅ Wired | served by `/api/picks` |
 | Backtest report | ✅ Done | 12 sections, 30-week runs |
-| Sync worker | ✅ Running | 03:30 + 15:30 UTC, resumable |
+| Results ledger | ✅ Done | published tickets frozen at price, auto-settled |
+| Sync worker | ✅ Running | 03:30 + 15:30 UTC, resumable, publishes + settles |
 | Odds capture worker | ✅ Running | 30-min loop, T-24h / T-1h |
 | CLI tools | ✅ Done | backtest, sync, backfill, odds-coverage |
 | REST API | ✅ Done | 7 controllers incl. `GET /api/picks` |
@@ -130,7 +136,6 @@ two markets are positively correlated.
 
 | Item | Why | Effort |
 |---|---|---|
-| Result tracking | Nothing records whether a *live* pick won. You cannot prove ROI to a customer without it, and every day without it is a day of evidence lost. | Medium |
 | Publish measured, not modelled, probability | Confidence picks are upward biased (Over 2.5: says 66 %, delivers 55 %). The fix exists in the report — use those numbers in the UI. | Small |
 | Postgres switch | You are on a 228 MB SQLite file. Provider exists, migrations exist, just untested under load. | Medium |
 | Auth hardening | Login works, but nothing else. Fine for a private beta, not for paying users. | Medium |
@@ -142,13 +147,13 @@ two markets are positively correlated.
 
 1. ~~Wire the picks endpoint~~ ✅
 2. ~~Replace the LLM combination engine~~ ✅
-3. **Add result tracking** — start collecting proof now, so in 6 weeks you have it
-4. **Wait on odds coverage** (Blocker 3) — runs in the background
+3. ~~Add result tracking~~ ✅
+4. **Start the worker and leave it running** — the ledger only fills with time
 5. **Re-run the backtest at 3 % MinEdge** — confirm the config change
 6. Postgres + auth + rate limiting — before you charge anyone
 
-Step 3 is the only substantial coding left before launch. Step 4 is calendar
-time and runs in parallel.
+The coding before launch is done. Steps 4 and 5 are calendar time and one
+command. Step 6 is the commercial hardening you do before taking money.
 
 ---
 

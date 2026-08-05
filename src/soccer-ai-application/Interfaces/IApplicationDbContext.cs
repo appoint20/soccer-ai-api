@@ -13,6 +13,8 @@ public interface IApplicationDbContext
     DbSet<BacktestReport> BacktestReports { get; }
     DbSet<SyncState> SyncStates { get; }
     DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; }
+    DbSet<PublishedTicket> PublishedTickets { get; }
+    DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }

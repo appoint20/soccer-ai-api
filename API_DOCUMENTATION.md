@@ -73,6 +73,22 @@ market estimates, and a maximum sits above the average of what it was chosen
 from, so it reads high. Publish the measured bucket hit rates from the backtest
 report instead.
 
+`GET /api/picks/performance?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+What published tickets actually returned — live results at the prices customers
+were shown, not a simulation. Broken down overall, by ticket kind and by market.
+
+The ledger behind it holds three rules that keep the record honest:
+
+- **Prices are frozen at publication.** Re-reading odds at settlement would
+  measure the closing line instead of the price shown, which always flatters.
+- **Void is not loss.** Abandoned fixtures, and extra-time results whose
+  90-minute score cannot be recovered, are excluded from ROI rather than
+  guessed at. A void leg voids the whole ticket rather than re-pricing the rest,
+  because the reduced ticket is not the one that was published.
+- **Every slice reports `sample_too_small`.** Below thirty settled tickets, ROI
+  is dominated by variance. Do not put such a number on a landing page.
+
 ### 1. Automation (`/api/automation`)
 Automates the system background state.
 - **Sync Daily Data**: Pulls yesterday's results to determine if predictions won or lost. Next, it downloads today's active fixtures.
