@@ -659,6 +659,32 @@ public class GetBacktestReportHandler(
         result.AddRange(selected.GroupBy(p => p.Market)
             .Select(g => Build(g.Key, g.ToList()))
             .OrderByDescending(r => r.Count));
+
+        // Selection bias: picking the MAX probability across markets inflates it
+        // (a maximum of several estimates sits above their average). Publishing
+        // the model number would overstate; these measured buckets are the
+        // honest figure to show users.
+        foreach (var market in selected.Select(p => p.Market).Distinct())
+        {
+            foreach (var (lo, hi) in new[] { (0.60, 0.65), (0.65, 0.70), (0.70, 0.80), (0.80, 1.01) })
+            {
+                var rows = selected
+                    .Where(p => p.Market == market && p.Probability >= lo && p.Probability < hi)
+                    .ToList();
+                if (rows.Count == 0) continue;
+
+                result.Add(new ConfidencePickReportRow
+                {
+                    Market = $"{market} [{lo:P0}-{(hi > 1 ? 1 : hi):P0})",
+                    Count = rows.Count,
+                    Hits = rows.Count(r => r.Won),
+                    HitRate = Math.Round((double)rows.Count(r => r.Won) / rows.Count * 100, 1),
+                    AvgProbability = Math.Round(rows.Average(r => r.Probability), 4),
+                    PicksPerDay = 0
+                });
+            }
+        }
+
         return result;
     }
 
@@ -670,7 +696,9 @@ public class GetBacktestReportHandler(
     {
         var rows = new List<EvSweepRow>();
 
-        foreach (var level in confluenceOptions.Value.EvSweepLevels.OrderBy(l => l))
+        // .NET config binding appends to default arrays, so identical values in
+        // appsettings duplicate the defaults — dedupe before reporting.
+        foreach (var level in confluenceOptions.Value.EvSweepLevels.Distinct().OrderBy(l => l))
         {
             var passing = candidates.Where(c => c.Ev >= level).ToList();
             var priced = passing.Where(c => c.RoiEligible).ToList();
