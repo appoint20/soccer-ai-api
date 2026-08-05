@@ -186,6 +186,19 @@ public static class Program
                               $"kelly={m.KellyRoiPercent,6:F1}%");
 
         Console.WriteLine();
+        Console.WriteLine("=== EV SWEEP (what each MinEdge level would have produced) ===");
+        Console.WriteLine($"  {"minEdge",8} {"picks",6} {"hit%",6} {"odds",6} {"ROI%",7} {"roi n",6}");
+        foreach (var e in r.EvSweep)
+            Console.WriteLine($"  {e.MinEdge,8:P0} {e.Picks,6} {e.HitRate,6:F1} {e.AvgOdds,6:F2} " +
+                              $"{e.RoiPercent,7:F1} {e.RoiSampleSize,6}");
+
+        Console.WriteLine();
+        Console.WriteLine("=== CONFIDENCE PICKS — Product 2 (predictions, NOT value bets) ===");
+        foreach (var c in r.ConfidencePicks)
+            Console.WriteLine($"  {c.Market,-14} n={c.Count,-5} hit={c.HitRate,5:F1}%  " +
+                              $"avg p={c.AvgProbability:P1}  {c.PicksPerDay:F1}/day");
+
+        Console.WriteLine();
         Console.WriteLine("=== QUALIFICATION FUNNEL (why fixtures dropped out) ===");
         Console.WriteLine($"  {"market",-14} {"total",5} {"noOdds",6} {"minOdds",7} {"minEV",5} {"floor",5} {"veto",5} {"conf",5} {"QUAL",5}");
         foreach (var f in r.QualificationFunnel.Where(f => f.League == "ALL"))

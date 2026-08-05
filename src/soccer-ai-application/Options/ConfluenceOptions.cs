@@ -47,6 +47,25 @@ public sealed class ConfluenceOptions
     public int MinGoalsMarketTickets { get; set; } = 3;
 
     /// <summary>
+    /// Combo legs must clear the SAME bar as a single pick (EV ≥ MinEdge), not
+    /// merely EV &gt; 0. Baseline v7: 2-leg tickets built from the weaker pool
+    /// hit 16.7% against a claimed 27% — probability error multiplies in a
+    /// parlay, so each leg needs more confidence, not less.
+    /// </summary>
+    public bool ComboLegsRequireQualified { get; set; } = true;
+
+    // ── Product 2: confidence picks (predictions, NOT value bets) ──
+
+    /// <summary>Top-N matches per day ranked by calibrated probability.</summary>
+    public int ConfidencePicksPerDay { get; set; } = 5;
+
+    /// <summary>Minimum calibrated probability to appear as a confidence pick.</summary>
+    public double ConfidencePickMinProbability { get; set; } = 0.60;
+
+    /// <summary>MinEdge levels reported side by side in the backtest EV sweep.</summary>
+    public double[] EvSweepLevels { get; set; } = [0.02, 0.03, 0.04, 0.05, 0.07];
+
+    /// <summary>
     /// Backtest ROI sections only include fixture weeks whose odds coverage
     /// reaches this share — low-coverage (blackout) weeks distort ROI.
     /// Brier/calibration always use all fixtures.

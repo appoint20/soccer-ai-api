@@ -37,6 +37,14 @@ public class GetBacktestReportHandler(
     private sealed record ShadowPickRow(
         string Cohort, string Market, string League, bool Won, double Odds, double? Ev, bool RoiEligible);
     private sealed record DivergenceRow(string League, string Market, double AbsModelMarketDivergence);
+    /// <summary>Product 2: a prediction, ranked by probability. No odds needed.</summary>
+    private sealed record ConfidencePickRow(
+        DateTime Day, string Market, string League, double Probability, bool Won);
+
+    /// <summary>A market that cleared every gate EXCEPT possibly the EV bar.</summary>
+    private sealed record EvCandidateRow(
+        string Market, string League, double Ev, double Odds, bool Won, bool RoiEligible);
+
     private sealed record TicketResultRow(
         int Legs, double TotalOdds, double CombinedP, double Ev, double KellyStake, bool Won,
         bool IsSameMatchPair = false, bool ContainsGoals = false);
@@ -133,6 +141,8 @@ public class GetBacktestReportHandler(
         var shadowPicks = new ConcurrentBag<ShadowPickRow>();
         var divergences = new ConcurrentBag<DivergenceRow>();
         var ticketRows = new ConcurrentBag<TicketResultRow>();
+        var confidencePicks = new ConcurrentBag<ConfidencePickRow>();
+        var evCandidates = new ConcurrentBag<EvCandidateRow>();
         var dayGroups = fixtures.GroupBy(f => f.Date.Date).ToList();
 
         // Use a semaphore to limit concurrency and avoid hammering the database/AI
@@ -238,6 +248,47 @@ public class GetBacktestReportHandler(
                             var mktWinner = pickIsHome ? probs[0] : probs[2];
                             divergences.Add(new DivergenceRow(league, "match_winner",
                                 CalibrationDivergence.RecoverModelDivergence(winnerProb, mktWinner, w)));
+                        }
+
+                        bool MarketWonLocal(string market) => market switch
+                        {
+                            "btts" => bttsActual,
+                            "over25" => over25Actual,
+                            "goals_2_3" => goals23Actual,
+                            "match_winner" => pickWon,
+                            "under25" => totalGoals < 3,
+                            "draw" => drawWon,
+                            _ => false
+                        };
+
+                        // ── Product 2: confidence picks (no odds required) ──
+                        // Best market for this fixture by calibrated probability.
+                        var confidenceCandidates = new (string Market, double P)[]
+                        {
+                            ("btts", pred.BTTSProb),
+                            ("over25", pred.Over25Prob),
+                            ("under25", 1 - pred.Over25Prob),
+                            ("match_winner", winnerProb)
+                        };
+                        var best = confidenceCandidates.OrderByDescending(c => c.P).First();
+                        if (best.P >= confluenceOptions.Value.ConfidencePickMinProbability)
+                        {
+                            confidencePicks.Add(new ConfidencePickRow(
+                                f.Date.Date, best.Market, league, best.P, MarketWonLocal(best.Market)));
+                        }
+
+                        // ── EV sweep candidates: passed everything except (maybe) EV ──
+                        foreach (var ma in auditByMarket.Values)
+                        {
+                            if (ma.Odds is null || ma.Ev is null) continue;
+                            if (!ma.ProbabilityPassed || ma.VetoesFired > 0) continue;
+                            if (ma.ConfirmationsFired < (analysisResult.Decisions.Audit?.MinConfirmationsRequired
+                                                         ?? confluenceOptions.Value.MinConfirmations)) continue;
+                            if (ma.GateOutcome == Services.Decisions.GateOutcome.InformationalOnly) continue;
+
+                            evCandidates.Add(new EvCandidateRow(
+                                ma.Market, league, ma.Ev.Value, ma.Odds.Value,
+                                MarketWonLocal(ma.Market), roiEligible));
                         }
 
                         // ── Shadow cohorts: what the price gates rejected ──
@@ -419,7 +470,9 @@ public class GetBacktestReportHandler(
             simulationResults.ToList(), leagueResults.ToList(),
             marketSamples.ToList(), hdaSamples.ToList(), qualifiedPicks.ToList(),
             gateOutcomes.ToList(), shadowPicks.ToList(), divergences.ToList(),
-            rawMarketSamples.ToList(), oddsCoverageWeekly, ticketRows.ToList(), startDate, query.WeeksBack, query.Stake);
+            rawMarketSamples.ToList(), oddsCoverageWeekly, ticketRows.ToList(),
+            confidencePicks.ToList(), evCandidates.ToList(),
+            startDate, query.WeeksBack, query.Stake);
 
         // 2. Persist the report to cache
         try
@@ -471,6 +524,8 @@ public class GetBacktestReportHandler(
         List<MarketSampleRow> rawMarketSamples,
         List<OddsCoverageWeeklyRow> oddsCoverageWeeklyRows,
         List<TicketResultRow> ticketRows,
+        List<ConfidencePickRow> confidencePicks,
+        List<EvCandidateRow> evCandidates,
         DateTimeOffset startDate, int weeks, double stake)
     {
         // Group by week, but apply daily dynamic limits (4 on weekends, 1 on weekdays)
@@ -537,6 +592,8 @@ public class GetBacktestReportHandler(
         var shadow = BuildShadowCohorts(shadowPicks);
         var leagueDivergence = BuildLeagueDivergence(divergences);
         var ticketsReport = BuildTicketsReport(ticketRows);
+        var confidenceReport = BuildConfidenceReport(confidencePicks);
+        var evSweep = BuildEvSweep(evCandidates);
 
         var totalStaked = finalSimulations.Sum(r => r.Stake);
         var totalReturned = finalSimulations.Sum(r => r.Return);
@@ -568,8 +625,72 @@ public class GetBacktestReportHandler(
             ShadowCohorts = shadow,
             LeagueDivergence = leagueDivergence,
             OddsCoverageWeekly = oddsCoverageWeeklyRows,
-            Tickets = ticketsReport
+            Tickets = ticketsReport,
+            ConfidencePicks = confidenceReport,
+            EvSweep = evSweep
         };
+    }
+
+    /// <summary>
+    /// Product 2: top-N predictions per day by calibrated probability, with no
+    /// odds or EV requirement. These are NOT value bets — they are the daily
+    /// content tier. Reported per market so the honest hit rate is visible.
+    /// </summary>
+    private List<ConfidencePickReportRow> BuildConfidenceReport(List<ConfidencePickRow> picks)
+    {
+        var perDay = confluenceOptions.Value.ConfidencePicksPerDay;
+
+        var selected = picks
+            .GroupBy(p => p.Day)
+            .SelectMany(g => g.OrderByDescending(p => p.Probability).Take(perDay))
+            .ToList();
+
+        ConfidencePickReportRow Build(string market, List<ConfidencePickRow> rows) => new()
+        {
+            Market = market,
+            Count = rows.Count,
+            Hits = rows.Count(r => r.Won),
+            HitRate = rows.Count > 0 ? Math.Round((double)rows.Count(r => r.Won) / rows.Count * 100, 1) : 0,
+            AvgProbability = rows.Count > 0 ? Math.Round(rows.Average(r => r.Probability), 4) : 0,
+            PicksPerDay = Math.Round(rows.Count / Math.Max(1.0, selected.Select(s => s.Day).Distinct().Count()), 2)
+        };
+
+        var result = new List<ConfidencePickReportRow> { Build("all", selected) };
+        result.AddRange(selected.GroupBy(p => p.Market)
+            .Select(g => Build(g.Key, g.ToList()))
+            .OrderByDescending(r => r.Count));
+        return result;
+    }
+
+    /// <summary>
+    /// EV sweep: what each MinEdge level would have produced. Answers "should we
+    /// loosen the filter?" with measured numbers instead of a guess.
+    /// </summary>
+    private List<EvSweepRow> BuildEvSweep(List<EvCandidateRow> candidates)
+    {
+        var rows = new List<EvSweepRow>();
+
+        foreach (var level in confluenceOptions.Value.EvSweepLevels.OrderBy(l => l))
+        {
+            var passing = candidates.Where(c => c.Ev >= level).ToList();
+            var priced = passing.Where(c => c.RoiEligible).ToList();
+            var staked = priced.Count;
+            var returned = priced.Sum(c => c.Won ? c.Odds : 0);
+
+            rows.Add(new EvSweepRow
+            {
+                MinEdge = level,
+                Picks = passing.Count,
+                Hits = passing.Count(c => c.Won),
+                HitRate = passing.Count > 0
+                    ? Math.Round((double)passing.Count(c => c.Won) / passing.Count * 100, 1) : 0,
+                AvgOdds = passing.Count > 0 ? Math.Round(passing.Average(c => c.Odds), 2) : 0,
+                RoiPercent = staked > 0 ? Math.Round((returned - staked) / staked * 100, 1) : 0,
+                RoiSampleSize = staked
+            });
+        }
+
+        return rows;
     }
 
     /// <summary>

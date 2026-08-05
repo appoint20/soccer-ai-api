@@ -121,7 +121,10 @@ public static class TicketBuilder
         }
 
         // ── 3. Multi-match combos ──
-        var pool = comboEligibleLegs
+        // Legs must clear the same bar as singles (see ComboLegsRequireQualified):
+        // errors multiply in a parlay, so a weaker per-leg filter is backwards.
+        var legSource = opt.ComboLegsRequireQualified ? qualifiedSingles : comboEligibleLegs;
+        var pool = legSource
             .GroupBy(l => l.FixtureId)
             .Select(g => g.OrderByDescending(l => l.IsGoalsMarket).ThenByDescending(l => l.Ev).First())
             .OrderByDescending(l => l.IsGoalsMarket)                       // goals markets first

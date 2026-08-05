@@ -51,6 +51,60 @@ public sealed class GetBacktestReportResponse : IResponse
     /// <summary>Ticket economics: singles + 2-3 leg combos, ticket-level Kelly.</summary>
     [JsonPropertyName("tickets")]
     public TicketsReport Tickets { get; init; } = new();
+
+    /// <summary>Product 2: daily predictions ranked by probability (NOT value bets).</summary>
+    [JsonPropertyName("confidence_picks")]
+    public List<ConfidencePickReportRow> ConfidencePicks { get; init; } = [];
+
+    /// <summary>What each MinEdge level would have produced.</summary>
+    [JsonPropertyName("ev_sweep")]
+    public List<EvSweepRow> EvSweep { get; init; } = [];
+}
+
+public sealed class ConfidencePickReportRow
+{
+    [JsonPropertyName("market")]
+    public string Market { get; init; } = "";
+
+    [JsonPropertyName("count")]
+    public int Count { get; init; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_probability")]
+    public double AvgProbability { get; init; }
+
+    [JsonPropertyName("picks_per_day")]
+    public double PicksPerDay { get; init; }
+}
+
+public sealed class EvSweepRow
+{
+    [JsonPropertyName("min_edge")]
+    public double MinEdge { get; init; }
+
+    [JsonPropertyName("picks")]
+    public int Picks { get; init; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; init; }
+
+    [JsonPropertyName("hit_rate")]
+    public double HitRate { get; init; }
+
+    [JsonPropertyName("avg_odds")]
+    public double AvgOdds { get; init; }
+
+    /// <summary>Flat ROI over ROI-eligible weeks only.</summary>
+    [JsonPropertyName("roi_percent")]
+    public double RoiPercent { get; init; }
+
+    [JsonPropertyName("roi_sample_size")]
+    public int RoiSampleSize { get; init; }
 }
 
 public sealed class TicketsReport
