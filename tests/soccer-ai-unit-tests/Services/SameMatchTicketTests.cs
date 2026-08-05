@@ -71,7 +71,7 @@ public class SameMatchTicketTests
         for (var i = 5; i <= 8; i++)
             legs.Add(new TicketLeg(i, $"League{i}", "match_winner", "Match Winner (Home)", 0.70, 2.20, 0.54));
 
-        var tickets = TicketBuilder.Build([], legs, Strat, Opt);
+        var tickets = TicketBuilder.Build(legs, [], Strat, Opt);
         var combos = tickets.Where(t => !t.IsSingle && !t.IsSameMatchPair).ToList();
 
         combos.Count(t => t.ContainsGoalsMarket)

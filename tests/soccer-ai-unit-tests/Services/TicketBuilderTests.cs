@@ -31,7 +31,8 @@ public class TicketBuilderTests
         var subFloor = Leg(1, odds: 1.55, p: 0.68, ev: 0.054);
         var partner = Leg(2, league: "Bundesliga", odds: 1.60, p: 0.66, ev: 0.056);
 
-        var tickets = TicketBuilder.Build([subFloor], [subFloor, partner], Strat, Opt);
+        // Combo legs must be qualified (v8): pass them as qualified singles.
+        var tickets = TicketBuilder.Build([subFloor, partner], [], Strat, Opt);
 
         tickets.Should().ContainSingle("no single, but the 2-leg combo clears the ticket floor");
         var combo = tickets[0];
@@ -47,7 +48,7 @@ public class TicketBuilderTests
         var winner = Leg(1, market: "match_winner", odds: 1.30, p: 0.80, ev: 0.04);
         var goals = Leg(2, league: "Bundesliga", odds: 1.55, p: 0.68, ev: 0.054);
 
-        var tickets = TicketBuilder.Build([], [winner, goals], Strat, Opt);
+        var tickets = TicketBuilder.Build([winner, goals], [], Strat, Opt);
 
         tickets.Should().BeEmpty("2.015 < the 2.10 floor that applies when 1X2 legs are involved");
     }
@@ -63,7 +64,7 @@ public class TicketBuilderTests
             Leg(3, "Bundesliga", "over25", 0.66, 1.60, 0.056)
         };
 
-        var tickets = TicketBuilder.Build([], legs, Strat, Opt);
+        var tickets = TicketBuilder.Build(legs, [], Strat, Opt);
 
         foreach (var ticket in tickets)
         {
@@ -75,9 +76,9 @@ public class TicketBuilderTests
     [Fact]
     public void Combo_OnlyEvPositiveTickets()
     {
-        var tickets = TicketBuilder.Build([],
+        var tickets = TicketBuilder.Build(
             [Leg(1, p: 0.55, odds: 1.30, ev: 0.01), Leg(2, league: "Bundesliga", p: 0.55, odds: 1.35, ev: 0.01)],
-            Strat, Opt);
+            [], Strat, Opt);
 
         // combined p = 0.3025, odds = 1.755 → EV = −0.47 → rejected
         tickets.Should().BeEmpty("ticket EV must be positive");
@@ -93,7 +94,7 @@ public class TicketBuilderTests
         legs.Add(Leg(9, "League9", market: "match_winner", p: 0.70, odds: 1.55, ev: 0.085));
         legs.Add(Leg(10, "League10", market: "match_winner", p: 0.68, odds: 1.60, ev: 0.088));
 
-        var tickets = TicketBuilder.Build([], legs, Strat, Opt);
+        var tickets = TicketBuilder.Build(legs, [], Strat, Opt);
 
         tickets.Should().NotBeEmpty();
         // The favorites must appear in the built tickets (preference ordering)
@@ -106,7 +107,7 @@ public class TicketBuilderTests
         var a = Leg(1, "Premier League", p: 0.70, odds: 1.80, ev: 0.26);
         var b = Leg(2, "Bundesliga", p: 0.70, odds: 1.80, ev: 0.26);
 
-        var tickets = TicketBuilder.Build([], [a, b], Strat, Opt);
+        var tickets = TicketBuilder.Build([a, b], [], Strat, Opt);
 
         var combo = tickets.Single(t => t.Legs.Count == 2);
         combo.CombinedProbability.Should().BeApproximately(0.49, 1e-9);
@@ -122,7 +123,7 @@ public class TicketBuilderTests
             .Select(i => Leg(i, $"League{i}", p: 0.62, odds: 1.85, ev: 0.147))
             .ToList();
 
-        var tickets = TicketBuilder.Build([], legs, Strat, Opt);
+        var tickets = TicketBuilder.Build(legs, [], Strat, Opt);
 
         tickets.Should().NotBeEmpty();
         tickets.Should().OnlyContain(t => t.Legs.Count <= 2,
@@ -137,7 +138,7 @@ public class TicketBuilderTests
             .Select(i => Leg(i, $"League{i}", p: 0.62, odds: 1.85, ev: 0.147))
             .ToList();
 
-        var tickets = TicketBuilder.Build([], legs, Strat, opt);
+        var tickets = TicketBuilder.Build(legs, [], Strat, opt);
 
         tickets.Should().Contain(t => t.Legs.Count == 3);
     }
