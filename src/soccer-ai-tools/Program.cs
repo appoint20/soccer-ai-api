@@ -66,6 +66,8 @@ public static class Program
                     return await BackfillAnalysisCommand.RunAsync(host.Services, args);
                 case "backfill-odds":
                     return await BackfillOddsCommand.RunAsync(host.Services, args);
+                case "import-odds-csv":
+                    return await ImportOddsCsvCommand.RunAsync(host.Services, args);
                 default:
                     Console.Error.WriteLine($"Unknown command: {command}");
                     PrintUsage();
@@ -414,6 +416,12 @@ public static class Program
                            so this recovers a short outage, NOT history. Older odds
                            are gone permanently. Never invents a price.
                            Start with --probe.
+              import-odds-csv [--seasons=2021,2022] [--from-season=2020] [--dry-run]
+                           One-time import of historical Bet365 1X2 + O/U 2.5
+                           prices from football-data.co.uk, which API-Football
+                           cannot serve. Never overwrites a live-captured price.
+                           Unmatched team names are reported, not guessed.
+                           Start with --dry-run.
               migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
                            One-time zero-loss SQLite → PostgreSQL migration with
                            row-count + checksum verification (aborts on mismatch;

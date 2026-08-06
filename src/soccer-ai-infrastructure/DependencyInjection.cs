@@ -36,6 +36,8 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.ConfluenceOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.OddsSyncOptions>(
             configuration.GetSection(SoccerAi.Application.Options.OddsSyncOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.HistoricalOddsOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.HistoricalOddsOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -55,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IAnalysisPrecomputeService, AnalysisPrecomputeService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
         services.AddScoped<IOddsBackfillService, OddsBackfillService>();
+        services.AddScoped<IHistoricalOddsImportService, HistoricalOddsImportService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
         services.AddScoped<ITeamSyncService, TeamSyncService>();
         
@@ -168,6 +171,14 @@ public static class DependencyInjection
                 Delay = TimeSpan.FromSeconds(2)
             });
             builder.AddTimeout(TimeSpan.FromSeconds(30));
+        });
+
+        // football-data.co.uk season files. No API key; a whole season is one
+        // file, so the timeout is generous and there is nothing to rate-limit.
+        services.AddHttpClient(HistoricalOddsImportService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+            client.DefaultRequestHeaders.Add("User-Agent", "soccer-ai-api/1.0");
         });
     }
 
