@@ -43,7 +43,7 @@ public interface IPickLedger
     /// changes nothing, and prices already recorded are never overwritten.
     /// </summary>
     /// <returns>Number of tickets newly recorded.</returns>
-    Task<int> RecordAsync(Services.Decisions.DailyPickBoard board, CancellationToken ct = default);
+    Task<int> RecordAsync(DailyPickBoard board, CancellationToken ct = default);
 
     /// <summary>
     /// Settles every pending ticket whose fixtures have finished.
