@@ -10,10 +10,7 @@ public sealed record TicketLeg(
     string Selection,
     double Probability,
     double Odds,
-    double Ev)
-{
-    public bool IsGoalsMarket => Market is "btts" or "over25";
-}
+    double Ev);
 
 /// <summary>
 /// A same-match BTTS + Over 2.5 pair. Its probability is the TRUE joint from
@@ -39,7 +36,12 @@ public sealed record Ticket(
     bool IsSameMatchPair = false)
 {
     public bool IsSingle => Legs.Count == 1;
-    public bool ContainsGoalsMarket => Legs.Any(l => l.IsGoalsMarket);
+
+    /// <summary>
+    /// Whether this ticket touches a focus (goals) market. Set at construction
+    /// because which markets count is configuration, not a fact about a leg.
+    /// </summary>
+    public bool ContainsGoalsMarket { get; init; }
 
     /// <summary>Fair price for this ticket's probability — never accept less.</summary>
     public double FairOdds => CombinedProbability > 0 ? Math.Round(1 / CombinedProbability, 2) : 0;
@@ -66,6 +68,21 @@ public static class TicketBuilder
     public const int MaxSupportedComboLegs = 3;
     public const int MaxComboTicketsPerDay = 5;
     public const double PreferredFavoriteProbability = 0.65;
+
+    /// <summary>
+    /// Legs considered when composing combos. Combinations grow factorially, so
+    /// this caps the search rather than the product: twelve legs is already
+    /// 220 three-leg candidates.
+    /// </summary>
+    public const int PoolSize = 12;
+
+    /// <summary>
+    /// Focus markets, which get guaranteed daily slots. Configuration rather
+    /// than a constant: which markets deserve priority is a product decision
+    /// that the measured results should be allowed to change.
+    /// </summary>
+    public static bool IsGoalsMarket(string market, ConfluenceOptions opt) =>
+        opt.GoalsMarkets.Contains(market);
 
     public static double MarketFloor(string market, StrategyOptions strat) => market switch
     {
@@ -117,7 +134,10 @@ public static class TicketBuilder
                 Math.Round(pair.JointProbability, 4),
                 Math.Round(ev, 4),
                 ValueMath.FractionalKelly(pair.JointProbability, totalOdds, opt.KellyFraction),
-                IsSameMatchPair: true));
+                IsSameMatchPair: true)
+            {
+                ContainsGoalsMarket = true
+            });
         }
 
         // ── 3. Multi-match combos ──
@@ -126,11 +146,12 @@ public static class TicketBuilder
         var legSource = opt.ComboLegsRequireQualified ? qualifiedSingles : comboEligibleLegs;
         var pool = legSource
             .GroupBy(l => l.FixtureId)
-            .Select(g => g.OrderByDescending(l => l.IsGoalsMarket).ThenByDescending(l => l.Ev).First())
-            .OrderByDescending(l => l.IsGoalsMarket)                       // goals markets first
+            .Select(g => g.OrderByDescending(l => IsGoalsMarket(l.Market, opt))
+                          .ThenByDescending(l => l.Ev).First())
+            .OrderByDescending(l => IsGoalsMarket(l.Market, opt))           // focus markets first
             .ThenByDescending(l => l.Probability >= PreferredFavoriteProbability)
             .ThenByDescending(l => l.Ev)
-            .Take(12)
+            .Take(PoolSize)
             .ToList();
 
         var combos = new List<Ticket>();
@@ -177,7 +198,13 @@ public static class TicketBuilder
         for (var i = start; i < pool.Count; i++)
         {
             var leg = pool[i];
-            if (current.Any(l => l.FixtureId == leg.FixtureId)) continue; // one leg per fixture
+
+            // One leg per fixture. This is also what makes a self-cancelling
+            // ticket impossible: Over 2.5 and Under 2.5 on the SAME match can
+            // never both land, so such a combo is a guaranteed loss however
+            // attractive its price looks. Across different matches they are
+            // simply two independent bets, and that is allowed.
+            if (current.Any(l => l.FixtureId == leg.FixtureId)) continue;
             if (current.Any(l => l.League == leg.League)) continue;       // one leg per league
 
             current.Add(leg);
@@ -198,6 +225,9 @@ public static class TicketBuilder
             Math.Round(totalOdds, 2),
             Math.Round(combinedP, 4),
             Math.Round(ev, 4),
-            ValueMath.FractionalKelly(combinedP, totalOdds, opt.KellyFraction));
+            ValueMath.FractionalKelly(combinedP, totalOdds, opt.KellyFraction))
+        {
+            ContainsGoalsMarket = legs.Any(l => IsGoalsMarket(l.Market, opt))
+        };
     }
 }

@@ -80,6 +80,70 @@ public class SameMatchTicketTests
     }
 
     [Fact]
+    public void Over25AndUnder25_OnTheSameMatch_AreNeverCombined()
+    {
+        // They cannot both land, so such a ticket is a guaranteed loss no matter
+        // how attractive the combined price looks.
+        var legs = new List<TicketLeg>
+        {
+            new(1, "Premier League", "over25", "Over 2.5 Goals", 0.62, 1.85, 0.147),
+            new(1, "Premier League", "under25", "Under 2.5 Goals", 0.55, 2.10, 0.155)
+        };
+
+        TicketBuilder.Build(legs, [], Strat, Opt)
+            .Where(t => !t.IsSingle)
+            .Should().BeEmpty("one fixture contributes at most one leg");
+    }
+
+    [Fact]
+    public void Over25AndUnder25_OnDifferentMatches_AreAllowed()
+    {
+        // Two independent fixtures: these are simply two separate bets.
+        var legs = new List<TicketLeg>
+        {
+            new(1, "Premier League", "over25", "Over 2.5 Goals", 0.64, 1.85, 0.184),
+            new(2, "Bundesliga", "under25", "Under 2.5 Goals", 0.63, 1.90, 0.197)
+        };
+
+        TicketBuilder.Build(legs, [], Strat, Opt)
+            .Should().Contain(t => t.Legs.Count == 2);
+    }
+
+    [Fact]
+    public void Under25_CountsAsAFocusMarket()
+    {
+        // Baseline v11 measured Under 2.5 as the strongest market while Over 2.5
+        // lost money, so it earns the same guaranteed slots.
+        TicketBuilder.IsGoalsMarket("under25", Opt).Should().BeTrue();
+        TicketBuilder.IsGoalsMarket("btts", Opt).Should().BeTrue();
+        TicketBuilder.IsGoalsMarket("match_winner", Opt).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ThreeLegCombos_AreBuiltWhenConfigured()
+    {
+        var opt = new ConfluenceOptions { MaxComboLegs = 3 };
+        var legs = Enumerable.Range(1, 6)
+            .Select(i => new TicketLeg(i, $"League{i}", "over25", "Over 2.5 Goals", 0.66, 1.80, 0.188))
+            .ToList();
+
+        TicketBuilder.Build(legs, [], Strat, opt)
+            .Should().Contain(t => t.Legs.Count == 3);
+    }
+
+    [Fact]
+    public void ComboLegs_NeverExceedTheConfiguredMaximum()
+    {
+        var opt = new ConfluenceOptions { MaxComboLegs = 2 };
+        var legs = Enumerable.Range(1, 6)
+            .Select(i => new TicketLeg(i, $"League{i}", "over25", "Over 2.5 Goals", 0.66, 1.80, 0.188))
+            .ToList();
+
+        TicketBuilder.Build(legs, [], Strat, opt)
+            .Should().OnlyContain(t => t.Legs.Count <= 2);
+    }
+
+    [Fact]
     public void MinOddsSameMatchPair_IsConfigurable()
     {
         var strat = new StrategyOptions { MinOddsSameMatchPair = 2.50 };

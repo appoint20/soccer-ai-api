@@ -41,8 +41,18 @@ public sealed class ConfluenceOptions
     public int MaxComboLegs { get; set; } = 2;
 
     /// <summary>
-    /// Guaranteed daily slots for tickets containing BTTS or Over 2.5 — the
-    /// focus markets. They are selected before any other combo.
+    /// Focus markets: tickets containing one are selected before any other
+    /// combo and hold guaranteed daily slots.
+    ///
+    /// Under 2.5 joined BTTS and Over 2.5 after baseline v11, where it was the
+    /// strongest market measured (n=31, 58.1% hit, +21.0% flat) while Over 2.5
+    /// lost money (n=47, 48.9%, −4.7%). Note that .NET configuration binding
+    /// appends to array defaults, so an override here adds to this list.
+    /// </summary>
+    public string[] GoalsMarkets { get; set; } = ["btts", "over25", "under25"];
+
+    /// <summary>
+    /// Guaranteed daily slots for tickets containing a focus market.
     /// </summary>
     public int MinGoalsMarketTickets { get; set; } = 3;
 
