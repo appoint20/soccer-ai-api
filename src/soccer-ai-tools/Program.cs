@@ -409,10 +409,10 @@ public static class Program
                            Recompute analysis for historical finished fixtures so
                            the calibration layer gets training data. 0 API calls.
               backfill-odds [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--max-calls=N] [--probe]
-                           Fetch REAL odds for fixtures the routine sync could
-                           never reach (aged past its lookback window). Samples
-                           first and aborts if the API no longer prices that far
-                           back, so quota is not wasted. Never invents a price.
+                           Repair odds for fixtures missed while the worker was
+                           down. API-Football keeps only 7 days of pre-match odds,
+                           so this recovers a short outage, NOT history. Older odds
+                           are gone permanently. Never invents a price.
                            Start with --probe.
               migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
                            One-time zero-loss SQLite → PostgreSQL migration with

@@ -7,12 +7,11 @@ using SoccerAi.Application.Options;
 namespace SoccerAi.Tools;
 
 /// <summary>
-/// Recovers odds the routine sync could never fetch.
+/// Repairs odds for fixtures the sync missed while it was not running.
 ///
-/// The sync only looks for odds inside a short lookback window, so fixtures
-/// that aged past it while the worker was down have no price at all — and a
-/// fixture without a price cannot be value-checked, however confident the model
-/// is about it. That is the single largest cause of low pick volume.
+/// Scope is small and fixed by the data source: API-Football keeps only the
+/// last seven days of pre-match odds, so this recovers a short outage — not
+/// history. Anything older is gone and cannot be bought back at any price.
 ///
 /// Only real quoted prices are written. Nothing is defaulted or estimated.
 /// </summary>
@@ -25,14 +24,28 @@ public static class BackfillOddsCommand
         var options = scope.ServiceProvider.GetRequiredService<IOptions<OddsSyncOptions>>().Value;
 
         var to = ParseDate(args, "--to") ?? DateTimeOffset.UtcNow;
-        var from = ParseDate(args, "--from") ?? to.AddDays(-210);
+        var retentionStart = DateTimeOffset.UtcNow.AddDays(-options.ApiOddsRetentionDays);
+        var requestedFrom = ParseDate(args, "--from") ?? retentionStart;
         var maxCalls = ParseInt(args, "--max-calls") ?? options.BackfillMaxCalls;
         var probeOnly = args.Contains("--probe");
 
-        if (from > to)
+        if (requestedFrom > to)
         {
             Console.Error.WriteLine("--from must not be after --to.");
             return 1;
+        }
+
+        // Asking for older fixtures cannot work, so say so rather than spending
+        // the caller's quota proving it.
+        var from = requestedFrom < retentionStart ? retentionStart : requestedFrom;
+        if (from != requestedFrom)
+        {
+            Console.WriteLine(
+                $"  Note: API-Football keeps only {options.ApiOddsRetentionDays} days of pre-match odds.");
+            Console.WriteLine(
+                $"  Window narrowed from {requestedFrom:yyyy-MM-dd} to {from:yyyy-MM-dd}. Older odds are gone");
+            Console.WriteLine("  permanently — only keeping the worker running prevents future gaps.");
+            Console.WriteLine();
         }
 
         Console.WriteLine();
