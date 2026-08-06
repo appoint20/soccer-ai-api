@@ -197,17 +197,34 @@ public static class PickSelector
             jointProbability.Value, bttsOdds.Value, over25Odds.Value);
     }
 
+    /// <summary>
+    /// Minimum probability this market must reach to be publishable, falling
+    /// back to the global floor.
+    /// </summary>
+    public static double ConfidenceFloorFor(string market, ConfluenceOptions opt) =>
+        opt.ConfidencePickMinProbabilityByMarket.TryGetValue(market, out var floor)
+            ? floor
+            : opt.ConfidencePickMinProbability;
+
+    /// <summary>
+    /// Each market is tested against its own floor <em>before</em> the best is
+    /// chosen, not after.
+    ///
+    /// The order matters. Selecting first and filtering second would let a
+    /// suppressed market win the comparison and then be dropped, silently
+    /// costing the fixture a perfectly publishable pick from another market.
+    /// </summary>
     private static ConfidencePick? BuildConfidencePick(
         FixtureRef fixture, DecisionAudit audit, ConfluenceOptions opt)
     {
         var best = audit.Markets
             .Where(m => ConfidenceMarkets.Contains(m.Market))
+            .Where(m => m.Probability >= ConfidenceFloorFor(m.Market, opt))
             .OrderByDescending(m => m.Probability)
             .FirstOrDefault();
 
-        if (best is null || best.Probability < opt.ConfidencePickMinProbability)
-            return null;
-
-        return new ConfidencePick(fixture, best.Market, SelectionOf(best), best.Probability);
+        return best is null
+            ? null
+            : new ConfidencePick(fixture, best.Market, SelectionOf(best), best.Probability);
     }
 }

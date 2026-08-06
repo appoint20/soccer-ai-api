@@ -73,6 +73,13 @@ market estimates, and a maximum sits above the average of what it was chosen
 from, so it reads high. Publish the measured bucket hit rates from the backtest
 report instead.
 
+Each market is filtered against its own floor
+(`Confluence:ConfidencePickMinProbabilityByMarket`) *before* the best is chosen,
+so a suppressed market cannot win the comparison and then be dropped, taking a
+publishable pick from another market down with it. Over 2.5 currently sits at
+0.65: baseline v9 measured the confidence-selected 60–65% band hitting 48.8%
+(n=41) while the same band across all fixtures hit 66.7% (n=123).
+
 `GET /api/picks/performance?from=YYYY-MM-DD&to=YYYY-MM-DD`
 
 What published tickets actually returned — live results at the prices customers

@@ -186,6 +186,48 @@ public class PickSelectorTests
     }
 
     [Fact]
+    public void ConfidencePick_AppliesThePerMarketFloor()
+    {
+        // Over 2.5 defaults to a 0.65 floor: baseline v9 measured the
+        // confidence-selected 60-65% band hitting 48.8% against a claimed 63.8%.
+        var audit = AuditFor(Audit("over25", probability: 0.63));
+
+        PickSelector.Select(Fixture, audit, null, Opt).ConfidencePick.Should().BeNull();
+    }
+
+    [Fact]
+    public void ConfidencePick_FiltersBeforeChoosingTheBest()
+    {
+        // Over 2.5 is the highest probability but sits under its own floor.
+        // Selecting first and filtering second would drop the fixture entirely
+        // and lose the perfectly publishable BTTS pick underneath it.
+        var audit = AuditFor(
+            Audit("over25", probability: 0.64),
+            Audit("btts", probability: 0.62));
+
+        var pick = PickSelector.Select(Fixture, audit, null, Opt).ConfidencePick;
+
+        pick.Should().NotBeNull();
+        pick!.Market.Should().Be("btts");
+    }
+
+    [Fact]
+    public void ConfidencePick_MarketsWithoutAnOverride_UseTheGlobalFloor()
+    {
+        PickSelector.ConfidenceFloorFor("btts", Opt).Should().Be(Opt.ConfidencePickMinProbability);
+        PickSelector.ConfidenceFloorFor("over25", Opt).Should().Be(0.65);
+    }
+
+    [Fact]
+    public void ConfidencePick_Over25AboveItsOwnFloor_IsStillPublished()
+    {
+        var audit = AuditFor(Audit("over25", probability: 0.72));
+
+        PickSelector.Select(Fixture, audit, null, Opt).ConfidencePick!
+            .Market.Should().Be("over25");
+    }
+
+    [Fact]
     public void ConfidencePick_IgnoresMarketsOutsideTheProductTwoSet()
     {
         // The draw is deliberately excluded: a 60%+ draw never occurs, and

@@ -62,6 +62,28 @@ public sealed class ConfluenceOptions
     /// <summary>Minimum calibrated probability to appear as a confidence pick.</summary>
     public double ConfidencePickMinProbability { get; set; } = 0.60;
 
+    /// <summary>
+    /// Per-market overrides of <see cref="ConfidencePickMinProbability"/>.
+    ///
+    /// Over 2.5 sits at 0.65 because baseline v9 measured a specific failure:
+    /// across all fixtures, Over 2.5 in the 60-65% band hit 66.7% (n=123) — but
+    /// the subset *selected as the best market on its fixture* hit only 48.8%
+    /// (n=41). Choosing the maximum does not merely inflate the number; it
+    /// picks fixtures where every other market looked weak, and those are
+    /// systematically different matches.
+    ///
+    /// Treat this as provisional: n=41 is thin, and the honest fix is to publish
+    /// measured bucket hit rates rather than model probabilities. Raise or
+    /// remove the entry in appsettings once more data arrives.
+    ///
+    /// Note that .NET configuration merges dictionary entries by key rather than
+    /// replacing the dictionary, so an override here adds to these defaults.
+    /// </summary>
+    public Dictionary<string, double> ConfidencePickMinProbabilityByMarket { get; set; } = new()
+    {
+        ["over25"] = 0.65
+    };
+
     /// <summary>MinEdge levels reported side by side in the backtest EV sweep.</summary>
     public double[] EvSweepLevels { get; set; } = [0.02, 0.03, 0.04, 0.05, 0.07];
 
