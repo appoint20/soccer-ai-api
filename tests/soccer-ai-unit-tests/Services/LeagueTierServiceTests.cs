@@ -88,4 +88,17 @@ public class LeagueTierServiceTests
         ids.Should().Contain([2, 3, 848]);
         ids.Should().Contain(39);
     }
+
+    [Fact]
+    public void SyncLeagueIds_AreDeduplicated()
+    {
+        // .NET configuration binding appends to an array's default rather than
+        // replacing it, so a Tier1 list in appsettings arrives doubled. Callers
+        // that loop over this — the fixture sync — would spend twice the API
+        // quota, and no membership check would ever reveal it.
+        var options = new LeagueTierOptions { Tier1 = [39, 78, 39, 78], IncludeTier2 = false };
+        var sut = new LeagueTierService(Microsoft.Extensions.Options.Options.Create(options));
+
+        sut.GetSyncLeagueIds().Should().Equal(39, 78);
+    }
 }
