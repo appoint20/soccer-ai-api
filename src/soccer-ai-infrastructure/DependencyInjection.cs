@@ -34,6 +34,8 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.StrategyOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.ConfluenceOptions>(
             configuration.GetSection(SoccerAi.Application.Options.ConfluenceOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.OddsSyncOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.OddsSyncOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -52,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();
         services.AddScoped<IAnalysisPrecomputeService, AnalysisPrecomputeService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
+        services.AddScoped<IOddsBackfillService, OddsBackfillService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
         services.AddScoped<ITeamSyncService, TeamSyncService>();
         

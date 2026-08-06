@@ -64,6 +64,8 @@ public static class Program
                     return await OddsCoverageCommand.RunAsync(host.Services);
                 case "backfill-analysis":
                     return await BackfillAnalysisCommand.RunAsync(host.Services, args);
+                case "backfill-odds":
+                    return await BackfillOddsCommand.RunAsync(host.Services, args);
                 default:
                     Console.Error.WriteLine($"Unknown command: {command}");
                     PrintUsage();
@@ -406,6 +408,12 @@ public static class Program
               backfill-analysis [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--chunk-days=7]
                            Recompute analysis for historical finished fixtures so
                            the calibration layer gets training data. 0 API calls.
+              backfill-odds [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--max-calls=N] [--probe]
+                           Fetch REAL odds for fixtures the routine sync could
+                           never reach (aged past its lookback window). Samples
+                           first and aborts if the API no longer prices that far
+                           back, so quota is not wasted. Never invents a price.
+                           Start with --probe.
               migrate-data [--sqlite=data/soccer.db] [--postgres=<conn string>]
                            One-time zero-loss SQLite → PostgreSQL migration with
                            row-count + checksum verification (aborts on mismatch;

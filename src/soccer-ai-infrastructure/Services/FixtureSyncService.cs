@@ -15,6 +15,7 @@ public class FixtureSyncService(IApiFootballService apiService,
     IApplicationDbContext dbContext,
     ILeagueTierService leagueTiers,
     IApiQuotaTracker quota,
+    Microsoft.Extensions.Options.IOptions<Application.Options.OddsSyncOptions> oddsOptions,
     ILogger<FixtureSyncService> logger)
     : IFixtureSyncService
 {
@@ -242,8 +243,15 @@ public class FixtureSyncService(IApiFootballService apiService,
                 var existingFixture = await dbContext.Fixtures
                     .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
 
-                // Check if match is within 7-day odds window
-                var isWithinOddsWindow = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-7);
+                // Odds are only fetched inside this lookback window, to keep the
+                // routine sync from re-checking thousands of historical fixtures
+                // on every run. The consequence is worth stating plainly: a
+                // fixture that ages past the window can never gain odds through
+                // this path, so a week the worker was down stays unpriced — and
+                // an unpriced fixture is invisible to the value gate. Closing
+                // that gap is what the backfill-odds command is for.
+                var isWithinOddsWindow =
+                    apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-oddsOptions.Value.LookbackDays);
                 var isVeryRecent = apiFixture.Date >= DateTimeOffset.UtcNow.AddDays(-2); // 48-hour refresh window
 
                 if (existingFixture == null)
@@ -500,16 +508,8 @@ public class FixtureSyncService(IApiFootballService apiService,
             }
         }
 
-        var best = Application.Services.OddsQuoteAggregator.BestPrices(quotes);
-
-        // Never null-out an existing valid price with a missing market.
-        fixture.HomeWinOdds = best.HomeWin ?? fixture.HomeWinOdds;
-        fixture.DrawOdds = best.Draw ?? fixture.DrawOdds;
-        fixture.AwayWinOdds = best.AwayWin ?? fixture.AwayWinOdds;
-        fixture.Over25Odds = best.Over25 ?? fixture.Over25Odds;
-        fixture.Under25Odds = best.Under25 ?? fixture.Under25Odds;
-        fixture.BttsYesOdds = best.BttsYes ?? fixture.BttsYesOdds;
-        fixture.UpdatedAt = DateTimeOffset.UtcNow;
+        Application.Services.FixtureOddsWriter.ApplyBestPrices(
+            fixture, Application.Services.OddsQuoteAggregator.BestPrices(quotes));
     }
 
     /// <summary>
