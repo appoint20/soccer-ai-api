@@ -57,6 +57,23 @@ public sealed class ConfluenceOptions
     public int MinGoalsMarketTickets { get; set; } = 3;
 
     /// <summary>
+    /// Legs a single combo may take from the same league. 0 means no limit.
+    ///
+    /// Previously fixed at one. With thirteen leagues and a strict edge bar,
+    /// that discarded most of the day's best combinations — on a weekend where
+    /// the three strongest picks were all Championship matches it produced no
+    /// ticket at all.
+    ///
+    /// The cost of lifting it is worth stating: ticket probability is the
+    /// product of its legs, which assumes independence. Two fixtures in the
+    /// same league on the same day share weather, referees and fixture
+    /// congestion, so they fail together more often than that product implies,
+    /// and such tickets are priced slightly optimistically. The backtest's
+    /// ticket section is where that would show up.
+    /// </summary>
+    public int MaxLegsPerLeague { get; set; }
+
+    /// <summary>
     /// Combo legs must clear the SAME bar as a single pick (EV ≥ MinEdge), not
     /// merely EV &gt; 0. Baseline v7: 2-leg tickets built from the weaker pool
     /// hit 16.7% against a claimed 27% — probability error multiplies in a

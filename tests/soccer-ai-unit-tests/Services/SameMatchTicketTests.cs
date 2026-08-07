@@ -110,6 +110,35 @@ public class SameMatchTicketTests
     }
 
     [Fact]
+    public void TwoLegsFromTheSameLeague_AreAllowedByDefault()
+    {
+        // With thirteen leagues and a strict edge bar, one-leg-per-league threw
+        // away most of the day's best combinations.
+        var legs = new List<TicketLeg>
+        {
+            new(1, "Premier League", "over25", "Over 2.5 Goals", 0.64, 1.85, 0.184),
+            new(2, "Premier League", "under25", "Under 2.5 Goals", 0.63, 1.90, 0.197)
+        };
+
+        TicketBuilder.Build(legs, [], Strat, Opt)
+            .Should().Contain(t => t.Legs.Count == 2);
+    }
+
+    [Fact]
+    public void LegsPerLeague_CanBeCappedAgain()
+    {
+        var opt = new ConfluenceOptions { MaxLegsPerLeague = 1 };
+        var legs = new List<TicketLeg>
+        {
+            new(1, "Premier League", "over25", "Over 2.5 Goals", 0.64, 1.85, 0.184),
+            new(2, "Premier League", "under25", "Under 2.5 Goals", 0.63, 1.90, 0.197)
+        };
+
+        TicketBuilder.Build(legs, [], Strat, opt)
+            .Should().NotContain(t => t.Legs.Count > 1);
+    }
+
+    [Fact]
     public void Under25_CountsAsAFocusMarket()
     {
         // Baseline v11 measured Under 2.5 as the strongest market while Over 2.5

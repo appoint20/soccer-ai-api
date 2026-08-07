@@ -204,8 +204,13 @@ public static class TicketBuilder
             // never both land, so such a combo is a guaranteed loss however
             // attractive its price looks. Across different matches they are
             // simply two independent bets, and that is allowed.
+            //
+            // Unlike the league limit below, this rule is arithmetic rather
+            // than preference, so it is not configurable.
             if (current.Any(l => l.FixtureId == leg.FixtureId)) continue;
-            if (current.Any(l => l.League == leg.League)) continue;       // one leg per league
+
+            if (opt.MaxLegsPerLeague > 0 &&
+                current.Count(l => l.League == leg.League) >= opt.MaxLegsPerLeague) continue;
 
             current.Add(leg);
             ComposeCombos(pool, current, i + 1, strat, opt, results);

@@ -54,23 +54,25 @@ public class TicketBuilderTests
     }
 
     [Fact]
-    public void Combo_NeverTwoLegsFromSameFixture_OrSameLeague()
+    public void Combo_NeverTwoLegsFromTheSameFixture()
     {
+        // One fixture, one leg — always. Two markets on the same match are
+        // correlated at best and mutually exclusive at worst (Over 2.5 with
+        // Under 2.5 can never both land). Legs from the same LEAGUE are allowed;
+        // see MaxLegsPerLeague.
         var legs = new List<TicketLeg>
         {
             Leg(1, "Premier League", "over25", 0.66, 1.60, 0.056),
             Leg(1, "Premier League", "btts", 0.65, 1.70, 0.105),      // same fixture
-            Leg(2, "Premier League", "over25", 0.66, 1.60, 0.056),    // same league as #1
+            Leg(2, "Premier League", "over25", 0.66, 1.60, 0.056),
             Leg(3, "Bundesliga", "over25", 0.66, 1.60, 0.056)
         };
 
         var tickets = TicketBuilder.Build(legs, [], Strat, Opt);
 
+        tickets.Should().NotBeEmpty();
         foreach (var ticket in tickets)
-        {
             ticket.Legs.Select(l => l.FixtureId).Should().OnlyHaveUniqueItems();
-            ticket.Legs.Select(l => l.League).Should().OnlyHaveUniqueItems();
-        }
     }
 
     [Fact]
