@@ -120,6 +120,12 @@ public static class TeamNameMatcher
         {
             if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark) continue;
 
+            // Apostrophes join words rather than separating them: "Nott'm" is
+            // one word, not two, and "King's Lynn" is two, not three. Treating
+            // them as separators produces a stray single-letter token that
+            // matches nothing.
+            if (IsApostrophe(ch)) continue;
+
             if (char.IsLetterOrDigit(ch)) sb.Append(char.ToLowerInvariant(ch));
             else sb.Append(' ');
         }
@@ -136,6 +142,14 @@ public static class TeamNameMatcher
 
         return string.Join(' ', tokens);
     }
+
+    /// <summary>
+    /// Every apostrophe form these feeds produce. U+0092 is included because
+    /// that is how Windows-1252's right single quote surfaces once the source
+    /// files are read as Latin-1.
+    /// </summary>
+    private static bool IsApostrophe(char ch) =>
+        ch is '\'' or '\u2019' or '\u2018' or '\u0092' or '`' or '\u00B4';
 
     /// <summary>
     /// Resolves an external name against the teams known to play in that league.

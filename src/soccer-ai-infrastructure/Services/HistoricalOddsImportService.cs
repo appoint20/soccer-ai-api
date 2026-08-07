@@ -79,7 +79,14 @@ public sealed class HistoricalOddsImportService(
         try
         {
             var client = httpClientFactory.CreateClient(HttpClientName);
-            csv = await client.GetStringAsync(url, ct);
+
+            // These files are Windows-1252, not UTF-8. Decoding them as UTF-8
+            // turns the apostrophe in "King's Lynn" into a replacement
+            // character, and a corrupted name silently fails to match.
+            // Latin-1 preserves every byte, leaving the normalizer to strip
+            // what it does not want.
+            var bytes = await client.GetByteArrayAsync(url, ct);
+            csv = System.Text.Encoding.Latin1.GetString(bytes);
         }
         catch (Exception ex)
         {

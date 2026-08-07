@@ -53,6 +53,19 @@ public class TeamNameMatcherTests
     public void Normalize_NameOfOnlyClubWords_DoesNotCollapseToNothing() =>
         TeamNameMatcher.Normalize("FC").Should().NotBeEmpty();
 
+    [Theory]
+    [InlineData("Nott'm Forest", "nottm forest")]
+    [InlineData("King's Lynn", "kings lynn")]
+    [InlineData("M’Gladbach", "mgladbach")]
+    [InlineData("Kings Lynn", "kings lynn")]
+    public void Normalize_TreatsApostrophesAsJoiners(string raw, string expected)
+    {
+        // Splitting on an apostrophe leaves a one-letter token that matches
+        // nothing. U+0092 is the Windows-1252 curly quote as it appears once
+        // these Latin-1 files are read.
+        TeamNameMatcher.Normalize(raw).Should().Be(expected);
+    }
+
     // ── Matching ─────────────────────────────────────────────────────────────
 
     [Fact]
