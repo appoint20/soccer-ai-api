@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -80,13 +81,7 @@ public sealed class HistoricalOddsImportService(
         {
             var client = httpClientFactory.CreateClient(HttpClientName);
 
-            // These files are Windows-1252, not UTF-8. Decoding them as UTF-8
-            // turns the apostrophe in "King's Lynn" into a replacement
-            // character, and a corrupted name silently fails to match.
-            // Latin-1 preserves every byte, leaving the normalizer to strip
-            // what it does not want.
-            var bytes = await client.GetByteArrayAsync(url, ct);
-            csv = System.Text.Encoding.Latin1.GetString(bytes);
+            csv = DecodeCsv(await client.GetByteArrayAsync(url, ct));
         }
         catch (Exception ex)
         {
@@ -244,6 +239,34 @@ public sealed class HistoricalOddsImportService(
             .ToList();
 
         return candidates.Count == 1 ? candidates[0] : null;
+    }
+
+    /// <summary>
+    /// These season files are not consistently encoded: most are Windows-1252
+    /// ("King's Lynn" with a curly quote), but some are UTF-8 ("Preußen
+    /// Münster"). Assuming either one corrupts the other's names, and a
+    /// corrupted name silently fails to match — which is how "PreuÃŸen
+    /// MÃ¼nster" reached an import report.
+    ///
+    /// Strict UTF-8 decoding settles it: byte sequences that are valid UTF-8
+    /// are essentially never Windows-1252 text by accident, so a decode failure
+    /// is a reliable signal rather than a guess.
+    /// </summary>
+    public static string DecodeCsv(byte[] bytes)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+
+        try
+        {
+            return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)
+                .GetString(bytes);
+        }
+        catch (DecoderFallbackException)
+        {
+            // Latin-1 never fails and preserves every byte, leaving the name
+            // normalizer to strip whatever it does not recognise.
+            return Encoding.Latin1.GetString(bytes);
+        }
     }
 
     /// <summary>Season 2025 (i.e. 2025/26) is published as "2526".</summary>
