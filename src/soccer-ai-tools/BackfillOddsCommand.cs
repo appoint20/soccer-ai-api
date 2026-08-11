@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SoccerAi.Application.Interfaces;
@@ -23,11 +22,11 @@ public static class BackfillOddsCommand
         var backfill = scope.ServiceProvider.GetRequiredService<IOddsBackfillService>();
         var options = scope.ServiceProvider.GetRequiredService<IOptions<OddsSyncOptions>>().Value;
 
-        var to = ParseDate(args, "--to") ?? DateTimeOffset.UtcNow;
+        var to = CommandArgs.Date(args, "--to") ?? DateTimeOffset.UtcNow;
         var retentionStart = DateTimeOffset.UtcNow.AddDays(-options.ApiOddsRetentionDays);
-        var requestedFrom = ParseDate(args, "--from") ?? retentionStart;
-        var maxCalls = ParseInt(args, "--max-calls") ?? options.BackfillMaxCalls;
-        var probeOnly = args.Contains("--probe");
+        var requestedFrom = CommandArgs.Date(args, "--from") ?? retentionStart;
+        var maxCalls = CommandArgs.Int(args, "--max-calls") ?? options.BackfillMaxCalls;
+        var probeOnly = CommandArgs.Flag(args, "--probe");
 
         if (requestedFrom > to)
         {
@@ -113,23 +112,4 @@ public static class BackfillOddsCommand
         OddsBackfillResult.Cancelled => "cancelled",
         _ => reason
     };
-
-    private static DateTimeOffset? ParseDate(string[] args, string name)
-    {
-        var raw = Value(args, name);
-        return raw is not null && DateTimeOffset.TryParse(
-            raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-            out var parsed)
-            ? parsed
-            : null;
-    }
-
-    private static int? ParseInt(string[] args, string name) =>
-        int.TryParse(Value(args, name), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : null;
-
-    private static string? Value(string[] args, string name) => args
-        .FirstOrDefault(a => a.StartsWith($"{name}=", StringComparison.OrdinalIgnoreCase))
-        ?[(name.Length + 1)..];
 }

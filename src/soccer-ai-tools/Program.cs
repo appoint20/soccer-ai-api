@@ -117,7 +117,7 @@ public static class Program
         if (!provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             return;
 
-        var dbOverride = GetStringOption(args, "--db");
+        var dbOverride = CommandArgs.String(args, "--db");
         if (dbOverride != null)
         {
             configuration["ConnectionStrings:DefaultConnection"] = $"Data Source={Path.GetFullPath(dbOverride)}";
@@ -157,9 +157,9 @@ public static class Program
 
     private static async Task RunBacktestAsync(IServiceProvider services, string[] args)
     {
-        var weeks = GetIntOption(args, "--weeks") ?? 10;
-        var stake = GetDoubleOption(args, "--stake") ?? 1.0;
-        var refresh = args.Contains("--refresh");
+        var weeks = CommandArgs.Int(args, "--weeks") ?? 10;
+        var stake = CommandArgs.Double(args, "--stake") ?? 1.0;
+        var refresh = CommandArgs.Flag(args, "--refresh");
 
         Console.WriteLine($"Starting backtest pipeline ({weeks} weeks, stake {stake}, refresh: {refresh})...");
         using var scope = services.CreateScope();
@@ -169,7 +169,7 @@ public static class Program
 
         var json = System.Text.Json.JsonSerializer.Serialize(
             response, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        var outputPath = GetStringOption(args, "--output") ?? "backtest_result.json";
+        var outputPath = CommandArgs.String(args, "--output") ?? "backtest_result.json";
         await File.WriteAllTextAsync(outputPath, json);
         Console.WriteLine($"Backtest complete. JSON written to {outputPath}");
 
@@ -280,7 +280,7 @@ public static class Program
     private static async Task RunMlTrainingAsync(IServiceProvider services, string[] args)
     {
         DateTimeOffset? cutoff = null;
-        var cutoffArg = GetStringOption(args, "--cutoff");
+        var cutoffArg = CommandArgs.String(args, "--cutoff");
         if (cutoffArg != null)
         {
             if (!DateTimeOffset.TryParse(cutoffArg, System.Globalization.CultureInfo.InvariantCulture,
@@ -301,14 +301,14 @@ public static class Program
 
     private static async Task<int> RunLeagueSyncAsync(IServiceProvider services, string[] args)
     {
-        var leagueId = GetIntOption(args, "--league");
+        var leagueId = CommandArgs.Int(args, "--league");
         if (leagueId is null)
         {
             Console.Error.WriteLine("sync-league requires --league=<id>");
             return 1;
         }
 
-        var season = GetIntOption(args, "--season") ?? CurrentSeason();
+        var season = CommandArgs.Int(args, "--season") ?? CurrentSeason();
         Console.WriteLine($"Targeted fixture sync for league {leagueId}, season {season}...");
 
         using var scope = services.CreateScope();
@@ -324,8 +324,8 @@ public static class Program
 
     private static async Task RunAiSyncAsync(IServiceProvider services, string[] args)
     {
-        var fixtureId = GetIntOption(args, "--fixture-id");
-        var force = args.Contains("--force");
+        var fixtureId = CommandArgs.Int(args, "--fixture-id");
+        var force = CommandArgs.Flag(args, "--force");
 
         Console.WriteLine(fixtureId.HasValue
             ? $"Starting AI analysis sync for fixture {fixtureId} (force: {force})..."
@@ -344,7 +344,7 @@ public static class Program
 
     private static async Task RunFullSyncAsync(IServiceProvider services, string[] args)
     {
-        var season = GetIntOption(args, "--season") ?? CurrentSeason();
+        var season = CommandArgs.Int(args, "--season") ?? CurrentSeason();
         Console.WriteLine($"Running full daily sync orchestration for season {season}...");
 
         using var scope = services.CreateScope();
@@ -356,10 +356,15 @@ public static class Program
 
     private static async Task<int> RunDataMigrationAsync(IServiceProvider services, string[] args)
     {
-        var sqlitePath = GetStringOption(args, "--sqlite") ?? Path.Combine("data", "soccer.db");
-
         var configuration = services.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-        var postgresConn = GetStringOption(args, "--postgres")
+
+        // Without --sqlite, use the file ResolveSqlitePath already located by
+        // searching upward. Falling back to the raw relative default instead
+        // would report "not found" for a database the process had just printed
+        // the absolute path of, one line earlier.
+        var sqlitePath = CommandArgs.String(args, "--sqlite") ?? ResolvedSqlitePath(configuration);
+
+        var postgresConn = CommandArgs.String(args, "--postgres")
             ?? Microsoft.Extensions.Configuration.ConfigurationExtensions
                 .GetConnectionString(configuration, "PostgresConnection");
 
@@ -370,22 +375,25 @@ public static class Program
             return 1;
         }
 
+        Console.WriteLine($"Source (SQLite) : {Path.GetFullPath(sqlitePath)}");
+        Console.WriteLine($"Target (Postgres): {ConnectionStringRedactor.Redact(postgresConn)}");
+        Console.WriteLine();
+
         return await DataMigrationCommand.RunAsync(sqlitePath, postgresConn);
+    }
+
+    private static string ResolvedSqlitePath(Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        var configured = Microsoft.Extensions.Configuration.ConfigurationExtensions
+            .GetConnectionString(configuration, "DefaultConnection");
+
+        var pathPart = configured?.Split('=', 2).ElementAtOrDefault(1)?.Split(';')[0];
+
+        return string.IsNullOrWhiteSpace(pathPart) ? Path.Combine("data", "soccer.db") : pathPart;
     }
 
     private static int CurrentSeason() =>
         DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
-
-    private static string? GetStringOption(string[] args, string name) =>
-        args.FirstOrDefault(a => a.StartsWith($"{name}=", StringComparison.OrdinalIgnoreCase))
-            ?.Split('=', 2)[1];
-
-    private static int? GetIntOption(string[] args, string name) =>
-        int.TryParse(GetStringOption(args, name), out var value) ? value : null;
-
-    private static double? GetDoubleOption(string[] args, string name) =>
-        double.TryParse(GetStringOption(args, name),
-            System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : null;
 
     private static void PrintUsage()
     {

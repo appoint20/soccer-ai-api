@@ -22,7 +22,7 @@ public static class ImportOddsCsvCommand
         using var scope = services.CreateScope();
         var import = scope.ServiceProvider.GetRequiredService<IHistoricalOddsImportService>();
 
-        var dryRun = args.Contains("--dry-run");
+        var dryRun = CommandArgs.Flag(args, "--dry-run");
         var seasons = ParseSeasons(args);
 
         if (seasons.Count == 0)
@@ -88,7 +88,7 @@ public static class ImportOddsCsvCommand
     /// </summary>
     private static List<int> ParseSeasons(string[] args)
     {
-        var explicitSeasons = Value(args, "--seasons");
+        var explicitSeasons = CommandArgs.String(args, "--seasons");
         if (explicitSeasons is not null)
         {
             return [.. explicitSeasons
@@ -99,14 +99,10 @@ public static class ImportOddsCsvCommand
         }
 
         var currentSeason = DateTime.UtcNow.Month >= 7 ? DateTime.UtcNow.Year : DateTime.UtcNow.Year - 1;
-        var fromSeason = int.TryParse(Value(args, "--from-season"), CultureInfo.InvariantCulture, out var from)
+        var fromSeason = int.TryParse(CommandArgs.String(args, "--from-season"), CultureInfo.InvariantCulture, out var from)
             ? from
             : currentSeason - 5;
 
         return [.. Enumerable.Range(fromSeason, Math.Max(1, currentSeason - fromSeason + 1))];
     }
-
-    private static string? Value(string[] args, string name) => args
-        .FirstOrDefault(a => a.StartsWith($"{name}=", StringComparison.OrdinalIgnoreCase))
-        ?[(name.Length + 1)..];
 }
