@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -8,6 +9,16 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
     /// The live results ledger: what was published, at what price, and how it
     /// finished. Additive only — no existing table or column is touched.
     /// </summary>
+    /// <remarks>
+    /// Both attributes are required. EF discovers migrations by the
+    /// <see cref="MigrationAttribute"/> and matches them to a context by
+    /// <see cref="DbContextAttribute"/>; the other SQLite migrations carry
+    /// these in generated .Designer.cs companions. Without them this class is
+    /// invisible — it applies silently to nothing, and the missing table only
+    /// surfaces later as "no such table: PublishedTickets".
+    /// </remarks>
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260805120000_AddPublishedTickets")]
     public partial class AddPublishedTickets : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
