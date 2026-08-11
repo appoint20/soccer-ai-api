@@ -93,7 +93,7 @@ public static class DependencyInjection
 
         if (provider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
         {
-            var connectionString = NormalizePostgresConnectionString(
+            var connectionString = PostgresConnectionString.Normalize(
                 configuration.GetConnectionString("PostgresConnection")
                 ?? configuration.GetConnectionString("DefaultConnection"));
 
@@ -121,33 +121,6 @@ public static class DependencyInjection
             sp.GetRequiredService<ApplicationDbContext>());
     }
 
-    /// <summary>
-    /// Managed platforms (e.g. Render) inject postgres://user:pass@host:port/db
-    /// URLs; Npgsql needs keyword syntax. Pass keyword strings through untouched.
-    /// </summary>
-    internal static string? NormalizePostgresConnectionString(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw)) return raw;
-        if (!raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
-            !raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
-            return raw;
-
-        var uri = new Uri(raw);
-        var userInfo = uri.UserInfo.Split(':', 2);
-        var user = Uri.UnescapeDataString(userInfo[0]);
-        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-        var database = uri.AbsolutePath.TrimStart('/');
-        var port = uri.Port > 0 ? uri.Port : 5432;
-
-        var result =
-            $"Host={uri.Host};Port={port};Database={database};Username={user};Password={password}";
-
-        // Managed Postgres almost always requires TLS.
-        if (!uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-            result += ";SSL Mode=Require";
-
-        return result;
-    }
 
     private static void AddExternalApis(this IServiceCollection services, IConfiguration configuration)
     {

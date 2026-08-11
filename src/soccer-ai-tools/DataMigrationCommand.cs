@@ -45,11 +45,16 @@ public static class DataMigrationCommand
         Console.WriteLine($"Source (read-only): {sqlitePath}");
         Console.WriteLine($"Target: PostgreSQL");
 
+        // Managed platforms hand out postgresql://user:pass@host/db, which
+        // Npgsql rejects as "Format of the initialization string does not
+        // conform to specification". Keyword strings pass through untouched.
+        var targetConnectionString = PostgresConnectionString.Normalize(postgresConnectionString);
+
         var sourceOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlite($"Data Source={sqlitePath};Mode=ReadOnly")
             .Options;
         var targetOptions = new DbContextOptionsBuilder<PostgresDbContext>()
-            .UseNpgsql(postgresConnectionString)
+            .UseNpgsql(targetConnectionString)
             .ConfigureWarnings(w => w.Ignore(
                 Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
             .Options;
@@ -66,7 +71,8 @@ public static class DataMigrationCommand
         // SyncState is transient operational state — intentionally NOT migrated.
         string[] knownEntities =
             [nameof(Team), nameof(Fixture), nameof(FixtureAnalysis), nameof(FixtureOddsQuote),
-             nameof(Combination), nameof(User), nameof(BacktestReport), nameof(SyncState)];
+             nameof(Combination), nameof(User), nameof(BacktestReport),
+             nameof(PublishedTicket), nameof(PublishedTicketLeg), nameof(SyncState)];
         var modelEntities = target.Model.GetEntityTypes()
             .Select(e => e.ClrType.Name)
             .Distinct()
@@ -82,7 +88,8 @@ public static class DataMigrationCommand
         // Target must be empty — this is a one-time migration.
         if (await target.Teams.AnyAsync() || await target.Fixtures.AnyAsync() ||
             await target.FixtureAnalyses.AnyAsync() || await target.Combinations.AnyAsync() ||
-            await target.Users.AnyAsync() || await target.BacktestReports.AnyAsync())
+            await target.Users.AnyAsync() || await target.BacktestReports.AnyAsync() ||
+            await target.PublishedTickets.AnyAsync())
         {
             Console.Error.WriteLine("ABORT: target database is not empty. This is a one-time migration.");
             return 1;
@@ -102,6 +109,12 @@ public static class DataMigrationCommand
             reports.Add(await MigrateTableAsync<User>(source, target, "Users", e => e.Id));
             reports.Add(await MigrateTableAsync<BacktestReport>(source, target, "BacktestReports", e => e.Id));
 
+            // The live results ledger. Tickets before legs: the legs carry the
+            // foreign key. Loaded without their navigation so EF inserts each
+            // row exactly once rather than cascading from the parent.
+            reports.Add(await MigrateTableAsync<PublishedTicket>(source, target, "PublishedTickets", e => e.Id));
+            reports.Add(await MigrateTableAsync<PublishedTicketLeg>(source, target, "PublishedTicketLegs", e => e.Id));
+
             PrintReport(reports);
 
             if (reports.Any(r => !r.Ok))
@@ -113,7 +126,10 @@ public static class DataMigrationCommand
 
             // Resync identity sequences after explicit-Id inserts.
             foreach (var table in new[]
-                     { "Teams", "Fixtures", "FixtureAnalyses", "FixtureOddsQuotes", "Combinations", "Users", "BacktestReports" })
+                     {
+                         "Teams", "Fixtures", "FixtureAnalyses", "FixtureOddsQuotes", "Combinations",
+                         "Users", "BacktestReports", "PublishedTickets", "PublishedTicketLegs"
+                     })
             {
                 // Table names come from the fixed list above — not user input.
 #pragma warning disable EF1002
