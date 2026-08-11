@@ -219,12 +219,44 @@ public static class DataMigrationCommand
         return string.Join(Environment.NewLine + "  → ", messages);
     }
 
+    /// <summary>
+    /// Whether the legacy source actually has this table.
+    ///
+    /// The source is opened read-only and <c>migrate-data</c> deliberately does
+    /// not apply migrations to it — this command exists to move OFF that file,
+    /// not to modify it. So a table added after the SQLite era is simply absent,
+    /// and absent means there is nothing to copy. Treating that as a failure
+    /// blocks the whole migration over an empty table.
+    /// </summary>
+    private static async Task<bool> SourceHasTableAsync(ApplicationDbContext source, string tableName)
+    {
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $name";
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$name";
+        parameter.Value = tableName;
+        command.Parameters.Add(parameter);
+
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) > 0;
+    }
+
     private static async Task<TableReport> MigrateTableAsync<TEntity>(
         ApplicationDbContext source,
         PostgresDbContext target,
         string tableName,
         Func<TEntity, int> keySelector) where TEntity : class
     {
+        if (!await SourceHasTableAsync(source, tableName))
+        {
+            Console.WriteLine($"Skipping {tableName}: not present in the legacy source — nothing to copy.");
+            return new TableReport(tableName, 0, 0, 0, 0);
+        }
+
         Console.WriteLine($"Migrating {tableName}...");
 
         var sourceRows = await source.Set<TEntity>().AsNoTracking().ToListAsync();
