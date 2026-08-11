@@ -1,5 +1,14 @@
 # Render Blueprint (soccer-ai-api)
 # Deploy everything in one go: https://render.com/docs/blueprints
+#
+# IMPORTANT: this file is only read when the services are created from a
+# Blueprint ("New > Blueprint" in the dashboard). A service created by hand
+# ignores it completely, keeps whatever environment variables the dashboard
+# holds, and therefore falls back to the SQLite default in appsettings.json —
+# which then dies on a container filesystem with
+# "SQLite Error 14: unable to open database file".
+#
+# If the deploy log says the provider is Sqlite, the Blueprint is not in effect.
 services:
   # 1. Main .NET 10 API Service (HTTP only — no background sync)
   - type: web
@@ -27,13 +36,10 @@ services:
         fromDatabase:
           name: soccer-ai-db
           property: connectionString
-      # Legacy SQLite kept on disk only for the one-time data migration
-      - key: CONNECTIONSTRINGS__DEFAULTCONNECTION
-        value: "Data Source=/app/data/soccer.db"
-    disk:
-      name: sqlite-data
-      mountPath: /app/data
-      sizeGB: 1
+    # No disk: Postgres holds the data. A SQLite file on a container filesystem
+    # is erased on every deploy, and the .db files are gitignored so one would
+    # not be in the image anyway. Load the historical data once from a laptop:
+    #   soccer-ai-tools migrate-data --sqlite=<local.db> --postgres=<external url>
 
   # 2. Sync agent (dedicated worker — fixtures/odds sync, analysis precompute)
   - type: worker
