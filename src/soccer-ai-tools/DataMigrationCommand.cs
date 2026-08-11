@@ -85,13 +85,44 @@ public static class DataMigrationCommand
             return 1;
         }
 
-        // Target must be empty — this is a one-time migration.
-        if (await target.Teams.AnyAsync() || await target.Fixtures.AnyAsync() ||
-            await target.FixtureAnalyses.AnyAsync() || await target.Combinations.AnyAsync() ||
-            await target.Users.AnyAsync() || await target.BacktestReports.AnyAsync() ||
-            await target.PublishedTickets.AnyAsync())
+        // The target must hold no business data — this migration copies whole
+        // tables and would otherwise duplicate rows.
+        //
+        // Users are deliberately NOT part of this check. The login handler seeds
+        // them the first time anyone signs in, so a deployed API creates them on
+        // its own the moment a developer opens the app. Their presence says
+        // nothing about whether business data was migrated, and guarding on them
+        // blocks every legitimate retry.
+        var occupied = new List<string>();
+
+        async Task CheckAsync<TEntity>(string name) where TEntity : class
         {
-            Console.Error.WriteLine("ABORT: target database is not empty. This is a one-time migration.");
+            var count = await target.Set<TEntity>().CountAsync();
+            if (count > 0) occupied.Add($"{name} ({count:N0} rows)");
+        }
+
+        await CheckAsync<Team>("Teams");
+        await CheckAsync<Fixture>("Fixtures");
+        await CheckAsync<FixtureAnalysis>("FixtureAnalyses");
+        await CheckAsync<FixtureOddsQuote>("FixtureOddsQuotes");
+        await CheckAsync<Combination>("Combinations");
+        await CheckAsync<BacktestReport>("BacktestReports");
+        await CheckAsync<PublishedTicket>("PublishedTickets");
+        await CheckAsync<PublishedTicketLeg>("PublishedTicketLegs");
+
+        if (occupied.Count > 0)
+        {
+            // Naming the tables matters: "not empty" alone leaves the operator
+            // guessing whether a previous run half-succeeded (it cannot — every
+            // copy happens in one transaction) or something else wrote rows.
+            Console.Error.WriteLine("ABORT: the target already holds business data:");
+            foreach (var table in occupied) Console.Error.WriteLine($"  - {table}");
+            Console.Error.WriteLine();
+            Console.Error.WriteLine(
+                "This migration copies whole tables and would duplicate them. Every run is a "
+                + "single transaction, so a failed run leaves nothing behind — if you expected "
+                + "this database to be empty, something else populated it. Drop and recreate the "
+                + "database, or point --postgres at an empty one.");
             return 1;
         }
 
