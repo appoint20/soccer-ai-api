@@ -106,7 +106,25 @@ public static class DataMigrationCommand
             reports.Add(await MigrateTableAsync<FixtureAnalysis>(source, target, "FixtureAnalyses", e => e.Id));
             reports.Add(await MigrateTableAsync<FixtureOddsQuote>(source, target, "FixtureOddsQuotes", e => e.Id));
             reports.Add(await MigrateTableAsync<Combination>(source, target, "Combinations", e => e.Id));
-            reports.Add(await MigrateTableAsync<User>(source, target, "Users", e => e.Id));
+
+            // Users are seed data, not business data: the login handler recreates
+            // them the first time anyone signs in against an empty database. A
+            // deployed API can therefore populate this table WHILE the migration
+            // runs — the emptiness check passes, then a developer logs in during
+            // the minutes it takes to copy 48,000 odds quotes, and the unique
+            // index on Username rejects the copy. Skipping is correct here:
+            // the same accounts with the same passwords already exist.
+            if (await target.Users.AnyAsync())
+            {
+                Console.WriteLine(
+                    "Skipping Users: the target already has accounts (the API seeds them on first "
+                    + "login). Same usernames, same passwords — nothing is lost.");
+            }
+            else
+            {
+                reports.Add(await MigrateTableAsync<User>(source, target, "Users", e => e.Id));
+            }
+
             reports.Add(await MigrateTableAsync<BacktestReport>(source, target, "BacktestReports", e => e.Id));
 
             // The live results ledger. Tickets before legs: the legs carry the
@@ -144,10 +162,30 @@ public static class DataMigrationCommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ABORT: {ex.Message} — rolling back. No data was committed.");
+            Console.Error.WriteLine($"ABORT: {Describe(ex)}");
+            Console.Error.WriteLine("Rolling back. No data was committed.");
             await transaction.RollbackAsync();
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Unwraps the whole exception chain.
+    ///
+    /// EF's own message is "An error occurred while saving the entity changes.
+    /// See the inner exception for details" — which is worse than useless when
+    /// the inner exception is the only thing that names the failing constraint,
+    /// column or value. Printing just the outer message costs an entire
+    /// diagnostic cycle.
+    /// </summary>
+    private static string Describe(Exception exception)
+    {
+        var messages = new List<string>();
+
+        for (var current = exception; current is not null; current = current.InnerException)
+            messages.Add($"{current.GetType().Name}: {current.Message}");
+
+        return string.Join(Environment.NewLine + "  → ", messages);
     }
 
     private static async Task<TableReport> MigrateTableAsync<TEntity>(
