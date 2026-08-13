@@ -20,6 +20,11 @@ ENV PORT=8080
 ENV ASPNETCORE_URLS=http://+:${PORT}
 ENV DB_PATH="/app/data/soccer.db"
 
+# No file watchers on appsettings*.json: they are baked into the image and never
+# change, while each watcher consumes an inotify instance from a per-UID kernel
+# limit shared across the host. Exhausting it fails startup outright.
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
+
 # Create directory for SQLite
 RUN mkdir -p /app/data
 

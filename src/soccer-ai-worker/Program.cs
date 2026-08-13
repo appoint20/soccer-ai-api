@@ -13,6 +13,25 @@ var builder = Host.CreateApplicationBuilder(args);
 // real file (or --db=<path>) so the worker never creates an empty database.
 ResolveSqlitePath(builder.Configuration, args);
 
+// The worker exists to call API-Football. Without a key every request comes
+// back 403 and the pipeline walks the whole league list writing nothing, so
+// refuse to start rather than run a sync that cannot fetch anything.
+try
+{
+    RequireApiFootballKey(builder.Configuration);
+}
+catch (InvalidOperationException ex)
+{
+    // Back off before exiting. A hosting platform restarts an exited worker
+    // immediately, so returning here at process speed turns a misconfiguration
+    // into a hot restart loop — which is how a missing key escalated into
+    // exhausting the host's inotify instance limit and failing before this
+    // check could even run.
+    Console.Error.WriteLine($"FATAL: {ex.Message}");
+    await Task.Delay(TimeSpan.FromSeconds(30));
+    return 1;
+}
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -38,7 +57,29 @@ using (var scope = host.Services.CreateScope())
 }
 
 await host.RunAsync();
-return;
+return 0;
+
+static void RequireApiFootballKey(IConfigurationManager configuration)
+{
+    // Same resolution order the HTTP client uses, including the detail that an
+    // empty environment variable does not fall through to configuration.
+    var fromEnvironment = Environment.GetEnvironmentVariable("API_FOOTBALL_KEY");
+    var key = fromEnvironment ?? configuration["ApiFootball:ApiKey"];
+
+    if (!string.IsNullOrWhiteSpace(key))
+        return;
+
+    var setButBlank = fromEnvironment is not null;
+
+    throw new InvalidOperationException(
+        "API_FOOTBALL_KEY is "
+        + (setButBlank ? "set but empty." : "not set.")
+        + " The sync worker cannot fetch fixtures, standings or odds without it and would "
+        + "otherwise run to completion having written nothing. Set API_FOOTBALL_KEY on THIS "
+        + "service (the worker — the web service does not make these calls); on Render it is "
+        + "declared with 'sync: false', which creates the variable but leaves the value blank "
+        + "until it is filled in the dashboard.");
+}
 
 static void ResolveSqlitePath(IConfigurationManager configuration, string[] args)
 {

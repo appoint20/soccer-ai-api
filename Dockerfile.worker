@@ -13,6 +13,17 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=dotnet-build /app/publish .
 
+# The host watches appsettings*.json for changes by default, and every watcher
+# is an inotify instance. Config files are baked into this image and can never
+# change, so the watchers buy nothing — but the kernel's inotify limit (128) is
+# per-UID across the whole host, and a restarting container exhausts it. Once it
+# is gone the process cannot even build its configuration:
+#   IOException: The configured user limit (128) on the number of inotify
+#   instances has been reached
+# Set here rather than in render.yaml so it applies even when the Blueprint is
+# not in effect.
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
+
 # Directory for the legacy SQLite volume (when Provider=Sqlite)
 RUN mkdir -p /app/data
 
