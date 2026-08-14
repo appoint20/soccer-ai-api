@@ -127,6 +127,35 @@ public static class DependencyInjection
         // Quota is per API key — one tracker for the whole process.
         services.AddSingleton<IApiQuotaTracker, ApiQuotaTracker>();
 
+        // Call outcomes, so a run can tell "nothing changed" from "all rejected".
+        services.AddSingleton<IApiCallTracker, ApiCallTracker>();
+
+        // Language-model forecasts scored against the pipeline. Registered
+        // unconditionally: the service reports IsEnabled=false without a key or
+        // models, so the sync step degrades to a no-op instead of failing.
+        services.AddOptions<OpenRouterOptions>()
+            .Bind(configuration.GetSection(OpenRouterOptions.SectionName));
+
+        services.AddHttpClient(OpenRouterForecastService.HttpClientName, (provider, client) =>
+        {
+            var opt = provider.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+            var key = string.IsNullOrWhiteSpace(opt.ApiKey)
+                ? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
+                : opt.ApiKey;
+
+            client.BaseAddress = new Uri(opt.BaseUrl.TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(opt.TimeoutSeconds);
+
+            if (!string.IsNullOrWhiteSpace(key))
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {key}");
+
+            // OpenRouter attributes usage on its dashboard by these headers.
+            client.DefaultRequestHeaders.Add("HTTP-Referer", opt.AppUrl);
+            client.DefaultRequestHeaders.Add("X-Title", opt.AppTitle);
+        });
+
+        services.AddScoped<IMatchForecastService, OpenRouterForecastService>();
+
         services.AddHttpClient<IApiFootballService, ApiFootballService>((provider, client) =>
         {
             var options = configuration.GetSection("ApiFootball").Get<FootballApiOptions>();

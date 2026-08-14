@@ -41,7 +41,8 @@ public class GetMatchCombinationHandler(
             "[Combinations] {Date}: {Count} portfolios from {Priced}/{Fixtures} priced fixtures",
             date, combinations.Count, board.Coverage.Priced, board.Coverage.Fixtures);
 
-        return new GetMatchCombinationResponse(combinations);
+        return new GetMatchCombinationResponse(
+            combinations, query.ResolveLimit(), query.ResolveOffset());
     }
 
     private static CombinationDto ToDto(

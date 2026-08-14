@@ -22,4 +22,15 @@ public class ExternalApiException : DomainException
 
     public static ExternalApiException Timeout(string serviceName, Exception? inner = null)
         => new(serviceName, $"{serviceName} request timed out.", HttpStatusCode.GatewayTimeout, inner);
+
+    /// <summary>
+    /// A rejected credential. Unlike a rate limit this never clears on its own,
+    /// so it must stop the run rather than let it continue call after call.
+    /// </summary>
+    public static ExternalApiException Unauthorized(string serviceName, HttpStatusCode statusCode, string? detail = null)
+        => new(serviceName,
+            $"{serviceName} rejected the API key ({(int)statusCode}). "
+            + "Check the credential configured for this service."
+            + (string.IsNullOrWhiteSpace(detail) ? "" : $" Upstream said: {detail}"),
+            statusCode);
 }

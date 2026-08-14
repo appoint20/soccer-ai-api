@@ -14,7 +14,10 @@ public class GetAiCoverageHandler(IApplicationDbContext dbContext)
 {
     public async Task<GetAiCoverageResponse> Handle(IReceiveContext<GetAiCoverageQuery> context, CancellationToken cancellationToken)
     {
-        var daysAhead = context.Message.DaysAhead;
+        var query = context.Message;
+        var daysAhead = query.DaysAhead;
+        var limit = query.ResolveLimit();
+        var offset = query.ResolveOffset();
         var today = DateTime.UtcNow.Date;
         
         // Entity Framework handles the UTC ticks SQLite conversion inside OnModelCreating automatically 
@@ -43,6 +46,14 @@ public class GetAiCoverageHandler(IApplicationDbContext dbContext)
             .OrderBy(x => x.Date)
             .ToList();
 
-        return new GetAiCoverageResponse { Coverage = coverage };
+        // Paged in memory: the set is one row per day and already bounded by the
+        // validated days_ahead window, so a second round trip would buy nothing.
+        return new GetAiCoverageResponse
+        {
+            Items = [.. coverage.Skip(offset).Take(limit)],
+            Limit = limit,
+            Offset = offset,
+            Total = coverage.Count
+        };
     }
 }

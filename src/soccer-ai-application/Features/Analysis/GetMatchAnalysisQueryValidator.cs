@@ -1,4 +1,5 @@
 using FluentValidation;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Application.Features.Analysis;
 
@@ -6,6 +7,8 @@ public class GetMatchAnalysisQueryValidator : AbstractValidator<GetMatchAnalysis
 {
     public GetMatchAnalysisQueryValidator()
     {
+        this.AddPagingRules();
+
         RuleFor(x => x.Language)
             .MaximumLength(5)
             .Matches("^[a-z]{2}$")

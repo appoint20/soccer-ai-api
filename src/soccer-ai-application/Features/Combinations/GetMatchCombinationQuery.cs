@@ -1,20 +1,47 @@
 using Mediator.Net.Contracts;
+using SoccerAi.Application.Models;
 using System.Text.Json.Serialization;
 
 namespace SoccerAi.Application.Features.Combinations;
 
-public class GetMatchCombinationQuery(DateTimeOffset date, string language = "en", bool refresh = false, string? userMessage = null) : IRequest
+public class GetMatchCombinationQuery : PageRequest, IRequest
 {
-    public DateTimeOffset Date { get; } = date;
-    public string Language { get; } = language;
-    public bool Refresh { get; } = refresh;
-    public string? UserMessage { get; } = userMessage;
+    public GetMatchCombinationQuery(
+        DateTimeOffset date, string language = "en", bool refresh = false, string? userMessage = null)
+    {
+        Date = date;
+        Language = language;
+        Refresh = refresh;
+        UserMessage = userMessage;
+    }
+
+    public DateTimeOffset Date { get; init; }
+    public string Language { get; init; } = "en";
+    public bool Refresh { get; init; }
+    public string? UserMessage { get; init; }
 }
 
-public class GetMatchCombinationResponse(List<CombinationDto> combinations) : IResponse
+/// <summary>
+/// Paged combinations.
+///
+/// <c>combinations</c> duplicates <c>items</c> and is deprecated; it stays for
+/// one release so existing callers survive the cutover.
+/// </summary>
+public class GetMatchCombinationResponse : PagedResponse<CombinationDto>, IResponse
 {
+    public GetMatchCombinationResponse() { }
+
+    public GetMatchCombinationResponse(List<CombinationDto> combinations, int limit, int offset)
+    {
+        Total = combinations.Count;
+        Limit = limit;
+        Offset = offset;
+        Items = [.. combinations.Skip(offset).Take(limit)];
+    }
+
+    /// <summary>Deprecated — use <c>items</c>.</summary>
     [JsonPropertyName("combinations")]
-    public List<CombinationDto> Combinations { get; } = combinations;
+    public List<CombinationDto> Combinations => Items;
 }
 
 public sealed class CombinationDto

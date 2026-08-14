@@ -22,6 +22,7 @@ namespace SoccerAi.Worker;
 public sealed class SyncPipeline(
     IServiceScopeFactory scopeFactory,
     IOptions<SyncOptions> options,
+    IApiCallTracker apiCalls,
     ILogger<SyncPipeline> logger)
 {
     private static readonly string[] StepOrder =
@@ -51,6 +52,10 @@ public sealed class SyncPipeline(
 
     private static int CurrentSeason(DateTimeOffset nowUtc) =>
         nowUtc.Month >= 7 ? nowUtc.Year : nowUtc.Year - 1;
+
+    private static bool IsCredentialFailure(ExternalApiException ex) =>
+        ex.StatusCode is System.Net.HttpStatusCode.Unauthorized
+            or System.Net.HttpStatusCode.Forbidden;
 
     /// <summary>Runs the pipeline. Returns true when it completed fully.</summary>
     public async Task<bool> RunAsync(bool resume, CancellationToken ct)
@@ -83,6 +88,8 @@ public sealed class SyncPipeline(
         state.LastError = null;
         await db.SaveChangesAsync(ct);
 
+        apiCalls.Reset();
+
         logger.LogInformation("[Sync] Run started (season {Season}, from step {Index}/{Total})",
             season, startIndex + 1, StepOrder.Length);
 
@@ -110,11 +117,42 @@ public sealed class SyncPipeline(
                 await MarkStepDoneAsync(db, state, step, ct);
             }
 
+            // Every step "completed", but completion is not the same as having
+            // fetched anything. When every upstream call was rejected, each step
+            // ran to the end over an empty result set — recording that as a
+            // successful sync clears LastError, hides the outage, and makes the
+            // next startup skip its catch-up run. Fail the run instead.
+            var calls = apiCalls.Current;
+            if (calls.AllFailed)
+            {
+                state.LastError = $"All {calls.Attempted} upstream API calls failed: {calls.LastError}";
+                await db.SaveChangesAsync(CancellationToken.None);
+                logger.LogError(
+                    "[Sync] Run produced no data — all {Attempted} API-Football calls failed ({Error}). "
+                    + "Not marking the sync successful.",
+                    calls.Attempted, calls.LastError);
+                return false;
+            }
+
             state.LastSuccessfulSyncUtc = DateTimeOffset.UtcNow;
             state.LastError = null;
             await db.SaveChangesAsync(ct);
-            logger.LogInformation("[Sync] Run completed successfully");
+            logger.LogInformation(
+                "[Sync] Run completed successfully ({Succeeded}/{Attempted} API calls succeeded)",
+                calls.Succeeded, calls.Attempted);
             return true;
+        }
+        catch (ExternalApiException ex) when (IsCredentialFailure(ex))
+        {
+            // A rejected key will not fix itself on the next run, so it is logged
+            // as an error rather than filed under the transient-limit path.
+            state.LastError = $"Credential rejected: {ex.Message}";
+            await db.SaveChangesAsync(CancellationToken.None);
+            logger.LogError(ex,
+                "[Sync] Aborted: {Service} rejected the API key. The sync cannot run until the "
+                + "credential is corrected — this will not resolve on the next scheduled run.",
+                ex.ServiceName);
+            return false;
         }
         catch (ExternalApiException ex)
         {

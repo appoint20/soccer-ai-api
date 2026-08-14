@@ -110,9 +110,34 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
         }
     }
 
+    /// <summary>
+    /// Liveness only: confirms this process is serving requests.
+    /// </summary>
+    /// <remarks>
+    /// Says nothing about the sync agent, which runs in a different service.
+    /// Use <c>GET /api/automation/sync-status</c> to find out whether syncing
+    /// actually works.
+    /// </remarks>
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {
         return Ok(ApiResponse<object>.Ok(new { status = "healthy", subsystem = "automation" }));
+    }
+
+    /// <summary>
+    /// Whether the sync agent is actually working: when it last succeeded, what
+    /// it last failed on, and how much data is in the database.
+    /// </summary>
+    /// <param name="query">Optional <c>stale_after_hours</c> threshold.</param>
+    /// <param name="ct">Cancellation token.</param>
+    [HttpGet("sync-status")]
+    [ProducesResponseType<ApiResponse<GetSyncStatusResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSyncStatus(
+        [FromQuery] GetSyncStatusQuery query, CancellationToken ct = default)
+    {
+        var response = await mediator
+            .RequestAsync<GetSyncStatusQuery, GetSyncStatusResponse>(query, ct);
+
+        return Ok(ApiResponse<GetSyncStatusResponse>.Ok(response));
     }
 }

@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
+    public DbSet<ModelForecast> ModelForecasts { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -152,6 +153,32 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasIndex(l => l.FixtureId);
 
             entity.ToTable("PublishedTicketLegs");
+        });
+
+        // ── ModelForecast (LLM vs pipeline head-to-head on goals) ────────────
+        modelBuilder.Entity<ModelForecast>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.Model).HasMaxLength(120).IsRequired();
+            entity.Property(f => f.Rationale).HasMaxLength(1000);
+
+            // Re-running a sync must update a fixture's forecast for a model,
+            // never accumulate a second opinion from the same one.
+            entity.HasIndex(f => new { f.FixtureId, f.Model }).IsUnique();
+
+            // The settlement sweep scans unsettled rows by kickoff.
+            entity.HasIndex(f => new { f.SettledAtUtc, f.KickoffUtc });
+
+            // The scoreboard groups by model over settled rows.
+            entity.HasIndex(f => new { f.Model, f.SettledAtUtc });
+
+            // Derived from the stored goal columns — never persisted.
+            entity.Ignore(f => f.ActualTotalGoals);
+            entity.Ignore(f => f.ActualOver25);
+            entity.Ignore(f => f.ActualBtts);
+            entity.Ignore(f => f.IsSettled);
+
+            entity.ToTable("ModelForecasts");
         });
 
         // ── SyncState (single-row operational state for the sync worker) ─────

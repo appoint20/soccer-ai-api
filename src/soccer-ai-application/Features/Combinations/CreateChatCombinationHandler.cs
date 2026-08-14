@@ -53,11 +53,20 @@ public class CreateChatCombinationHandler(
         // Explicitly decouple these queries from system automation
         intent.SourceType = "USER";
 
-        // 2. Fetch analyzed matches for the target date
-        var analysisQuery = new GetMatchAnalysisQuery { Date = cmd.Date, Language = cmd.Language };
+        // 2. Fetch analyzed matches for the target date.
+        // The combination engine reasons over the whole day at once, so it asks
+        // for the largest page the API allows rather than the default window.
+        var analysisQuery = new GetMatchAnalysisQuery
+        {
+            Date = cmd.Date,
+            Language = cmd.Language,
+            Limit = PageRequest.MaxLimit
+        };
         var analysisResponse = await mediator.RequestAsync<GetMatchAnalysisQuery, GetMatchAnalysisResponse>(analysisQuery, cancellationToken);
-        
-        if (analysisResponse.Matches == null || analysisResponse.Matches.Count == 0)
+
+        var matches = analysisResponse.Items;
+
+        if (matches.Count == 0)
         {
             return new CreateChatCombinationResponse 
             { 
@@ -71,18 +80,18 @@ public class CreateChatCombinationHandler(
         {
             if (intent.TimeFrame.StartTime.HasValue)
             {
-                analysisResponse.Matches = analysisResponse.Matches
+                matches = matches
                     .Where(m => m.Time >= intent.TimeFrame.StartTime.Value)
                     .ToList();
             }
             if (intent.TimeFrame.EndTime.HasValue)
             {
-                analysisResponse.Matches = analysisResponse.Matches
+                matches = matches
                     .Where(m => m.Time <= intent.TimeFrame.EndTime.Value)
                     .ToList();
             }
 
-            if (analysisResponse.Matches.Count == 0)
+            if (matches.Count == 0)
             {
                 return new CreateChatCombinationResponse 
                 { 
@@ -97,11 +106,11 @@ public class CreateChatCombinationHandler(
         {
             // Simple substring match for flexibility (e.g. "England" matches "England: Premier League")
             var prefLeagues = intent.PreferredLeagues.Select(l => l.ToLowerInvariant()).ToList();
-            analysisResponse.Matches = analysisResponse.Matches
+            matches = matches
                 .Where(m => prefLeagues.Any(pl => m.League.ToLowerInvariant().Contains(pl)))
                 .ToList();
 
-            if (analysisResponse.Matches.Count == 0)
+            if (matches.Count == 0)
             {
                 return new CreateChatCombinationResponse 
                 { 
@@ -114,7 +123,7 @@ public class CreateChatCombinationHandler(
         // 3. Generate and rank combinations using the engine
         intent.UserMessage = cmd.Query;
         intent.Refresh = true; // User chat requests should bypass daily system cache
-        var combinations = await engine.GenerateCombinationsAsync(analysisResponse.Matches, intent);
+        var combinations = await engine.GenerateCombinationsAsync(matches, intent);
 
         if (combinations.Count == 0)
         {

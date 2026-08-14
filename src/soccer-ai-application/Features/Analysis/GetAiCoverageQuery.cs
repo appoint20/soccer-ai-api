@@ -1,16 +1,18 @@
 using Mediator.Net.Contracts;
-using System.Collections.Generic;
+using SoccerAi.Application.Models;
+using System.Text.Json.Serialization;
 
 namespace SoccerAi.Application.Features.Analysis;
 
-public class GetAiCoverageQuery : IRequest
+public class GetAiCoverageQuery : PageRequest, IRequest
 {
-    public int DaysAhead { get; init; } = 5;
+    public int DaysAhead { get; set; } = 5;
 }
 
-public class GetAiCoverageResponse : IResponse
-{
-    public List<AiCoverageDto> Coverage { get; init; } = new();
-}
+public class GetAiCoverageResponse : PagedResponse<AiCoverageDto>, IResponse;
 
-public record AiCoverageDto(string Date, int TotalMatches, int AnalyzedMatches, int PendingMatches);
+public record AiCoverageDto(
+    [property: JsonPropertyName("date")] string Date,
+    [property: JsonPropertyName("total_matches")] int TotalMatches,
+    [property: JsonPropertyName("analyzed_matches")] int AnalyzedMatches,
+    [property: JsonPropertyName("pending_matches")] int PendingMatches);

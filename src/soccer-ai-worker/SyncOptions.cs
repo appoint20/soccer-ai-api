@@ -10,7 +10,16 @@ public sealed class SyncOptions
     /// <summary>
     /// Daily run times in UTC, "HH:mm" (cron-style daily schedule).
     /// </summary>
-    public string[] ScheduleUtc { get; set; } = ["03:30", "15:30"];
+    /// <remarks>
+    /// Deliberately empty. The configuration binder <em>appends</em> bound array
+    /// entries to whatever the property already holds instead of replacing them,
+    /// so a default here is never overridden — it is concatenated with the
+    /// configured value. That produced the duplicated
+    /// "03:30, 15:30, 03:30, 15:30" schedule and made the times impossible to
+    /// change from configuration. <see cref="SyncWorker.ParseSchedule"/> supplies
+    /// the fallback when nothing is configured.
+    /// </remarks>
+    public string[] ScheduleUtc { get; set; } = [];
 
     /// <summary>
     /// On startup, sync immediately ONLY if the last successful sync is older

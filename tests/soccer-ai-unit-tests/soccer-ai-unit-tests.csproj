@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\soccer-ai-api\soccer-ai-api.csproj" />
     <ProjectReference Include="..\..\src\soccer-ai-application\soccer-ai-application.csproj" />
     <ProjectReference Include="..\..\src\soccer-ai-infrastructure\soccer-ai-infrastructure.csproj" />
     <ProjectReference Include="..\..\src\soccer-ai-worker\soccer-ai-worker.csproj" />

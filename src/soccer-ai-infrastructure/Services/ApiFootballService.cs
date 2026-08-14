@@ -10,6 +10,7 @@ namespace SoccerAi.Infrastructure.Services;
 public class ApiFootballService(
     HttpClient client,
     IApiQuotaTracker quota,
+    IApiCallTracker calls,
     ILogger<ApiFootballService> logger) : IApiFootballService
 {
     /// <summary>
@@ -76,11 +77,15 @@ public class ApiFootballService(
             
             logger.LogInformation("Fetched {Count} fixtures for league {LeagueId}", fixtures.Count, leagueId);
         }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw; // Rate limit or rejected key: abort the run, do not report success.
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to fetch fixtures for league {LeagueId}", leagueId);
         }
-        
+
         return fixtures;
     }
 
@@ -109,6 +114,10 @@ public class ApiFootballService(
             var awayStats = ParseTeamStats(data[1]);
             
             return (homeStats, awayStats);
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -342,6 +351,10 @@ public class ApiFootballService(
                 }
             }
         }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch odds quotes for fixture {FixtureId}", fixtureId);
@@ -422,6 +435,10 @@ public class ApiFootballService(
             }
             
             logger.LogInformation("Fetched {Count} team standings for league {LeagueId}", teams.Count, leagueId);
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -573,6 +590,10 @@ public class ApiFootballService(
                 return new TeamCoach(id, name, appointed);
             }
         }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch coach for team {TeamId}", teamId);
@@ -606,6 +627,10 @@ public class ApiFootballService(
                 }
             }
         }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch red cards for fixture {FixtureId}", fixtureId);
@@ -627,10 +652,27 @@ public class ApiFootballService(
             if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
                 logger.LogWarning("API-Football rate limit exceeded for {Url}", relativeUrl);
+                calls.RecordFailure("Rate limit exceeded");
                 throw Application.Exceptions.ExternalApiException.RateLimited("API-Football");
             }
 
             var body = await response.Content.ReadAsStringAsync(ct);
+
+            // A rejected key is a configuration fault, not a transient one. It
+            // will fail identically for every remaining league, so stop the run
+            // here instead of logging the same 403 thirty more times and then
+            // reporting the sync as successful.
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized
+                or System.Net.HttpStatusCode.Forbidden)
+            {
+                logger.LogError(
+                    "API-Football rejected the API key. Url: {Url}, Status: {Status}, Body: {Body}",
+                    relativeUrl, (int)response.StatusCode, TrimForLog(body));
+
+                calls.RecordFailure($"API key rejected ({(int)response.StatusCode})");
+                throw Application.Exceptions.ExternalApiException.Unauthorized(
+                    "API-Football", response.StatusCode, TrimForLog(body));
+            }
 
             if (!response.IsSuccessStatusCode)
             {
@@ -639,10 +681,12 @@ public class ApiFootballService(
                     relativeUrl,
                     (int)response.StatusCode,
                     TrimForLog(body));
+                calls.RecordFailure($"HTTP {(int)response.StatusCode}");
                 return null;
             }
 
             using var doc = JsonDocument.Parse(body);
+            calls.RecordSuccess();
             return doc.RootElement.Clone();
         }
         catch (Application.Exceptions.ExternalApiException)

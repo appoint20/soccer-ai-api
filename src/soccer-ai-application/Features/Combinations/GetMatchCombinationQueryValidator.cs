@@ -1,4 +1,5 @@
 using FluentValidation;
+using SoccerAi.Application.Models;
 
 namespace SoccerAi.Application.Features.Combinations;
 
@@ -6,6 +7,8 @@ public class GetMatchCombinationQueryValidator : AbstractValidator<GetMatchCombi
 {
     public GetMatchCombinationQueryValidator()
     {
+        this.AddPagingRules();
+
         RuleFor(x => x.Date)
             .NotEmpty()
             .WithMessage("Date is required");

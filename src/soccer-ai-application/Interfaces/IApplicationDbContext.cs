@@ -15,6 +15,7 @@ public interface IApplicationDbContext
     DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; }
     DbSet<PublishedTicket> PublishedTickets { get; }
     DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
+    DbSet<ModelForecast> ModelForecasts { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }

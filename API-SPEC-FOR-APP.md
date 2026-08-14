@@ -62,6 +62,47 @@ Every endpoint returns:
 
 On failure: `success: false`, `data: null`, `message` explains.
 
+### Paging
+
+Every field name in this API — query parameters and JSON keys alike — is
+`snake_case`.
+
+Collection endpoints put a paged envelope inside `data`:
+
+```json
+{
+  "items": [ ],
+  "limit": 20,
+  "offset": 0,
+  "total": 82,
+  "has_more": true
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `items` | this page |
+| `limit` | page size actually applied |
+| `offset` | rows skipped |
+| `total` | size of the **whole** matching set, not the page |
+| `has_more` | another page exists — prefer this over comparing counts yourself |
+
+Send `limit` and `offset`. Both are optional; **`limit` defaults to 50 and is
+capped at 200, so omitting it returns the first page, never everything.** Design
+for the list to be paged — an endpoint that looks small today grows on a busy
+matchday.
+
+`page` and `page_size` are accepted as a **deprecated** one-based alias
+(`offset = (page - 1) * page_size`) and will be removed. Prefer `limit`/`offset`.
+If both are sent, `limit`/`offset` win.
+
+Invalid paging returns `400` with errors keyed by the snake_case field:
+
+```json
+{ "status": 400, "message": "Validation failed",
+  "errors": { "limit": ["'limit' must be between 1 and 200."] } }
+```
+
 ### Auth
 
 ```
@@ -191,24 +232,44 @@ yet"*, not *"no value today"*. Say so — otherwise the app looks broken.
 This is the "show all matches with LLM analysis" screen.
 
 ```
-GET /api/analyze?date=2026-08-10&language=en&page=1&page_size=20&only_analyzed=true
+GET /api/analyze?date=2026-08-10&language=en&limit=20&offset=0&only_analyzed=true
 ```
 
 | Param | Notes |
 |---|---|
 | `date` | defaults to today |
 | `language` | `en` or `de` |
-| `page`, `page_size` | omit both for everything that day |
+| `limit` | page size, 1–200. **Defaults to 50 — omitting it does not return the whole day.** |
+| `offset` | rows to skip, defaults to 0 |
+| `page`, `page_size` | **deprecated** one-based alias, resolves to the same window. Migrate to `limit`/`offset`. |
 | `only_analyzed` | `true` = skip fixtures with no analysis |
 | `refresh` | **never send from the app** — forces recomputation, very slow |
 
+Out-of-range paging is rejected with `400`, not clamped: `limit` outside 1–200,
+a negative `offset`, or `page` below 1 all return a validation error keyed by the
+snake_case field name.
+
 ```json
 {
-  "matches": [ /* MatchAnalysis */ ],
+  "items": [ /* MatchAnalysis */ ],
+  "limit": 20,
+  "offset": 0,
+  "total": 82,
+  "has_more": true,
+
+  "matches": [ /* deprecated: same array as items */ ],
   "total_count": 82,
+
   "summary": { "total_matches": 40, "correct_matches": 26, "accuracy_rate": 65.0 }
 }
 ```
+
+`matches` and `total_count` are duplicates kept for one release so the shipped
+app survives the cutover. Read `items` and `total`; the old keys will be removed.
+
+**`summary` describes the page, not the day.** With paging on by default it
+covers only the finished fixtures in `items`, so do not label it as a day-wide
+accuracy figure.
 
 **`MatchAnalysis`** — the big one. Key fields for a mobile UI:
 
@@ -347,14 +408,51 @@ as losses.
 ### 4.4 Supporting endpoints
 
 ```
-GET /api/leagues                  → [{ "id": 39, "name": "Premier League" }, ...]
-GET /api/leagues/{id}/status      → sync/persistence status for one league
+GET /api/leagues                  → paged { "items": [{ "id": 39, "name": "Premier League" }, ...] }
+GET /api/leagues/{id}/status      → sync/persistence status for one league (single object, not paged)
 GET /api/backtest?weeks_back=30&stake=1   → full historical report (large, slow; admin only)
-POST /api/combinations            → legacy shape of /api/picks combos; prefer /api/picks
+POST /api/combinations            → paged; legacy shape of /api/picks combos; prefer /api/picks
 ```
 
+`GET /api/leagues` now returns the paged envelope rather than a bare array —
+read `data.items`. The list is a fixed sixteen entries, so the default window
+returns all of them.
+
+`POST /api/combinations` takes `limit`/`offset` in the JSON body alongside
+`date`. Its `combinations` key is deprecated and duplicates `items`.
+
+`GET /api/picks` is **not** paged: it is a composite of four separately-bounded
+lists (`singles`, `same_match_pairs`, `combos`, `confidence_picks`) plus
+`coverage`, none of which grows with fixture count. `GET /api/picks/performance`
+is likewise a fixed set of slices.
+
 Admin-only, **not for the app**: `POST /api/automation/*` (sync triggers),
-`GET /api/automation/health`.
+`GET /api/automation/health`, `GET /api/automation/sync-status`.
+
+**`GET /api/automation/health` is liveness only.** It returns a constant and
+never reads the database, so it says `healthy` regardless of whether any data is
+being synced. Do not use it to judge data freshness.
+
+**`GET /api/automation/sync-status`** is the honest check. Optional
+`stale_after_hours` (default 26).
+
+```json
+{
+  "status": "healthy",
+  "last_successful_sync_utc": "2026-08-13T03:31:12+00:00",
+  "last_run_started_utc": "2026-08-13T03:30:00+00:00",
+  "last_completed_step": "ai_narratives",
+  "last_error": null,
+  "hours_since_last_success": 1.2,
+  "is_stale": false,
+  "fixture_count": 41233, "team_count": 812, "analysis_count": 39104
+}
+```
+
+`status` is one of `never_run`, `healthy`, `stale`, `failing`. Read it rather
+than deriving a verdict from the timestamps — an unresolved `last_error` reports
+`failing` even when a older run succeeded recently. The row counts are there
+because a sync can report success while the tables stay empty.
 
 ---
 

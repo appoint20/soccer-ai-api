@@ -11,12 +11,18 @@ namespace SoccerAi.Application.Helpers;
 public class FixtureQueryHelper(IApplicationDbContext dbContext)
 {
     /// <summary>
-    /// Loads paginated fixtures for a given date along with their team mappings.
+    /// Loads one page of fixtures for a given date along with their team mappings.
     /// </summary>
+    /// <remarks>
+    /// The window is always applied. This previously paged only when both a page
+    /// and a page size were supplied, so the documented call — which sent
+    /// <c>page_size</c>, a name the binder never matched — fell through to
+    /// loading every fixture on the date and analyzing each one.
+    /// </remarks>
     public async Task<(List<Fixture> Fixtures, Dictionary<int, Team> Teams, int TotalCount)> GetFixturesWithTeamsAsync(
         DateTimeOffset date,
-        int? page = null,
-        int? pageSize = null,
+        int limit,
+        int offset,
         bool onlyAnalyzed = false,
         CancellationToken cancellationToken = default)
     {
@@ -29,18 +35,18 @@ public class FixtureQueryHelper(IApplicationDbContext dbContext)
         {
             query = query.Where(f => dbContext.FixtureAnalyses.Any(a => a.FixtureId == f.Id));
         }
-        
+
         var totalCount = await query.CountAsync(cancellationToken);
 
-        if (page.HasValue && pageSize.HasValue)
-        {
-            query = query
-                .OrderBy(f => f.Date)
-                .Skip((page.Value - 1) * pageSize.Value)
-                .Take(pageSize.Value);
-        }
-
-        var fixtures = await query.ToListAsync(cancellationToken);
+        // Id breaks ties on Date. Without it, fixtures sharing a kickoff time —
+        // the norm on a matchday — have no defined order between queries, so a
+        // row could repeat on one page and be skipped on the next.
+        var fixtures = await query
+            .OrderBy(f => f.Date)
+            .ThenBy(f => f.Id)
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 
         var teamIds = fixtures
             .SelectMany(f => new[] { f.HomeTeamId, f.AwayTeamId })

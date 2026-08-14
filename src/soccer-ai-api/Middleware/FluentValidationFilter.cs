@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -29,7 +30,7 @@ public class FluentValidationFilter(IServiceProvider serviceProvider) : IAsyncAc
             if (!result.IsValid)
             {
                 var errors = result.Errors
-                    .GroupBy(e => e.PropertyName)
+                    .GroupBy(e => ToSnakeCase(e.PropertyName))
                     .ToDictionary(
                         g => g.Key,
                         g => g.Select(e => e.ErrorMessage).ToArray());
@@ -47,4 +48,18 @@ public class FluentValidationFilter(IServiceProvider serviceProvider) : IAsyncAc
 
         await next();
     }
+
+    /// <summary>
+    /// Reports the field under the name the caller sent it as. FluentValidation
+    /// names errors after the CLR property, which would hand a client reading a
+    /// snake_case API a key like "PageSize" that appears nowhere in its request.
+    /// Nested paths are converted per segment so "TimeFrame.StartTime" stays a
+    /// path rather than becoming one long token.
+    /// </summary>
+    private static string ToSnakeCase(string propertyName) =>
+        string.IsNullOrEmpty(propertyName)
+            ? propertyName
+            : string.Join('.', propertyName
+                .Split('.')
+                .Select(JsonNamingPolicy.SnakeCaseLower.ConvertName));
 }

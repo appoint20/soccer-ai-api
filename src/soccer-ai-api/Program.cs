@@ -20,6 +20,19 @@ builder.Services.AddScoped<SoccerAi.Api.Middleware.FluentValidationFilter>();
 builder.Services.AddControllers(options =>
     {
         options.Filters.AddService<SoccerAi.Api.Middleware.FluentValidationFilter>();
+
+        // Responses are snake_case; without this, query parameters were not.
+        // Swapping the built-in factory lets `?only_analyzed=true&page_size=20`
+        // bind instead of being dropped silently. See SnakeCaseQueryValueProvider.
+        var queryFactory = options.ValueProviderFactories
+            .OfType<Microsoft.AspNetCore.Mvc.ModelBinding.QueryStringValueProviderFactory>()
+            .FirstOrDefault();
+
+        if (queryFactory is not null)
+        {
+            options.ValueProviderFactories[options.ValueProviderFactories.IndexOf(queryFactory)] =
+                new SoccerAi.Api.Binding.SnakeCaseQueryValueProviderFactory();
+        }
     })
     .AddJsonOptions(options =>
     {

@@ -33,18 +33,22 @@ public class GetMatchAnalysisHandler(
         var query = context.Message;
         var lang = query.Language ?? "en";
         var date = query.Date ?? DateTimeOffset.UtcNow;
+        var limit = query.ResolveLimit();
+        var offset = query.ResolveOffset();
 
         // Step 1: Load fixtures + teams (cheap indexed queries)
         var (fixtures, _, totalCount) = await queryHelper.GetFixturesWithTeamsAsync(
-            date, query.Page, query.PageSize, query.OnlyAnalyzed, cancellationToken);
+            date, limit, offset, query.OnlyAnalyzed, cancellationToken);
 
         if (fixtures.Count == 0)
         {
             logger.LogInformation("No fixtures found for {Date}", date.ToString("yyyy-MM-dd"));
             return new GetMatchAnalysisResponse
             {
-                Matches = [],
-                TotalCount = totalCount,
+                Items = [],
+                Limit = limit,
+                Offset = offset,
+                Total = totalCount,
                 Summary = new AnalysisSummary { TotalMatches = 0, CorrectMatches = 0, AccuracyRate = 0 }
             };
         }
@@ -106,8 +110,10 @@ public class GetMatchAnalysisHandler(
 
         return new GetMatchAnalysisResponse
         {
-            Matches = analysisList,
-            TotalCount = totalCount,
+            Items = analysisList,
+            Limit = limit,
+            Offset = offset,
+            Total = totalCount,
             Summary = summary
         };
     }
