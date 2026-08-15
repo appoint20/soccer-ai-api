@@ -105,7 +105,32 @@ public class GetMatchAnalysisHandler(
             }
         }
 
-        // Step 5: summary over finished matches
+        // Step 5: model forecasts for this page, so the app can show them under
+        // the summary. One extra indexed query rather than a per-fixture read.
+        var forecasts = await dbContext.ModelForecasts
+            .AsNoTracking()
+            .Where(f => fixtureIds.Contains(f.FixtureId))
+            .OrderBy(f => f.Model)
+            .ToListAsync(cancellationToken);
+
+        var forecastsByFixture = forecasts
+            .GroupBy(f => f.FixtureId)
+            .ToDictionary(g => g.Key, g => g.Select(f => new MatchModelForecastDto
+            {
+                Model = f.Model,
+                ExpectedGoals = f.ExpectedGoals,
+                PredictedScore = $"{f.PredictedHomeGoals}:{f.PredictedAwayGoals}",
+                Over25Probability = f.Over25Probability,
+                BttsProbability = f.BttsProbability,
+                Confidence = f.Confidence,
+                Rationale = f.Rationale,
+                PredictedAtUtc = f.PredictedAtUtc,
+                SystemOver25Probability = f.SystemOver25Probability,
+                SystemBttsProbability = f.SystemBttsProbability,
+                ActualTotalGoals = f.ActualTotalGoals,
+            }).ToList());
+
+        // Step 6: summary over finished matches
         var summary = AnalysisResponseMapper.CalculateSummary(analysisList);
 
         return new GetMatchAnalysisResponse
@@ -114,6 +139,7 @@ public class GetMatchAnalysisHandler(
             Limit = limit,
             Offset = offset,
             Total = totalCount,
+            ModelForecasts = forecastsByFixture,
             Summary = summary
         };
     }

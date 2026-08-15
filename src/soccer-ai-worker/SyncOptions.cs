@@ -27,6 +27,9 @@ public sealed class SyncOptions
     /// </summary>
     public double StartupSyncThresholdHours { get; set; } = 20;
 
+    /// <summary>How far ahead to forecast fixtures with the language models.</summary>
+    public int ForecastDaysAhead { get; set; } = 3;
+
     /// <summary>Run the optional LLM narrative generation step.</summary>
     public bool GenerateAiNarratives { get; set; } = false;
 

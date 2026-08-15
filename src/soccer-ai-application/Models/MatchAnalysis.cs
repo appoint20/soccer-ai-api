@@ -20,6 +20,14 @@ public sealed class MatchAnalysis
     public string HomeTeam { get; init; } = string.Empty;
     public string AwayTeam { get; init; } = string.Empty;
     public MatchResult? Result { get; init; }
+
+    /// <summary>
+    /// The one call the system backs for this fixture, and whether it landed.
+    /// Read this for "was the prediction right"; read <c>prediction</c> for the
+    /// full per-market probabilities.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("headline_prediction")]
+    public HeadlinePrediction? Headline { get; init; }
     
     public double? OddsHomeWin { get; init; }
     public double? OddsDraw { get; init; }

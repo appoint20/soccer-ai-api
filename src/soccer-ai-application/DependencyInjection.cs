@@ -31,6 +31,7 @@ public static class DependencyInjection
         // The forecast head-to-head: model predictions recorded next to the
         // pipeline's own, settled once results land.
         services.AddScoped<Services.Forecasts.IModelForecastLedger, Services.Forecasts.ModelForecastLedger>();
+        services.AddScoped<Services.Forecasts.IModelForecastSyncService, Services.Forecasts.ModelForecastSyncService>();
 
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();

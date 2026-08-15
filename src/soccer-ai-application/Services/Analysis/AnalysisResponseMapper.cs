@@ -31,6 +31,7 @@ public class AnalysisResponseMapper
     {
         var prediction = BuildPredictionResponse(analysis, aiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
+        var headline = BuildHeadline(analysis.Prediction, matchResult);
 
         // Production Sanitization: Only show models in Development
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
@@ -45,6 +46,7 @@ public class AnalysisResponseMapper
             HomeTeam = homeTeam.ShortName ?? homeTeam.Name,
             AwayTeam = awayTeam.ShortName ?? awayTeam.Name,
             Result = matchResult,
+            Headline = headline,
             OddsHomeWin = analysis.OddsHomeWin,
             OddsDraw = analysis.OddsDraw,
             OddsAwayWin = analysis.OddsAwayWin,
@@ -154,6 +156,58 @@ public class AnalysisResponseMapper
     }
 
     /// <summary>
+    /// Picks the single call the system stands behind: the highest-probability
+    /// market on the fixture.
+    ///
+    /// Same rule as the confidence picks, so the headline shown on a match and
+    /// the pick the product sells cannot contradict each other. Grading one call
+    /// rather than every market also stops a match reading as "3 of 4 correct"
+    /// when the thing the system actually backed was wrong.
+    /// </summary>
+    private static HeadlinePrediction? BuildHeadline(WeightedPrediction? p, MatchResult? result)
+    {
+        if (p is null) return null;
+
+        // Each market as the side the model actually leans to, with that side's
+        // probability — a 30% "over" is a 70% "under", and the call is the under.
+        var candidates = new (string Market, string Selection, double Probability, bool? Correct)[]
+        {
+            p.Over25
+                ? ("over_2_5", "Over 2.5 Goals", p.Over25Prob, result is null ? null : result.ActualOver25 == true)
+                : ("under_2_5", "Under 2.5 Goals", 1 - p.Over25Prob, result is null ? null : result.ActualOver25 == false),
+
+            p.BTTS
+                ? ("btts", "Both Teams To Score", p.BTTSProb, result is null ? null : result.ActualBtts == true)
+                : ("no_btts", "Not Both Teams To Score", 1 - p.BTTSProb, result is null ? null : result.ActualBtts == false),
+
+            p.MatchWinner.Equals("home", StringComparison.OrdinalIgnoreCase)
+                ? ("home_win", "Home Win", p.HomeProb, result is null ? null : result.ActualWinner == "home")
+                : p.MatchWinner.Equals("away", StringComparison.OrdinalIgnoreCase)
+                    ? ("away_win", "Away Win", p.AwayProb, result is null ? null : result.ActualWinner == "away")
+                    : ("draw", "Draw", p.DrawProb, result is null ? null : result.ActualWinner == "draw"),
+        };
+
+        // A market whose probability is exactly 0 was not computed — treat it as
+        // absent rather than as a certainty. Without this the complement of an
+        // unset probability is 1.0, and a market the model never priced wins the
+        // headline slot as a 100% confident call.
+        var best = candidates
+            .Where(c => c.Probability is > 0 and < 1)
+            .OrderByDescending(c => c.Probability)
+            .FirstOrDefault();
+
+        if (best.Market is null) return null;
+
+        return new HeadlinePrediction
+        {
+            Market = best.Market,
+            Selection = best.Selection,
+            Probability = Math.Round(best.Probability, 4),
+            IsCorrect = best.Correct,
+        };
+    }
+
+    /// <summary>
     /// Validates match result for completed fixtures.
     /// Supports variety of completed statuses from API-Football.
     /// </summary>
@@ -173,13 +227,36 @@ public class AnalysisResponseMapper
             (predWinner.Equals("draw", StringComparison.OrdinalIgnoreCase) && fixture.HomeGoal == fixture.AwayGoal) ||
             (predWinner.Equals("away", StringComparison.OrdinalIgnoreCase) && fixture.HomeGoal < fixture.AwayGoal);
 
-        return new MatchResult 
-        { 
-            ActualScore = actualScore, 
+        var isOver25 = totalGoals > 2.5;
+        var actualWinner = fixture.HomeGoal > fixture.AwayGoal ? "home"
+            : fixture.HomeGoal < fixture.AwayGoal ? "away" : "draw";
+
+        // A prediction is correct when it matches the outcome — including when
+        // it correctly predicted the market would NOT hit. These flags used to
+        // carry the raw outcome, so "BTTS: no" on a 1-0 was reported as wrong.
+        var p = analysis.Prediction;
+
+        return new MatchResult
+        {
+            ActualScore = actualScore,
             IsCorrect = isWinnerCorrect,
-            IsBttsCorrect = isBtts,
-            IsOver25Correct = totalGoals > 2.5,
-            IsUnder25Correct = totalGoals < 2.5
+
+            IsBttsCorrect = p is null ? null : p.BTTS == isBtts,
+            IsOver25Correct = p is null ? null : p.Over25 == isOver25,
+
+            // Over and Under 2.5 are one binary call, so this necessarily equals
+            // IsOver25Correct: predicting "over" wrongly is the same event as
+            // predicting "under" wrongly. Kept as its own field so a UI showing
+            // an Under 2.5 row does not have to invert anything itself.
+            IsUnder25Correct = p is null ? null : p.Over25 == isOver25,
+
+            HomeGoals = fixture.HomeGoal,
+            AwayGoals = fixture.AwayGoal,
+            TotalGoals = totalGoals,
+            ActualBtts = isBtts,
+            ActualOver25 = isOver25,
+            PredictedWinner = string.IsNullOrWhiteSpace(predWinner) ? null : predWinner.ToLowerInvariant(),
+            ActualWinner = actualWinner,
         };
     }
 

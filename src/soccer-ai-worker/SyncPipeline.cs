@@ -27,16 +27,24 @@ public sealed class SyncPipeline(
 {
     private static readonly string[] StepOrder =
     [
+        Steps.HistoricalDepth,
         Steps.Standings,
         Steps.FixturesAndOdds,
         Steps.RecomputeAnalysis,
         Steps.SettlePicks,
         Steps.PublishPicks,
+        Steps.ModelForecasts,
         Steps.AiNarratives
     ];
 
     public static class Steps
     {
+        /// <summary>
+        /// Backfills prior seasons for leagues with too little history for the
+        /// model to run. First, because every later step depends on it.
+        /// </summary>
+        public const string HistoricalDepth = "historical_depth";
+
         public const string Standings = "standings";
         public const string FixturesAndOdds = "fixtures_odds";
         public const string RecomputeAnalysis = "recompute_analysis";
@@ -46,6 +54,13 @@ public sealed class SyncPipeline(
 
         /// <summary>Freeze today's board into the ledger at the prices shown.</summary>
         public const string PublishPicks = "publish_picks";
+
+        /// <summary>
+        /// Settle finished forecasts, then forecast upcoming fixtures. Runs
+        /// after the analysis snapshots it reads from, and is a measurement —
+        /// a failure here never fails the run.
+        /// </summary>
+        public const string ModelForecasts = "model_forecasts";
 
         public const string AiNarratives = "ai_narratives";
     }
@@ -182,6 +197,14 @@ public sealed class SyncPipeline(
         var nowUtc = DateTimeOffset.UtcNow;
         switch (step)
         {
+            case Steps.HistoricalDepth:
+                // MinLeagueMatches in DixonColesOptions is the real threshold;
+                // 10 mirrors its default. Two prior seasons is enough depth for
+                // the time-decay weighting without a large call budget.
+                await services.GetRequiredService<IFixtureSyncService>()
+                    .EnsureHistoricalDepthAsync(season, minFinishedPerLeague: 10, maxSeasonsBack: 2, ct);
+                break;
+
             case Steps.Standings:
                 await services.GetRequiredService<ITeamSyncService>()
                     .SyncAllLeaguesAsync(season, ct);
@@ -213,6 +236,12 @@ public sealed class SyncPipeline(
             // tickets and never rewrites a recorded price.
             case Steps.PublishPicks:
                 await PublishPicksAsync(services, nowUtc, opt, ct);
+                break;
+
+            case Steps.ModelForecasts:
+                await services.GetRequiredService<
+                        Application.Services.Forecasts.IModelForecastSyncService>()
+                    .RunAsync(opt.ForecastDaysAhead, ct);
                 break;
 
             case Steps.AiNarratives:

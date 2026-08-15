@@ -29,13 +29,73 @@ public sealed class MatchContext
     public float? AwayRestDays { get; init; }
 }
 
+/// <summary>
+/// How a finished fixture turned out, and whether each prediction called it.
+///
+/// The "Correct" flags compare the prediction to the outcome. The "Actual"
+/// fields state the outcome itself. They are separate on purpose: the flags
+/// previously carried the raw outcome, so a match where BTTS was predicted
+/// "no" and BTTS did not happen was reported as incorrect.
+/// </summary>
 public sealed class MatchResult
 {
+    /// <summary>Winner prediction matched the result.</summary>
+    [JsonPropertyName("is_correct")]
     public bool IsCorrect { get; init; }
+
+    [JsonPropertyName("actual_score")]
     public string ActualScore { get; init; } = string.Empty;
+
+    /// <summary>Null when no prediction was made for the market.</summary>
+    [JsonPropertyName("is_btts_correct")]
     public bool? IsBttsCorrect { get; init; }
+
+    [JsonPropertyName("is_over25_correct")]
     public bool? IsOver25Correct { get; init; }
+
+    [JsonPropertyName("is_under25_correct")]
     public bool? IsUnder25Correct { get; init; }
+
+    // ── What actually happened ────────────────────────────────────
+    [JsonPropertyName("home_goals")] public int? HomeGoals { get; init; }
+    [JsonPropertyName("away_goals")] public int? AwayGoals { get; init; }
+    [JsonPropertyName("total_goals")] public int? TotalGoals { get; init; }
+    [JsonPropertyName("actual_btts")] public bool? ActualBtts { get; init; }
+    [JsonPropertyName("actual_over25")] public bool? ActualOver25 { get; init; }
+
+    /// <summary>home | draw | away — what the model called, for display next to the score.</summary>
+    [JsonPropertyName("predicted_winner")] public string? PredictedWinner { get; init; }
+
+    /// <summary>home | draw | away — what actually happened.</summary>
+    [JsonPropertyName("actual_winner")] public string? ActualWinner { get; init; }
+}
+
+/// <summary>
+/// The single call the system stands behind for a fixture, and — once played —
+/// whether it landed.
+///
+/// Every market's probability stays available on <c>prediction</c>; this is the
+/// one the model would actually back, so accuracy is one number rather than a
+/// per-market grid that can read as three-quarters right on a match the system
+/// got wrong.
+///
+/// The market with the highest probability wins the slot. That is the same rule
+/// the confidence picks use, so the headline here and the pick the product sells
+/// can never disagree.
+/// </summary>
+public sealed class HeadlinePrediction
+{
+    /// <summary>over_2_5 | under_2_5 | btts | no_btts | home_win | draw | away_win</summary>
+    [JsonPropertyName("market")] public required string Market { get; init; }
+
+    /// <summary>Human-readable, e.g. "Over 2.5 Goals".</summary>
+    [JsonPropertyName("selection")] public required string Selection { get; init; }
+
+    /// <summary>Model probability for this call, 0-1.</summary>
+    [JsonPropertyName("probability")] public required double Probability { get; init; }
+
+    /// <summary>Null until the fixture has finished.</summary>
+    [JsonPropertyName("is_correct")] public bool? IsCorrect { get; init; }
 }
 
 public sealed class TeamStats

@@ -25,8 +25,20 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// Odds-coverage cache per (league, season). Checked ONCE via /leagues before
     /// spending calls on /odds for a competition the API never prices.
     /// </summary>
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int League, int Season), bool>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int League, int Season), (bool Covered, DateTimeOffset CheckedAt)>
         OddsCoverageCache = new();
+
+    /// <summary>
+    /// How long a "no coverage" answer is trusted before asking again.
+    ///
+    /// A positive is cached for the process lifetime — a competition that is
+    /// priced does not stop being priced. A negative must expire: API-Football
+    /// reports no odds coverage for a season that has not started yet, and this
+    /// worker is long-lived, so caching that answer permanently means odds never
+    /// resume once the season begins. That is how a new season produces fixtures
+    /// with no quotes and an app with no combinations.
+    /// </summary>
+    private static readonly TimeSpan NegativeCoverageTtl = TimeSpan.FromHours(6);
 
     /// <summary>
     /// Get current football season (starts in July)
@@ -39,6 +51,88 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// Check if the season is the current season
     /// </summary>
     private static bool IsCurrentSeason(int season) => season == GetCurrentSeason();
+
+    /// <inheritdoc />
+    public async Task<SyncResult> EnsureHistoricalDepthAsync(
+        int season, int minFinishedPerLeague, int maxSeasonsBack, CancellationToken ct)
+    {
+        var result = new SyncResult();
+
+        // One grouped count instead of a query per league.
+        var leagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+        var finishedByLeague = await dbContext.Fixtures
+            .Where(f => leagueIds.Contains(f.LeagueId) && f.Status == "FT")
+            .GroupBy(f => f.LeagueId)
+            .Select(g => new { LeagueId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.LeagueId, g => g.Count, ct);
+
+        var shallow = leagueIds
+            .Where(id => finishedByLeague.GetValueOrDefault(id) < minFinishedPerLeague)
+            .ToList();
+
+        if (shallow.Count == 0)
+        {
+            logger.LogInformation(
+                "[History] All {Count} leagues hold at least {Min} finished fixtures — nothing to backfill.",
+                leagueIds.Count, minFinishedPerLeague);
+            return result;
+        }
+
+        logger.LogWarning(
+            "[History] {Count} league(s) below {Min} finished fixtures — the model cannot price them. "
+            + "Backfilling up to {Seasons} prior season(s): {Leagues}",
+            shallow.Count, minFinishedPerLeague, maxSeasonsBack, string.Join(", ", shallow));
+
+        foreach (var leagueId in shallow)
+        {
+            var have = finishedByLeague.GetValueOrDefault(leagueId);
+
+            for (var back = 1; back <= maxSeasonsBack && have < minFinishedPerLeague; back++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var priorSeason = season - back;
+                try
+                {
+                    var seasonResult = await SyncLeagueFixturesAsync(leagueId, priorSeason, ct);
+                    result.Created += seasonResult.Created;
+                    result.Updated += seasonResult.Updated;
+                    result.ErrorMessages.AddRange(seasonResult.ErrorMessages);
+
+                    have = await dbContext.Fixtures
+                        .CountAsync(f => f.LeagueId == leagueId && f.Status == "FT", ct);
+
+                    logger.LogInformation(
+                        "[History] League {LeagueId} season {Season}: now {Count} finished fixtures",
+                        leagueId, priorSeason, have);
+                }
+                catch (Application.Exceptions.ExternalApiException)
+                {
+                    // Quota or credentials — the caller decides whether to stop.
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex,
+                        "[History] Backfill failed for league {LeagueId} season {Season}",
+                        leagueId, priorSeason);
+                    result.ErrorMessages.Add($"League {leagueId} season {priorSeason}: {ex.Message}");
+                }
+            }
+
+            if (have < minFinishedPerLeague)
+            {
+                logger.LogWarning(
+                    "[History] League {LeagueId} still holds only {Count} finished fixtures after "
+                    + "{Seasons} prior season(s). Analysis for it will stay empty.",
+                    leagueId, have, maxSeasonsBack);
+            }
+
+            result.LeaguesSynced++;
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Sync last N seasons for all supported leagues
@@ -466,11 +560,20 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// <summary>One /leagues coverage call per league+season, cached for the process lifetime.</summary>
     private async Task<bool> HasOddsCoverageCachedAsync(int leagueId, int season, CancellationToken ct)
     {
-        if (OddsCoverageCache.TryGetValue((leagueId, season), out var cached))
-            return cached;
+        var key = (leagueId, season);
+
+        if (OddsCoverageCache.TryGetValue(key, out var cached))
+        {
+            if (cached.Covered) return true;
+            if (DateTimeOffset.UtcNow - cached.CheckedAt < NegativeCoverageTtl) return false;
+
+            logger.LogInformation(
+                "[Coverage] Re-checking league {LeagueId} season {Season} — last answer was 'no odds' {Age:F1}h ago",
+                leagueId, season, (DateTimeOffset.UtcNow - cached.CheckedAt).TotalHours);
+        }
 
         var covered = await apiService.HasOddsCoverageAsync(leagueId, season, ct);
-        OddsCoverageCache[(leagueId, season)] = covered;
+        OddsCoverageCache[key] = (covered, DateTimeOffset.UtcNow);
         return covered;
     }
 
