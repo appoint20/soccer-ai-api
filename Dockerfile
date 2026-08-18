@@ -12,6 +12,16 @@ RUN dotnet publish src/soccer-ai-api/soccer-ai-api.csproj -c Release -o /app/pub
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
+# Npgsql probes for GSSAPI/Kerberos while negotiating authentication, and the
+# aspnet runtime image does not ship it:
+#   Cannot load library libgssapi_krb5.so.2
+# Password authentication still succeeds, so this is noise rather than a
+# failure — but it is logged as "Error", which makes every real connection
+# problem harder to spot in the deploy log. One small package removes it.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy .NET binaries
 COPY --from=dotnet-build /app/publish .
 
