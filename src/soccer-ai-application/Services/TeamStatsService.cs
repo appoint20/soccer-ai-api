@@ -109,6 +109,9 @@ public class TeamStatsService: ITeamStatsService
             else break;
         }
 
+        // Already capped at 100: score3 (max 70) + scorePrev (max 30) reaches the
+        // ceiling on its own, and the streak bonus can only push against a cap
+        // that is already there. The range is 0-100, not 0-105.
         return Math.Round(Math.Min(100, score3 + scorePrev + streakBonus), 2);
     }
 

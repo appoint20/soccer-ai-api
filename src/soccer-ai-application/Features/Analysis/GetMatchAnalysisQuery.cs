@@ -46,6 +46,18 @@ public class GetMatchAnalysisResponse : IResponse
     public int TotalCount => Total;
 
     /// <summary>
+    /// One-based page number, echoed for clients built against page/page_size.
+    /// Derived from the limit/offset actually applied, so it is correct even
+    /// when the caller sent limit/offset instead.
+    /// </summary>
+    [JsonPropertyName("page")]
+    public int Page => Limit <= 0 ? 1 : (Offset / Limit) + 1;
+
+    /// <summary>Deprecated alias for <see cref="Limit"/>.</summary>
+    [JsonPropertyName("page_size")]
+    public int PageSize => Limit;
+
+    /// <summary>
     /// Independent language-model forecasts for the fixtures on this page,
     /// keyed by fixture id. Shown alongside the pipeline's own numbers so the
     /// two can be compared; never used to select or price a bet.

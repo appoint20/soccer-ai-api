@@ -116,12 +116,18 @@ public sealed class TeamStats
     [JsonPropertyName("form")]
     public string Form { get; set; } = "";
     
+    /// <summary>Points won over the last 5 results as a share of 15. Range 0-100.</summary>
     [JsonPropertyName("form_percentage")]
     public int FormPercentage { get; set; }
 
     [JsonPropertyName("possession")]
     public double Possession { get; set; }
     
+    /// <summary>
+    /// Weighted recent form: 70 points from the last 3 matches, 30 from the
+    /// previous 4, plus a win-streak bonus. Range 0-100 — the sum is capped, so
+    /// the streak bonus cannot carry it past 100. Effectively a percentage.
+    /// </summary>
     [JsonPropertyName("momentum")]
     public double Momentum { get; set; }
 
@@ -141,9 +147,11 @@ public sealed class TeamStats
     [JsonPropertyName("avg_goals_conceded_last_3")]
     public double AvgGoalsConcededLast3 { get; set; }
     
+    /// <summary>Share of the last 3 matches with both teams scoring. Range 0-1.</summary>
     [JsonPropertyName("btts_rate_last_3")]
     public double BTTSRateLast3 { get; set; }
     
+    /// <summary>Share of the last 3 matches going over 2.5 goals. Range 0-1.</summary>
     [JsonPropertyName("over_25_rate_last_3")]
     public double Over25RateLast3 { get; set; }
 
@@ -161,16 +169,29 @@ public sealed class TeamStats
     public double Over25RateLast7 { get; set; }
 
     // ---------- PERFORMANCE ----------
+    /// <summary>
+    /// Goals scored per match, weighted 60% at this venue and 40% overall.
+    /// An absolute rate in goals, NOT a ratio — there is no neutral 1.0. Do not
+    /// confuse it with TeamStrength.HomeAttackStrength, which IS a ratio against
+    /// the league average and where 1.0 does mean average.
+    /// </summary>
     [JsonPropertyName("attack_strength")]
     public double AttackStrength { get; set; }
     
+    /// <summary>
+    /// Goals conceded per match, weighted 60% at this venue and 40% overall.
+    /// An absolute rate in goals, NOT a ratio — lower is better, and there is no
+    /// neutral 1.0.
+    /// </summary>
     [JsonPropertyName("defensive_strength")]
     public double DefensiveStrength { get; set; }
 
     // ---------- RESULTS ----------
+    /// <summary>Share of the last 7 matches without conceding. Range 0-1.</summary>
     [JsonPropertyName("clean_sheet_rate")]
     public double CleanSheetRate { get; set; }
     
+    /// <summary>Share of the last 7 matches won. Range 0-1.</summary>
     [JsonPropertyName("win_rate")]
     public double WinRate { get; set; }
     

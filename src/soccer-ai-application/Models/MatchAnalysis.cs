@@ -35,7 +35,10 @@ public sealed class MatchAnalysis
     public double? OddsOver25 { get; init; }
     public double? OddsUnder25 { get; init; }
     public double? OddsBttsYes { get; init; }
-    public double? OddsGoals23 { get; init; } = 1.90;
+    // odds_goals23 removed: it was a hardcoded 1.90 placeholder, never a real
+    // quote. 2-3 goals is informational and never becomes a bet, so a synthetic
+    // price on it is exactly the placeholder the product rules forbid. The
+    // MinOddsGoals23 strategy threshold is unrelated and still applies.
 
     /// <summary>
     /// True joint P(BTTS ∧ Over 2.5) from the Dixon-Coles score matrix, needed
