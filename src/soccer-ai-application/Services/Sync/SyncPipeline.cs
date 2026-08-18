@@ -6,7 +6,7 @@ using SoccerAi.Application.Entities;
 using SoccerAi.Application.Exceptions;
 using SoccerAi.Application.Interfaces;
 
-namespace SoccerAi.Worker;
+namespace SoccerAi.Application.Services.Sync;
 
 /// <summary>
 /// The sync pipeline: standings → fixtures/results+odds → recompute analysis
@@ -240,7 +240,7 @@ public sealed class SyncPipeline(
 
             case Steps.ModelForecasts:
                 await services.GetRequiredService<
-                        Application.Services.Forecasts.IModelForecastSyncService>()
+                        Forecasts.IModelForecastSyncService>()
                     .RunAsync(opt.ForecastDaysAhead, ct);
                 break;
 

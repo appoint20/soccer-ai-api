@@ -1,3 +1,4 @@
+using SoccerAi.Application.Services.Sync;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,3 +1,4 @@
+using SoccerAi.Application.Services.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

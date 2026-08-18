@@ -33,6 +33,12 @@ public static class DependencyInjection
         services.AddScoped<Services.Forecasts.IModelForecastLedger, Services.Forecasts.ModelForecastLedger>();
         services.AddScoped<Services.Forecasts.IModelForecastSyncService, Services.Forecasts.ModelForecastSyncService>();
 
+        // The sync pipeline lives here rather than in the worker so it can be
+        // driven by whatever schedules it — the worker's timer, or an HTTP call
+        // from a cron job. A worker that gets shut down should not be the only
+        // way to run a sync.
+        services.AddSingleton<Services.Sync.SyncPipeline>();
+
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();
         services.AddScoped<Services.Analysis.AnalysisResponseMapper>();

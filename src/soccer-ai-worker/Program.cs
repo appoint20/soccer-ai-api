@@ -1,3 +1,4 @@
+using SoccerAi.Application.Services.Sync;
 using Mediator.Net;
 using Mediator.Net.MicrosoftDependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,6 @@ builder.Services.RegisterMediator(mediatorBuilder);
 
 // Worker
 builder.Services.Configure<SyncOptions>(builder.Configuration.GetSection(SyncOptions.SectionName));
-builder.Services.AddSingleton<SyncPipeline>();
 builder.Services.AddHostedService<SyncWorker>();
 builder.Services.AddHostedService<OddsCaptureWorker>();
 

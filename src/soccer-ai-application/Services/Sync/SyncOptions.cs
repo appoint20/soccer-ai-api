@@ -1,4 +1,4 @@
-namespace SoccerAi.Worker;
+namespace SoccerAi.Application.Services.Sync;
 
 /// <summary>
 /// Sync worker configuration ("Sync" section). ALL times are UTC.
