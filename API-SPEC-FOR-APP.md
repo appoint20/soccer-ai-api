@@ -122,6 +122,26 @@ Authorization: Bearer <jwt>
 
 Errors: `401` bad credentials or missing/expired token.
 
+#### Admin API key
+
+The `/api/automation/*` endpoints also accept a static key, so a scheduler can
+call them without holding a login:
+
+```
+X-API-Key: <key>
+```
+
+Configure it by setting `ADMIN_API_KEY` to any string of 16+ characters. The
+service hashes it at startup and never logs it; only the hash is kept in memory.
+Every source is additive — an environment key joins the hashes already in
+`appsettings.json` rather than replacing them — so keys can be rotated by adding
+the new one, moving traffic across, then dropping the old. Comma-separate to
+accept several at once. Pre-computed SHA-256 digests still work via
+`AdminApi:ApiKeyHashes` or `ADMIN_API_KEY_HASH` for keeping the key off the host.
+
+The startup log reports how many keys loaded and from which source, which is the
+quickest way to tell a misconfigured key from a wrong one.
+
 ### Dates
 
 `YYYY-MM-DD` in query strings. Timestamps are ISO-8601 UTC. **Kickoff times are

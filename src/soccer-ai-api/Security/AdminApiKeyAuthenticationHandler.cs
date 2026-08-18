@@ -1,10 +1,7 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using SoccerAi.Api.Configuration;
 
 namespace SoccerAi.Api.Security;
 
@@ -12,47 +9,34 @@ public sealed class AdminApiKeyAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> schemeOptions,
     ILoggerFactory loggerFactory,
     UrlEncoder encoder,
-    IOptions<AdminApiKeyOptions> adminOptions)
+    AdminApiKeyRegistry registry)
     : AuthenticationHandler<AuthenticationSchemeOptions>(schemeOptions, loggerFactory, encoder)
 {
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var options = adminOptions.Value;
-        var configuredHashes = options.ApiKeyHashes;
-        if (configuredHashes.Length == 0)
-        {
-            var fallbackHash = Environment.GetEnvironmentVariable("ADMIN_API_KEY_HASH");
-            if (!string.IsNullOrWhiteSpace(fallbackHash))
-            {
-                configuredHashes = [fallbackHash];
-            }
-        }
-
-        if (configuredHashes.Length == 0)
-        {
+        // No keys anywhere: decline rather than fail, so the other schemes in
+        // CombinedPolicy still get their turn.
+        if (!registry.IsConfigured)
             return Task.FromResult(AuthenticateResult.NoResult());
-        }
 
-        if (!Request.Headers.TryGetValue(options.HeaderName, out var rawValues))
-        {
+        if (!Request.Headers.TryGetValue(registry.Options.HeaderName, out var rawValues))
             return Task.FromResult(AuthenticateResult.NoResult());
-        }
 
-        var raw = rawValues.ToString();
-        if (!Guid.TryParse(raw, out var providedGuid))
-        {
-            return Task.FromResult(AuthenticateResult.Fail("Invalid API key format."));
-        }
+        var presented = rawValues.ToString().Trim();
 
-        // Canonical form for deterministic hashing.
-        var providedCanonical = providedGuid.ToString("D").ToLowerInvariant();
-        var providedHash = ComputeSha256Hex(providedCanonical);
+        if (presented.Length == 0)
+            return Task.FromResult(AuthenticateResult.Fail(
+                $"The {registry.Options.HeaderName} header was present but empty."));
 
-        var isValid = configuredHashes.Any(hash => FixedTimeEqualsHex(hash, providedHash));
-        if (!isValid)
-        {
-            return Task.FromResult(AuthenticateResult.Fail("Invalid API key."));
-        }
+        // Reported separately from a bad key: this one is a malformed request,
+        // and saying so saves guessing at which of the two went wrong.
+        if (presented.Length < registry.Options.MinimumKeyLength)
+            return Task.FromResult(AuthenticateResult.Fail(
+                $"API key is too short — expected at least {registry.Options.MinimumKeyLength} characters."));
+
+        if (!registry.Matches(presented))
+            return Task.FromResult(AuthenticateResult.Fail(
+                $"API key was not recognised. {registry.Count} key(s) are configured."));
 
         var claims = new[]
         {
@@ -65,23 +49,5 @@ public sealed class AdminApiKeyAuthenticationHandler(
         var ticket = new AuthenticationTicket(principal, AdminApiKeyAuthenticationDefaults.SchemeName);
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
-    }
-
-    private static string ComputeSha256Hex(string input)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private static bool FixedTimeEqualsHex(string configuredHash, string providedHash)
-    {
-        if (string.IsNullOrWhiteSpace(configuredHash))
-            return false;
-
-        var configured = Encoding.UTF8.GetBytes(configuredHash.Trim().ToLowerInvariant());
-        var provided = Encoding.UTF8.GetBytes(providedHash);
-
-        return configured.Length == provided.Length &&
-               CryptographicOperations.FixedTimeEquals(configured, provided);
     }
 }

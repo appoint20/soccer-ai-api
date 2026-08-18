@@ -64,6 +64,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddOptions<AdminApiKeyOptions>()
     .Bind(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
 
+// Resolved once: the accepted keys cannot change without a restart anyway, and
+// hashing every raw key on each request would be pointless work.
+builder.Services.AddSingleton<AdminApiKeyRegistry>();
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -119,6 +123,27 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Say what admin-key auth actually loaded. Without this the only symptom of a
+// misconfigured key is a 401 that looks identical to sending the wrong one.
+{
+    var keyRegistry = app.Services.GetRequiredService<AdminApiKeyRegistry>();
+    var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("AdminApiKey");
+
+    if (keyRegistry.IsConfigured)
+    {
+        startupLogger.LogInformation(
+            "[AdminApiKey] {Count} key(s) accepted on header {Header}, from: {Sources}",
+            keyRegistry.Count, keyRegistry.Options.HeaderName, string.Join(", ", keyRegistry.Sources));
+    }
+    else
+    {
+        startupLogger.LogWarning(
+            "[AdminApiKey] No admin keys configured — every API-key request will be rejected. " +
+            "Set the {RawEnvVar} environment variable to any string of at least {MinLength} characters.",
+            AdminApiKeyRegistry.RawKeyEnvVar, keyRegistry.Options.MinimumKeyLength);
+    }
+}
 
 app.UseForwardedHeaders();
 app.UseRouting();

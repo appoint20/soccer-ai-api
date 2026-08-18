@@ -29,6 +29,12 @@ services:
         value: "glm-5.1"
       - key: ZAI_API_KEY
         sync: false # Set this manually in the Render dashboard
+      # Admin key for /api/automation/* (header: X-API-Key). Any string of 16+
+      # characters; the app hashes it on startup and never logs it. Added to the
+      # hashes in appsettings.json rather than replacing them, so existing keys
+      # keep working. Comma-separate to allow several during a rotation.
+      - key: ADMIN_API_KEY
+        sync: false # Set this manually in the Render dashboard
       # ── PostgreSQL (provisioned below) is the primary database ──
       - key: DATABASE__PROVIDER
         value: Postgres
