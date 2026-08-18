@@ -53,6 +53,12 @@ builder.Services.AddOpenApi("v1");
 
 // Clean Architecture Layers
 builder.Services.AddApplication();
+
+// The sync pipeline reads its schedule-independent settings (recompute window,
+// forecast horizon) from the same "Sync" section the worker uses, so a run
+// triggered over HTTP behaves identically to one the worker starts.
+builder.Services.Configure<SoccerAi.Application.Services.Sync.SyncOptions>(
+    builder.Configuration.GetSection(SoccerAi.Application.Services.Sync.SyncOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddOptions<AdminApiKeyOptions>()

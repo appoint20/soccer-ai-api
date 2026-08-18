@@ -17,6 +17,9 @@ namespace SoccerAi.Api.Controllers;
 [Authorize(Policy = "CombinedPolicy")]
 public class AutomationController(IMediator mediator, IHostApplicationLifetime lifetime, ILogger<AutomationController> logger) : ControllerBase
 {
+    /// <summary>Serialises pipeline runs across requests in this process.</summary>
+    private static readonly SemaphoreSlim _pipelineGate = new(1, 1);
+
     /// <summary>
     /// Executes the full daily synchronization job:
     /// Standings -> Fixtures -> ML retraining -> AI analysis.
@@ -108,6 +111,73 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
             logger.LogError(ex, "[AutomationSync] Fixture sync failed");
             return StatusCode(500, ApiResponse<object>.Fail($"Fixture sync failed: {ex.Message}"));
         }
+    }
+
+    /// <summary>
+    /// Runs the full sync pipeline: history backfill, standings, fixtures and
+    /// odds, analysis precompute, pick settle/publish, and model forecasts.
+    /// </summary>
+    /// <remarks>
+    /// Returns 202 immediately and runs in the background — a full run takes
+    /// minutes, far longer than any sensible HTTP timeout, so holding the
+    /// request open would just fail the caller while the work continued.
+    /// Poll <c>GET /api/automation/sync-status</c> for progress.
+    ///
+    /// This exists so a scheduler outside the process can drive a sync. The
+    /// background worker runs the same pipeline on a timer; when that worker is
+    /// unavailable — shut down, sleeping, or not deployed — this is the same
+    /// work through a service that stays up. Unlike <c>sync-daily</c>, which
+    /// runs an older and shorter sequence, this is the identical pipeline.
+    ///
+    /// Concurrent calls are rejected with 409 rather than queued: two runs
+    /// against one database would double every API call and interleave writes.
+    /// </remarks>
+    /// <param name="pipeline">The shared pipeline.</param>
+    /// <param name="resume">Resume an interrupted run from its last completed step.</param>
+    [HttpPost("sync-pipeline")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public IActionResult RunSyncPipeline(
+        [FromServices] SoccerAi.Application.Services.Sync.SyncPipeline pipeline,
+        [FromQuery] bool resume = true)
+    {
+        if (!_pipelineGate.Wait(0))
+        {
+            return Conflict(ApiResponse<object>.Fail(
+                "A sync is already running. Poll /api/automation/sync-status for progress."));
+        }
+
+        // ApplicationStopping, not the request token: the run must outlive the
+        // response, and only a host shutdown should cancel it.
+        var ct = lifetime.ApplicationStopping;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var completed = await pipeline.RunAsync(resume, ct);
+                logger.LogInformation("[AutomationSync] Triggered pipeline run finished (completed: {Completed})", completed);
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogWarning("[AutomationSync] Triggered pipeline run cancelled by shutdown");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[AutomationSync] Triggered pipeline run failed");
+            }
+            finally
+            {
+                _pipelineGate.Release();
+            }
+        }, CancellationToken.None);
+
+        return Accepted(ApiResponse<object>.Ok(new
+        {
+            message = "Sync pipeline started.",
+            poll = "/api/automation/sync-status",
+            started_at = DateTime.UtcNow,
+        }));
     }
 
     /// <summary>
