@@ -21,6 +21,11 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             logger.LogWarning(ex, "Validation error: {Message}", ex.Message);
             await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message, ex.Errors);
         }
+        catch (ForbiddenException ex)
+        {
+            logger.LogWarning(ex, "Forbidden: {Message}", ex.Message);
+            await HandleExceptionAsync(context, HttpStatusCode.Forbidden, ex.Message);
+        }
         catch (NotFoundException ex)
         {
             logger.LogWarning(ex, "Not found: {Message}", ex.Message);
