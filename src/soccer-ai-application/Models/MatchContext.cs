@@ -37,8 +37,69 @@ public sealed class MatchContext
 /// previously carried the raw outcome, so a match where BTTS was predicted
 /// "no" and BTTS did not happen was reported as incorrect.
 /// </summary>
+/// <summary>
+/// Whether one market's call was right.
+/// </summary>
+/// <remarks>
+/// Present only for a market that genuinely has a verdict. An absent entry
+/// means "not judged", which is a different fact from <c>correct: false</c> and
+/// must never be collapsed into it — a pick nobody can score is not a pick that
+/// lost.
+/// </remarks>
+/// <param name="Market">
+/// Market key, spelled as in <c>decision_audit.markets[]</c>: <c>btts</c>,
+/// <c>over25</c>, <c>under25</c>, <c>goals_2_3</c>, <c>match_winner</c> or
+/// <c>draw</c>.
+/// </param>
+/// <param name="Correct">
+/// Whether the call matched the outcome — including a correct call that the
+/// market would not hit.
+/// </param>
+public sealed record MarketVerdict(
+    [property: JsonPropertyName("market")] string Market,
+    [property: JsonPropertyName("correct")] bool Correct);
+
+/// <summary>
+/// Whether a fixture's outcome can be counted.
+/// </summary>
+/// <remarks>
+/// Only <c>settled</c> may enter a hit-rate or ROI figure. The rest finished in
+/// a way that never produced a market outcome, and counting them as losses
+/// would understate the record — a postponed match is not a failed prediction.
+/// </remarks>
+public static class ResultStatus
+{
+    /// <summary>Played to a conclusion — verdicts are meaningful.</summary>
+    public const string Settled = "settled";
+
+    /// <summary>Awarded or walked over: a result exists on paper, but no market played out.</summary>
+    public const string Void = "void";
+
+    /// <summary>Called off before kick-off.</summary>
+    public const string Postponed = "postponed";
+
+    /// <summary>Started but never finished.</summary>
+    public const string Abandoned = "abandoned";
+}
+
 public sealed class MatchResult
 {
+    /// <summary>
+    /// <c>settled</c> | <c>void</c> | <c>postponed</c> | <c>abandoned</c>.
+    /// Anything other than <c>settled</c> must be excluded from both the correct
+    /// and the wrong counts.
+    /// </summary>
+    [JsonPropertyName("status")]
+    public string Status { get; init; } = ResultStatus.Settled;
+
+    /// <summary>
+    /// Per-market verdicts, keyed as in <c>decision_audit.markets[]</c>, so a
+    /// pick is scored on the market it was actually made in rather than on the
+    /// 1X2 outcome. Empty when nothing could be judged.
+    /// </summary>
+    [JsonPropertyName("markets")]
+    public IReadOnlyList<MarketVerdict> Markets { get; init; } = [];
+
     /// <summary>Winner prediction matched the result.</summary>
     [JsonPropertyName("is_correct")]
     public bool IsCorrect { get; init; }

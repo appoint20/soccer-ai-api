@@ -2,6 +2,8 @@ namespace SoccerAi.Application.Interfaces;
 
 /// <summary>Realized performance for one slice of the ledger.</summary>
 /// <param name="Settled">Tickets with a final result (void excluded).</param>
+/// <param name="Key">Slice identity: "overall", a ticket kind, or a market.</param>
+/// <param name="Won">Settled tickets that returned a profit.</param>
 /// <param name="Pending">Published but not yet settleable.</param>
 /// <param name="Voided">Excluded from ROI — abandoned or unsettleable fixtures.</param>
 /// <param name="Staked">Total staked at one flat unit per ticket.</param>
@@ -21,13 +23,23 @@ public sealed record PickPerformanceSlice(
     public double Roi => Staked > 0 ? (Returned - Staked) / Staked : 0;
 }
 
-/// <summary>Realized results overall, by ticket kind and by market.</summary>
+/// <summary>One ISO week of realized results.</summary>
+/// <param name="Label">ISO week, e.g. "W31".</param>
+/// <param name="Settled">Settled tickets that week — lets a caller suppress a week too thin to publish.</param>
+/// <param name="ProfitUnits">
+/// Signed profit in units of one flat stake, never a currency amount, so the
+/// figure means the same thing whatever the reader stakes.
+/// </param>
+public sealed record PickWeeklySlice(string Label, int Settled, double ProfitUnits);
+
+/// <summary>Realized results overall, by ticket kind, by market and by week.</summary>
 public sealed record PickPerformance(
     DateOnly From,
     DateOnly To,
     PickPerformanceSlice Overall,
     IReadOnlyList<PickPerformanceSlice> ByKind,
-    IReadOnlyList<PickPerformanceSlice> ByMarket);
+    IReadOnlyList<PickPerformanceSlice> ByMarket,
+    IReadOnlyList<PickWeeklySlice> ByWeek);
 
 /// <summary>
 /// The record of what was actually published and how it finished.

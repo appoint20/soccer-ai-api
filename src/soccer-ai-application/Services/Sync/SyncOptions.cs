@@ -16,8 +16,8 @@ public sealed class SyncOptions
     /// so a default here is never overridden — it is concatenated with the
     /// configured value. That produced the duplicated
     /// "03:30, 15:30, 03:30, 15:30" schedule and made the times impossible to
-    /// change from configuration. <see cref="SyncWorker.ParseSchedule"/> supplies
-    /// the fallback when nothing is configured.
+    /// change from configuration. The sync worker's schedule parser supplies the
+    /// fallback when nothing is configured.
     /// </remarks>
     public string[] ScheduleUtc { get; set; } = [];
 

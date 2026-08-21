@@ -142,6 +142,41 @@ accept several at once. Pre-computed SHA-256 digests still work via
 The startup log reports how many keys loaded and from which source, which is the
 quickest way to tell a misconfigured key from a wrong one.
 
+### Result verdicts
+
+A finished fixture carries `result.status` and `result.markets[]`:
+
+```json
+"result": {
+  "actual_score": "2:1",
+  "status": "settled",
+  "markets": [
+    { "market": "btts", "correct": true },
+    { "market": "over25", "correct": true },
+    { "market": "under25", "correct": true },
+    { "market": "goals_2_3", "correct": false },
+    { "market": "match_winner", "correct": true },
+    { "market": "draw", "correct": true }
+  ],
+  "is_correct": true, "is_btts_correct": true, "is_over25_correct": true
+}
+```
+
+`status` is `settled` | `void` | `postponed` | `abandoned`. Only `settled` may
+enter a hit-rate or ROI figure. An awarded result or walkover is `void` — the
+scoreline exists but no market played out — and an abandoned match is never
+scored on the goals it happened to have when it stopped.
+
+`markets[]` keys match `decision_audit.markets[]`, so a pick is judged on the
+market it was made in. An absent entry means *not judged*; `correct: false`
+means the call missed. The two are never conflated, and nothing but an empty
+list is sent when there is no prediction to score. `under25` always agrees with
+`over25` — one binary call, so they cannot disagree.
+
+The legacy `is_*` flags stay for compatibility and agree with `markets[]`.
+
+Note `actual_score` uses a colon (`2:1`).
+
 ### Dates
 
 `YYYY-MM-DD` in query strings. Timestamps are ISO-8601 UTC. **Kickoff times are
@@ -411,9 +446,16 @@ users were shown** — not a simulation.
     "roi_pct": 12.7, "sample_too_small": false
   },
   "by_kind":   [ /* single | same_match_pair | combo */ ],
-  "by_market": [ /* btts | over25 | under25 | match_winner | draw */ ]
+  "by_market": [ /* btts | over25 | under25 | match_winner | draw */ ],
+  "by_week":   [ { "label": "W31", "settled": 9, "profit_units": 4.6 } ]
 }
 ```
+
+`by_week` is the weekly series, oldest first, from **live settled results** —
+never the backtest's simulated `weekly_breakdown`. `profit_units` is signed
+profit in units of one stake, so it reads the same whatever the user stakes;
+`settled` is published per week so a week too thin to publish can be suppressed
+the way `sample_too_small` suppresses the totals.
 
 ⚠️ **`sample_too_small` is `true` below 30 settled tickets. When it is true, the
 app must not show `roi_pct` as a headline.** Show "building track record —

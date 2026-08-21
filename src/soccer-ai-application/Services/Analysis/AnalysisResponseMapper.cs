@@ -211,10 +211,72 @@ public class AnalysisResponseMapper
     /// Validates match result for completed fixtures.
     /// Supports variety of completed statuses from API-Football.
     /// </summary>
+    /// <summary>
+    /// Maps an API-Football status to a countable outcome.
+    /// </summary>
+    /// <remarks>
+    /// Only a match played to its conclusion settles. An awarded result or a
+    /// walkover has a scoreline but no market outcome — nobody's Over 2.5 was
+    /// decided by a forfeit — so those are void rather than settled, and an
+    /// abandoned match is reported as such instead of being scored on the goals
+    /// that happened to be in before it stopped.
+    /// </remarks>
+    private static string? ClassifyResultStatus(string? fixtureStatus) => fixtureStatus switch
+    {
+        "FT" or "AET" or "PEN" => ResultStatus.Settled,
+        "ABD" => ResultStatus.Abandoned,
+        "AWD" or "WO" or "CANC" => ResultStatus.Void,
+        "PST" or "SUSP" or "INT" => ResultStatus.Postponed,
+        // Not yet played, or still in progress: there is no result to report.
+        _ => null,
+    };
+
+    /// <summary>
+    /// One verdict per market the fixture can be scored on, keyed as in
+    /// <c>decision_audit.markets[]</c>.
+    /// </summary>
+    /// <remarks>
+    /// A call is correct when it matches the outcome, including when it
+    /// correctly said a market would NOT hit. Markets are omitted rather than
+    /// reported false when no prediction exists, because "not judged" and
+    /// "wrong" are different facts on screen.
+    /// </remarks>
+    private static List<MarketVerdict> BuildMarketVerdicts(
+        WeightedPrediction? p, bool isBtts, bool isOver25, int totalGoals, string actualWinner)
+    {
+        if (p is null) return [];
+
+        var verdicts = new List<MarketVerdict>
+        {
+            new("btts", p.BTTS == isBtts),
+            new("over25", p.Over25 == isOver25),
+
+            // Over and Under 2.5 are one binary call: getting "over" wrong is
+            // the same event as getting "under" wrong, so the verdict is shared.
+            new("under25", p.Over25 == isOver25),
+
+            new("goals_2_3", p.TwoToThreeGoals == totalGoals is 2 or 3),
+        };
+
+        if (!string.IsNullOrWhiteSpace(p.MatchWinner))
+        {
+            verdicts.Add(new MarketVerdict("match_winner",
+                p.MatchWinner.Equals(actualWinner, StringComparison.OrdinalIgnoreCase)));
+
+            // The draw is its own market in the audit, so it gets its own
+            // verdict: did the model correctly say this would (or would not)
+            // finish level.
+            var calledDraw = p.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase);
+            verdicts.Add(new MarketVerdict("draw", calledDraw == (actualWinner == "draw")));
+        }
+
+        return verdicts;
+    }
+
     private static MatchResult? ValidateMatchResult(Fixture fixture, FixtureAnalysisResult analysis)
     {
-        var completedStatuses = new[] { "FT", "AET", "PEN", "ABD", "AWD", "WO" };
-        if (!completedStatuses.Contains(fixture.Status))
+        var status = ClassifyResultStatus(fixture.Status);
+        if (status is null)
             return null;
 
         var actualScore = $"{fixture.HomeGoal}:{fixture.AwayGoal}";
@@ -236,19 +298,29 @@ public class AnalysisResponseMapper
         // carry the raw outcome, so "BTTS: no" on a 1-0 was reported as wrong.
         var p = analysis.Prediction;
 
+        // Verdicts only mean something for a match that actually played out.
+        // A void or postponed fixture reports its status and no markets, so a
+        // client counting hits skips it instead of recording a loss.
+        var isSettled = status == ResultStatus.Settled;
+
         return new MatchResult
         {
-            ActualScore = actualScore,
-            IsCorrect = isWinnerCorrect,
+            Status = status,
+            Markets = isSettled
+                ? BuildMarketVerdicts(p, isBtts, isOver25, totalGoals, actualWinner)
+                : [],
 
-            IsBttsCorrect = p is null ? null : p.BTTS == isBtts,
-            IsOver25Correct = p is null ? null : p.Over25 == isOver25,
+            ActualScore = actualScore,
+            IsCorrect = isSettled && isWinnerCorrect,
+
+            IsBttsCorrect = p is null || !isSettled ? null : p.BTTS == isBtts,
+            IsOver25Correct = p is null || !isSettled ? null : p.Over25 == isOver25,
 
             // Over and Under 2.5 are one binary call, so this necessarily equals
             // IsOver25Correct: predicting "over" wrongly is the same event as
             // predicting "under" wrongly. Kept as its own field so a UI showing
             // an Under 2.5 row does not have to invert anything itself.
-            IsUnder25Correct = p is null ? null : p.Over25 == isOver25,
+            IsUnder25Correct = p is null || !isSettled ? null : p.Over25 == isOver25,
 
             HomeGoals = fixture.HomeGoal,
             AwayGoals = fixture.AwayGoal,

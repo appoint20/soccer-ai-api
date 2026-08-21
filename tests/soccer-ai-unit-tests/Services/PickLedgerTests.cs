@@ -247,4 +247,95 @@ public class PickLedgerTests : IDisposable
         byMarket.Single(s => s.Key == "btts").Won.Should().Be(1);
         byMarket.Single(s => s.Key == "over25").Won.Should().Be(0);
     }
+
+    // ── Weekly series ────────────────────────────────────────────────────────
+
+    private static DailyPickBoard BoardOn(DateOnly date, params Ticket[] tickets) =>
+        new(date, tickets, [], new Dictionary<int, FixtureRef>(), new PickCoverage(1, 1, 1));
+
+    private async Task SeedFixtureOnAsync(int id, DateOnly date, string status, int homeGoals, int awayGoals)
+    {
+        _db.Fixtures.Add(new Fixture
+        {
+            Id = id,
+            ApiId = id,
+            LeagueId = 39,
+            HomeTeamId = 1,
+            AwayTeamId = 2,
+            Date = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero),
+            Status = status,
+            HomeGoal = homeGoals,
+            AwayGoal = awayGoals
+        });
+        await _db.SaveChangesAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Weekly_ReportsProfitInStakes_NotCurrency()
+    {
+        // One winner at 2.00 on a flat stake returns two units for one staked:
+        // +1 unit of profit, whatever the reader's own stake happens to be.
+        await _sut.RecordAsync(Board(Single(1, "btts", "BTTS", 2.00)));
+        await SeedFixtureAsync(1, "FT", 1, 1);
+        await _sut.SettleAsync();
+
+        var week = (await _sut.GetPerformanceAsync(BoardDate, BoardDate)).ByWeek.Single();
+
+        week.Settled.Should().Be(1);
+        week.ProfitUnits.Should().Be(1.0);
+    }
+
+    [Fact]
+    public async Task Weekly_ALosingWeekIsNegative()
+    {
+        await _sut.RecordAsync(Board(Single(1, "over25", "Over 2.5 Goals", 2.00)));
+        await SeedFixtureAsync(1, "FT", 0, 0);
+        await _sut.SettleAsync();
+
+        var week = (await _sut.GetPerformanceAsync(BoardDate, BoardDate)).ByWeek.Single();
+
+        week.ProfitUnits.Should().Be(-1.0);
+    }
+
+    [Fact]
+    public async Task Weekly_SeparatesWeeksAndOrdersThemOldestFirst()
+    {
+        var laterWeek = BoardDate.AddDays(14);
+
+        await _sut.RecordAsync(Board(Single(1, "btts", "BTTS", 2.00)));
+        await _sut.RecordAsync(BoardOn(laterWeek, Single(2, "btts", "BTTS", 2.00)));
+
+        await SeedFixtureAsync(1, "FT", 1, 1);
+        await SeedFixtureOnAsync(2, laterWeek, "FT", 0, 0);
+        await _sut.SettleAsync();
+
+        var weeks = (await _sut.GetPerformanceAsync(BoardDate, laterWeek)).ByWeek;
+
+        weeks.Should().HaveCount(2);
+        weeks[0].ProfitUnits.Should().Be(1.0, "the earlier week won and must come first");
+        weeks[1].ProfitUnits.Should().Be(-1.0);
+    }
+
+    [Fact]
+    public async Task Weekly_PendingTicketsCountAsNeitherWonNorLost()
+    {
+        // A week whose fixtures have not finished has nothing to report yet;
+        // reporting it as a flat zero would read as a break-even week.
+        await _sut.RecordAsync(Board(Single(1, "btts", "BTTS", 2.00)));
+
+        var week = (await _sut.GetPerformanceAsync(BoardDate, BoardDate)).ByWeek.Single();
+
+        week.Settled.Should().Be(0);
+        week.ProfitUnits.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Weekly_LabelsAreIsoWeeks()
+    {
+        await _sut.RecordAsync(Board(Single(1, "btts", "BTTS")));
+
+        var week = (await _sut.GetPerformanceAsync(BoardDate, BoardDate)).ByWeek.Single();
+
+        week.Label.Should().MatchRegex(@"^W\d{2}$");
+    }
 }

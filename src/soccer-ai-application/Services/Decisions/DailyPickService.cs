@@ -42,13 +42,19 @@ public sealed class DailyPickService(
         var teams = await LoadTeamsAsync(fixtures, ct);
         var snapshots = await LoadSnapshotsAsync(fixtures, lang, ct);
 
+        // A past board has to read back as it was published. Recomputing a
+        // missing snapshot would price the day against today's odds, which
+        // would quietly falsify the claim that results are measured at the
+        // prices customers were actually shown.
+        var isHistorical = date < DateOnly.FromDateTime(DateTime.UtcNow);
+
         var selections = new List<FixtureSelection>(fixtures.Count);
         var refs = new Dictionary<int, FixtureRef>(fixtures.Count);
         int analyzed = 0, priced = 0;
 
         foreach (var fixture in fixtures)
         {
-            var snapshot = await ResolveSnapshotAsync(fixture, lang, snapshots, ct);
+            var snapshot = await ResolveSnapshotAsync(fixture, lang, snapshots, isHistorical, ct);
             if (snapshot?.DecisionAudit is null) continue;
 
             analyzed++;
@@ -132,12 +138,18 @@ public sealed class DailyPickService(
     }
 
     private async Task<MatchAnalysis?> ResolveSnapshotAsync(
-        Fixture fixture, string lang, IReadOnlyDictionary<int, string?> snapshots, CancellationToken ct)
+        Fixture fixture, string lang, IReadOnlyDictionary<int, string?> snapshots,
+        bool isHistorical, CancellationToken ct)
     {
         var snapshot = AnalysisSnapshotSerializer.Deserialize(
             snapshots.GetValueOrDefault(fixture.Id));
 
         if (snapshot?.DecisionAudit is not null) return snapshot;
+
+        // Nothing was published for this fixture on a day already past, so it
+        // stays absent. Reconstructing it now would invent a ticket at prices
+        // that were never offered.
+        if (isHistorical) return null;
 
         try
         {

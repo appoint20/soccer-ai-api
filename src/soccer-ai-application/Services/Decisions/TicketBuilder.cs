@@ -17,7 +17,7 @@ public sealed record TicketLeg(
 /// the Dixon-Coles score matrix (the two markets are strongly correlated —
 /// multiplying them would badly understate the chance), while the price is the
 /// product of the two leg odds. Bookmakers price same-game doubles BELOW that
-/// product, so <see cref="RequiredOdds"/> states the minimum price worth taking.
+/// product, so the pair's required odds state the minimum price worth taking.
 /// </summary>
 public sealed record SameMatchPair(
     int FixtureId,

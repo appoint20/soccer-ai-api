@@ -43,6 +43,26 @@ public sealed record PerformanceSliceDto
     [JsonPropertyName("sample_too_small")] public required bool SampleTooSmall { get; init; }
 }
 
+/// <summary>One ISO week of realized results, oldest first.</summary>
+public sealed record WeeklyPerformanceDto
+{
+    /// <summary>ISO week label, e.g. "W31".</summary>
+    [JsonPropertyName("label")] public required string Label { get; init; }
+
+    /// <summary>
+    /// Settled tickets in the week. Published so a caller can suppress a week
+    /// whose sample is too thin to mean anything, the same judgement
+    /// <see cref="PerformanceSliceDto.SampleTooSmall"/> makes for the totals.
+    /// </summary>
+    [JsonPropertyName("settled")] public required int Settled { get; init; }
+
+    /// <summary>
+    /// Signed profit in units of one stake — not currency. A reader staking 5
+    /// and a reader staking 500 should read the same number here.
+    /// </summary>
+    [JsonPropertyName("profit_units")] public required double ProfitUnits { get; init; }
+}
+
 public sealed record GetPickPerformanceResponse : IResponse
 {
     [JsonPropertyName("from")] public required DateOnly From { get; init; }
@@ -50,4 +70,10 @@ public sealed record GetPickPerformanceResponse : IResponse
     [JsonPropertyName("overall")] public required PerformanceSliceDto Overall { get; init; }
     [JsonPropertyName("by_kind")] public required IReadOnlyList<PerformanceSliceDto> ByKind { get; init; }
     [JsonPropertyName("by_market")] public required IReadOnlyList<PerformanceSliceDto> ByMarket { get; init; }
+
+    /// <summary>
+    /// Live settled results per week. These are realized outcomes at published
+    /// prices, never the backtest's simulated weekly breakdown.
+    /// </summary>
+    [JsonPropertyName("by_week")] public required IReadOnlyList<WeeklyPerformanceDto> ByWeek { get; init; }
 }

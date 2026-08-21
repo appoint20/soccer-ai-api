@@ -9,6 +9,16 @@
     <RootNamespace>SoccerAi.Api</RootNamespace>
     <UserSecretsId>714295b9-82ec-4a8b-ae72-6c59a8c87cf2</UserSecretsId>
     <DefaultItemExcludes>$(DefaultItemExcludes);**/*.resx</DefaultItemExcludes>
+
+    <!--
+      Feeds the XML doc comments into the OpenAPI document. Ranges and
+      orientation rules are documented on the models, but a client reading the
+      generated schema could not see any of it, so questions already answered in
+      the source kept coming back. CS1591 is silenced because this is here to
+      publish the comments that exist, not to require one on every member.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

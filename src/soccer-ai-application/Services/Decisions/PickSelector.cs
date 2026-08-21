@@ -88,11 +88,14 @@ public static class PickSelector
             ? DefaultSelectionFor(audit.Market)
             : audit.Selection;
 
+    /// <param name="fixture">The fixture the audit belongs to.</param>
+    /// <param name="audit">Rule-engine output per market; null selects nothing.</param>
     /// <param name="bttsAndOver25JointProbability">
     /// The true joint P(BTTS ∧ Over 2.5) read off the Dixon-Coles score matrix.
     /// Pass null when unavailable; never pass p_btts × p_over25, which badly
     /// understates it because the two markets are positively correlated.
     /// </param>
+    /// <param name="opt">Confluence thresholds governing qualification.</param>
     public static FixtureSelection Select(
         FixtureRef fixture,
         DecisionAudit? audit,

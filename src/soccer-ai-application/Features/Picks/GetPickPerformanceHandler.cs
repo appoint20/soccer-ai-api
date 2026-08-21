@@ -41,9 +41,17 @@ public sealed class GetPickPerformanceHandler(IPickLedger ledger)
             To = performance.To,
             Overall = ToDto(performance.Overall),
             ByKind = [.. performance.ByKind.Select(ToDto)],
-            ByMarket = [.. performance.ByMarket.Select(ToDto)]
+            ByMarket = [.. performance.ByMarket.Select(ToDto)],
+            ByWeek = [.. performance.ByWeek.Select(ToWeeklyDto)]
         };
     }
+
+    private static WeeklyPerformanceDto ToWeeklyDto(PickWeeklySlice week) => new()
+    {
+        Label = week.Label,
+        Settled = week.Settled,
+        ProfitUnits = week.ProfitUnits
+    };
 
     private static PerformanceSliceDto ToDto(PickPerformanceSlice slice) => new()
     {

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoccerAi.Application.Entities;
@@ -122,8 +123,37 @@ public sealed class PickLedger(
             to,
             Summarize("overall", tickets),
             [.. tickets.GroupBy(t => t.Kind).Select(g => Summarize(g.Key, g)).OrderBy(s => s.Key)],
-            [.. MarketSlices(tickets)]);
+            [.. MarketSlices(tickets)],
+            [.. WeeklySlices(tickets)]);
     }
+
+    /// <summary>
+    /// Realized profit per ISO week, oldest first.
+    /// </summary>
+    /// <remarks>
+    /// Profit is expressed in stakes rather than money: the ledger stakes one
+    /// flat unit per ticket, so dividing by that unit gives a figure that means
+    /// the same thing to a reader betting 1 as to one betting 100. These are
+    /// live settled results, not a simulation — unlike the backtest report's
+    /// weekly breakdown, which must never be shown beside them unlabelled.
+    /// </remarks>
+    private static IEnumerable<PickWeeklySlice> WeeklySlices(IReadOnlyCollection<PublishedTicket> tickets) =>
+        tickets
+            .GroupBy(t => ISOWeek.GetWeekOfYear(t.BoardDateUtc.UtcDateTime))
+            .Select(g =>
+            {
+                var week = Summarize("week", g);
+                return new
+                {
+                    Start = g.Min(t => t.BoardDateUtc),
+                    Slice = new PickWeeklySlice(
+                        $"W{g.Key:D2}",
+                        week.Settled,
+                        Math.Round((week.Returned - week.Staked) / FlatStake, 2)),
+                };
+            })
+            .OrderBy(x => x.Start)
+            .Select(x => x.Slice);
 
     // ── Summaries ────────────────────────────────────────────────────────────
 

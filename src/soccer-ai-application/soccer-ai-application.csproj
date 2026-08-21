@@ -6,6 +6,14 @@
     <RootNamespace>SoccerAi.Application</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!--
+      The response models live here, so their XML comments have to be emitted
+      too or the OpenAPI document describes the endpoints without describing
+      what any field means. See the API project for the rest of this.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
