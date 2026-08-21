@@ -37,6 +37,7 @@ public static class DailyPickBoardMapper
         {
             Kind = KindOf(ticket),
             Legs = [.. ticket.Legs.Select(l => ToDto(l, fixtures.GetValueOrDefault(l.FixtureId)))],
+            Priced = ticket.IsPriced,
             TotalOdds = ticket.TotalOdds,
             FairOdds = ticket.FairOdds,
             Probability = ticket.CombinedProbability,
@@ -61,7 +62,7 @@ public static class DailyPickBoardMapper
             Selection = leg.Selection,
             Probability = Math.Round(leg.Probability, 4),
             Odds = leg.Odds,
-            Ev = Math.Round(leg.Ev, 4)
+            Ev = leg.Ev is null ? null : Math.Round(leg.Ev.Value, 4)
         };
 
     private static ConfidencePickDto ToDto(ConfidencePick pick) =>

@@ -52,8 +52,13 @@ public sealed class CombinationDto
     [JsonPropertyName("type")]
     public string Type { get; init; } = "";
 
+    /// <summary>
+    /// Product of the leg prices, or null when no odds have been published for
+    /// this combination. Null rather than a placeholder: the combination is
+    /// still worth showing as analysis, but it cannot be staked.
+    /// </summary>
     [JsonPropertyName("total_odds")]
-    public double TotalOdds { get; init; }
+    public double? TotalOdds { get; init; }
 
     [JsonPropertyName("source_type")]
     public string SourceType { get; set; } = "";

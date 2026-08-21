@@ -30,7 +30,11 @@ public sealed class PickLedger(
 
         var boardDateUtc = new DateTimeOffset(board.Date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
+        // Unpriced tickets are analysis, not bets. Recording one would put a
+        // ticket with no stake and no possible return into the very ledger that
+        // answers "what did the published picks actually make".
         var candidates = board.Tickets
+            .Where(t => t.IsPriced)
             .Select(t => (Ticket: t, Fingerprint: TicketFingerprint.Compute(boardDateUtc, KindOf(t), t.Legs)))
             .ToList();
 
@@ -194,16 +198,17 @@ public sealed class PickLedger(
         : ticket.IsSingle ? "single"
         : "combo";
 
+    /// <summary>Only ever called for a priced ticket — see RecordAsync.</summary>
     private static PublishedTicket ToEntity(Ticket ticket, string fingerprint, DateTimeOffset boardDateUtc) =>
         new()
         {
             BoardDateUtc = boardDateUtc,
             Kind = KindOf(ticket),
             Fingerprint = fingerprint,
-            TotalOdds = ticket.TotalOdds,
+            TotalOdds = ticket.TotalOdds!.Value,
             CombinedProbability = ticket.CombinedProbability,
-            Ev = ticket.Ev,
-            KellyStake = ticket.KellyStake,
+            Ev = ticket.Ev ?? 0,
+            KellyStake = ticket.KellyStake ?? 0,
             Status = TicketStatus.Pending,
             PublishedAtUtc = DateTimeOffset.UtcNow,
             Legs = [.. ticket.Legs.Select(l => new PublishedTicketLeg
@@ -213,8 +218,8 @@ public sealed class PickLedger(
                 Market = l.Market,
                 Selection = l.Selection,
                 Probability = l.Probability,
-                Odds = l.Odds,
-                Ev = l.Ev,
+                Odds = l.Odds!.Value,
+                Ev = l.Ev ?? 0,
                 Status = TicketStatus.Pending
             })]
         };

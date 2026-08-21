@@ -393,10 +393,15 @@ public class GetBacktestReportHandler(
                                 .ToList();
                         var isFullWin = legWins.All(w => w);
 
+                        // The backtest measures returns, and an unpriced ticket
+                        // has none to measure. Historical odds are present here
+                        // in practice, so this only guards the boundary.
+                        if (!ticket.IsPriced) continue;
+
                         ticketRows.Add(new TicketResultRow(
                             ticket.IsSameMatchPair ? 1 : ticket.Legs.Count,
-                            ticket.TotalOdds, ticket.CombinedProbability,
-                            ticket.Ev, ticket.KellyStake, isFullWin,
+                            ticket.TotalOdds.Value, ticket.CombinedProbability,
+                            ticket.Ev ?? 0, ticket.KellyStake ?? 0, isFullWin,
                             ticket.IsSameMatchPair, ticket.ContainsGoalsMarket));
 
                         // Legacy combo summary/weekly sections track multi-leg tickets.
@@ -405,10 +410,10 @@ public class GetBacktestReportHandler(
                             simulationResults.Add(new SimulationCombo
                             {
                                 Date = day.Key,
-                                Odds = ticket.TotalOdds,
+                                Odds = ticket.TotalOdds.Value,
                                 IsWon = isFullWin,
                                 Stake = query.Stake,
-                                Return = isFullWin ? ticket.TotalOdds * query.Stake : 0,
+                                Return = isFullWin ? ticket.TotalOdds.Value * query.Stake : 0,
                                 AverageConfidence = ticket.CombinedProbability,
                                 Legs = legWins.Select(w => new LegResult { IsWon = w }).ToList()
                             });

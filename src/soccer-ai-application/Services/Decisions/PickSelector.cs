@@ -36,12 +36,17 @@ public sealed record ConfidencePick(
 /// endpoint run the exact same selection code: the backtest joins results back
 /// on (FixtureId, Market) afterwards.
 /// </summary>
+/// <param name="UnpricedComboLegs">
+/// Legs that passed every check except having a price. Kept apart from the
+/// priced lists so nothing can accidentally stake one.
+/// </param>
 public sealed record FixtureSelection(
     FixtureRef Fixture,
     IReadOnlyList<TicketLeg> QualifiedLegs,
     IReadOnlyList<TicketLeg> ComboEligibleLegs,
     SameMatchPair? SameMatchPair,
-    ConfidencePick? ConfidencePick)
+    ConfidencePick? ConfidencePick,
+    IReadOnlyList<TicketLeg>? UnpricedComboLegs = null)
 {
     public static FixtureSelection Empty(FixtureRef fixture) => new(fixture, [], [], null, null);
 }
@@ -110,11 +115,21 @@ public static class PickSelector
 
         var qualified = new List<TicketLeg>();
         var comboEligible = new List<TicketLeg>();
+        var unpriced = new List<TicketLeg>();
 
         foreach (var market in audit.Markets)
         {
             var leg = ToLeg(fixture, market);
-            if (leg is null) continue;
+            if (leg is null)
+            {
+                if (opt.AllowUnpricedCombos &&
+                    ToUnpricedLeg(fixture, market, audit.MinConfirmationsRequired, opt) is { } unpricedLeg)
+                {
+                    unpriced.Add(unpricedLeg);
+                }
+
+                continue;
+            }
 
             if (market.Qualified) qualified.Add(leg);
             if (market.ComboEligible) comboEligible.Add(leg);
@@ -125,7 +140,8 @@ public static class PickSelector
             qualified,
             comboEligible,
             BuildSameMatchPair(fixture, audit, bttsAndOver25JointProbability),
-            BuildConfidencePick(fixture, audit, opt));
+            BuildConfidencePick(fixture, audit, opt),
+            unpriced);
     }
 
     /// <summary>
@@ -147,7 +163,8 @@ public static class PickSelector
             all.SelectMany(s => s.ComboEligibleLegs).ToList(),
             strat,
             opt,
-            all.Select(s => s.SameMatchPair).OfType<SameMatchPair>().ToList());
+            all.Select(s => s.SameMatchPair).OfType<SameMatchPair>().ToList(),
+            all.SelectMany(s => s.UnpricedComboLegs ?? []).ToList());
     }
 
     // ── Internals ────────────────────────────────────────────────────────────
@@ -169,6 +186,39 @@ public static class PickSelector
             market.Probability,
             odds.Value,
             market.Ev ?? ValueMath.Ev(market.Probability, odds.Value));
+    }
+
+    /// <summary>
+    /// A leg the model would have taken had anyone quoted a price.
+    /// </summary>
+    /// <remarks>
+    /// The value gate reports <c>analysis_only_no_odds</c> before it looks at
+    /// probability, vetoes or confirmations, so a missing quote hides whether
+    /// the rest of the confluence passed. This re-applies exactly those
+    /// non-price checks and nothing else: the bar is not lowered, the price
+    /// requirement is simply not applied.
+    ///
+    /// Informational markets stay excluded — 2-3 goals can never become a bet,
+    /// and a missing price is not a reason to promote one.
+    /// </remarks>
+    private static TicketLeg? ToUnpricedLeg(
+        FixtureRef fixture, MarketRuleAudit market, int minConfirmations, ConfluenceOptions opt)
+    {
+        if (OddsGuard.Sanitize(market.Odds) is not null) return null;
+        if (opt.InformationalOnlyMarkets.Contains(market.Market)) return null;
+
+        if (!market.ProbabilityPassed) return null;
+        if (market.VetoesFired > 0) return null;
+        if (market.ConfirmationsFired < minConfirmations) return null;
+
+        return new TicketLeg(
+            fixture.FixtureId,
+            fixture.League,
+            market.Market,
+            SelectionOf(market),
+            market.Probability,
+            Odds: null,
+            Ev: null);
     }
 
     /// <summary>

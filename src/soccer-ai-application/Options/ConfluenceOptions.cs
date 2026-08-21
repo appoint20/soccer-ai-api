@@ -81,6 +81,32 @@ public sealed class ConfluenceOptions
     /// </summary>
     public bool ComboLegsRequireQualified { get; set; } = true;
 
+    /// <summary>
+    /// Whether to compose combos from legs that have no bookmaker price.
+    /// </summary>
+    /// <remarks>
+    /// The value gate rejects an unpriced market before it looks at anything
+    /// else, so with no odds feed the combo board is empty however good the
+    /// model's probabilities are. With this on, legs that pass every non-price
+    /// check are combined and published as analysis: probability and fair odds
+    /// are real, while total odds, EV and Kelly stake are null because no quote
+    /// exists to compute them from.
+    ///
+    /// These tickets are never recorded in the ledger and never reach the
+    /// performance figures — an unpriced suggestion has no return to measure.
+    /// </remarks>
+    public bool AllowUnpricedCombos { get; set; } = true;
+
+    /// <summary>
+    /// Minimum combined probability for an unpriced combo to be published.
+    /// </summary>
+    /// <remarks>
+    /// The odds floor normally stops implausible accumulators; without prices
+    /// this is the only thing standing between the board and a three-leg parlay
+    /// nobody should look at.
+    /// </remarks>
+    public double UnpricedComboMinProbability { get; set; } = 0.20;
+
     // ── Product 2: confidence picks (predictions, NOT value bets) ──
 
     /// <summary>Top-N matches per day ranked by calibrated probability.</summary>

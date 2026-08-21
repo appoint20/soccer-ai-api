@@ -13,8 +13,15 @@ public sealed record PickLegDto
     [JsonPropertyName("market")] public required string Market { get; init; }
     [JsonPropertyName("selection")] public required string Selection { get; init; }
     [JsonPropertyName("probability")] public required double Probability { get; init; }
-    [JsonPropertyName("odds")] public required double Odds { get; init; }
-    [JsonPropertyName("ev")] public required double Ev { get; init; }
+
+    /// <summary>
+    /// The bookmaker's price, or null when none was published. Never a
+    /// placeholder — a leg with no price is not a bet.
+    /// </summary>
+    [JsonPropertyName("odds")] public required double? Odds { get; init; }
+
+    /// <summary>Expected value; null whenever <see cref="Odds"/> is.</summary>
+    [JsonPropertyName("ev")] public required double? Ev { get; init; }
 }
 
 /// <summary>
@@ -25,16 +32,39 @@ public sealed record TicketDto
 {
     [JsonPropertyName("kind")] public required string Kind { get; init; }
     [JsonPropertyName("legs")] public required IReadOnlyList<PickLegDto> Legs { get; init; }
-    [JsonPropertyName("total_odds")] public required double TotalOdds { get; init; }
 
-    /// <summary>Break-even price for this probability — never accept less.</summary>
+    /// <summary>
+    /// Whether every leg carries a real quote.
+    /// </summary>
+    /// <remarks>
+    /// False means this is an analysis-only suggestion: the model rates the
+    /// combination, but no bookmaker has priced it, so <c>total_odds</c>,
+    /// <c>ev</c> and <c>kelly_stake</c> are all null and it must not be
+    /// presented as a stakeable bet. <c>probability</c> and <c>fair_odds</c>
+    /// remain meaningful — fair odds is the price it would need to be worth
+    /// taking.
+    /// </remarks>
+    [JsonPropertyName("priced")] public required bool Priced { get; init; }
+
+    /// <summary>Product of the leg prices; null when any leg is unpriced.</summary>
+    [JsonPropertyName("total_odds")] public required double? TotalOdds { get; init; }
+
+    /// <summary>
+    /// Break-even price for this probability — never accept less. Derived from
+    /// the model, so it is present even on an unpriced ticket.
+    /// </summary>
     [JsonPropertyName("fair_odds")] public required double FairOdds { get; init; }
 
     [JsonPropertyName("probability")] public required double Probability { get; init; }
-    [JsonPropertyName("ev")] public required double Ev { get; init; }
 
-    /// <summary>Quarter-Kelly stake as a share of bankroll, not a currency amount.</summary>
-    [JsonPropertyName("kelly_stake")] public required double KellyStake { get; init; }
+    /// <summary>Expected value; null without a price to compare against.</summary>
+    [JsonPropertyName("ev")] public required double? Ev { get; init; }
+
+    /// <summary>
+    /// Quarter-Kelly stake as a share of bankroll, not a currency amount. Null
+    /// on an unpriced ticket, because Kelly needs a price.
+    /// </summary>
+    [JsonPropertyName("kelly_stake")] public required double? KellyStake { get; init; }
 
     [JsonPropertyName("contains_goals_market")] public required bool ContainsGoalsMarket { get; init; }
 

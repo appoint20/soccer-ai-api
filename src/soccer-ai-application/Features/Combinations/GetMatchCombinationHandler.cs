@@ -68,9 +68,15 @@ public class GetMatchCombinationHandler(
     /// check the claim: price offered versus price the model considers fair.
     /// </summary>
     private static string DescribeValue(Ticket ticket) =>
-        $"Model probability {ticket.CombinedProbability:P1} implies a fair price of "
-        + $"{ticket.FairOdds:0.00}; the offered {ticket.TotalOdds:0.00} carries "
-        + $"{ticket.Ev:P1} expected value.";
+        ticket.IsPriced
+            ? $"Model probability {ticket.CombinedProbability:P1} implies a fair price of "
+              + $"{ticket.FairOdds:0.00}; the offered {ticket.TotalOdds:0.00} carries "
+              + $"{ticket.Ev:P1} expected value."
+            // No quote, so there is no edge to state — only the price it would
+            // take to make this worth backing.
+            : $"Model probability {ticket.CombinedProbability:P1} implies a fair price of "
+              + $"{ticket.FairOdds:0.00}. No odds published yet, so expected value "
+              + "cannot be calculated.";
 
     private static CombinationMatchDto ToDto(TicketLeg leg, FixtureRef? fixture) =>
         new()

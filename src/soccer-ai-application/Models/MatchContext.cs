@@ -104,18 +104,63 @@ public sealed class MatchResult
     [JsonPropertyName("is_correct")]
     public bool IsCorrect { get; init; }
 
+    /// <summary>
+    /// Final score as <c>"home:away"</c> — colon-separated, e.g. <c>"1:2"</c>.
+    /// </summary>
+    /// <remarks>
+    /// Prefer <see cref="HomeGoals"/> and <see cref="AwayGoals"/> for anything
+    /// arithmetic. They are integers and cannot be broken by a separator
+    /// change, whereas parsing this string couples a caller to the format.
+    /// </remarks>
     [JsonPropertyName("actual_score")]
     public string ActualScore { get; init; } = string.Empty;
 
-    /// <summary>Null when no prediction was made for the market.</summary>
+    /// <summary>
+    /// Whether the model's BTTS <em>call</em> was right — not whether both
+    /// teams scored. Predicting "no" on a 1-0 is correct and reports true.
+    /// Null when no prediction was made. See <see cref="ActualBtts"/> for the
+    /// outcome itself.
+    /// </summary>
     [JsonPropertyName("is_btts_correct")]
     public bool? IsBttsCorrect { get; init; }
 
+    /// <summary>
+    /// Whether the model's over/under <em>call</em> was right — <b>not</b>
+    /// whether over 2.5 occurred.
+    /// </summary>
+    /// <remarks>
+    /// A 1-1 where the model called under reports true: the call landed, the
+    /// market did not. The name reads like the outcome, which is why
+    /// <see cref="Over25CallCorrect"/> exists; see <see cref="ActualOver25"/>
+    /// for whether the goals were actually scored, and <see cref="Markets"/>
+    /// for per-market verdicts that cannot be misread.
+    /// </remarks>
     [JsonPropertyName("is_over25_correct")]
     public bool? IsOver25Correct { get; init; }
 
+    /// <summary>Whether the model's over/under call was right. See <see cref="IsOver25Correct"/>.</summary>
     [JsonPropertyName("is_under25_correct")]
     public bool? IsUnder25Correct { get; init; }
+
+    // ── Unambiguously named aliases ───────────────────────────────────────
+    // Same values, names that say "the call was right" rather than reading as
+    // the outcome. The is_* spellings stay for the shipped app.
+
+    /// <summary>Whether the over/under call was right. Alias for <see cref="IsOver25Correct"/>.</summary>
+    [JsonPropertyName("over25_call_correct")]
+    public bool? Over25CallCorrect => IsOver25Correct;
+
+    /// <summary>Whether the over/under call was right. Alias for <see cref="IsUnder25Correct"/>.</summary>
+    [JsonPropertyName("under25_call_correct")]
+    public bool? Under25CallCorrect => IsUnder25Correct;
+
+    /// <summary>Whether the BTTS call was right. Alias for <see cref="IsBttsCorrect"/>.</summary>
+    [JsonPropertyName("btts_call_correct")]
+    public bool? BttsCallCorrect => IsBttsCorrect;
+
+    /// <summary>Whether the 1X2 call was right. Alias for <see cref="IsCorrect"/>.</summary>
+    [JsonPropertyName("winner_call_correct")]
+    public bool WinnerCallCorrect => IsCorrect;
 
     // ── What actually happened ────────────────────────────────────
     [JsonPropertyName("home_goals")] public int? HomeGoals { get; init; }

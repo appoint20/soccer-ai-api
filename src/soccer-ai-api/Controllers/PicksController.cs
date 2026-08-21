@@ -36,6 +36,44 @@ public class PicksController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
+    /// Prices a slip the user assembled themselves.
+    /// </summary>
+    /// <remarks>
+    /// The client can multiply the leg prices exactly, so total odds is not why
+    /// this exists — the joint probability is. Multiplying leg probabilities
+    /// assumes independence, which is false for two markets on one fixture, and
+    /// EV and Kelly computed from a wrong joint are numbers a user might stake
+    /// against. Returns the same <c>TicketDto</c> a generated combination uses,
+    /// so the builder renders through one component.
+    ///
+    /// Stateless — nothing is stored, and the slip stays on the device.
+    /// </remarks>
+    /// <response code="400">
+    /// A leg has no published price, names an unknown or informational-only
+    /// market, or pairs two correlated markets on one fixture that the model
+    /// has no joint probability for. The message names the offending leg.
+    /// </response>
+    [HttpPost("custom")]
+    [ProducesResponseType<ApiResponse<TicketDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PriceCustomTicket(
+        [FromBody] PriceCustomTicketQuery query,
+        [FromQuery] string? language = null,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Language = language;
+
+        var response = await mediator
+            .RequestAsync<PriceCustomTicketQuery, PriceCustomTicketResponse>(query, ct);
+
+        if (response.Error is not null)
+            return BadRequest(ApiResponse<object>.Fail(response.Error));
+
+        return Ok(ApiResponse<TicketDto>.Ok(response.Ticket!));
+    }
+
+    /// <summary>
     /// What published tickets actually returned. Unlike the backtest, these are
     /// live results at the prices customers were shown.
     /// </summary>
