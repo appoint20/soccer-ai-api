@@ -13,10 +13,39 @@ public sealed class QualificationDecisions
     public MarketDecision LowScoring { get; set; } = MarketDecision.NotQualified;
 }
 
+/// <summary>One piece of evidence behind a trap flag.</summary>
+/// <param name="Id">Stable identifier, e.g. <c>market_favors_worse_side</c>.</param>
+/// <param name="Evidence">Human-readable detail, safe to print verbatim.</param>
+public sealed record TrapSignal(
+    [property: System.Text.Json.Serialization.JsonPropertyName("id")] string Id,
+    [property: System.Text.Json.Serialization.JsonPropertyName("evidence")] string Evidence);
+
+/// <summary>
+/// Whether the market looks like a trap, and why.
+/// </summary>
+/// <remarks>
+/// A reason is always present when <see cref="IsTrap"/> is set. A warning a
+/// reader cannot evaluate is close to useless, and inventing a rationale to
+/// fill the gap would be worse — so when nothing was recorded, the reason says
+/// exactly that rather than manufacturing one.
+/// </remarks>
 public sealed class TrapDecision
 {
+    // Named explicitly rather than left to the serializer's policy: the client
+    // reads these keys, so they should not move if the policy is ever changed.
+    [System.Text.Json.Serialization.JsonPropertyName("is_trap")]
     public bool IsTrap { get; init; }
+
+    /// <summary>Never empty while <see cref="IsTrap"/> is true.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string Reason { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The signals that fired, for rendering the warning as evidence rather
+    /// than prose. May be empty; <see cref="Reason"/> stands on its own.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("signals")]
+    public IReadOnlyList<TrapSignal> Signals { get; init; } = [];
 }
 
 public sealed class Qualification

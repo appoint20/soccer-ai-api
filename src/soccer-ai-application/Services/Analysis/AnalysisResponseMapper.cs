@@ -62,9 +62,7 @@ public class AnalysisResponseMapper
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
-            Trap = aiAnalysis?.IsTrap == true 
-                ? new TrapDecision { IsTrap = true, Reason = aiAnalysis.TrapReason } 
-                : analysis.Decisions.Trap,
+            Trap = BuildTrap(analysis, aiAnalysis),
             H2H = analysis.H2H,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
                 ? new AiAnalysisDto()
@@ -211,6 +209,66 @@ public class AnalysisResponseMapper
     /// Validates match result for completed fixtures.
     /// Supports variety of completed statuses from API-Football.
     /// </summary>
+    /// <summary>
+    /// Combines the two trap sources and guarantees the flag arrives explained.
+    /// </summary>
+    /// <remarks>
+    /// The language model and the statistical rules can each raise the flag.
+    /// Either way the client prints the reason verbatim, so an empty one leaves
+    /// a bare warning on screen with nothing behind it. The reason falls back
+    /// through the sources that actually observed something, and only if none
+    /// did does it say so plainly — a fabricated justification for a warning is
+    /// worse than an unexplained warning.
+    /// </remarks>
+    private static TrapDecision BuildTrap(FixtureAnalysisResult analysis, AiAnalysisDto? aiAnalysis)
+    {
+        var statistical = analysis.Decisions.Trap;
+        var aiFlagged = aiAnalysis?.IsTrap == true;
+
+        if (!aiFlagged && !statistical.IsTrap)
+            return statistical;
+
+        var signals = CollectTrapSignals(analysis.Signals);
+
+        var reason = FirstNonBlank(
+            aiFlagged ? aiAnalysis!.TrapReason : null,
+            statistical.Reason,
+            signals.FirstOrDefault()?.Evidence)
+            ?? "Flagged as a trap, but no supporting detail was recorded.";
+
+        return new TrapDecision { IsTrap = true, Reason = reason, Signals = signals };
+    }
+
+    /// <summary>
+    /// The market signals that fired, as structured evidence.
+    /// </summary>
+    /// <remarks>
+    /// Only flagged signals are included: an unflagged one is the absence of
+    /// evidence, and listing it under a warning would imply it supports the
+    /// warning.
+    /// </remarks>
+    private static List<TrapSignal> CollectTrapSignals(Models.Signals.StrategicSignals? signals)
+    {
+        if (signals is null) return [];
+
+        var market = signals.Market;
+        var candidates = new (string Id, Models.Signals.SignalValue Signal)[]
+        {
+            ("market_favors_worse_side", market.Trap),
+            ("opening_line_drift", market.OpeningDrift),
+            ("model_market_divergence_1x2", market.Divergence1X2),
+            ("model_market_divergence_over25", market.DivergenceOver25),
+            ("model_market_divergence_btts", market.DivergenceBtts),
+        };
+
+        return [.. candidates
+            .Where(c => c.Signal is { Flag: true } && !string.IsNullOrWhiteSpace(c.Signal.Label))
+            .Select(c => new TrapSignal(c.Id, c.Signal.Label))];
+    }
+
+    private static string? FirstNonBlank(params string?[] candidates) =>
+        candidates.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c))?.Trim();
+
     /// <summary>
     /// Maps an API-Football status to a countable outcome.
     /// </summary>
