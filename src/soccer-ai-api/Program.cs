@@ -61,6 +61,9 @@ builder.Services.Configure<SoccerAi.Application.Services.Sync.SyncOptions>(
     builder.Configuration.GetSection(SoccerAi.Application.Services.Sync.SyncOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Background hosted service that runs AI analysis sync on application startup
+builder.Services.AddHostedService<SoccerAi.Api.Startup.AiStartupSyncHostedService>();
+
 builder.Services.AddOptions<AdminApiKeyOptions>()
     .Bind(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
 

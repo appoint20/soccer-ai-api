@@ -186,7 +186,7 @@ public static class DependencyInjection
 
     private static void RegisterAiAnalysisService(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<AiServiceOptions>(configuration.GetSection("AiService"));
+        services.Configure<AiServiceOptions>(configuration.GetSection(AiServiceOptions.SectionName));
 
         // The LLM only generates narrative text — it must NEVER be required for
         // the statistical flow (model, calibration, decisions, backtest).
@@ -201,22 +201,17 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IAiAnalysisService, OpenAiAnalysisService>();
-        services.AddScoped<ChatClient>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<AiServiceOptions>>().Value;
-            var key = ResolveAiApiKey(configuration) ?? options.ApiKey;
-
-            var clientOptions = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(options.BaseUrl.TrimEnd('/') + "/") };
-            return new ChatClient(options.DefaultModel ?? "glm-4-plus", new System.ClientModel.ApiKeyCredential(key), clientOptions);
-        });
     }
 
-    /// <summary>AiService:ApiKey (incl. AiService__ApiKey env) with ZAI_API_KEY fallback.</summary>
+    /// <summary>AiService:ApiKey with OPENROUTER_API_KEY, ANTHROPIC_API_KEY, NVIDIA_API_KEY fallback.</summary>
     private static string? ResolveAiApiKey(IConfiguration configuration)
     {
         var key = configuration["AiService:ApiKey"];
         return string.IsNullOrWhiteSpace(key)
-            ? Environment.GetEnvironmentVariable("ZAI_API_KEY")
+            ? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
+              ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
+              ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY")
+              ?? Environment.GetEnvironmentVariable("ZAI_API_KEY")
             : key;
     }
 

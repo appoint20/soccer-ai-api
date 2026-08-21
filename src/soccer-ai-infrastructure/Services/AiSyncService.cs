@@ -12,6 +12,7 @@ public class AiSyncService(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
     IAiAnalysisService aiService,
+    IAnalysisPrecomputeService precomputeService,
     ILeagueTierService leagueTiers,
     ILogger<AiSyncService> logger)
     : IAiSyncService
@@ -147,8 +148,21 @@ public class AiSyncService(
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("[AiSync] Successfully called SaveChangesAsync for batch.");
+
+                // Recompute the cached snapshot so GET /api/analyze immediately contains the AI narrative
+                foreach (var (fixtureId, _) in results)
+                {
+                    try
+                    {
+                        await precomputeService.RecomputeFixtureAsync(fixtureId, cancellationToken);
+                    }
+                    catch (Exception reEx)
+                    {
+                        logger.LogWarning(reEx, "[AiSync] Snapshot recompute failed for fixture {Id}", fixtureId);
+                    }
+                }
                 
-                logger.LogInformation("[AiSync] Batch {Num} fully persisted.", i + 1);
+                logger.LogInformation("[AiSync] Batch {Num} fully persisted and snapshots updated.", i + 1);
                 
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
@@ -227,6 +241,7 @@ public class AiSyncService(
             await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
             await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
+            await precomputeService.RecomputeFixtureAsync(fixtureId, cancellationToken);
             logger.LogInformation("Successfully synced AI analysis for Fixture {FixtureId}.", fixtureId);
         }
         else

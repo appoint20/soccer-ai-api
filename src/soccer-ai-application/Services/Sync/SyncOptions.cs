@@ -31,7 +31,7 @@ public sealed class SyncOptions
     public int ForecastDaysAhead { get; set; } = 3;
 
     /// <summary>Run the optional LLM narrative generation step.</summary>
-    public bool GenerateAiNarratives { get; set; } = false;
+    public bool GenerateAiNarratives { get; set; } = true;
 
     /// <summary>Precompute window around today, in days (past / future).</summary>
     public int RecomputeDaysBack { get; set; } = 3;

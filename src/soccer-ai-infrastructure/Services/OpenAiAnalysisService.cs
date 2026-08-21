@@ -1,6 +1,7 @@
 using System.ClientModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenAI;
@@ -13,13 +14,14 @@ using SoccerAi.Infrastructure.Options;
 namespace SoccerAi.Infrastructure.Services;
 
 /// <summary>
-/// Professional implementation of IAiAnalysisService using the official OpenAI SDK.
-/// Configured to talk to Zhipu AI's OpenAI-compatible endpoint.
+/// Professional implementation of IAiAnalysisService using OpenRouter.
+/// Uses Anthropic Claude 3.5 Sonnet as the primary engine with automatic
+/// fallback to NVIDIA (e.g. llama-3.1-nemotron-70b-instruct).
 /// </summary>
 public sealed class OpenAiAnalysisService : IAiAnalysisService
 {
-    private readonly ChatClient _client;
     private readonly AiServiceOptions _options;
+    private readonly string _apiKey;
     private readonly ILogger<OpenAiAnalysisService> _logger;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -30,45 +32,93 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     };
 
     public OpenAiAnalysisService(
-        ChatClient client,
         IOptions<AiServiceOptions> options,
+        IConfiguration configuration,
         ILogger<OpenAiAnalysisService> logger)
     {
-        _client = client;
         _options = options.Value;
         _logger = logger;
+
+        _apiKey = !string.IsNullOrWhiteSpace(_options.ApiKey)
+            ? _options.ApiKey
+            : configuration["AiService:ApiKey"]
+              ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
+              ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
+              ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY")
+              ?? Environment.GetEnvironmentVariable("ZAI_API_KEY")
+              ?? string.Empty;
+    }
+
+    private ChatClient CreateClient(string model)
+    {
+        var baseUrl = (_options.BaseUrl ?? "https://openrouter.ai/api/v1").TrimEnd('/') + "/";
+        var clientOptions = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(baseUrl)
+        };
+        return new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
     }
 
     public async Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items)
     {
-        if (items == null || items.Count == 0 || !_options.Enabled) return new();
+        if (items == null || items.Count == 0 || !_options.Enabled || string.IsNullOrWhiteSpace(_apiKey)) return new();
 
-        try
+        var modelsToTry = new List<string>();
+        if (!string.IsNullOrWhiteSpace(_options.DefaultModel))
+            modelsToTry.Add(_options.DefaultModel);
+        if (!string.IsNullOrWhiteSpace(_options.FallbackModel) && !_options.FallbackModel.Equals(_options.DefaultModel, StringComparison.OrdinalIgnoreCase))
+            modelsToTry.Add(_options.FallbackModel);
+
+        if (modelsToTry.Count == 0)
         {
-            var messages = new List<ChatMessage>
-            {
-                new SystemChatMessage(Prompts.MatchAnalysisSystemPrompt),
-                new UserChatMessage($"Analyze these matches:\n{JsonSerializer.Serialize(items, JsonOpts)}")
-            };
-
-            var completionOptions = new ChatCompletionOptions
-            {
-                MaxOutputTokenCount = 8192,
-                ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat()
-            };
-
-            var completion = await _client.CompleteChatAsync(messages, completionOptions);
-            var json = ExtractJson(completion.Value.Content[0].Text);
-            
-            var results = JsonSerializer.Deserialize<List<AiBilingualResult>>(json, JsonOpts);
-            return results?.ToDictionary(r => r.FixtureId) ?? new();
+            modelsToTry.Add("anthropic/claude-3.5-sonnet");
+            modelsToTry.Add("stealth/ox-alpha");
         }
-        catch (Exception ex)
+
+        var messages = new List<ChatMessage>
         {
-            _logger.LogError(ex, "OpenAiAnalysisService.AnalyzeBatchAsync failed");
-            return new();
+            new SystemChatMessage(Prompts.MatchAnalysisSystemPrompt),
+            new UserChatMessage($"Analyze these matches:\n{JsonSerializer.Serialize(items, JsonOpts)}")
+        };
+
+        var completionOptions = new ChatCompletionOptions
+        {
+            MaxOutputTokenCount = 8192
+        };
+
+        foreach (var model in modelsToTry)
+        {
+            try
+            {
+                _logger.LogInformation("[OpenRouter] Requesting match analysis from {Model} for {Count} match(es)...", model, items.Count);
+                var client = CreateClient(model);
+                var completion = await client.CompleteChatAsync(messages, completionOptions);
+                var rawText = completion.Value.Content[0].Text;
+                var json = ExtractJson(rawText);
+
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    _logger.LogWarning("[OpenRouter] Model {Model} returned non-JSON text. Raw: {Raw}", model, rawText);
+                    continue;
+                }
+
+                var results = JsonSerializer.Deserialize<List<AiBilingualResult>>(json, JsonOpts);
+                if (results != null && results.Count > 0)
+                {
+                    _logger.LogInformation("[OpenRouter] Successfully generated match analysis with {Model} for {Count} match(es).", model, results.Count);
+                    return results.ToDictionary(r => r.FixtureId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[OpenRouter] Analysis with model {Model} failed. Attempting next configured model...", model);
+            }
         }
+
+        _logger.LogError("[OpenRouter] All configured models failed to produce analysis for batch.");
+        return new();
     }
+
 
     public async Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates, string? userMessage = null)
     {
@@ -118,10 +168,11 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
             var completionOptions = new ChatCompletionOptions
             {
-                ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat()
+                MaxOutputTokenCount = 8192
             };
 
-            var completion = await _client.CompleteChatAsync(messages, completionOptions);
+            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-3.5-sonnet");
+            var completion = await client.CompleteChatAsync(messages, completionOptions);
             var json = ExtractJson(completion.Value.Content[0].Text);
 
             var results = JsonSerializer.Deserialize<List<CombinationDto>>(json, JsonOpts);
@@ -145,7 +196,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
     public async Task<ChatCombinationIntent?> ParseChatIntentAsync(string query)
     {
-        if (string.IsNullOrWhiteSpace(query) || !_options.Enabled) return null;
+        if (string.IsNullOrWhiteSpace(query) || !_options.Enabled || string.IsNullOrWhiteSpace(_apiKey)) return null;
 
         try
         {
@@ -155,7 +206,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 new UserChatMessage(query)
             };
 
-            var completion = await _client.CompleteChatAsync(messages);
+            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-3.5-sonnet");
+            var completion = await client.CompleteChatAsync(messages);
             var json = ExtractJson(completion.Value.Content[0].Text);
 
             return JsonSerializer.Deserialize<ChatCombinationIntent>(json, JsonOpts);
