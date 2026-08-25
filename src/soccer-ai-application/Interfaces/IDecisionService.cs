@@ -22,7 +22,6 @@ public interface IDecisionService
 public class DecisionServiceResult
 {
     public QualificationDecisions Markets { get; set; } = new();
-    public TrapDecision Trap { get; set; } = new();
     public Qualification Qualification { get; set; } = new();
     public PredictionDecision Decision { get; set; } = PredictionDecision.NoBet;
 

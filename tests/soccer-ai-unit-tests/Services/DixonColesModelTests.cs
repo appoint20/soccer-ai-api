@@ -27,11 +27,18 @@ public class DixonColesModelTests
 
         _dbContext = new ApplicationDbContext(options);
 
-        _sut = new DixonColesModel(
-            _dbContext,
-            Microsoft.Extensions.Options.Options.Create(new DixonColesOptions()),
-            new Mock<ILogger<DixonColesModel>>().Object);
+        _sut = NewModel();
     }
+
+    /// <summary>
+    /// A fresh model over the same database. The league-average cache is
+    /// per-instance, so a test that seeds more fixtures mid-way has to ask a
+    /// new instance rather than a warmed one.
+    /// </summary>
+    private DixonColesModel NewModel() => new(
+        _dbContext,
+        Microsoft.Extensions.Options.Options.Create(new DixonColesOptions()),
+        new Mock<ILogger<DixonColesModel>>().Object);
 
     private async Task SeedMatchesAsync(
         int count,
@@ -196,5 +203,167 @@ public class DixonColesModelTests
             LeagueId, HomeTeamId, AwayTeamId, matchDate);
 
         result.Should().BeNull("only Status == FT matches count");
+    }
+
+    [Fact]
+    public async Task PromotedTeam_WithNoHistoryInThisDivision_StillPriced()
+    {
+        // The reported failure: a club that just changed division. Its whole
+        // record sits under the league it came from, so a league-filtered
+        // lookup finds nothing and the fixture loses every market.
+        var matchDate = DateTimeOffset.UtcNow;
+        const int PriorLeagueId = 42;
+        var id = 9000;
+
+        // The target division has plenty of history — but none of it is the
+        // promoted side's.
+        for (var i = 0; i < 12; i++)
+        {
+            _dbContext.Fixtures.Add(new Fixture
+            {
+                Id = id++,
+                LeagueId = LeagueId,
+                HomeTeamId = i % 2 == 0 ? AwayTeamId : 777,
+                AwayTeamId = i % 2 == 0 ? 777 : AwayTeamId,
+                Status = "FT",
+                Date = matchDate.AddDays(-i - 1),
+                HomeGoal = 2,
+                AwayGoal = 1
+            });
+        }
+
+        // The promoted club's record, all of it in the division below.
+        for (var i = 0; i < 12; i++)
+        {
+            _dbContext.Fixtures.Add(new Fixture
+            {
+                Id = id++,
+                LeagueId = PriorLeagueId,
+                HomeTeamId = i % 2 == 0 ? HomeTeamId : 555,
+                AwayTeamId = i % 2 == 0 ? 555 : HomeTeamId,
+                Status = "FT",
+                Date = matchDate.AddDays(-i - 30),
+                HomeGoal = 2,
+                AwayGoal = 1
+            });
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _sut.CalculateProbabilitiesAsync(
+            LeagueId, HomeTeamId, AwayTeamId, matchDate);
+
+        result.Should().NotBeNull(
+            "a promoted or relegated club must be priced from the division it came from");
+    }
+
+    [Fact]
+    public async Task EstablishedTeam_IsUnaffectedByItsOtherCompetitions()
+    {
+        // The supplement must not leak into a club that already has a record
+        // in this division — cup and continental results would otherwise move
+        // every price in the league.
+        var matchDate = DateTimeOffset.UtcNow;
+        await SeedMatchesAsync(12, matchDate);
+
+        var before = await _sut.CalculateProbabilitiesAsync(
+            LeagueId, HomeTeamId, AwayTeamId, matchDate);
+
+        // A rout in another competition, recent enough to dominate if counted.
+        for (var i = 0; i < 6; i++)
+        {
+            _dbContext.Fixtures.Add(new Fixture
+            {
+                Id = 7000 + i,
+                LeagueId = 999,
+                HomeTeamId = HomeTeamId,
+                AwayTeamId = 4242,
+                Status = "FT",
+                Date = matchDate.AddHours(-i - 1),
+                HomeGoal = 7,
+                AwayGoal = 0
+            });
+        }
+        await _dbContext.SaveChangesAsync();
+
+        var after = await NewModel().CalculateProbabilitiesAsync(
+            LeagueId, HomeTeamId, AwayTeamId, matchDate);
+
+        before.Should().NotBeNull();
+        after!.HomeExpectedGoals.Should().BeApproximately(before!.HomeExpectedGoals, 1e-9);
+        after.AwayExpectedGoals.Should().BeApproximately(before.AwayExpectedGoals, 1e-9);
+    }
+
+    [Fact]
+    public async Task CrossLeagueGoals_AreReadInThisDivisionsScoringEnvironment()
+    {
+        // Same club record — three goals a game — carried over from a division
+        // where three goals a game is ordinary, versus one where it is
+        // exceptional. The second must produce the higher expected goals.
+        var matchDate = DateTimeOffset.UtcNow;
+
+        async Task<double> ExpectedHomeGoalsFrom(int targetLeague, int priorLeague, int priorLeagueGoals)
+        {
+            var id = targetLeague * 10_000;
+
+            // The division being priced: 12 matches, none of them the newcomer's.
+            for (var i = 0; i < 12; i++)
+            {
+                _dbContext.Fixtures.Add(new Fixture
+                {
+                    Id = id++,
+                    LeagueId = targetLeague,
+                    HomeTeamId = i % 2 == 0 ? AwayTeamId : 777,
+                    AwayTeamId = i % 2 == 0 ? 777 : AwayTeamId,
+                    Status = "FT",
+                    Date = matchDate.AddDays(-i - 1),
+                    HomeGoal = 1,
+                    AwayGoal = 1
+                });
+            }
+
+            // The newcomer's record, plus enough of that division for its
+            // baseline to be usable at all.
+            for (var i = 0; i < 12; i++)
+            {
+                _dbContext.Fixtures.Add(new Fixture
+                {
+                    Id = id++,
+                    LeagueId = priorLeague,
+                    HomeTeamId = HomeTeamId,
+                    AwayTeamId = 555,
+                    Status = "FT",
+                    Date = matchDate.AddDays(-i - 20),
+                    HomeGoal = 3,
+                    AwayGoal = 0
+                });
+                _dbContext.Fixtures.Add(new Fixture
+                {
+                    Id = id++,
+                    LeagueId = priorLeague,
+                    HomeTeamId = 666,
+                    AwayTeamId = 555,
+                    Status = "FT",
+                    Date = matchDate.AddDays(-i - 20),
+                    HomeGoal = priorLeagueGoals,
+                    AwayGoal = 0
+                });
+            }
+            await _dbContext.SaveChangesAsync();
+
+            var result = await NewModel().CalculateProbabilitiesAsync(
+                targetLeague, HomeTeamId, AwayTeamId, matchDate);
+
+            result.Should().NotBeNull();
+            return result!.HomeExpectedGoals;
+        }
+
+        // League 20: the newcomer's 3 goals a game were typical there.
+        var fromHighScoringLeague = await ExpectedHomeGoalsFrom(20, priorLeague: 21, priorLeagueGoals: 3);
+        // League 30: the same 3 goals a game stood out against a 1-goal norm.
+        var fromLowScoringLeague = await ExpectedHomeGoalsFrom(30, priorLeague: 31, priorLeagueGoals: 1);
+
+        fromLowScoringLeague.Should().BeGreaterThan(fromHighScoringLeague,
+            "goals are worth what the division they were scored in makes them worth");
     }
 }

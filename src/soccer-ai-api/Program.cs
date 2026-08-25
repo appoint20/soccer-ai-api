@@ -7,6 +7,7 @@ using SoccerAi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SoccerAi.Application.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SoccerAi.Api.Configuration;
@@ -71,6 +72,15 @@ builder.Services.AddOptions<AdminApiKeyOptions>()
 // hashing every raw key on each request would be pointless work.
 builder.Services.AddSingleton<AdminApiKeyRegistry>();
 
+// Supabase owns identity once a project URL is configured. Its tokens are
+// validated here rather than by calling Supabase on every request: an access
+// token is an ordinary JWT, and this API only needs the issuer, the audience
+// and the keys allowed to have signed it.
+var supabase = builder.Configuration.GetSection(SupabaseOptions.SectionName).Get<SupabaseOptions>()
+               ?? new SupabaseOptions();
+builder.Services.Configure<SupabaseOptions>(
+    builder.Configuration.GetSection(SupabaseOptions.SectionName));
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -92,17 +102,52 @@ builder.Services.AddAuthentication(options =>
     .AddScheme<AuthenticationSchemeOptions, AdminApiKeyAuthenticationHandler>(
         AdminApiKeyAuthenticationDefaults.SchemeName, _ => { });
 
+if (supabase.IsConfigured)
+{
+    // Public keys are fetched from the project's JWKS and cached, so key
+    // rotation needs no redeploy. Older projects sign HS256 with the project
+    // secret instead; when one is configured it is accepted as well, which is
+    // what lets a project migrate without a flag day.
+    var symmetric = string.IsNullOrWhiteSpace(supabase.JwtSecret)
+        ? null
+        : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(supabase.JwtSecret));
+
+    var signingKeys = new SupabaseSigningKeys(supabase.JwksUrl, symmetric);
+
+    builder.Services.AddAuthentication()
+        .AddJwtBearer(SupabaseAuthenticationDefaults.SchemeName, options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = supabase.Issuer,
+                ValidAudience = supabase.Audience,
+                // Supabase puts the user id in `sub`; without this the name
+                // claim silently resolves to nothing.
+                NameClaimType = "sub",
+                IssuerSigningKeyResolver = (_, _, _, _) => signingKeys.Resolve()
+            };
+        });
+}
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CombinedPolicy", policy =>
     {
-        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, AdminApiKeyAuthenticationDefaults.SchemeName);
+        policy.AddAuthenticationSchemes(
+            JwtBearerDefaults.AuthenticationScheme,
+            SupabaseAuthenticationDefaults.SchemeName,
+            AdminApiKeyAuthenticationDefaults.SchemeName);
         policy.RequireAuthenticatedUser();
     });
 
     options.AddPolicy("JwtPolicy", policy =>
     {
         policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+        policy.AuthenticationSchemes.Add(SupabaseAuthenticationDefaults.SchemeName);
         policy.RequireAuthenticatedUser();
     });
 

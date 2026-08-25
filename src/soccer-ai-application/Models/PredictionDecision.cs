@@ -16,8 +16,5 @@ public enum PredictionDecision
     SmallEdge,
 
     /// <summary>Strong edge (EV > 8%) + model agrees with market. Full stake.</summary>
-    StrongBet,
-
-    /// <summary>Trap detected — avoid regardless of model output.</summary>
-    Avoid
+    StrongBet
 }

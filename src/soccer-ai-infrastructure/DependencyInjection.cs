@@ -188,6 +188,14 @@ public static class DependencyInjection
     {
         services.Configure<AiServiceOptions>(configuration.GetSection(AiServiceOptions.SectionName));
 
+        services.Configure<SoccerAi.Application.Options.SupabaseOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.SupabaseOptions.SectionName));
+
+        services.AddHttpClient<ISupabaseAdminService, SupabaseAdminService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+
         // The LLM only generates narrative text — it must NEVER be required for
         // the statistical flow (model, calibration, decisions, backtest).
         // Without a key (or with AiService:Enabled=false) a no-op service is used.

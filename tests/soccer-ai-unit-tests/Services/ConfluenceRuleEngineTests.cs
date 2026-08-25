@@ -210,7 +210,7 @@ public class ConfluenceRuleEngineTests
             HomeTier2Within4Days = Off(0, "no European match"),
             AwayTier2Within4Days = Off(0, "no European match")
         },
-        Market = new MarketSignals { Trap = Off(0, "aligned with table") }
+        Market = new MarketSignals()
     };
 
     [Fact]
@@ -239,20 +239,6 @@ public class ConfluenceRuleEngineTests
 
         audit.Rules.Single(r => r.RuleId == "winner_confirm_composite").Fired.Should().BeFalse();
         audit.Rules.Single(r => r.RuleId == "winner_veto_rotation_risk").Fired.Should().BeTrue();
-        audit.Qualified.Should().BeFalse();
-    }
-
-    [Fact]
-    public void Winner_TrapSignal_Vetoes()
-    {
-        var signals = WinnerFriendly() with
-        {
-            Market = new MarketSignals { Trap = On(10, "market against table logic") }
-        };
-
-        var audit = ConfluenceRuleEngine.EvaluateWinner(0.62, true, signals, 0.50, 2.2, 2.1, 0.05, Opt);
-
-        audit.Rules.Single(r => r.RuleId == "winner_veto_trap").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
     }
 
@@ -375,5 +361,156 @@ public class ConfluenceRuleEngineTests
 
         audit.Rules.Single(r => r.RuleId == "goals23_veto_chaos").Fired.Should().BeTrue();
         audit.Qualified.Should().BeFalse();
+    }
+}
+
+/// <summary>
+/// The language model's per-market opinion, folded into the audit as a rule.
+/// </summary>
+public class AiAgreementTests
+{
+    private static readonly StrategyOptions Strat = new();
+
+    private static readonly MarketPrices Prices =
+        MarketPrices.FromRaw(2.5, 3.4, 3.1, 1.9, 1.95, 1.85);
+
+    private static WeightedPrediction Prediction() => new()
+    {
+        HomeProb = 0.45,
+        DrawProb = 0.27,
+        AwayProb = 0.28,
+        Over25Prob = 0.62,
+        BTTSProb = 0.64,
+        TwoToThreeGoalsProb = 0.5,
+        MatchWinner = "home",
+        Confidence = 0.6,
+    };
+
+    /// <summary>Signals rich enough for BTTS to clear the gate on its own.</summary>
+    private static StrategicSignals Friendly() => new()
+    {
+        HomeScoring = new ScoringSignals
+        {
+            ScoredInLast3Venue = SignalValue.Of(3, true, "home scored 3/3"),
+            ConcededInLast3Venue = SignalValue.Of(3, true, "home conceded 3/3"),
+            CleanSheetsLast5Venue = SignalValue.Of(0, false, "none"),
+            FailedToScoreLast5Venue = SignalValue.Of(0, false, "none"),
+        },
+        AwayScoring = new ScoringSignals
+        {
+            ScoredInLast3Venue = SignalValue.Of(3, true, "away scored 3/3"),
+            ConcededInLast3Venue = SignalValue.Of(3, true, "away conceded 3/3"),
+            CleanSheetsLast5Venue = SignalValue.Of(0, false, "none"),
+            FailedToScoreLast5Venue = SignalValue.Of(0, false, "none"),
+        },
+        H2H = new HeadToHeadSignals
+        {
+            BttsRateLast5 = SignalValue.Of(0.8, true, "BTTS in 80% of H2H"),
+            SampleSize = 5,
+        },
+    };
+
+    private static AiAnalysisDto AiSaying(bool btts, int confidence = 72) => new()
+    {
+        AiBttsQualified = btts,
+        AiOver25Qualified = btts,
+        AiOverallConfidence = confidence,
+        AiBestBet = "BTTS",
+    };
+
+    private static MarketRuleAudit Btts(ConfluenceOptions opt, AiAnalysisDto? ai) =>
+        ConfluenceRuleEngine
+            .Evaluate(Prediction(), Friendly(), Prices, 0, opt, Strat, ai)
+            .Markets.Single(m => m.Market == ConfluenceRuleEngine.Markets.Btts);
+
+    [Fact]
+    public void NoAiOpinion_ChangesNothing()
+    {
+        // A failed AI sync must not disqualify the board: absent is not "no".
+        var withAi = Btts(new ConfluenceOptions(), ai: null);
+        var withEmptyAi = Btts(new ConfluenceOptions(), ai: new AiAnalysisDto());
+
+        withAi.AiAgrees.Should().BeNull();
+        withEmptyAi.AiAgrees.Should().BeNull();
+        withEmptyAi.Qualified.Should().Be(withAi.Qualified);
+        withAi.Rules.Should().NotContain(r => r.RuleId.Contains("_ai_"));
+    }
+
+    [Fact]
+    public void Agreement_IsRecordedAsAFiredConfirmation()
+    {
+        var audit = Btts(new ConfluenceOptions(), AiSaying(btts: true));
+
+        audit.AiAgrees.Should().BeTrue();
+        audit.Rules.Single(r => r.RuleId == "btts_confirm_ai_agrees").Fired.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Disagreement_InConfirmMode_DoesNotDisqualify()
+    {
+        // The default mode records the disagreement without acting on it, so a
+        // conservative model cannot quietly empty the board.
+        var opt = new ConfluenceOptions { AiAgreement = ConfluenceOptions.AiAgreementMode.Confirm };
+        var audit = Btts(opt, AiSaying(btts: false));
+
+        audit.AiAgrees.Should().BeFalse();
+        audit.VetoesFired.Should().Be(0);
+        audit.Qualified.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Disagreement_InVetoMode_Disqualifies_AndSaysWhy()
+    {
+        var opt = new ConfluenceOptions { AiAgreement = ConfluenceOptions.AiAgreementMode.Veto };
+        var audit = Btts(opt, AiSaying(btts: false));
+
+        audit.Qualified.Should().BeFalse();
+        audit.GateOutcome.Should().Be(GateOutcome.AiDisagrees);
+        audit.Rules.Single(r => r.RuleId == "btts_veto_ai_disagrees").Fired.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IgnoreMode_RecordsTheOpinionButAddsNoRule()
+    {
+        var opt = new ConfluenceOptions { AiAgreement = ConfluenceOptions.AiAgreementMode.Ignore };
+        var audit = Btts(opt, AiSaying(btts: false));
+
+        audit.AiAgrees.Should().BeFalse();
+        audit.Rules.Should().NotContain(r => r.RuleId.Contains("_ai_"));
+        audit.Qualified.Should().BeTrue();
+    }
+
+    [Fact]
+    public void WinnerMarket_AsksAboutTheSideActuallyEvaluated()
+    {
+        // The engine only ever evaluates the stronger side, so asking the AI
+        // about "a winner" would be asking about a different bet.
+        var homeFavourite = Prediction();
+        var ai = new AiAnalysisDto
+        {
+            AiHomeWinQualified = true,
+            AiAwayWinQualified = false,
+            AiOverallConfidence = 70,
+        };
+
+        ConfluenceRuleEngine.AiBacks(ConfluenceRuleEngine.Markets.MatchWinner, homeFavourite, ai)
+            .Should().BeTrue();
+
+        var awayFavourite = new WeightedPrediction
+        {
+            HomeProb = 0.25, DrawProb = 0.27, AwayProb = 0.48,
+            Over25Prob = 0.5, BTTSProb = 0.5, TwoToThreeGoalsProb = 0.5,
+            MatchWinner = "away",
+        };
+
+        ConfluenceRuleEngine.AiBacks(ConfluenceRuleEngine.Markets.MatchWinner, awayFavourite, ai)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void DrawMarket_IsNeverAskedOfTheAi()
+    {
+        ConfluenceRuleEngine.AiBacks(ConfluenceRuleEngine.Markets.Draw, Prediction(), AiSaying(btts: true))
+            .Should().BeNull();
     }
 }

@@ -24,9 +24,9 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: AISERVICE__BASEURL
-        value: "https://api.z.ai/api/paas/v4/chat/completions"
+        value: "https://openrouter.ai/api/v1"
       - key: AISERVICE__DEFAULTMODEL
-        value: "glm-5.1"
+        value: "stealth/ox-alpha"
       - key: ZAI_API_KEY
         sync: false # Set this manually in the Render dashboard
       # Admin key for /api/automation/* (header: X-API-Key). Any string of 16+
@@ -35,6 +35,17 @@ services:
       # keep working. Comma-separate to allow several during a rotation.
       - key: ADMIN_API_KEY
         sync: false # Set this manually in the Render dashboard
+      # ── Supabase (identity) ──
+      # The URL is public; the two keys are not. service_role bypasses row-level
+      # security entirely and is used only for deleting an account.
+      - key: SUPABASE__URL
+        value: "https://knvspbrwljvgzfklrvxt.supabase.co"
+      - key: SUPABASE__SERVICEROLEKEY
+        sync: false # Set this manually in the Render dashboard
+      # Only for projects that still sign HS256 with the legacy project JWT
+      # secret. Newer projects publish a JWKS and need nothing here.
+      - key: SUPABASE__JWTSECRET
+        sync: false
       # ── PostgreSQL (provisioned below) is the primary database ──
       - key: DATABASE__PROVIDER
         value: Postgres

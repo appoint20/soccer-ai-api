@@ -50,7 +50,8 @@ public static class ConfluenceRuleEngine
         MarketPrices prices,
         double tierExtraProbability,
         ConfluenceOptions opt,
-        StrategyOptions strat)
+        StrategyOptions strat,
+        AiAnalysisDto? ai = null)
     {
         // Winner pick = the stronger non-draw side; the draw is its own market.
         var favoriteIsHome = prediction.HomeProb >= prediction.AwayProb;
@@ -73,7 +74,101 @@ public static class ConfluenceRuleEngine
                 prices.Draw, strat.MinOdds1X2, opt.DrawMinEdge, opt)
         };
 
+        // The language model's view is folded in last, as one visible rule per
+        // market, so agreement and disagreement are both auditable rather than
+        // being a hidden adjustment to a number.
+        markets = [.. markets.Select(m => WithAiOpinion(m, prediction, ai, opt))];
+
         return new DecisionAudit(opt.MinConfirmations, markets, DateTimeOffset.UtcNow);
+    }
+
+    /// <summary>
+    /// Does the language model back this market?
+    /// </summary>
+    /// <remarks>
+    /// Returns null when the AI produced no decision layer for the fixture —
+    /// which is different from "it said no". Treating an absent opinion as a
+    /// rejection would let a failed AI sync quietly disqualify every market on
+    /// the board.
+    /// </remarks>
+    public static bool? AiBacks(string market, WeightedPrediction prediction, AiAnalysisDto? ai)
+    {
+        if (ai is null || !ai.HasDecisionLayer) return null;
+
+        return market switch
+        {
+            Markets.Btts => ai.AiBttsQualified,
+            Markets.Over25 => ai.AiOver25Qualified,
+            Markets.Under25 => ai.AiUnder25Qualified,
+            Markets.Goals23 => ai.AiGoals23Qualified,
+            // The winner market is evaluated for one side only, so the AI is
+            // asked about that same side rather than about "a winner".
+            Markets.MatchWinner => prediction.HomeProb >= prediction.AwayProb
+                ? ai.AiHomeWinQualified
+                : ai.AiAwayWinQualified,
+            // The AI is never asked about the draw, and silence is not a no.
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Re-assembles one market with the AI agreement rule applied, under the
+    /// configured mode.
+    /// </summary>
+    private static MarketRuleAudit WithAiOpinion(
+        MarketRuleAudit m,
+        WeightedPrediction prediction,
+        AiAnalysisDto? ai,
+        ConfluenceOptions opt)
+    {
+        var backs = AiBacks(m.Market, prediction, ai);
+        if (backs is null || opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Ignore)
+            return m with { AiAgrees = backs };
+
+        var agrees = backs.Value;
+        var evidence = agrees
+            ? $"The model and the AI both back {m.Selection}"
+            : $"The AI does not back {m.Selection}; the model does";
+
+        var rules = m.Rules.ToList();
+        rules.Add(agrees
+            ? new RuleResult($"{m.Market}_confirm_ai_agrees", RuleResult.Confirm, true, evidence)
+            : new RuleResult(
+                $"{m.Market}_veto_ai_disagrees",
+                opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Veto ? RuleResult.Veto : RuleResult.Confirm,
+                opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Veto,
+                evidence));
+
+        var confirms = rules.Count(r => r is { Kind: RuleResult.Confirm, Fired: true });
+        var vetoes = rules.Count(r => r is { Kind: RuleResult.Veto, Fired: true });
+
+        // Re-run only the two gates the new rule can move. Everything upstream
+        // of it — price, edge, probability floor — is unchanged by an opinion.
+        var stillQualified = m.Qualified;
+        var outcome = m.GateOutcome;
+
+        if (!agrees && opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Veto && m.Qualified)
+        {
+            stillQualified = false;
+            outcome = GateOutcome.AiDisagrees;
+        }
+        else if (agrees && !m.Qualified && outcome == GateOutcome.InsufficientConfirms
+                 && confirms >= opt.MinConfirmations)
+        {
+            // Agreement was the confirmation this market was short of.
+            stillQualified = true;
+            outcome = GateOutcome.Qualified;
+        }
+
+        return m with
+        {
+            Rules = rules,
+            ConfirmationsFired = confirms,
+            VetoesFired = vetoes,
+            Qualified = stillQualified,
+            GateOutcome = outcome,
+            AiAgrees = backs,
+        };
     }
 
     // ── BTTS ─────────────────────────────────────────────────────────────────
@@ -231,10 +326,6 @@ public static class ConfluenceRuleEngine
             Confirm("winner_confirm_h2h_dominance",
                 s.H2H.Dominance.Flag && s.H2H.Dominance.Label.Contains(favSideWord),
                 s.H2H.Dominance.Label),
-
-            Veto("winner_veto_trap",
-                s.Market.Trap.Flag,
-                s.Market.Trap.Label),
 
             Veto("winner_veto_opposition_dominance",
                 s.H2H.Dominance.Flag && s.H2H.Dominance.Label.Contains(dogSideWord),

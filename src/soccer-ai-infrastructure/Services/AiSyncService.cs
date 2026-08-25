@@ -107,7 +107,7 @@ public class AiSyncService(
             return;
         }
 
-        logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Starting batch processing (Chunk of 5)...", toAnalyze.Count);
+        logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Processing one fixture per request...", toAnalyze.Count);
 
         // 3. Process incrementally in batches of 1 to prevent LLM context bleeding/hallucinations.
         for (var i = 0; i < toAnalyze.Count; i += 1)
@@ -262,8 +262,6 @@ public class AiSyncService(
             existing.Confidence          = aiResult.Confidence;
             existing.PredictionReason    = block.PredictionReason ?? "";
             existing.Analysis            = block.Analysis ?? "";
-            existing.TrapDetected        = aiResult.TrapDetected;
-            existing.TrapReason          = block.TrapReason;
             existing.ConsensusEvaluation = block.ConsensusEvaluation ?? "";
             existing.BttsSummary         = block.Summaries?.Btts ?? "";
             existing.Over25Summary       = block.Summaries?.Over25 ?? "";
@@ -301,8 +299,6 @@ public class AiSyncService(
                 Confidence          = aiResult.Confidence,
                 PredictionReason    = block.PredictionReason ?? "",
                 Analysis            = block.Analysis ?? "",
-                TrapDetected        = aiResult.TrapDetected,
-                TrapReason          = block.TrapReason,
                 ConsensusEvaluation = block.ConsensusEvaluation ?? "",
                 BttsSummary         = block.Summaries?.Btts ?? "",
                 Over25Summary       = block.Summaries?.Over25 ?? "",

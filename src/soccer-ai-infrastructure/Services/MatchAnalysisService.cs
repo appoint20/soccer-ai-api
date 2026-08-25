@@ -83,8 +83,6 @@ public sealed class MatchAnalysisService(
             Confidence = aiEntity.Confidence,
             Reasoning = aiEntity.PredictionReason ?? "",
             Analysis = aiEntity.Analysis ?? "",
-            IsTrap = aiEntity.TrapDetected,
-            TrapReason = aiEntity.TrapReason ?? "",
             OneLineSummary = aiEntity.ConsensusEvaluation ?? "",
             BttsSummary = aiEntity.BttsSummary ?? "",
             Over25Summary = aiEntity.Over25Summary ?? "",
@@ -131,7 +129,7 @@ public sealed class MatchAnalysisService(
             H2H = h2h,
             Prediction = prediction,
             Decisions = decisions,
-            LeagueName = GetLeagueName(fixture.LeagueId),
+            LeagueName = LeagueCatalog.Name(fixture.LeagueId),
             OddsOver25 = odds.OddsOver25,
             OddsUnder25 = odds.OddsUnder25,
             OddsBttsYes = odds.OddsBttsYes,
@@ -163,34 +161,9 @@ public sealed class MatchAnalysisService(
         OddsHome = OddsGuard.Sanitize(fixture.HomeWinOdds),
         OddsAway = OddsGuard.Sanitize(fixture.AwayWinOdds),
         OddsDraw = OddsGuard.Sanitize(fixture.DrawOdds),
-        LeagueName = GetLeagueName(fixture.LeagueId),
+        LeagueName = LeagueCatalog.Name(fixture.LeagueId),
         HomeRestDays = homeRest,
         AwayRestDays = awayRest
     };
 
-    private static string GetLeagueName(int leagueId) => leagueId switch
-    {
-        39 => "Premier League",
-        40 => "Championship",
-        41 => "League One",
-        42 => "League Two",
-        46 => "National League",
-        34 => "National League",
-        154 => "National League",
-        43 => "National League",
-        5 => "National League",
-        78 => "Bundesliga",
-        79 => "2. Bundesliga",
-        80 => "3. Liga",
-        135 => "Serie A",
-        136 => "Serie B",
-        140 => "La Liga",
-        141 => "La Liga 2",
-        61 => "Ligue 1",
-        62 => "Ligue 2",
-        2 => "Champions League",
-        3 => "Europa League",
-        848 => "Conference League",
-        _ => $"League {leagueId}"
-    };
 }

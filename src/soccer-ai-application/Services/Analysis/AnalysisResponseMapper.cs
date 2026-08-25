@@ -31,7 +31,7 @@ public class AnalysisResponseMapper
     {
         var prediction = BuildPredictionResponse(analysis, aiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
-        var headline = BuildHeadline(analysis.Prediction, matchResult);
+        var headline = BuildHeadline(analysis.Prediction, matchResult, analysis.Decisions.Audit);
 
         // Production Sanitization: Only show models in Development
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
@@ -62,7 +62,6 @@ public class AnalysisResponseMapper
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
-            Trap = BuildTrap(analysis, aiAnalysis),
             H2H = analysis.H2H,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
                 ? new AiAnalysisDto()
@@ -162,7 +161,8 @@ public class AnalysisResponseMapper
     /// rather than every market also stops a match reading as "3 of 4 correct"
     /// when the thing the system actually backed was wrong.
     /// </summary>
-    private static HeadlinePrediction? BuildHeadline(WeightedPrediction? p, MatchResult? result)
+    private static HeadlinePrediction? BuildHeadline(
+        WeightedPrediction? p, MatchResult? result, DecisionAudit? audit)
     {
         if (p is null) return null;
 
@@ -189,8 +189,19 @@ public class AnalysisResponseMapper
         // absent rather than as a certainty. Without this the complement of an
         // unset probability is 1.0, and a market the model never priced wins the
         // headline slot as a 100% confident call.
-        var best = candidates
-            .Where(c => c.Probability is > 0 and < 1)
+        var usable = candidates.Where(c => c.Probability is > 0 and < 1).ToList();
+
+        // The one call the product puts its name to should be one both sides
+        // agree on. Among the markets the language model also backs, the most
+        // probable wins; if it backs none of them — or never ran — this falls
+        // straight back to the model's own best, which is the previous
+        // behaviour and is never worse than it.
+        var aligned = usable
+            .Where(c => audit?.Markets
+                .FirstOrDefault(m => m.Market == AuditMarketFor(c.Market))?.AiAgrees == true)
+            .ToList();
+
+        var best = (aligned.Count > 0 ? aligned : usable)
             .OrderByDescending(c => c.Probability)
             .FirstOrDefault();
 
@@ -206,69 +217,23 @@ public class AnalysisResponseMapper
     }
 
     /// <summary>
+    /// The audit's name for a headline market. The two vocabularies were built
+    /// separately and only overlap on `btts` and `draw`.
+    /// </summary>
+    private static string AuditMarketFor(string headlineMarket) => headlineMarket switch
+    {
+        "over_2_5" => Services.Decisions.ConfluenceRuleEngine.Markets.Over25,
+        "under_2_5" => Services.Decisions.ConfluenceRuleEngine.Markets.Under25,
+        "btts" or "no_btts" => Services.Decisions.ConfluenceRuleEngine.Markets.Btts,
+        "home_win" or "away_win" => Services.Decisions.ConfluenceRuleEngine.Markets.MatchWinner,
+        "draw" => Services.Decisions.ConfluenceRuleEngine.Markets.Draw,
+        _ => headlineMarket,
+    };
+
+    /// <summary>
     /// Validates match result for completed fixtures.
     /// Supports variety of completed statuses from API-Football.
     /// </summary>
-    /// <summary>
-    /// Combines the two trap sources and guarantees the flag arrives explained.
-    /// </summary>
-    /// <remarks>
-    /// The language model and the statistical rules can each raise the flag.
-    /// Either way the client prints the reason verbatim, so an empty one leaves
-    /// a bare warning on screen with nothing behind it. The reason falls back
-    /// through the sources that actually observed something, and only if none
-    /// did does it say so plainly — a fabricated justification for a warning is
-    /// worse than an unexplained warning.
-    /// </remarks>
-    private static TrapDecision BuildTrap(FixtureAnalysisResult analysis, AiAnalysisDto? aiAnalysis)
-    {
-        var statistical = analysis.Decisions.Trap;
-        var aiFlagged = aiAnalysis?.IsTrap == true;
-
-        if (!aiFlagged && !statistical.IsTrap)
-            return statistical;
-
-        var signals = CollectTrapSignals(analysis.Signals);
-
-        var reason = FirstNonBlank(
-            aiFlagged ? aiAnalysis!.TrapReason : null,
-            statistical.Reason,
-            signals.FirstOrDefault()?.Evidence)
-            ?? "Flagged as a trap, but no supporting detail was recorded.";
-
-        return new TrapDecision { IsTrap = true, Reason = reason, Signals = signals };
-    }
-
-    /// <summary>
-    /// The market signals that fired, as structured evidence.
-    /// </summary>
-    /// <remarks>
-    /// Only flagged signals are included: an unflagged one is the absence of
-    /// evidence, and listing it under a warning would imply it supports the
-    /// warning.
-    /// </remarks>
-    private static List<TrapSignal> CollectTrapSignals(Models.Signals.StrategicSignals? signals)
-    {
-        if (signals is null) return [];
-
-        var market = signals.Market;
-        var candidates = new (string Id, Models.Signals.SignalValue Signal)[]
-        {
-            ("market_favors_worse_side", market.Trap),
-            ("opening_line_drift", market.OpeningDrift),
-            ("model_market_divergence_1x2", market.Divergence1X2),
-            ("model_market_divergence_over25", market.DivergenceOver25),
-            ("model_market_divergence_btts", market.DivergenceBtts),
-        };
-
-        return [.. candidates
-            .Where(c => c.Signal is { Flag: true } && !string.IsNullOrWhiteSpace(c.Signal.Label))
-            .Select(c => new TrapSignal(c.Id, c.Signal.Label))];
-    }
-
-    private static string? FirstNonBlank(params string?[] candidates) =>
-        candidates.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c))?.Trim();
-
     /// <summary>
     /// Maps an API-Football status to a countable outcome.
     /// </summary>

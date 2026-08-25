@@ -30,7 +30,11 @@ public class FixtureAnalysis
     /// <summary>6-8 sentence match analysis</summary>
     public string Analysis { get; set; } = "";
 
-    // ── Trap detection ─────────────────────────────────────────────
+    // ── Retired: the trap flag ─────────────────────────────────────
+    // Nothing writes or reads these any more. They stay mapped only because
+    // TrapDetected is NOT NULL with no database default, so dropping the
+    // properties without a migration would break every insert. Remove both
+    // together with a migration that drops the columns.
     public bool TrapDetected { get; set; }
     public string? TrapReason { get; set; }
 

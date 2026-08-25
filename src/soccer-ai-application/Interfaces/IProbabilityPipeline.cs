@@ -15,7 +15,7 @@ public interface IProbabilityPipeline
 /// <summary>
 /// Output of the probability flow. <see cref="Calibrated"/> is the only
 /// probability set decisions may consume; <see cref="Poisson"/> is kept for
-/// diagnostics and trap detection (raw model vs market divergence).
+/// diagnostics (raw model vs market divergence).
 /// </summary>
 public sealed class ProbabilityBundle
 {
