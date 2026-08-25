@@ -64,6 +64,4 @@ public sealed class AiJudgementInput
     [JsonPropertyName("confidence")]
     public int Confidence { get; set; }
 
-    [JsonPropertyName("is_trap")]
-    public bool IsTrap { get; set; }
 }

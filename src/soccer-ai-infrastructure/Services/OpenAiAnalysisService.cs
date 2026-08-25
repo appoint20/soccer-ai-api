@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,19 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     private readonly AiServiceOptions _options;
     private readonly string _apiKey;
     private readonly ILogger<OpenAiAnalysisService> _logger;
+
+    /// <summary>
+    /// Consecutive failures of the primary model, across the whole process.
+    /// </summary>
+    /// <remarks>
+    /// The sync analyses one fixture per request. When the primary model is
+    /// simply unavailable — or, as with a reasoning model, slower than the
+    /// timeout allows — paying the full timeout on every fixture before falling
+    /// back turns a ten-minute sync into an overnight one. After a few failures
+    /// in a row the primary is skipped for the rest of the run and the fallback
+    /// is used directly; a single success resets it.
+    /// </remarks>
+    private static int _primaryFailures;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -54,8 +68,28 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         var baseUrl = (_options.BaseUrl ?? "https://openrouter.ai/api/v1").TrimEnd('/') + "/";
         var clientOptions = new OpenAI.OpenAIClientOptions
         {
-            Endpoint = new Uri(baseUrl)
+            Endpoint = new Uri(baseUrl),
+
+            // Without this the SDK applies its own 100-second default and
+            // TimeoutSeconds is dead configuration. A reasoning model — which
+            // is what the default model now is — spends most of a request
+            // thinking before it emits a token, and 100 seconds is not enough
+            // for a batch of fixtures.
+            NetworkTimeout = TimeSpan.FromSeconds(Math.Max(30, _options.TimeoutSeconds)),
+
+            // One retry, not three. A timeout is not a transient blip: four
+            // attempts at the full timeout each burned about seven minutes per
+            // batch and starved the fallback model of any chance to answer
+            // before the sync moved on.
+            RetryPolicy = new ClientRetryPolicy(maxRetries: _options.MaxRetries),
         };
+
+        // OpenRouter's `reasoning` field. Per-call, so the body is rewritten
+        // once rather than on every retry of the same request.
+        var reasoning = OpenRouterReasoningPolicy.TryCreate(_options.Reasoning);
+        if (reasoning is not null)
+            clientOptions.AddPolicy(reasoning, PipelinePosition.PerCall);
+
         return new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
     }
 
@@ -83,16 +117,32 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
         var completionOptions = new ChatCompletionOptions
         {
-            MaxOutputTokenCount = 8192
+            MaxOutputTokenCount = _options.MaxOutputTokens
         };
+
+        // Drop the primary while it is failing repeatedly, rather than paying
+        // its timeout again on every remaining fixture.
+        if (modelsToTry.Count > 1 && Volatile.Read(ref _primaryFailures) >= _options.PrimaryFailuresBeforeSkip)
+        {
+            _logger.LogWarning(
+                "[OpenRouter] Skipping {Model} for now — it failed {Count} times in a row. Using {Fallback}.",
+                modelsToTry[0], _primaryFailures, modelsToTry[1]);
+            modelsToTry.RemoveAt(0);
+        }
 
         foreach (var model in modelsToTry)
         {
+            var isPrimary = model.Equals(_options.DefaultModel, StringComparison.OrdinalIgnoreCase);
             try
             {
-                _logger.LogInformation("[OpenRouter] Requesting match analysis from {Model} for {Count} match(es)...", model, items.Count);
+                _logger.LogInformation(
+                    "[OpenRouter] Requesting match analysis from {Model} for {Count} match(es) (timeout {Timeout}s, reasoning {Reasoning})...",
+                    model, items.Count, _options.TimeoutSeconds, DescribeReasoning(_options.Reasoning));
+                var started = System.Diagnostics.Stopwatch.StartNew();
                 var client = CreateClient(model);
                 var completion = await client.CompleteChatAsync(messages, completionOptions);
+                _logger.LogInformation(
+                    "[OpenRouter] {Model} answered in {Elapsed:F1}s", model, started.Elapsed.TotalSeconds);
                 var rawText = completion.Value.Content[0].Text;
                 var json = ExtractJson(rawText);
 
@@ -105,13 +155,21 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 var results = JsonSerializer.Deserialize<List<AiBilingualResult>>(json, JsonOpts);
                 if (results != null && results.Count > 0)
                 {
+                    if (isPrimary) Volatile.Write(ref _primaryFailures, 0);
                     _logger.LogInformation("[OpenRouter] Successfully generated match analysis with {Model} for {Count} match(es).", model, results.Count);
                     return results.ToDictionary(r => r.FixtureId);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[OpenRouter] Analysis with model {Model} failed. Attempting next configured model...", model);
+                // Log the reason, not the stack: a timeout here is an
+                // operational fact, and 200 lines of transport frames buries
+                // the next model's attempt.
+                if (isPrimary) Interlocked.Increment(ref _primaryFailures);
+
+                _logger.LogWarning(
+                    "[OpenRouter] {Model} failed after {Timeout}s ({Reason}). Trying the next configured model...",
+                    model, _options.TimeoutSeconds, ex.GetBaseException().Message);
             }
         }
 
@@ -151,8 +209,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 AiJudgement = new AiJudgementInput
                 {
                     Recommendation = c.Ai?.Recommendation ?? string.Empty,
-                    Confidence = (int)(c.Ai?.Confidence ?? 0),
-                    IsTrap = c.Ai?.IsTrap ?? false
+                    Confidence = (int)(c.Ai?.Confidence ?? 0)
                 }
             }).ToList();
 
@@ -219,6 +276,16 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         }
     }
 
+    /// <summary>One short phrase for the request log: the reasoning setting is
+    /// the first thing to check when a model keeps timing out.</summary>
+    private static string DescribeReasoning(AiReasoningOptions o)
+    {
+        if (!o.Send) return "provider default";
+        if (!o.Enabled) return "off";
+        var effort = string.IsNullOrWhiteSpace(o.Effort) ? "default effort" : $"{o.Effort} effort";
+        return o.MaxTokens is > 0 ? $"on, {effort}, max {o.MaxTokens} tokens" : $"on, {effort}";
+    }
+
     private static string ExtractJson(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;
@@ -261,9 +328,8 @@ TASK:
 For each match in the input array:
 1. Conduct a deep tactical evaluation.
 2. Make FINAL qualification decisions for each betting market based on the rules below.
-3. Detect traps (e.g., relegation zone, H2H contradicting recent form).
-4. Identify the single best bet market.
-5. Produce professional English and German reasoning suitable for serious sports analytics.
+3. Identify the single best bet market.
+4. Produce professional English and German reasoning suitable for serious sports analytics.
 
 MANDATORY RULES FOR PREDICTIONS:
 
@@ -277,17 +343,12 @@ MANDATORY RULES FOR PREDICTIONS:
    - Do NOT predict them to win regardless of their Attack Strength or Rank. 
    - Prediction for this match must be 'Draw' or 'Opponent Win'.
 
-3. TRAP RESOLUTION:
-   - If 'is_trap' is true, check the form.
-   - If the Favorite (based on odds) has bad form (<30%), the 'Trap' is real. The prediction MUST flip to the Underdog or Draw.
-   - If 'is_trap' is true due to relegation, these teams play open football. Bias predictions towards Over 2.5 Goals rather than 'Draw'.
-
-4. SANITY CHECK (Anti-Hallucination):
+3. SANITY CHECK (Anti-Hallucination):
    - You must strictly repeat the 'form' string provided in the JSON. Do not invent or modify the form string. If the data says 'WDDDD', do not say 'DDWWW'. Analyze only what is present.
    - Compare the 'form' string (e.g., 'WWLWD') with the AI reasoning text.
    - If the text claims 'Poor Form' but the data shows 'Good Form', DISCARD the text reasoning and trust the raw data.
 
-5. H2H vs. FORM OVERRIDE:
+4. H2H vs. FORM OVERRIDE:
    - If (Current Form Differential) > 30% (e.g., 80% vs 40%), IGNORE H2H history. Current Form is the dominant predictor.
    - If a team has form > 70% and is playing away against a team with < 40% form, predict AWAY WIN.
 
@@ -295,7 +356,6 @@ QUALIFICATION RULES (apply equally to ALL markets):
 - BTTS/Over 2.5: Qualify if both teams avg >= 1.0 goals, BTTS rate >= 0.5, or combined avg goals >= 2.5.
 - Under 2.5: Qualify if both teams avg < 0.8 goals or clean sheet rate > 60%. REJECT if combined avg goals > 2.5 or H2H avg total goals > 2.5.
 - Match Winner: Confidence >= 60% and clear dominance.
-- Traps: Flag if a team is in the relegation zone, or if H2H strongly contradicts recent form.
 - Be BALANCED. Do not favor defensive markets over offensive ones.
 
 OUTPUT FORMAT (STRICT JSON ARRAY):
@@ -304,7 +364,6 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
     ""fixtureId"": 123,
     ""recommendation"": ""BTTS"",
     ""confidence"": 72,
-    ""trapDetected"": false,
     ""over25Qualified"": true,
     ""bttsQualified"": true,
     ""under25Qualified"": false,
@@ -316,7 +375,6 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
     ""en"": {
       ""predictionReason"": ""Both teams average >1.0 goals and BTTS rate is high."",
       ""analysis"": ""Detailed match analysis in English."",
-      ""trapReason"": """",
       ""consensusEvaluation"": ""Strong agreement on goals."",
       ""summaries"": {
         ""btts"": ""High attacking output confirms BTTS probability."",
@@ -330,7 +388,6 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
     ""de"": {
       ""predictionReason"": ""Beide Teams erzielen im Schnitt >1.0 Tore."",
       ""analysis"": ""Detaillierte Spielanalyse auf Deutsch."",
-      ""trapReason"": """",
       ""consensusEvaluation"": ""Starke Übereinstimmung bei Toren."",
       ""summaries"": {
         ""btts"": ""Hohe Offensivleistung bestätigt BTTS."",
@@ -388,7 +445,7 @@ STRATEGY: You must generate EXACTLY 12 combinations if the pool of matches allow
 STRICT CONSTRAINTS:
 - UNIQUE MATCHES: A match (match_id) can appear ONLY ONCE in the entire set of 12 combinations. No reuse!
 - WIN ODDS: If a selection is ""Match Winner"", the odds MUST be >= 2.0.
-- CONFIDENCE: Avoid matches where confidence < 60 or is_trap is true.
+- CONFIDENCE: Avoid matches where confidence < 60.
 - Output MUST be a strictly valid JSON array of objects.
 - Each combination must have a UNIQUE combination_id (1-12).
 - ""total_odds"" is the PRODUCT of the individual odds.

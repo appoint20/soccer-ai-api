@@ -34,6 +34,13 @@ public static class GateOutcome
     public const string BelowProbabilityFloor = "below_probability_floor";
     public const string Vetoed = "vetoed";
     public const string InsufficientConfirms = "insufficient_confirms";
+
+    /// <summary>
+    /// The model and the language model disagreed about this market, and the
+    /// configured agreement mode treats that as disqualifying.
+    /// </summary>
+    public const string AiDisagrees = "ai_disagrees";
+
     public const string Qualified = "qualified";
 }
 

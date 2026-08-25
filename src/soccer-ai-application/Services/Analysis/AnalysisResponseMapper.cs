@@ -31,7 +31,7 @@ public class AnalysisResponseMapper
     {
         var prediction = BuildPredictionResponse(analysis, aiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
-        var headline = BuildHeadline(analysis.Prediction, matchResult);
+        var headline = BuildHeadline(analysis.Prediction, matchResult, analysis.Decisions.Audit);
 
         // Production Sanitization: Only show models in Development
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
@@ -62,9 +62,6 @@ public class AnalysisResponseMapper
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
-            Trap = aiAnalysis?.IsTrap == true 
-                ? new TrapDecision { IsTrap = true, Reason = aiAnalysis.TrapReason } 
-                : analysis.Decisions.Trap,
             H2H = analysis.H2H,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
                 ? new AiAnalysisDto()
@@ -164,7 +161,8 @@ public class AnalysisResponseMapper
     /// rather than every market also stops a match reading as "3 of 4 correct"
     /// when the thing the system actually backed was wrong.
     /// </summary>
-    private static HeadlinePrediction? BuildHeadline(WeightedPrediction? p, MatchResult? result)
+    private static HeadlinePrediction? BuildHeadline(
+        WeightedPrediction? p, MatchResult? result, DecisionAudit? audit)
     {
         if (p is null) return null;
 
@@ -191,8 +189,19 @@ public class AnalysisResponseMapper
         // absent rather than as a certainty. Without this the complement of an
         // unset probability is 1.0, and a market the model never priced wins the
         // headline slot as a 100% confident call.
-        var best = candidates
-            .Where(c => c.Probability is > 0 and < 1)
+        var usable = candidates.Where(c => c.Probability is > 0 and < 1).ToList();
+
+        // The one call the product puts its name to should be one both sides
+        // agree on. Among the markets the language model also backs, the most
+        // probable wins; if it backs none of them — or never ran — this falls
+        // straight back to the model's own best, which is the previous
+        // behaviour and is never worse than it.
+        var aligned = usable
+            .Where(c => audit?.Markets
+                .FirstOrDefault(m => m.Market == AuditMarketFor(c.Market))?.AiAgrees == true)
+            .ToList();
+
+        var best = (aligned.Count > 0 ? aligned : usable)
             .OrderByDescending(c => c.Probability)
             .FirstOrDefault();
 
@@ -206,6 +215,20 @@ public class AnalysisResponseMapper
             IsCorrect = best.Correct,
         };
     }
+
+    /// <summary>
+    /// The audit's name for a headline market. The two vocabularies were built
+    /// separately and only overlap on `btts` and `draw`.
+    /// </summary>
+    private static string AuditMarketFor(string headlineMarket) => headlineMarket switch
+    {
+        "over_2_5" => Services.Decisions.ConfluenceRuleEngine.Markets.Over25,
+        "under_2_5" => Services.Decisions.ConfluenceRuleEngine.Markets.Under25,
+        "btts" or "no_btts" => Services.Decisions.ConfluenceRuleEngine.Markets.Btts,
+        "home_win" or "away_win" => Services.Decisions.ConfluenceRuleEngine.Markets.MatchWinner,
+        "draw" => Services.Decisions.ConfluenceRuleEngine.Markets.Draw,
+        _ => headlineMarket,
+    };
 
     /// <summary>
     /// Validates match result for completed fixtures.

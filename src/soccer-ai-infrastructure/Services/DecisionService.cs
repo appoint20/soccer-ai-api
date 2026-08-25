@@ -35,7 +35,6 @@ public sealed class DecisionService(
             return Task.FromResult(new DecisionServiceResult
             {
                 Markets = new QualificationDecisions(),
-                Trap = new TrapDecision(),
                 Qualification = new Qualification
                 {
                     IsQualified = false,
@@ -58,7 +57,7 @@ public sealed class DecisionService(
             context.OddsOver25, context.OddsUnder25, context.OddsBttsYes);
 
         var audit = ConfluenceRuleEngine.Evaluate(
-            prediction, signals, prices, tierExtra, opt, strategyOptions.Value);
+            prediction, signals, prices, tierExtra, opt, strategyOptions.Value, aiContext);
 
         var drawAudit = audit.Markets.First(m => m.Market == ConfluenceRuleEngine.Markets.Draw);
         var markets = new QualificationDecisions
@@ -80,24 +79,12 @@ public sealed class DecisionService(
             }
         };
 
-        // Trap is a market signal now — surfaced for the response, and it also
-        // acts as a veto inside the winner rules.
-        var trap = new TrapDecision
-        {
-            IsTrap = signals.Market.Trap.Flag,
-            Reason = signals.Market.Trap.Flag ? signals.Market.Trap.Label : string.Empty
-        };
-
         var qualifiedMarkets = audit.Markets.Where(m => m.Qualified).ToList();
         var isQualified = qualifiedMarkets.Count > 0;
         var bestProb = qualifiedMarkets.Count > 0 ? qualifiedMarkets.Max(m => m.Probability) : 0;
 
         var decision = PredictionDecision.NoBet;
-        if (trap.IsTrap && !isQualified)
-        {
-            decision = PredictionDecision.Avoid;
-        }
-        else if (isQualified)
+        if (isQualified)
         {
             var strong = qualifiedMarkets.Any(m =>
                 m.ConfirmationsFired >= opt.MinConfirmations + opt.StrongBetExtraConfirms &&
@@ -108,7 +95,6 @@ public sealed class DecisionService(
         return Task.FromResult(new DecisionServiceResult
         {
             Markets = markets,
-            Trap = trap,
             Qualification = new Qualification
             {
                 IsQualified = isQualified,

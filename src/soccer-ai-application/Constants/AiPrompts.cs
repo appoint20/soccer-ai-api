@@ -38,7 +38,6 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
     ""fixtureId"": number,
     ""recommendation"": ""ONE FROM THE LIST ABOVE"",
     ""confidence"": number (0-100),
-    ""trapDetected"": boolean (True if NOT a Value Bet and risk is high),
     ""en"": {
       ""predictionReason"": ""String containing your 4 reasoning points"",
       ""analysis"": ""Deeper match analysis (4-6 detailed sentences)"",
@@ -91,7 +90,7 @@ STRICT COMBINATION RULES:
 1. Allowed accumulator size: DOUBLE (2 matches), TREBLE (3 matches)
 2. A match Id may appear ONLY ONCE globally across ALL combinations.
 3. Maximum combinations allowed in this batch: 4
-4. Selection filter — Ignore matches if: Confidence < 65, Trap = true
+4. Selection filter — Ignore matches if: Confidence < 65
 5. Prefer matches from different leagues. Maximum 2 matches from same league in a combination.
 
 Return ONLY valid JSON array:

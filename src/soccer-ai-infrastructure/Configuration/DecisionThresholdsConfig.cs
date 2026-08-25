@@ -41,8 +41,6 @@ public class DecisionThresholdsConfig
 
     // Historical data thresholds
     public int MinH2HMatches { get; set; } = 5;
-    public int MinH2HMatchesForTrap { get; set; } = 2;
-    public int MaxDaysGapForTrap { get; set; } = 730;
     public double MinH2HDrawRate { get; set; } = 0.20;
     public double MinH2HWinRateForWinner { get; set; } = 0.35;
     public double MinDrawRateInForm { get; set; } = 0.15;

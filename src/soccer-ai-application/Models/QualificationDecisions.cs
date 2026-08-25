@@ -13,12 +13,6 @@ public sealed class QualificationDecisions
     public MarketDecision LowScoring { get; set; } = MarketDecision.NotQualified;
 }
 
-public sealed class TrapDecision
-{
-    public bool IsTrap { get; init; }
-    public string Reason { get; init; } = string.Empty;
-}
-
 public sealed class Qualification
 {
     public bool IsQualified { get; set; }

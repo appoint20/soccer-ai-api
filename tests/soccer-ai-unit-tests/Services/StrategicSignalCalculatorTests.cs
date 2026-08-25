@@ -513,21 +513,6 @@ public class StrategicSignalCalculatorTests
     }
 
     [Fact]
-    public void TrapPattern_MarketFavorsWorseRankedSide()
-    {
-        // Away side is the favorite by odds but ranked 10 places worse
-        var fixture = TheFixture(homeOdds: 3.2, drawOdds: 3.4, awayOdds: 2.0);
-        var home = MakeTeam(HomeId, rank: 5, points: 50, played: 28);
-        var away = MakeTeam(AwayId, rank: 15, points: 30, played: 28);
-
-        var s = StrategicSignalCalculator.Compute(
-            Inputs(fixture: fixture, homeTeam: home, awayTeam: away), Opt);
-
-        s.Market.Trap.Flag.Should().BeTrue();
-        s.Market.Trap.Value.Should().Be(10);
-    }
-
-    [Fact]
     public void OpeningDrift_DegradesGracefully_WithoutQuoteHistory()
     {
         var s = StrategicSignalCalculator.Compute(Inputs(), Opt);

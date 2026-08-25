@@ -8,6 +8,39 @@ namespace SoccerAi.Application.Options;
 /// </summary>
 public sealed class ConfluenceOptions
 {
+    /// <summary>
+    /// How the language model's per-market opinion is allowed to affect the
+    /// decision.
+    /// </summary>
+    /// <remarks>
+    /// The statistical model owns every number; this only controls how much
+    /// weight the LLM's agreement carries on top of it. It can never invent a
+    /// market the model did not call — a market the AI likes and the model did
+    /// not is still not a pick.
+    /// </remarks>
+    public enum AiAgreementMode
+    {
+        /// <summary>The AI's view is recorded in the audit and nothing else.</summary>
+        Ignore,
+
+        /// <summary>
+        /// Agreement counts as a confirmation toward MinConfirmations, so a
+        /// market both sides like clears the gate more easily. Disagreement
+        /// costs nothing. This is the default: it aligns the two without
+        /// letting a quiet LLM silently empty the board.
+        /// </summary>
+        Confirm,
+
+        /// <summary>
+        /// Strict alignment: a market the AI does not back cannot qualify, and
+        /// reports <c>ai_disagrees</c>. Expect materially fewer picks.
+        /// </summary>
+        Veto,
+    }
+
+    /// <summary>How much weight the language model's agreement carries.</summary>
+    public AiAgreementMode AiAgreement { get; set; } = AiAgreementMode.Confirm;
+
     public const string SectionName = "Confluence";
 
     /// <summary>K — minimum confirm rules that must fire.</summary>

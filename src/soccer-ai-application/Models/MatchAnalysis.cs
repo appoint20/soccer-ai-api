@@ -59,7 +59,6 @@ public sealed class MatchAnalysis
     public StatisticalModels? Models { get; set; }
     
     // Flattened Decisions
-    public TrapDecision Trap { get; init; } = new();
     public PredictionResponse? Prediction { get; init; }
     public HeadToHeadModel? H2H { get; init; }
     public AiAnalysisDto? Ai { get; set; }

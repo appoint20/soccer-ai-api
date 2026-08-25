@@ -67,7 +67,6 @@ public sealed class StrategyOptions
     public double HeavyFavoriteOdds { get; set; } = 1.40;
     public double ModerateFavoriteOdds { get; set; } = 2.00;
     public double BalancedFavoriteOdds { get; set; } = 2.75;
-    public int TrapRankGap { get; set; } = 5;                  // market favors much worse-ranked side
 
     // ── H. League profile flags ──
     public double LeagueDeviationFlag { get; set; } = 0.15;

@@ -56,6 +56,12 @@ public sealed record MarketRuleAudit(
     /// </summary>
     [JsonPropertyName("selection")] public string Selection { get; init; } = "";
 
+    /// <summary>
+    /// Whether the language model backs this market: true, false, or null when
+    /// it produced no opinion for the fixture. Null is not a rejection.
+    /// </summary>
+    [JsonPropertyName("ai_agrees")] public bool? AiAgrees { get; init; }
+
     [JsonIgnore]
     public IEnumerable<string> FiredConfirmRuleIds =>
         Rules.Where(r => r is { Kind: RuleResult.Confirm, Fired: true }).Select(r => r.RuleId);

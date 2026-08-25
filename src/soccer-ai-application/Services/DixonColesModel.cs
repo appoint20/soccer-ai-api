@@ -16,6 +16,11 @@ namespace SoccerAi.Application.Services;
 /// - ONE query per team loads its finished fixtures (home+away together);
 ///   league averages are computed once per (league, cutoff) and cached for
 ///   the lifetime of this scoped instance (i.e. per request/calculation).
+/// - A team short of history in the division being priced is read from its
+///   other competitions instead, with the goals converted into this
+///   division's scoring environment and discounted. Without that, a promoted
+///   or relegated club has no record here at all and the fixture is priced
+///   from nothing — which is to say, not priced.
 /// - The date filter runs in SQL, not client-side.
 ///
 /// Probability handling:
@@ -44,7 +49,16 @@ public sealed class DixonColesModel(
         {
             var leagueAvg = await GetLeagueAveragesAsync(leagueId, matchDate, ct);
             if (leagueAvg.MatchesAnalyzed < _opt.MinLeagueMatches)
+            {
+                // Say which gate closed. A fixture that reaches the client with
+                // no markets at all is otherwise indistinguishable from one the
+                // model chose not to back, and the two need different fixes.
+                logger.LogInformation(
+                    "[DC] League {LeagueId} holds {Count} finished fixtures before {Date:yyyy-MM-dd}, "
+                    + "below the minimum of {Min} — nothing in it can be priced",
+                    leagueId, leagueAvg.MatchesAnalyzed, matchDate, _opt.MinLeagueMatches);
                 return null;
+            }
 
             var homeStats = await GetTeamStrengthAsync(leagueId, homeTeamId, matchDate, leagueAvg, ct);
             var awayStats = await GetTeamStrengthAsync(leagueId, awayTeamId, matchDate, leagueAvg, ct);
@@ -134,29 +148,57 @@ public sealed class DixonColesModel(
         int leagueId, int teamId, DateTimeOffset beforeDate,
         LeagueAverages leagueAvg, CancellationToken ct)
     {
+        // Every competition the team has played, not only this one. Cutting on
+        // the target league alone left a promoted or relegated club with no
+        // history whatsoever — its record sits under the division it came from
+        // — so the model returned null and the fixture reached the client with
+        // no probabilities, no markets and no decision audit.
         var fixtures = await dbContext.Fixtures
             .Where(f =>
-                f.LeagueId == leagueId &&
                 (f.HomeTeamId == teamId || f.AwayTeamId == teamId) &&
                 f.Status == "FT" &&
                 f.Date < beforeDate)
-            .Select(f => new { f.Date, f.HomeTeamId, f.HomeGoal, f.AwayGoal })
+            .Select(f => new { f.Date, f.LeagueId, f.HomeTeamId, f.HomeGoal, f.AwayGoal })
             .ToListAsync(ct);
 
-        if (fixtures.Count < _opt.MinTeamMatches)
+        var inLeague = fixtures.Where(f => f.LeagueId == leagueId).ToList();
+
+        // Same-division form is used on its own whenever there is enough of it,
+        // so an established club is priced exactly as before. The rest of the
+        // record only steps in when this division alone cannot price the team.
+        var sample = inLeague.Count >= _opt.MinTeamMatches ? inLeague : fixtures;
+
+        if (sample.Count < _opt.MinTeamMatches)
+        {
+            logger.LogInformation(
+                "[DC] Team {TeamId} has {InLeague} finished fixture(s) in league {LeagueId} and "
+                + "{Total} across all competitions before {Date:yyyy-MM-dd}, below the minimum of "
+                + "{Min} — the fixture cannot be priced",
+                teamId, inLeague.Count, leagueId, fixtures.Count, beforeDate, _opt.MinTeamMatches);
             return null;
+        }
 
         // Split in memory: scored/conceded from the team's perspective.
         var home = new WeightedGoalStats();
         var away = new WeightedGoalStats();
         var overall = new WeightedGoalStats();
 
-        foreach (var f in fixtures)
+        var scales = new Dictionary<int, (double Home, double Away)>();
+
+        foreach (var f in sample)
         {
             var w = TimeDecayWeight(f.Date, beforeDate);
             var isHome = f.HomeTeamId == teamId;
-            var scored = isHome ? f.HomeGoal : f.AwayGoal;
-            var conceded = isHome ? f.AwayGoal : f.HomeGoal;
+            var (homeScale, awayScale) = await GoalScaleAsync(f.LeagueId, leagueId, leagueAvg, beforeDate, scales, ct);
+
+            // A goal is worth what the division it was scored in makes it
+            // worth: two goals in a league averaging 1.2 at home say more than
+            // two in one averaging 1.7. Conceding is read against the opposite
+            // venue's baseline, since that is the side doing the scoring.
+            var scored = (isHome ? f.HomeGoal : f.AwayGoal) * (isHome ? homeScale : awayScale);
+            var conceded = (isHome ? f.AwayGoal : f.HomeGoal) * (isHome ? awayScale : homeScale);
+
+            if (f.LeagueId != leagueId) w *= _opt.CrossLeagueWeight;
 
             overall.Add(w, scored, conceded);
             if (isHome) home.Add(w, scored, conceded);
@@ -193,6 +235,32 @@ public sealed class DixonColesModel(
         };
     }
 
+    /// <summary>
+    /// Factors that convert goals scored in <paramref name="sourceLeagueId"/>
+    /// into the scoring environment of <paramref name="targetLeagueId"/>.
+    /// </summary>
+    /// <remarks>
+    /// (1, 1) for the target division itself, and also for a division we hold
+    /// too little of: a baseline built on a handful of matches is noise, and
+    /// rescaling by noise is worse than leaving the goals as they are.
+    /// </remarks>
+    private async Task<(double Home, double Away)> GoalScaleAsync(
+        int sourceLeagueId, int targetLeagueId, LeagueAverages targetAvg,
+        DateTimeOffset beforeDate, Dictionary<int, (double Home, double Away)> cache,
+        CancellationToken ct)
+    {
+        if (sourceLeagueId == targetLeagueId) return (1, 1);
+        if (cache.TryGetValue(sourceLeagueId, out var cached)) return cached;
+
+        var source = await GetLeagueAveragesAsync(sourceLeagueId, beforeDate, ct);
+        var scale = source.MatchesAnalyzed >= _opt.MinLeagueMatches
+            ? (targetAvg.HomeGoalsAvg / source.HomeGoalsAvg, targetAvg.AwayGoalsAvg / source.AwayGoalsAvg)
+            : (1d, 1d);
+
+        cache[sourceLeagueId] = scale;
+        return scale;
+    }
+
     // ── Weighting helpers ────────────────────────────────────────────────────
 
     /// <summary>w = 0.5^(ageDays / halfLife); future-dated safety-clamped to 1.</summary>
@@ -210,7 +278,7 @@ public sealed class DixonColesModel(
     {
         private double _wSum, _scoredSum, _concededSum;
 
-        public void Add(double weight, int scored, int conceded)
+        public void Add(double weight, double scored, double conceded)
         {
             _wSum += weight;
             _scoredSum += weight * scored;

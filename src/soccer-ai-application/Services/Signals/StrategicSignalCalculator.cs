@@ -418,30 +418,21 @@ public static class StrategicSignalCalculator
         }
 
         // Favorite band
+        //
+        // There was a "trap" signal here: it fired whenever the bookmaker's
+        // favourite sat five or more places lower in the table. That is not a
+        // trap, only a disagreement between the price and the standings, and
+        // three matchdays into a season the standings are noise — so it fired
+        // on most of the board and warned about nothing.
         var favBand = SignalValue.Unavailable("No 1X2 odds");
-        SignalValue trap = SignalValue.Unavailable("No 1X2 odds or standings");
         if (OddsGuard.IsValid(f.HomeWinOdds) && OddsGuard.IsValid(f.AwayWinOdds))
         {
-            var favIsHome = f.HomeWinOdds.Value <= f.AwayWinOdds.Value;
             var favOdds = Math.Min(f.HomeWinOdds.Value, f.AwayWinOdds.Value);
             var band = favOdds < opt.HeavyFavoriteOdds ? "heavy favorite"
                 : favOdds < opt.ModerateFavoriteOdds ? "moderate favorite"
                 : favOdds < opt.BalancedFavoriteOdds ? "balanced"
                 : "outsider-friendly";
             favBand = SignalValue.Of(favOdds, favOdds < opt.HeavyFavoriteOdds, $"Market: {band} at {favOdds:F2}");
-
-            if (home is { Played: > 0 } && away is { Played: > 0 })
-            {
-                // Trap pattern: the market favors the clearly WORSE-ranked side.
-                var favRank = favIsHome ? home.Rank : away.Rank;
-                var dogRank = favIsHome ? away.Rank : home.Rank;
-                var againstTable = favRank - dogRank; // positive = favorite ranked worse
-                var isTrap = againstTable >= opt.TrapRankGap;
-                trap = SignalValue.Of(againstTable, isTrap,
-                    isTrap
-                        ? $"Market favors the side ranked {againstTable} places WORSE — classic trap pattern"
-                        : "Odds aligned with table logic");
-            }
         }
 
         return new MarketSignals
@@ -455,8 +446,7 @@ public static class StrategicSignalCalculator
             DivergenceOver25 = divOver,
             DivergenceBtts = divBtts,
             Divergence1X2 = div1X2,
-            FavoriteOddsBand = favBand,
-            Trap = trap
+            FavoriteOddsBand = favBand
         };
     }
 

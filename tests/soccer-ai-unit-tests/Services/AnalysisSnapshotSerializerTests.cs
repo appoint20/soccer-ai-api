@@ -19,7 +19,6 @@ public class AnalysisSnapshotSerializerTests
             AwayTeam = "Chelsea",
             OddsHomeWin = 2.1,
             OddsOver25 = 1.85,
-            Trap = new TrapDecision { IsTrap = true, Reason = "test trap" },
             Ai = new AiAnalysisDto { Recommendation = "Over 2.5", Confidence = 71 }
         };
 
@@ -34,8 +33,6 @@ public class AnalysisSnapshotSerializerTests
         restored.AwayTeam.Should().Be("Chelsea");
         restored.OddsHomeWin.Should().Be(2.1);
         restored.OddsOver25.Should().Be(1.85);
-        restored.Trap.IsTrap.Should().BeTrue();
-        restored.Trap.Reason.Should().Be("test trap");
         restored.Ai!.Recommendation.Should().Be("Over 2.5");
         restored.Ai.Confidence.Should().Be(71);
     }

@@ -33,6 +33,21 @@ public sealed class DixonColesOptions
     /// <summary>Minimum finished matches per team before the model produces output.</summary>
     public int MinTeamMatches { get; set; } = 3;
 
+    /// <summary>
+    /// Weight applied to a team's matches played in a DIFFERENT competition,
+    /// used only when its record in this division is shorter than
+    /// <see cref="MinTeamMatches"/>.
+    /// </summary>
+    /// <remarks>
+    /// Goals from another division are converted into this division's scoring
+    /// environment before they are counted, but opponent quality is not
+    /// corrected for — a goals model cannot see it. The discount is what keeps
+    /// a promoted side's record in the tier below from being read as if it had
+    /// been earned here. 1.0 would treat the two as interchangeable; 0 would
+    /// restore the old behaviour of pricing such a club from nothing at all.
+    /// </remarks>
+    public double CrossLeagueWeight { get; set; } = 0.75;
+
     /// <summary>Lower clamp for expected goals λ.</summary>
     public double LambdaMin { get; set; } = 0.2;
 

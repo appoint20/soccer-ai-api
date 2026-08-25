@@ -131,7 +131,6 @@ public sealed record MarketSignals
     [JsonPropertyName("divergence_btts")] public SignalValue DivergenceBtts { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("divergence_1x2")] public SignalValue Divergence1X2 { get; init; } = SignalValue.Unavailable("n/a");
     [JsonPropertyName("favorite_odds_band")] public SignalValue FavoriteOddsBand { get; init; } = SignalValue.Unavailable("n/a");
-    [JsonPropertyName("trap")] public SignalValue Trap { get; init; } = SignalValue.Unavailable("n/a");
 }
 
 /// <summary>H. League profile base rates.</summary>

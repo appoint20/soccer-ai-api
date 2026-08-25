@@ -5,7 +5,6 @@ public class AiBilingualResult
     public int FixtureId { get; set; }
     public string Recommendation { get; set; } = "";
     public int Confidence { get; set; }
-    public bool TrapDetected { get; set; }
 
     // Unified AI Decision Layer flags
     public bool Over25Qualified { get; set; }
@@ -25,7 +24,6 @@ public class AiLanguageBlock
 {
     public string PredictionReason { get; set; } = "";
     public string Analysis { get; set; } = "";
-    public string? TrapReason { get; set; }
     public string ConsensusEvaluation { get; set; } = "";
     public MarketSummaries Summaries { get; set; } = default!;
 }
