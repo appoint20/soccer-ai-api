@@ -30,7 +30,12 @@ public class GetAiCoverageHandler(IApplicationDbContext dbContext)
             .Select(f => new 
             {
                 f.Date,
-                HasAnalysis = dbContext.FixtureAnalyses.Any(a => a.FixtureId == f.Id && a.Lang == "en")
+                // Confidence > 0 is the marker of a real narrative.
+                // AnalysisPrecomputeService writes a row per fixture just to
+                // hold the snapshot, so row existence alone reported full
+                // coverage while nothing had been written by the model.
+                HasAnalysis = dbContext.FixtureAnalyses.Any(
+                    a => a.FixtureId == f.Id && a.Lang == "en" && a.Confidence > 0)
             })
             .ToListAsync(cancellationToken);
 

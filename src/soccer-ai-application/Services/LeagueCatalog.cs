@@ -24,6 +24,7 @@ public static class LeagueCatalog
         [40] = "Championship",
         [41] = "League One",
         [42] = "League Two",
+        [43] = "National League",
         // Germany
         [78] = "Bundesliga",
         [79] = "2. Bundesliga",

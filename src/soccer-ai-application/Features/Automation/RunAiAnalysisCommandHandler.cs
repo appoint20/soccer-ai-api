@@ -16,6 +16,7 @@ public class RunAiAnalysisCommandHandler(
     public async Task Handle(IReceiveContext<RunAiAnalysisCommand> context, CancellationToken cancellationToken)
     {
         logger.LogInformation("Manual trigger processing via mediator for AI sync...");
-        await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, false, cancellationToken);
+        await aiSyncService.SyncUpcomingFixturesAsync(
+            DateTime.UtcNow, force: false, cancellationToken: cancellationToken);
     }
 }

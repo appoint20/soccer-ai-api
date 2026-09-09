@@ -19,5 +19,7 @@ public class FixtureOddsQuote
 
     public double Price { get; set; }
 
+    public DateTimeOffset? ProviderUpdatedAtUtc { get; set; }
+
     public DateTimeOffset CapturedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 }

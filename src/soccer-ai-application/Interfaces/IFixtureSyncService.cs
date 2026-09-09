@@ -27,4 +27,10 @@ public interface IFixtureSyncService
     /// Returns the number of fixtures captured.
     /// </summary>
     Task<int> CaptureUpcomingOddsAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Captures reported absences for fixtures approaching kickoff. Returns how
+    /// many fixtures were fetched.
+    /// </summary>
+    Task<int> CaptureUpcomingInjuriesAsync(CancellationToken ct);
 }

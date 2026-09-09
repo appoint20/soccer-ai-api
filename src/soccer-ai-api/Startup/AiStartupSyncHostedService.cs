@@ -33,7 +33,8 @@ public sealed class AiStartupSyncHostedService(
             var aiSyncService = scope.ServiceProvider.GetRequiredService<IAiSyncService>();
 
             // Runs upcoming fixtures analysis (today + upcoming 3 days)
-            await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, force: false, stoppingToken);
+            await aiSyncService.SyncUpcomingFixturesAsync(
+                DateTime.UtcNow, force: false, cancellationToken: stoppingToken);
 
             logger.LogInformation("[Startup] Background AI analysis sync completed successfully.");
         }

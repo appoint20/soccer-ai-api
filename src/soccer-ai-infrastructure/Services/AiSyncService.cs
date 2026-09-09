@@ -17,25 +17,45 @@ public class AiSyncService(
     ILogger<AiSyncService> logger)
     : IAiSyncService
 {
-    public async Task SyncUpcomingFixturesAsync(DateTime now, bool force = false, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Days of upcoming fixtures a run covers. The product sells analysis of the
+    /// coming board, so the default is a horizon rather than a batch size.
+    /// </summary>
+    public const int DefaultDaysAhead = 5;
+
+    public async Task SyncUpcomingFixturesAsync(
+        DateTime now, bool force = false, int daysAhead = DefaultDaysAhead, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("[AiSync] Starting batch sync. Current time: {Now}", now);
 
-        var startUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero).AddDays(-3);
-        var endUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero).AddDays(4); // Includes up to 3 days in future (exclusive end)
+        // Upcoming means upcoming. The window used to open three days in the
+        // PAST while the query ordered ascending, so a run spent its budget
+        // narrating fixtures that had already been played before it ever
+        // reached tomorrow's — which is why coverage stopped at today.
+        var startUtc = new DateTimeOffset(DateTime.SpecifyKind(now, DateTimeKind.Utc));
+        var endUtc = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero)
+            .AddDays(Math.Max(1, daysAhead));
 
-        logger.LogInformation("[AiSync] Window: {Start} to {End}", startUtc, endUtc);
+        logger.LogInformation("[AiSync] Window: {Start:u} to {End:u} ({Days} days ahead)",
+            startUtc, endUtc, daysAhead);
 
-        // 1. Fetch raw fixtures from DB (focus leagues only)
+        // 1. Fetch raw fixtures from DB (focus leagues only). Not-yet-started
+        //    only: a finished match already has a result, so paying an LLM to
+        //    predict one is pure waste.
         var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
         var fixtures = await dbContext.Fixtures
-            .Where(f => f.Date >= startUtc && f.Date < endUtc && scopedLeagueIds.Contains(f.LeagueId))
+            .Where(f => f.Date >= startUtc && f.Date < endUtc
+                        && (f.Status == "NS" || f.Status == "TBD")
+                        && scopedLeagueIds.Contains(f.LeagueId))
             .OrderBy(f => f.Date)
+            .ThenBy(f => f.Id)
             .ToListAsync(cancellationToken);
 
         if (fixtures.Count == 0)
         {
-            logger.LogWarning("[AiSync] Found 0 fixtures in the 5-day window. Check your local DB sync.");
+            logger.LogWarning(
+                "[AiSync] Found 0 upcoming fixtures between {Start:u} and {End:u}. Check the fixture sync.",
+                startUtc, endUtc);
             return;
         }
 
@@ -43,6 +63,7 @@ public class AiSyncService(
 
         var totalProcessed = 0;
         var toAnalyze = new List<AiBatchItem>();
+        var rawByFixture = new Dictionary<int, WeightedPrediction>();
         var skippedCount = 0;
 
         // 2. Filter BEFORE heavy ML prediction
@@ -62,8 +83,17 @@ public class AiSyncService(
 
             try
             {
-                // Run predictive ML for this unanalyzed fixture
-                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", false, cancellationToken);
+                // refresh: true is load-bearing. With a warm math cache the
+                // analysis short-circuits the models and returns
+                // PoissonModel.Empty — every Model* field below would be 0.0,
+                // and the LLM would be asked to judge a match whose
+                // "mathematical probabilities" are all zero.
+                var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", refresh: true, cancellationToken);
+
+                // The calibrated prediction is what the product acts on, so it
+                // is what the model reasons about. Poisson output is the raw
+                // pre-calibration layer and belongs in the math cache only.
+                var probs = analysis.Prediction ?? new WeightedPrediction();
 
                 toAnalyze.Add(new AiBatchItem
                 {
@@ -75,18 +105,29 @@ public class AiSyncService(
                     AwayStats = analysis.TeamStats.Away,
                     HomeGoalAvg = analysis.TeamStats.Home.AvgGoalsScoredLast7,
                     AwayGoalAvg = analysis.TeamStats.Away.AvgGoalsScoredLast7,
-                    ModelHomeWin = analysis.Models.Poisson.HomeWin,
-                    ModelDraw = analysis.Models.Poisson.Draw,
-                    ModelAwayWin = analysis.Models.Poisson.AwayWin,
-                    ModelOver25 = analysis.Models.Poisson.Over25,
-                    ModelBTTS = analysis.Models.Poisson.BTTS,
-                    ModelGoals23 = analysis.Models.Poisson.TwoToThreeGoals,
+                    ModelHomeWin = probs.HomeProb,
+                    ModelDraw = probs.DrawProb,
+                    ModelAwayWin = probs.AwayProb,
+                    ModelOver25 = probs.Over25Prob,
+                    ModelBTTS = probs.BTTSProb,
+                    ModelGoals23 = probs.TwoToThreeGoalsProb,
                     OddsHomeWin = analysis.OddsHomeWin,
                     OddsDraw = analysis.OddsDraw,
                     OddsAwayWin = analysis.OddsAwayWin,
                     OddsOver25 = analysis.OddsOver25,
                     OddsBTTS = analysis.OddsBttsYes,
                 });
+
+                rawByFixture[analysis.FixtureId] = analysis.RawPrediction ?? probs;
+
+                if (probs.HomeProb <= 0 && probs.Over25Prob <= 0)
+                {
+                    logger.LogWarning(
+                        "[AiSync] Fixture {FixtureId} produced no model probabilities — the narrative would be "
+                        + "written from stats alone. Skipping.", fixture.Id);
+                    toAnalyze.RemoveAt(toAnalyze.Count - 1);
+                    continue;
+                }
 
                 if (analysis.OddsHomeWin == 0 && analysis.OddsAwayWin == 0)
                 {
@@ -131,12 +172,16 @@ public class AiSyncService(
                         continue;
                     }
 
-                    var mathProbs = new WeightedPrediction
+                    // The math cache is the isotonic layer's training data and
+                    // must hold RAW probabilities — the same convention
+                    // AnalysisPrecomputeService writes. Feeding calibrated
+                    // values back in would make the calibration self-correct.
+                    var mathProbs = rawByFixture.GetValueOrDefault(fixtureId) ?? new WeightedPrediction
                     {
                         HomeProb = originalAnalysis.ModelHomeWin,
                         Over25Prob = originalAnalysis.ModelOver25,
                         BTTSProb = originalAnalysis.ModelBTTS,
-                        DrawProb = originalAnalysis.ModelDraw,       // real value — zeroing it broke 1X2 log loss
+                        DrawProb = originalAnalysis.ModelDraw,
                         TwoToThreeGoalsProb = originalAnalysis.ModelGoals23,
                         AwayProb = originalAnalysis.ModelAwayWin,
                     };
@@ -185,8 +230,14 @@ public class AiSyncService(
     {
         logger.LogInformation("Running targeted AI sync for Fixture {FixtureId}.", fixtureId);
 
+        // Confidence > 0 is what separates a real narrative from the empty row
+        // AnalysisPrecomputeService creates to hold a snapshot. Counting rows
+        // alone made every precomputed fixture look analysed, so a targeted
+        // sync could never fill one in.
         var langCount = await dbContext.FixtureAnalyses
-            .CountAsync(a => a.FixtureId == fixtureId && (a.Lang == "en" || a.Lang == "de"), cancellationToken);
+            .CountAsync(a => a.FixtureId == fixtureId
+                             && (a.Lang == "en" || a.Lang == "de")
+                             && a.Confidence > 0, cancellationToken);
 
         if (!force && langCount >= 2)
         {
@@ -213,7 +264,10 @@ public class AiSyncService(
             return;
         }
 
-        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", false, cancellationToken);
+        // refresh: true — see the batch path: a warm cache returns
+        // PoissonModel.Empty and the model would be sent all-zero probabilities.
+        var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", refresh: true, cancellationToken);
+        var probs = analysis.Prediction ?? new WeightedPrediction();
         var item = new AiBatchItem
         {
             FixtureId = fixture.Id,
@@ -222,12 +276,12 @@ public class AiSyncService(
             AwayTeam  = awayTeam.Name,
             HomeStats = analysis.TeamStats.Home,
             AwayStats = analysis.TeamStats.Away,
-            ModelHomeWin = analysis.Models.Poisson.HomeWin,
-            ModelDraw = analysis.Models.Poisson.Draw,
-            ModelAwayWin = analysis.Models.Poisson.AwayWin,
-            ModelOver25 = analysis.Models.Poisson.Over25,
-            ModelBTTS = analysis.Models.Poisson.BTTS,
-            ModelGoals23 = analysis.Models.Poisson.TwoToThreeGoals,
+            ModelHomeWin = probs.HomeProb,
+            ModelDraw = probs.DrawProb,
+            ModelAwayWin = probs.AwayProb,
+            ModelOver25 = probs.Over25Prob,
+            ModelBTTS = probs.BTTSProb,
+            ModelGoals23 = probs.TwoToThreeGoalsProb,
             OddsHomeWin = analysis.OddsHomeWin,
             OddsDraw = analysis.OddsDraw,
             OddsAwayWin = analysis.OddsAwayWin,
@@ -238,8 +292,9 @@ public class AiSyncService(
         var results = await aiService.AnalyzeBatchAsync([item]);
         if (results.TryGetValue(fixtureId, out var bilingualResult))
         {
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
-            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", analysis.Prediction ?? new WeightedPrediction(), cancellationToken);
+            var raw = analysis.RawPrediction ?? probs;
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", raw, cancellationToken);
+            await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", raw, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             await precomputeService.RecomputeFixtureAsync(fixtureId, cancellationToken);
             logger.LogInformation("Successfully synced AI analysis for Fixture {FixtureId}.", fixtureId);

@@ -56,6 +56,9 @@ public sealed class GetFixtureAnalysisHandler(
             snapshot = recomputed.GetValueOrDefault(lang);
         }
 
+        if (snapshot is not null)
+            SoccerAi.Application.Services.LiveOddsPolicy.RefreshResponse(snapshot, fixture, DateTimeOffset.UtcNow);
+
         var forecasts = await dbContext.ModelForecasts
             .AsNoTracking()
             .Where(f => f.FixtureId == query.FixtureId)

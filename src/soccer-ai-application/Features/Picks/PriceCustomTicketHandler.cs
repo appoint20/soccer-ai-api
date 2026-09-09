@@ -82,6 +82,9 @@ public sealed class PriceCustomTicketHandler(
                 return PriceCustomTicketResponse.Fail(
                     $"Fixture {id} has no analysis yet, so its markets cannot be priced.");
 
+            LiveOddsPolicy.RefreshResponse(snapshot, fixtures[id], DateTimeOffset.UtcNow);
+            if (!LiveOddsPolicy.IsFresh(fixtures[id], DateTimeOffset.UtcNow))
+                return PriceCustomTicketResponse.Fail($"Fixture {id} has no fresh pre-match odds. Refresh after the next odds sync.");
             snapshots[id] = snapshot;
         }
 
@@ -100,7 +103,7 @@ public sealed class PriceCustomTicketHandler(
                     $"Fixture {requested.FixtureId} has no market '{requested.Market}'.");
 
             var odds = OddsGuard.Sanitize(audit.Odds);
-            if (odds is null)
+            if (odds is null || odds < LiveOddsPolicy.MinimumOdds)
                 return PriceCustomTicketResponse.Fail(
                     $"No price is published for '{requested.Market}' on fixture {requested.FixtureId} "
                     + $"({snapshot.HomeTeam} vs {snapshot.AwayTeam}). A leg with no price is not a bet.");
@@ -195,6 +198,8 @@ public sealed class PriceCustomTicketHandler(
         Selection = PickSelector.SelectionOf(leg.Audit),
         Probability = Math.Round(leg.Audit.Probability, 4),
         Odds = leg.Odds,
+        OddsUpdatedAtUtc = leg.Snapshot.OddsUpdatedAtUtc,
+        OddsCheckedAtUtc = leg.Snapshot.OddsCheckedAtUtc,
         Ev = Math.Round(ValueMath.Ev(leg.Audit.Probability, leg.Odds), 4),
     };
 

@@ -36,6 +36,25 @@ public static class FixtureOddsWriter
         return wrote;
     }
 
+    /// <summary>Replace the live market, preserving historical prices in quote rows.</summary>
+    public static void ReplaceLivePrices(Fixture fixture, IReadOnlyCollection<OddsQuote> quotes,
+        DateTimeOffset capturedAt)
+    {
+        fixture.OddsCheckedAtUtc = capturedAt;
+        var fresh = quotes.Where(q => OddsGuard.IsValid(q.Price) &&
+            q.ProviderUpdatedAtUtc is { } updated && updated <= capturedAt &&
+            capturedAt - updated <= LiveOddsPolicy.MaximumAge).ToList();
+        var best = OddsQuoteAggregator.BestPrices(fresh);
+        fixture.HomeWinOdds = best.HomeWin;
+        fixture.DrawOdds = best.Draw;
+        fixture.AwayWinOdds = best.AwayWin;
+        fixture.Over25Odds = best.Over25;
+        fixture.Under25Odds = best.Under25;
+        fixture.BttsYesOdds = best.BttsYes;
+        fixture.OddsUpdatedAtUtc = fresh.Count > 0 ? fresh.Min(q => q.ProviderUpdatedAtUtc) : null;
+        fixture.UpdatedAt = capturedAt;
+    }
+
     /// <summary>
     /// A fixture the value gate can price at all. Without a guard-valid price
     /// there is no EV, so such a fixture is invisible to the gate no matter how

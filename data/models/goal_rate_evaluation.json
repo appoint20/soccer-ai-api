@@ -1,0 +1,179 @@
+{
+  "GeneratedAtUtc": "2026-09-05T11:11:17.503024+00:00",
+  "TrainRows": 25414,
+  "EvaluatedRows": 15249,
+  "HeldOutFrom": "2023-12-17T15:30:00Z",
+  "Trainer": "FastTreeTweedie",
+  "LambdaHomeMean": 1.4879,
+  "LambdaAwayMean": 1.1892,
+  "ActualHomeGoalsMean": 1.5034,
+  "ActualAwayGoalsMean": 1.2267,
+  "HomeScale": 0,
+  "AwayScale": 0,
+  "Over25": {
+    "Samples": 15249,
+    "BaseRate": 52,
+    "BrierScore": 0.2483,
+    "AccuracyAtHalf": 55.26,
+    "PublishThreshold": 0.6,
+    "Published": 2508,
+    "PublishedShare": 16.45,
+    "PublishedHitRate": 60.85,
+    "PublishedHitRateLowerBound": 58.92
+  },
+  "Btts": {
+    "Samples": 15249,
+    "BaseRate": 54.07,
+    "BrierScore": 0.2492,
+    "AccuracyAtHalf": 54,
+    "PublishThreshold": 0.58,
+    "Published": 3408,
+    "PublishedShare": 22.35,
+    "PublishedHitRate": 59.39,
+    "PublishedHitRateLowerBound": 57.73
+  },
+  "Over25Thresholds": [
+    {
+      "Threshold": 0.5,
+      "Published": 6920,
+      "PublishedShare": 45.38,
+      "HitRate": 57.99,
+      "HitRateLowerBound": 56.82
+    },
+    {
+      "Threshold": 0.54,
+      "Published": 4877,
+      "PublishedShare": 31.98,
+      "HitRate": 58.58,
+      "HitRateLowerBound": 57.19
+    },
+    {
+      "Threshold": 0.56,
+      "Published": 4010,
+      "PublishedShare": 26.3,
+      "HitRate": 59.58,
+      "HitRateLowerBound": 58.05
+    },
+    {
+      "Threshold": 0.58,
+      "Published": 3214,
+      "PublishedShare": 21.08,
+      "HitRate": 59.99,
+      "HitRateLowerBound": 58.28
+    },
+    {
+      "Threshold": 0.6,
+      "Published": 2508,
+      "PublishedShare": 16.45,
+      "HitRate": 60.85,
+      "HitRateLowerBound": 58.92
+    },
+    {
+      "Threshold": 0.62,
+      "Published": 1941,
+      "PublishedShare": 12.73,
+      "HitRate": 61.51,
+      "HitRateLowerBound": 59.33
+    },
+    {
+      "Threshold": 0.64,
+      "Published": 1446,
+      "PublishedShare": 9.48,
+      "HitRate": 63.69,
+      "HitRateLowerBound": 61.18
+    },
+    {
+      "Threshold": 0.66,
+      "Published": 1108,
+      "PublishedShare": 7.27,
+      "HitRate": 64.26,
+      "HitRateLowerBound": 61.39
+    },
+    {
+      "Threshold": 0.68,
+      "Published": 838,
+      "PublishedShare": 5.5,
+      "HitRate": 65.63,
+      "HitRateLowerBound": 62.35
+    },
+    {
+      "Threshold": 0.7,
+      "Published": 593,
+      "PublishedShare": 3.89,
+      "HitRate": 65.94,
+      "HitRateLowerBound": 62.03
+    }
+  ],
+  "BttsThresholds": [
+    {
+      "Threshold": 0.5,
+      "Published": 8865,
+      "PublishedShare": 58.13,
+      "HitRate": 56.94,
+      "HitRateLowerBound": 55.91
+    },
+    {
+      "Threshold": 0.54,
+      "Published": 5895,
+      "PublishedShare": 38.66,
+      "HitRate": 58,
+      "HitRateLowerBound": 56.73
+    },
+    {
+      "Threshold": 0.56,
+      "Published": 4613,
+      "PublishedShare": 30.25,
+      "HitRate": 58.42,
+      "HitRateLowerBound": 56.99
+    },
+    {
+      "Threshold": 0.58,
+      "Published": 3408,
+      "PublishedShare": 22.35,
+      "HitRate": 59.39,
+      "HitRateLowerBound": 57.73
+    },
+    {
+      "Threshold": 0.6,
+      "Published": 2444,
+      "PublishedShare": 16.03,
+      "HitRate": 59.45,
+      "HitRateLowerBound": 57.49
+    },
+    {
+      "Threshold": 0.62,
+      "Published": 1652,
+      "PublishedShare": 10.83,
+      "HitRate": 59.93,
+      "HitRateLowerBound": 57.54
+    },
+    {
+      "Threshold": 0.64,
+      "Published": 1091,
+      "PublishedShare": 7.15,
+      "HitRate": 60.59,
+      "HitRateLowerBound": 57.65
+    },
+    {
+      "Threshold": 0.66,
+      "Published": 648,
+      "PublishedShare": 4.25,
+      "HitRate": 60.03,
+      "HitRateLowerBound": 56.21
+    },
+    {
+      "Threshold": 0.68,
+      "Published": 402,
+      "PublishedShare": 2.64,
+      "HitRate": 62.44,
+      "HitRateLowerBound": 57.61
+    },
+    {
+      "Threshold": 0.7,
+      "Published": 243,
+      "PublishedShare": 1.59,
+      "HitRate": 60.49,
+      "HitRateLowerBound": 54.23
+    }
+  ]
+}

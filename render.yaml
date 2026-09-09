@@ -79,12 +79,51 @@ services:
         fromDatabase:
           name: soccer-ai-db
           property: connectionString
+      # Eight runs a day. Each one re-prices fixtures and rebuilds snapshots, so
+      # a published pick is at most three hours behind the market rather than
+      # twelve. NOTE: the binder APPENDS array entries rather than replacing
+      # them, so these indices must cover every slot — leaving a gap does not
+      # clear it, it merges with whatever the code default holds.
       - key: SYNC__SCHEDULEUTC__0
-        value: "03:30"
+        value: "00:20"
       - key: SYNC__SCHEDULEUTC__1
-        value: "15:30"
+        value: "03:20"
+      - key: SYNC__SCHEDULEUTC__2
+        value: "06:20"
+      - key: SYNC__SCHEDULEUTC__3
+        value: "09:20"
+      - key: SYNC__SCHEDULEUTC__4
+        value: "12:20"
+      - key: SYNC__SCHEDULEUTC__5
+        value: "15:20"
+      - key: SYNC__SCHEDULEUTC__6
+        value: "18:20"
+      - key: SYNC__SCHEDULEUTC__7
+        value: "21:20"
+      # Odds cadence. The loop ticks every 30 min but only re-prices a fixture
+      # once its newest quote is 3h old — or on every tick inside the last 6h,
+      # where lines actually move.
+      - key: SYNC__ODDSREFRESHINTERVALHOURS
+        value: "3"
+      - key: SYNC__ODDSCAPTUREHORIZONHOURS
+        value: "72"
+      - key: SYNC__ODDSFINALAPPROACHHOURS
+        value: "6"
+      # Model training now runs inside the sync pipeline, between the fixture
+      # fetch it learns from and the recompute that serves it. It self-throttles
+      # on the published generation's age, so eight syncs a day still cost one
+      # training run — raise this if the instance struggles with the fit.
+      - key: HYBRIDMODEL__RETRAININTERVALHOURS
+        value: "24"
+      # The AI narrative step. With this off, SyncPipeline skips the step and
+      # marks it done, so every fixture's `ai` block stays permanently empty
+      # ("", confidence 0, has_decision_layer false) and the app has no analysis
+      # text to show. It also needs ZAI_API_KEY set in the dashboard above —
+      # without a key the service returns empty results silently.
+      #
+      # This costs money per sync: it is an LLM call per upcoming fixture.
       - key: SYNC__GENERATEAINARRATIVES
-        value: "false"
+        value: "true"
 
 databases:
   - name: soccer-ai-db

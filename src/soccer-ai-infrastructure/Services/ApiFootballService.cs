@@ -81,7 +81,7 @@ public class ApiFootballService(
         {
             throw; // Rate limit or rejected key: abort the run, do not report success.
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to fetch fixtures for league {LeagueId}", leagueId);
         }
@@ -119,7 +119,7 @@ public class ApiFootballService(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to fetch stats for fixture {FixtureId}", fixtureId);
             return (null, null);
@@ -188,7 +188,7 @@ public class ApiFootballService(
             {
                 throw; // rate limit — let the caller abort cleanly
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogWarning(ex, "Batched fixture detail fetch failed for {Count} ids", batch.Length);
             }
@@ -230,7 +230,7 @@ public class ApiFootballService(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Coverage check failed for league {LeagueId} season {Season}", leagueId, season);
             return true; // fail open
@@ -305,57 +305,100 @@ public class ApiFootballService(
     /// bookmaker meant no odds at all. Line shopping across every listed
     /// bookmaker both raises coverage and gives the best available price.
     /// </summary>
+    /// <summary>
+    /// Reported absences for one fixture. Empty is a normal answer, not a
+    /// failure: the endpoint is unpopulated until roughly 24h before kickoff,
+    /// and some competitions are never covered.
+    /// </summary>
+    public async Task<List<InjuryReport>> GetFixtureInjuriesAsync(
+        int fixtureId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync($"/injuries?fixture={fixtureId}");
+            if (response is null || !response.Value.TryGetProperty("response", out var data))
+                return [];
+
+            var reports = new List<InjuryReport>();
+            foreach (var item in data.EnumerateArray())
+            {
+                if (!item.TryGetProperty("player", out var player) ||
+                    !item.TryGetProperty("team", out var team)) continue;
+
+                var playerId = player.TryGetProperty("id", out var pid) && pid.TryGetInt32(out var p) ? p : 0;
+                var teamId = team.TryGetProperty("id", out var tid) && tid.TryGetInt32(out var t) ? t : 0;
+                if (playerId == 0 || teamId == 0) continue;
+
+                reports.Add(new InjuryReport(
+                    teamId,
+                    playerId,
+                    player.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+                    player.TryGetProperty("type", out var ty) ? ty.GetString() ?? "" : "",
+                    player.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : ""));
+            }
+
+            return reports;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[Injuries] Fetch failed for fixture {FixtureId}", fixtureId);
+            return [];
+        }
+    }
+
     public async Task<List<OddsQuote>> GetFixtureOddsQuotesAsync(int fixtureId)
     {
         var quotes = new List<OddsQuote>();
         try
         {
-            var response = await GetApiResponseAsync($"/odds?fixture={fixtureId}");
-            if (response is null)
-                return quotes;
-
-            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
-                return quotes;
-
-            var bookmakers = data[0].GetProperty("bookmakers");
-
-            foreach (var bm in bookmakers.EnumerateArray())
+            for (var page = 1; page <= 20; page++)
             {
-                var bookmaker = bm.GetProperty("name").GetString() ?? "unknown";
-
-                foreach (var bet in bm.GetProperty("bets").EnumerateArray())
+                var response = await GetApiResponseAsync($"/odds?fixture={fixtureId}&page={page}");
+                if (response is null) return []; // a partial fetch must not look complete
+                if (!response.Value.TryGetProperty("response", out var data)) return [];
+                foreach (var item in data.EnumerateArray())
                 {
-                    var betName = bet.GetProperty("name").GetString();
-                    var values = bet.GetProperty("values");
-
-                    switch (betName)
+                    DateTimeOffset? updatedAt = item.TryGetProperty("update", out var update) &&
+                        DateTimeOffset.TryParse(update.GetString(), System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed)
+                        ? parsed.ToUniversalTime() : null;
+                    foreach (var bm in item.GetProperty("bookmakers").EnumerateArray())
                     {
-                        case "Match Winner":
-                            AddQuotes(quotes, bookmaker, values,
-                                ("Home", OddsMarkets.HomeWin),
-                                ("Draw", OddsMarkets.Draw),
-                                ("Away", OddsMarkets.AwayWin));
-                            break;
-                        case "Goals Over/Under":
-                        case "Over/Under 2.5":
-                            AddQuotes(quotes, bookmaker, values,
-                                ("Over 2.5", OddsMarkets.Over25),
-                                ("Under 2.5", OddsMarkets.Under25));
-                            break;
-                        case "Both Teams Score":
-                            AddQuotes(quotes, bookmaker, values,
-                                ("Yes", OddsMarkets.BttsYes),
-                                ("No", OddsMarkets.BttsNo));
-                            break;
+                        var bookmaker = bm.GetProperty("name").GetString() ?? "unknown";
+                        foreach (var bet in bm.GetProperty("bets").EnumerateArray())
+                        {
+                            var betName = bet.GetProperty("name").GetString();
+                            var values = bet.GetProperty("values");
+                            switch (betName)
+                            {
+                                case "Match Winner":
+                                    AddQuotes(quotes, bookmaker, values, updatedAt,
+                                        ("Home", OddsMarkets.HomeWin), ("Draw", OddsMarkets.Draw), ("Away", OddsMarkets.AwayWin));
+                                    break;
+                                case "Goals Over/Under":
+                                case "Over/Under 2.5":
+                                    AddQuotes(quotes, bookmaker, values, updatedAt,
+                                        ("Over 2.5", OddsMarkets.Over25), ("Under 2.5", OddsMarkets.Under25));
+                                    break;
+                                case "Both Teams Score":
+                                    AddQuotes(quotes, bookmaker, values, updatedAt,
+                                        ("Yes", OddsMarkets.BttsYes), ("No", OddsMarkets.BttsNo));
+                                    break;
+                            }
+                        }
                     }
                 }
+                var totalPages = response.Value.TryGetProperty("paging", out var paging) &&
+                    paging.TryGetProperty("total", out var total) ? total.GetInt32() : 1;
+                if (page >= totalPages) break;
+                if (page == 20) return []; // fail closed if a response exceeds the bounded paging window
             }
         }
         catch (Application.Exceptions.ExternalApiException)
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to fetch odds quotes for fixture {FixtureId}", fixtureId);
         }
@@ -363,7 +406,7 @@ public class ApiFootballService(
     }
 
     private static void AddQuotes(
-        List<OddsQuote> quotes, string bookmaker, JsonElement values,
+        List<OddsQuote> quotes, string bookmaker, JsonElement values, DateTimeOffset? updatedAt,
         params (string ApiValue, string Market)[] mapping)
     {
         foreach (var v in values.EnumerateArray())
@@ -375,7 +418,7 @@ public class ApiFootballService(
             if (double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var odd))
             {
-                quotes.Add(new OddsQuote(bookmaker, match.Market, odd));
+                quotes.Add(new OddsQuote(bookmaker, match.Market, odd, updatedAt));
             }
         }
     }
@@ -440,7 +483,7 @@ public class ApiFootballService(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to fetch standings for league {LeagueId}", leagueId);
         }
@@ -495,7 +538,7 @@ public class ApiFootballService(
 
             return null;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to resolve league ID for {LeagueName}", leagueName);
             return null;
@@ -535,7 +578,7 @@ public class ApiFootballService(
                 };
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return new Dictionary<string, object>
             {
@@ -594,7 +637,7 @@ public class ApiFootballService(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to fetch coach for team {TeamId}", teamId);
         }
@@ -631,7 +674,7 @@ public class ApiFootballService(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to fetch red cards for fixture {FixtureId}", fixtureId);
         }
@@ -686,6 +729,14 @@ public class ApiFootballService(
             }
 
             using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("errors", out var errors) &&
+                ((errors.ValueKind == JsonValueKind.Object && errors.EnumerateObject().Any()) ||
+                 (errors.ValueKind == JsonValueKind.Array && errors.GetArrayLength() > 0)))
+            {
+                calls.RecordFailure("Provider returned an error envelope");
+                throw new Application.Exceptions.ExternalApiException("API-Football",
+                    "Provider returned an error envelope; no sync data accepted.");
+            }
             calls.RecordSuccess();
             return doc.RootElement.Clone();
         }
@@ -708,7 +759,7 @@ public class ApiFootballService(
             logger.LogError(ex, "API-Football response parse failure for {Url}", relativeUrl);
             return null;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "API-Football unexpected error for {Url}", relativeUrl);
             return null;

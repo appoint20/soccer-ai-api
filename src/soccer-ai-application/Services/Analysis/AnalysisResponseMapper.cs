@@ -41,6 +41,9 @@ public class AnalysisResponseMapper
         {
             Id = fixture.Id,
             Date = fixture.Date,
+            Status = fixture.Status,
+            OddsUpdatedAtUtc = fixture.OddsUpdatedAtUtc,
+            OddsCheckedAtUtc = fixture.OddsCheckedAtUtc,
             Time = fixture.Date.TimeOfDay,
             League = analysis.LeagueName,
             HomeTeam = homeTeam.ShortName ?? homeTeam.Name,

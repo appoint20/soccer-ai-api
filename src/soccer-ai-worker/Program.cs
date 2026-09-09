@@ -56,6 +56,27 @@ using (var scope = host.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+// A container platform stops a worker with SIGTERM, and the framework logs that
+// as a bare "Application is shutting down..." — indistinguishable from a local
+// Ctrl+C. Neither worker in this process ever requests shutdown (both catch
+// every exception inside their own loop), so any stop is external. Recording
+// how long the process had been up separates the common causes: seconds means
+// the platform replaced or refused the instance, hours means a scheduled
+// restart or a manual stop.
+var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+var lifetimeLogger = host.Services
+    .GetRequiredService<ILoggerFactory>()
+    .CreateLogger("SoccerAi.Worker.Lifetime");
+var startedAtUtc = DateTimeOffset.UtcNow;
+
+lifetime.ApplicationStopping.Register(() =>
+    lifetimeLogger.LogWarning(
+        "Shutdown signal received after {Uptime:g} of uptime. No code in this worker "
+        + "requests shutdown, so the signal came from the host — a new deploy replacing "
+        + "this instance, a manual stop/suspend, or the service being run as a web "
+        + "service whose port scan found no listener (this process binds no port).",
+        DateTimeOffset.UtcNow - startedAtUtc));
+
 await host.RunAsync();
 return 0;
 

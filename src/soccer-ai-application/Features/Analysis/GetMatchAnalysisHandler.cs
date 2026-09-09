@@ -97,7 +97,10 @@ public class GetMatchAnalysisHandler(
                 }
 
                 if (snapshot != null)
+                {
+                    SoccerAi.Application.Services.LiveOddsPolicy.RefreshResponse(snapshot, fixture, DateTimeOffset.UtcNow);
                     analysisList.Add(snapshot);
+                }
             }
             catch (Exception ex)
             {

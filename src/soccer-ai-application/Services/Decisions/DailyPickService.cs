@@ -54,9 +54,12 @@ public sealed class DailyPickService(
 
         foreach (var fixture in fixtures)
         {
+            if (!isHistorical && (fixture.Status != "NS" || fixture.Date <= DateTimeOffset.UtcNow)) continue;
             var snapshot = await ResolveSnapshotAsync(fixture, lang, snapshots, isHistorical, ct);
             if (snapshot?.DecisionAudit is null) continue;
 
+            if (!isHistorical)
+                LiveOddsPolicy.RefreshResponse(snapshot, fixture, DateTimeOffset.UtcNow);
             analyzed++;
 
             var reference = ToFixtureRef(fixture, snapshot, teams);
@@ -66,7 +69,7 @@ public sealed class DailyPickService(
                 reference,
                 snapshot.DecisionAudit,
                 snapshot.BttsAndOver25Probability,
-                confluenceOptions.Value);
+                confluenceOptions.Value, requireLivePrice: !isHistorical);
 
             if (selection.QualifiedLegs.Count > 0 || selection.ComboEligibleLegs.Count > 0)
                 priced++;
@@ -156,7 +159,7 @@ public sealed class DailyPickService(
             var recomputed = await precomputeService.RecomputeFixtureAsync(fixture.Id, ct);
             return recomputed.GetValueOrDefault(lang);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // One unanalysable fixture must not take the whole board down.
             logger.LogError(ex, "[Picks] Could not analyze fixture {FixtureId}", fixture.Id);
@@ -175,6 +178,6 @@ public sealed class DailyPickService(
             snapshot.League,
             home?.ShortName ?? home?.Name ?? snapshot.HomeTeam,
             away?.ShortName ?? away?.Name ?? snapshot.AwayTeam,
-            fixture.Date);
+            fixture.Date, fixture.OddsUpdatedAtUtc, fixture.OddsCheckedAtUtc);
     }
 }

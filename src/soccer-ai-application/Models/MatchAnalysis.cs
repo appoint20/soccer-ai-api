@@ -15,6 +15,9 @@ public sealed class MatchAnalysis
 {
     public int Id { get; init; }
     public DateTimeOffset Date { get; init; }
+    public string Status { get; set; } = "NS";
+    [JsonPropertyName("odds_checked_at_utc")] public DateTimeOffset? OddsCheckedAtUtc { get; set; }
+    [JsonPropertyName("odds_updated_at_utc")] public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
     public TimeSpan Time { get; init; }
     public string League { get; init; } = string.Empty;
     public string HomeTeam { get; init; } = string.Empty;
@@ -29,12 +32,12 @@ public sealed class MatchAnalysis
     [System.Text.Json.Serialization.JsonPropertyName("headline_prediction")]
     public HeadlinePrediction? Headline { get; init; }
     
-    public double? OddsHomeWin { get; init; }
-    public double? OddsDraw { get; init; }
-    public double? OddsAwayWin { get; init; }
-    public double? OddsOver25 { get; init; }
-    public double? OddsUnder25 { get; init; }
-    public double? OddsBttsYes { get; init; }
+    public double? OddsHomeWin { get; set; }
+    public double? OddsDraw { get; set; }
+    public double? OddsAwayWin { get; set; }
+    public double? OddsOver25 { get; set; }
+    public double? OddsUnder25 { get; set; }
+    public double? OddsBttsYes { get; set; }
     // odds_goals23 removed: it was a hardcoded 1.90 placeholder, never a real
     // quote. 2-3 goals is informational and never becomes a bet, so a synthetic
     // price on it is exactly the placeholder the product rules forbid. The
@@ -68,7 +71,7 @@ public sealed class MatchAnalysis
 
     /// <summary>Which confirm/veto rules fired per market — the backtest and LLM narratives cite this.</summary>
     [JsonPropertyName("decision_audit")]
-    public DecisionAudit? DecisionAudit { get; init; }
+    public DecisionAudit? DecisionAudit { get; set; }
 
     /// <summary>Raw vs isotonic-calibrated probability per market.</summary>
     [JsonPropertyName("calibration_trace")]

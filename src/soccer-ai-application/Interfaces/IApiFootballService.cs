@@ -37,9 +37,13 @@ public record FixtureOdds(
     double? BttsNo);
 
 /// <summary>One bookmaker's price for one market outcome.</summary>
-public record OddsQuote(string Bookmaker, string Market, double Price);
+public record OddsQuote(string Bookmaker, string Market, double Price, DateTimeOffset? ProviderUpdatedAtUtc = null);
 
 /// <summary>Canonical market keys for per-bookmaker quotes.</summary>
+/// <summary>One reported absence as returned by /injuries.</summary>
+public sealed record InjuryReport(
+    int TeamApiId, int PlayerApiId, string PlayerName, string Type, string Reason);
+
 public static class OddsMarkets
 {
     public const string HomeWin = "1x2_home";
@@ -96,6 +100,16 @@ public interface IApiFootballService
     // ── Contextual Intelligence Data ──
     Task<TeamCoach?> GetTeamCoachAsync(int teamId);
     Task<Dictionary<int, int>> GetFixtureRedCardsAsync(int fixtureId);
+
+    /// <summary>
+    /// Reported absences for one fixture.
+    /// </summary>
+    /// <remarks>
+    /// Measured availability: nothing at 2-3 days out, populated from roughly
+    /// 24h before kickoff. Calling it earlier is a wasted request, so the
+    /// capture loop only asks inside that window.
+    /// </remarks>
+    Task<List<InjuryReport>> GetFixtureInjuriesAsync(int fixtureId, CancellationToken ct = default);
 }
 
 

@@ -38,6 +38,8 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.OddsSyncOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.HistoricalOddsOptions>(
             configuration.GetSection(SoccerAi.Application.Options.HistoricalOddsOptions.SectionName));
+        services.Configure<SoccerAi.Application.Options.HybridModelOptions>(
+            configuration.GetSection(SoccerAi.Application.Options.HybridModelOptions.SectionName));
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -67,7 +69,19 @@ public static class DependencyInjection
 
         services.AddScoped<ILeagueVolatilityService, LeagueVolatilityService>();
 
-        // Machine Learning (training preparation only — no serving integration yet)
+        // Machine Learning.
+        //
+        // The hybrid goal-rate model is the one wired into serving: the
+        // forecaster is a singleton because it caches loaded ITransformers,
+        // which are immutable and thread-safe, and reloading them per request
+        // would dominate the cost of a prediction.
+        services.AddScoped<IGoalRateTrainingService, GoalRateTrainingService>();
+        services.AddSingleton<GoalRateFeatureBuilder>();
+        services.AddSingleton<IGoalRateForecaster, GoalRateForecaster>();
+
+        // Legacy per-market binary trainer. Retained so existing tooling keeps
+        // working, but nothing loads its output — see IGoalRateForecaster for
+        // the path that actually reaches a published prediction.
         services.AddScoped<IMlTrainingService, MlTrainingService>();
         services.AddSingleton<MlTrainingDataBuilder>();
 

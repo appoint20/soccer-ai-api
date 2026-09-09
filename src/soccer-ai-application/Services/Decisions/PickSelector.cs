@@ -9,7 +9,8 @@ public sealed record FixtureRef(
     string League,
     string HomeTeam,
     string AwayTeam,
-    DateTimeOffset KickoffUtc)
+    DateTimeOffset KickoffUtc,
+    DateTimeOffset? OddsUpdatedAtUtc = null, DateTimeOffset? OddsCheckedAtUtc = null)
 {
     public string Match => $"{HomeTeam} vs {AwayTeam}";
 }
@@ -28,7 +29,7 @@ public sealed record ConfidencePick(
     FixtureRef Fixture,
     string Market,
     string Selection,
-    double Probability);
+    double Probability, double? Odds = null);
 
 /// <summary>
 /// Everything one fixture offers a ticket builder, with no reference to the
@@ -105,7 +106,7 @@ public static class PickSelector
         FixtureRef fixture,
         DecisionAudit? audit,
         double? bttsAndOver25JointProbability,
-        ConfluenceOptions opt)
+        ConfluenceOptions opt, bool requireLivePrice = false)
     {
         ArgumentNullException.ThrowIfNull(fixture);
         ArgumentNullException.ThrowIfNull(opt);
@@ -122,7 +123,7 @@ public static class PickSelector
             var leg = ToLeg(fixture, market);
             if (leg is null)
             {
-                if (opt.AllowUnpricedCombos &&
+                if (!requireLivePrice && opt.AllowUnpricedCombos &&
                     ToUnpricedLeg(fixture, market, audit.MinConfirmationsRequired, opt) is { } unpricedLeg)
                 {
                     unpriced.Add(unpricedLeg);
@@ -140,7 +141,7 @@ public static class PickSelector
             qualified,
             comboEligible,
             BuildSameMatchPair(fixture, audit, bttsAndOver25JointProbability),
-            BuildConfidencePick(fixture, audit, opt),
+            BuildConfidencePick(fixture, audit, opt, requireLivePrice),
             unpriced);
     }
 
@@ -268,16 +269,17 @@ public static class PickSelector
     /// costing the fixture a perfectly publishable pick from another market.
     /// </summary>
     private static ConfidencePick? BuildConfidencePick(
-        FixtureRef fixture, DecisionAudit audit, ConfluenceOptions opt)
+        FixtureRef fixture, DecisionAudit audit, ConfluenceOptions opt, bool requireLivePrice)
     {
         var best = audit.Markets
             .Where(m => ConfidenceMarkets.Contains(m.Market))
+            .Where(m => !requireLivePrice || (OddsGuard.IsValid(m.Odds) && m.Odds >= LiveOddsPolicy.MinimumOdds && m.Probability * m.Odds > 1))
             .Where(m => m.Probability >= ConfidenceFloorFor(m.Market, opt))
             .OrderByDescending(m => m.Probability)
             .FirstOrDefault();
 
         return best is null
             ? null
-            : new ConfidencePick(fixture, best.Market, SelectionOf(best), best.Probability);
+            : new ConfidencePick(fixture, best.Market, SelectionOf(best), best.Probability, best.Odds);
     }
 }

@@ -41,6 +41,9 @@ public class Fixture
     // ── Expected Goals ─────────────────────────────────────────────────────
     public double HomeXg { get; set; }
     public double AwayXg { get; set; }
+    public double? HomeObservedXg { get; set; }
+    public double? AwayObservedXg { get; set; }
+    public DateTimeOffset? StatisticsUpdatedAtUtc { get; set; }
 
     // ── Betting Odds (nullable — only fetched near match date) ────────────
     public double? HomeWinOdds { get; set; }
@@ -49,6 +52,18 @@ public class Fixture
     public double? Over25Odds { get; set; }
     public double? Under25Odds { get; set; }
     public double? BttsYesOdds { get; set; }
+
+    /// <summary>Last odds request; independent of whether the price moved.</summary>
+    public DateTimeOffset? OddsCheckedAtUtc { get; set; }
+
+    /// <summary>
+    /// When reported absences were last fetched for this fixture. Provenance,
+    /// exactly as for odds: a report read after kickoff is a confirmation, not a
+    /// prediction input.
+    /// </summary>
+    public DateTimeOffset? InjuriesCheckedAtUtc { get; set; }
+    /// <summary>Oldest provider update among the currently usable prices.</summary>
+    public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
 
     // ── ELO (Situational Context) ──────────────────────────────────────────
     public double? HomeElo { get; set; }

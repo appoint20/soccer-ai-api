@@ -7,6 +7,14 @@ namespace SoccerAi.Application.Interfaces;
 /// </summary>
 public interface IAiSyncService
 {
-    Task SyncUpcomingFixturesAsync(DateTime now, bool force = false, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Generates narratives for fixtures that have not kicked off yet, from
+    /// <paramref name="now"/> out to <paramref name="daysAhead"/> days.
+    /// </summary>
+    Task SyncUpcomingFixturesAsync(
+        DateTime now,
+        bool force = false,
+        int daysAhead = 5,
+        CancellationToken cancellationToken = default);
     Task SyncSingleFixtureAsync(int fixtureId, bool force = false, CancellationToken cancellationToken = default);
 }

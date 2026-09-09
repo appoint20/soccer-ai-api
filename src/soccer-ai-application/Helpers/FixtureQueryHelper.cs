@@ -33,7 +33,11 @@ public class FixtureQueryHelper(IApplicationDbContext dbContext)
 
         if (onlyAnalyzed)
         {
-            query = query.Where(f => dbContext.FixtureAnalyses.Any(a => a.FixtureId == f.Id));
+            // Confidence > 0, not mere row existence: the precompute step
+            // creates a row for every in-scope fixture to hold its snapshot,
+            // so the old predicate let through matches with an empty ai block.
+            query = query.Where(f => dbContext.FixtureAnalyses.Any(
+                a => a.FixtureId == f.Id && a.Confidence > 0));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
