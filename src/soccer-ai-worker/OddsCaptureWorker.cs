@@ -35,6 +35,12 @@ public sealed class OddsCaptureWorker(
                 using var scope = scopeFactory.CreateScope();
                 var syncService = scope.ServiceProvider.GetRequiredService<IFixtureSyncService>();
                 await syncService.CaptureUpcomingOddsAsync(stoppingToken);
+
+                // Odds first, deliberately. They decide whether a fixture can be
+                // priced at all; absences only refine a price that already
+                // exists, so they take what budget is left rather than
+                // competing for it.
+                await syncService.CaptureUpcomingInjuriesAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {

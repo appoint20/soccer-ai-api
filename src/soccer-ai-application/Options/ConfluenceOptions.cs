@@ -146,28 +146,37 @@ public sealed class ConfluenceOptions
     public int ConfidencePicksPerDay { get; set; } = 5;
 
     /// <summary>Minimum calibrated probability to appear as a confidence pick.</summary>
-    public double ConfidencePickMinProbability { get; set; } = 0.60;
+    /// <remarks>
+    /// This is the live publish gate, and the hybrid model's training report
+    /// (<c>goal_rate_evaluation.json</c>) measures its walk-forward hit rate at
+    /// exactly this value on every run — so the two cannot drift apart.
+    ///
+    /// 0.58 was measured over 14,477 out-of-fold fixtures: it publishes 21.5%
+    /// of fixtures at a 60.2% hit rate (95% lower bound 58.5%).
+    /// </remarks>
+    public double ConfidencePickMinProbability { get; set; } = 0.58;
 
     /// <summary>
     /// Per-market overrides of <see cref="ConfidencePickMinProbability"/>.
     ///
-    /// Over 2.5 sits at 0.65 because baseline v9 measured a specific failure:
-    /// across all fixtures, Over 2.5 in the 60-65% band hit 66.7% (n=123) — but
-    /// the subset *selected as the best market on its fixture* hit only 48.8%
-    /// (n=41). Choosing the maximum does not merely inflate the number; it
-    /// picks fixtures where every other market looked weak, and those are
-    /// systematically different matches.
+    /// Over 2.5 sits slightly higher than the global floor because it is the
+    /// better-anchored of the two goals markets — a bookmaker prices it on ~85%
+    /// of fixtures against ~7% for BTTS — so it earns its accuracy at a lower
+    /// cost in volume. Walk-forward over 14,477 out-of-fold fixtures: 0.60
+    /// publishes 16.4% of fixtures at 60.8% (95% lower bound 58.8%), and 0.66
+    /// reaches 64.8% at 7.3%.
     ///
-    /// Treat this as provisional: n=41 is thin, and the honest fix is to publish
-    /// measured bucket hit rates rather than model probabilities. Raise or
-    /// remove the entry in appsettings once more data arrives.
+    /// The selection bias that motivated the old 0.65 floor has not gone away:
+    /// taking the maximum across markets still overstates the winner, which is
+    /// why the published number should be the measured bucket hit rate from the
+    /// report rather than the model's own probability.
     ///
     /// Note that .NET configuration merges dictionary entries by key rather than
     /// replacing the dictionary, so an override here adds to these defaults.
     /// </summary>
     public Dictionary<string, double> ConfidencePickMinProbabilityByMarket { get; set; } = new()
     {
-        ["over25"] = 0.65
+        ["over25"] = 0.60
     };
 
     /// <summary>MinEdge levels reported side by side in the backtest EV sweep.</summary>

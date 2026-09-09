@@ -6,6 +6,8 @@ namespace SoccerAi.Application.Features.Picks;
 /// <summary>One selection inside a ticket.</summary>
 public sealed record PickLegDto
 {
+    [JsonPropertyName("odds_updated_at_utc")] public DateTimeOffset? OddsUpdatedAtUtc { get; init; }
+    [JsonPropertyName("odds_checked_at_utc")] public DateTimeOffset? OddsCheckedAtUtc { get; init; }
     [JsonPropertyName("fixture_id")] public required int FixtureId { get; init; }
     [JsonPropertyName("kickoff_utc")] public required DateTimeOffset KickoffUtc { get; init; }
     [JsonPropertyName("league")] public required string League { get; init; }
@@ -79,6 +81,9 @@ public sealed record TicketDto
 /// <summary>Product 2 — highest-probability market on a fixture, priced or not.</summary>
 public sealed record ConfidencePickDto
 {
+    [JsonPropertyName("odds")] public double? Odds { get; init; }
+    [JsonPropertyName("odds_updated_at_utc")] public DateTimeOffset? OddsUpdatedAtUtc { get; init; }
+    [JsonPropertyName("odds_checked_at_utc")] public DateTimeOffset? OddsCheckedAtUtc { get; init; }
     [JsonPropertyName("fixture_id")] public required int FixtureId { get; init; }
     [JsonPropertyName("kickoff_utc")] public required DateTimeOffset KickoffUtc { get; init; }
     [JsonPropertyName("league")] public required string League { get; init; }

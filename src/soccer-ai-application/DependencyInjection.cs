@@ -28,6 +28,9 @@ public static class DependencyInjection
         services.AddScoped<IDailyPickService, Services.Decisions.DailyPickService>();
         services.AddScoped<IPickLedger, Services.Decisions.PickLedger>();
 
+        services.AddScoped<Services.Statistics.PredictionLedger>();
+        services.AddScoped<Services.Statistics.PredictionStatisticsService>();
+
         // The forecast head-to-head: model predictions recorded next to the
         // pipeline's own, settled once results land.
         services.AddScoped<Services.Forecasts.IModelForecastLedger, Services.Forecasts.ModelForecastLedger>();

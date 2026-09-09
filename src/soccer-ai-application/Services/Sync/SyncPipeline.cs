@@ -30,12 +30,20 @@ public sealed class SyncPipeline(
         Steps.HistoricalDepth,
         Steps.Standings,
         Steps.FixturesAndOdds,
+        Steps.TrainModel,
         Steps.RecomputeAnalysis,
         Steps.SettlePicks,
         Steps.PublishPicks,
         Steps.ModelForecasts,
         Steps.AiNarratives
     ];
+
+    /// <summary>
+    /// The steps this pipeline runs, in execution order. Exposed read-only so
+    /// the order is assertable — a step that exists but never reaches StepOrder
+    /// is invisible, and that has already happened once with model training.
+    /// </summary>
+    public static IReadOnlyList<string> ExecutionOrder => StepOrder;
 
     public static class Steps
     {
@@ -47,6 +55,23 @@ public sealed class SyncPipeline(
 
         public const string Standings = "standings";
         public const string FixturesAndOdds = "fixtures_odds";
+
+        /// <summary>
+        /// Retrains the hybrid goal-rate model.
+        /// </summary>
+        /// <remarks>
+        /// Placed AFTER the fixtures it learns from and BEFORE the recompute
+        /// that serves it, so the day's snapshots are built by the model that
+        /// was just fitted rather than by yesterday's. Reversing those two would
+        /// leave the published board permanently one training run behind.
+        ///
+        /// Self-throttling: the service skips unless the published generation is
+        /// older than HybridModel:RetrainIntervalHours, so eight syncs a day
+        /// still cost one training run. Like ModelForecasts, a failure here
+        /// never fails the run.
+        /// </remarks>
+        public const string TrainModel = "train_model";
+
         public const string RecomputeAnalysis = "recompute_analysis";
 
         /// <summary>Settle yesterday's published tickets against fresh results.</summary>
@@ -217,6 +242,24 @@ public sealed class SyncPipeline(
                     .SyncAllLeaguesAsync(season, ct);
                 break;
 
+            case Steps.TrainModel:
+                // Caught here, not thrown. Training is enrichment: the model is
+                // optional and the pipeline falls back to Dixon-Coles without
+                // it, whereas letting an out-of-memory fit abort the run would
+                // also cost the fixtures, odds and snapshots this sync exists
+                // to refresh.
+                try
+                {
+                    await services.GetRequiredService<IGoalRateTrainingService>().TrainAsync(ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogError(ex,
+                        "[Sync] Goal-rate training failed — continuing with the previously "
+                        + "published model");
+                }
+                break;
+
             case Steps.RecomputeAnalysis:
                 await services.GetRequiredService<IAnalysisPrecomputeService>()
                     .RecomputeWindowAsync(
@@ -246,7 +289,7 @@ public sealed class SyncPipeline(
 
             case Steps.AiNarratives:
                 await services.GetRequiredService<IAiSyncService>()
-                    .SyncUpcomingFixturesAsync(nowUtc.UtcDateTime, force: false, ct);
+                    .SyncUpcomingFixturesAsync(nowUtc.UtcDateTime, force: false, opt.AiNarrativeDaysAhead, ct);
                 break;
 
             default:

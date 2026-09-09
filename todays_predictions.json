@@ -1,0 +1,2386 @@
+[
+  {
+    "fixture_id": 26321,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League 43",
+    "home_team": "Aldershot Town",
+    "away_team": "FC Halifax Town",
+    "lambda_home": 1.27,
+    "lambda_away": 1.75,
+    "probabilities": {
+      "home_win": 0.265,
+      "draw": 0.263,
+      "away_win": 0.472,
+      "over_25": 0.581,
+      "btts": 0.608
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.608,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26287,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "Championship",
+    "home_team": "Stoke City",
+    "away_team": "Charlton",
+    "lambda_home": 1.41,
+    "lambda_away": 1.27,
+    "probabilities": {
+      "home_win": 0.389,
+      "draw": 0.29,
+      "away_win": 0.321,
+      "over_25": 0.502,
+      "btts": 0.56
+    },
+    "odds": {
+      "home": 2.18,
+      "draw": 3.33,
+      "away": 3.64,
+      "over_25": 2.24,
+      "btts_yes": 1.87
+    },
+    "top_prediction": "1 (Stoke City)",
+    "top_probability": 0.389,
+    "value_edges": [
+      "Away @3,64 (\u002B17 %)",
+      "O2.5 @2,24 (\u002B12 %)"
+    ]
+  },
+  {
+    "fixture_id": 26296,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League One",
+    "home_team": "Wigan",
+    "away_team": "Stockport County",
+    "lambda_home": 1.68,
+    "lambda_away": 1.65,
+    "probabilities": {
+      "home_win": 0.378,
+      "draw": 0.255,
+      "away_win": 0.367,
+      "over_25": 0.646,
+      "btts": 0.67
+    },
+    "odds": {
+      "home": 3.12,
+      "draw": 3.66,
+      "away": 2.25,
+      "over_25": 1.75,
+      "btts_yes": 1.6
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.67,
+    "value_edges": [
+      "Home @3,12 (\u002B18 %)",
+      "O2.5 @1,75 (\u002B13 %)",
+      "BTTS @1,60 (\u002B7 %)"
+    ]
+  },
+  {
+    "fixture_id": 26297,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League One",
+    "home_team": "Peterborough",
+    "away_team": "Sheffield Wednesday",
+    "lambda_home": 1.61,
+    "lambda_away": 1.55,
+    "probabilities": {
+      "home_win": 0.381,
+      "draw": 0.263,
+      "away_win": 0.356,
+      "over_25": 0.612,
+      "btts": 0.644
+    },
+    "odds": {
+      "home": 3.14,
+      "draw": 3.89,
+      "away": 2.16,
+      "over_25": 1.57,
+      "btts_yes": 1.44
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.644,
+    "value_edges": [
+      "Home @3,14 (\u002B20 %)"
+    ]
+  },
+  {
+    "fixture_id": 26307,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League Two",
+    "home_team": "Fleetwood Town",
+    "away_team": "Shrewsbury",
+    "lambda_home": 1.28,
+    "lambda_away": 0.85,
+    "probabilities": {
+      "home_win": 0.448,
+      "draw": 0.322,
+      "away_win": 0.23,
+      "over_25": 0.356,
+      "btts": 0.428
+    },
+    "odds": {
+      "home": 1.91,
+      "draw": 3.61,
+      "away": 4.07,
+      "over_25": 2.07,
+      "btts_yes": 1.84
+    },
+    "top_prediction": "1 (Fleetwood Town)",
+    "top_probability": 0.448,
+    "value_edges": [
+      "Draw @3,61 (\u002B16 %)"
+    ]
+  },
+  {
+    "fixture_id": 26308,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League Two",
+    "home_team": "Salford City",
+    "away_team": "Port Vale",
+    "lambda_home": 1.46,
+    "lambda_away": 1.07,
+    "probabilities": {
+      "home_win": 0.447,
+      "draw": 0.294,
+      "away_win": 0.259,
+      "over_25": 0.464,
+      "btts": 0.52
+    },
+    "odds": {
+      "home": 1.85,
+      "draw": 3.91,
+      "away": 4.1,
+      "over_25": 1.87,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "1 (Salford City)",
+    "top_probability": 0.447,
+    "value_edges": [
+      "Away @4,10 (\u002B6 %)",
+      "Draw @3,91 (\u002B15 %)"
+    ]
+  },
+  {
+    "fixture_id": 26280,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "Premier League",
+    "home_team": "Newcastle",
+    "away_team": "Bournemouth",
+    "lambda_home": 1.44,
+    "lambda_away": 1.3,
+    "probabilities": {
+      "home_win": 0.388,
+      "draw": 0.286,
+      "away_win": 0.326,
+      "over_25": 0.518,
+      "btts": 0.572
+    },
+    "odds": {
+      "home": 2.15,
+      "draw": 3.8,
+      "away": 3.48,
+      "over_25": 1.6,
+      "btts_yes": 1.5
+    },
+    "top_prediction": "1 (Newcastle)",
+    "top_probability": 0.388,
+    "value_edges": [
+      "Away @3,48 (\u002B13 %)",
+      "Draw @3,80 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26286,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "Championship",
+    "home_team": "Preston",
+    "away_team": "Blackburn",
+    "lambda_home": 1.25,
+    "lambda_away": 1.03,
+    "probabilities": {
+      "home_win": 0.396,
+      "draw": 0.317,
+      "away_win": 0.287,
+      "over_25": 0.4,
+      "btts": 0.477
+    },
+    "odds": {
+      "home": 2.53,
+      "draw": 3.29,
+      "away": 2.99,
+      "over_25": 2.17,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "1 (Preston)",
+    "top_probability": 0.396,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26320,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "League 43",
+    "home_team": "Southend",
+    "away_team": "Yeovil Town",
+    "lambda_home": 2.09,
+    "lambda_away": 0.88,
+    "probabilities": {
+      "home_win": 0.641,
+      "draw": 0.224,
+      "away_win": 0.135,
+      "over_25": 0.569,
+      "btts": 0.524
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "1 (Southend)",
+    "top_probability": 0.641,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26288,
+    "kickoff": "2026-09-05T11:30:00+00:00",
+    "league": "Championship",
+    "home_team": "Lincoln",
+    "away_team": "Southampton",
+    "lambda_home": 1.28,
+    "lambda_away": 1.51,
+    "probabilities": {
+      "home_win": 0.306,
+      "draw": 0.283,
+      "away_win": 0.412,
+      "over_25": 0.527,
+      "btts": 0.577
+    },
+    "odds": {
+      "home": 4.1,
+      "draw": 4.07,
+      "away": 1.85,
+      "over_25": 1.7,
+      "btts_yes": 1.62
+    },
+    "top_prediction": "2 (Southampton)",
+    "top_probability": 0.412,
+    "value_edges": [
+      "Home @4,10 (\u002B25 %)",
+      "Draw @4,07 (\u002B15 %)"
+    ]
+  },
+  {
+    "fixture_id": 26349,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "Ligue 2",
+    "home_team": "Reims",
+    "away_team": "Guingamp",
+    "lambda_home": 2.28,
+    "lambda_away": 1.1,
+    "probabilities": {
+      "home_win": 0.627,
+      "draw": 0.213,
+      "away_win": 0.16,
+      "over_25": 0.656,
+      "btts": 0.61
+    },
+    "odds": {
+      "home": 1.7,
+      "draw": 3.9,
+      "away": 5.24,
+      "over_25": 1.8,
+      "btts_yes": 1.73
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.656,
+    "value_edges": [
+      "Home @1,70 (\u002B7 %)",
+      "O2.5 @1,80 (\u002B18 %)",
+      "BTTS @1,73 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26339,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "3. Liga",
+    "home_team": "Preu\u00DFen M\u00FCnster",
+    "away_team": "Havelse",
+    "lambda_home": 2.08,
+    "lambda_away": 1.17,
+    "probabilities": {
+      "home_win": 0.57,
+      "draw": 0.233,
+      "away_win": 0.197,
+      "over_25": 0.631,
+      "btts": 0.617
+    },
+    "odds": {
+      "home": 1.64,
+      "draw": 4.32,
+      "away": 4.76,
+      "over_25": 1.56,
+      "btts_yes": 1.62
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.631,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26342,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "3. Liga",
+    "home_team": "Waldhof Mannheim",
+    "away_team": "Verl",
+    "lambda_home": 1.87,
+    "lambda_away": 1.64,
+    "probabilities": {
+      "home_win": 0.424,
+      "draw": 0.245,
+      "away_win": 0.33,
+      "over_25": 0.68,
+      "btts": 0.693
+    },
+    "odds": {
+      "home": 2.24,
+      "draw": 4.06,
+      "away": 2.8,
+      "over_25": 1.45,
+      "btts_yes": 1.4
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.693,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26345,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "La Liga 2",
+    "home_team": "Real Sociedad II",
+    "away_team": "Tenerife",
+    "lambda_home": 1.25,
+    "lambda_away": 1.12,
+    "probabilities": {
+      "home_win": 0.375,
+      "draw": 0.312,
+      "away_win": 0.313,
+      "over_25": 0.422,
+      "btts": 0.497
+    },
+    "odds": {
+      "home": 2.63,
+      "draw": 3.19,
+      "away": 2.96,
+      "over_25": 2.25,
+      "btts_yes": 1.85
+    },
+    "top_prediction": "1 (Real Sociedad II)",
+    "top_probability": 0.375,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26341,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "3. Liga",
+    "home_team": "TSV Steinbach Haiger",
+    "away_team": "VfB Oldenburg",
+    "lambda_home": 2.19,
+    "lambda_away": 1.31,
+    "probabilities": {
+      "home_win": 0.563,
+      "draw": 0.226,
+      "away_win": 0.211,
+      "over_25": 0.678,
+      "btts": 0.658
+    },
+    "odds": {
+      "home": 1.7,
+      "draw": 4.17,
+      "away": 4.38,
+      "over_25": 1.57,
+      "btts_yes": 1.57
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.678,
+    "value_edges": [
+      "O2.5 @1,57 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26338,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "3. Liga",
+    "home_team": "SSV Jahn Regensburg",
+    "away_team": "MSV Duisburg",
+    "lambda_home": 1.32,
+    "lambda_away": 2.12,
+    "probabilities": {
+      "home_win": 0.223,
+      "draw": 0.232,
+      "away_win": 0.545,
+      "over_25": 0.667,
+      "btts": 0.656
+    },
+    "odds": {
+      "home": 3.79,
+      "draw": 4.1,
+      "away": 1.83,
+      "over_25": 1.58,
+      "btts_yes": 1.53
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.667,
+    "value_edges": [
+      "O2.5 @1,58 (\u002B5 %)"
+    ]
+  },
+  {
+    "fixture_id": 26340,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "3. Liga",
+    "home_team": "SV Meppen",
+    "away_team": "Hannover 96 II",
+    "lambda_home": 1.83,
+    "lambda_away": 1.81,
+    "probabilities": {
+      "home_win": 0.384,
+      "draw": 0.24,
+      "away_win": 0.375,
+      "over_25": 0.705,
+      "btts": 0.714
+    },
+    "odds": {
+      "home": 2.53,
+      "draw": 3.63,
+      "away": 2.64,
+      "over_25": 1.62,
+      "btts_yes": 1.53
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.714,
+    "value_edges": [
+      "O2.5 @1,62 (\u002B14 %)",
+      "BTTS @1,53 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26350,
+    "kickoff": "2026-09-05T12:00:00+00:00",
+    "league": "Ligue 2",
+    "home_team": "Metz",
+    "away_team": "Rodez",
+    "lambda_home": 1.56,
+    "lambda_away": 1.21,
+    "probabilities": {
+      "home_win": 0.437,
+      "draw": 0.281,
+      "away_win": 0.282,
+      "over_25": 0.523,
+      "btts": 0.57
+    },
+    "odds": {
+      "home": 2.1,
+      "draw": 3.6,
+      "away": 3.54,
+      "over_25": 1.81,
+      "btts_yes": 1.62
+    },
+    "top_prediction": "1 (Metz)",
+    "top_probability": 0.437,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26347,
+    "kickoff": "2026-09-05T13:00:00+00:00",
+    "league": "Serie A",
+    "home_team": "Fiorentina",
+    "away_team": "Torino",
+    "lambda_home": 1.22,
+    "lambda_away": 1.03,
+    "probabilities": {
+      "home_win": 0.386,
+      "draw": 0.321,
+      "away_win": 0.293,
+      "over_25": 0.389,
+      "btts": 0.469
+    },
+    "odds": {
+      "home": 1.96,
+      "draw": 3.4,
+      "away": 4.8,
+      "over_25": 2.19,
+      "btts_yes": 1.95
+    },
+    "top_prediction": "1 (Fiorentina)",
+    "top_probability": 0.386,
+    "value_edges": [
+      "Away @4,80 (\u002B41 %)",
+      "Draw @3,40 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26348,
+    "kickoff": "2026-09-05T13:00:00+00:00",
+    "league": "Serie B",
+    "home_team": "Sudtirol",
+    "away_team": "Catanzaro",
+    "lambda_home": 1.04,
+    "lambda_away": 1.01,
+    "probabilities": {
+      "home_win": 0.337,
+      "draw": 0.339,
+      "away_win": 0.324,
+      "over_25": 0.337,
+      "btts": 0.429
+    },
+    "odds": {
+      "home": 2.5,
+      "draw": 3.13,
+      "away": 3.22,
+      "over_25": 2.26,
+      "btts_yes": 1.91
+    },
+    "top_prediction": "Draw",
+    "top_probability": 0.339,
+    "value_edges": [
+      "Draw @3,13 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26333,
+    "kickoff": "2026-09-05T13:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "Bayer Leverkusen",
+    "away_team": "Union Berlin",
+    "lambda_home": 2.38,
+    "lambda_away": 1.19,
+    "probabilities": {
+      "home_win": 0.626,
+      "draw": 0.207,
+      "away_win": 0.167,
+      "over_25": 0.691,
+      "btts": 0.642
+    },
+    "odds": {
+      "home": 1.49,
+      "draw": 5.2,
+      "away": 6.7,
+      "over_25": 1.45,
+      "btts_yes": 1.6
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.691,
+    "value_edges": [
+      "Away @6,70 (\u002B12 %)",
+      "Draw @5,20 (\u002B8 %)"
+    ]
+  },
+  {
+    "fixture_id": 26331,
+    "kickoff": "2026-09-05T13:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "Borussia M\u00F6nchengladbach",
+    "away_team": "SV Elversberg",
+    "lambda_home": 1.79,
+    "lambda_away": 1.28,
+    "probabilities": {
+      "home_win": 0.481,
+      "draw": 0.259,
+      "away_win": 0.26,
+      "over_25": 0.593,
+      "btts": 0.615
+    },
+    "odds": {
+      "home": 1.93,
+      "draw": 3.98,
+      "away": 4.06,
+      "over_25": 1.65,
+      "btts_yes": 1.56
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.615,
+    "value_edges": [
+      "Away @4,06 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26332,
+    "kickoff": "2026-09-05T13:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "1899 Hoffenheim",
+    "away_team": "Borussia Dortmund",
+    "lambda_home": 1.56,
+    "lambda_away": 1.82,
+    "probabilities": {
+      "home_win": 0.319,
+      "draw": 0.25,
+      "away_win": 0.43,
+      "over_25": 0.656,
+      "btts": 0.674
+    },
+    "odds": {
+      "home": 3.04,
+      "draw": 4,
+      "away": 2.31,
+      "over_25": 1.5,
+      "btts_yes": 1.44
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.674,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26334,
+    "kickoff": "2026-09-05T13:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "SC Paderborn 07",
+    "away_team": "SC Freiburg",
+    "lambda_home": 1.51,
+    "lambda_away": 1.55,
+    "probabilities": {
+      "home_win": 0.356,
+      "draw": 0.269,
+      "away_win": 0.375,
+      "over_25": 0.591,
+      "btts": 0.628
+    },
+    "odds": {
+      "home": 3.64,
+      "draw": 3.81,
+      "away": 2.09,
+      "over_25": 1.73,
+      "btts_yes": 1.57
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.628,
+    "value_edges": [
+      "Home @3,64 (\u002B30 %)"
+    ]
+  },
+  {
+    "fixture_id": 26330,
+    "kickoff": "2026-09-05T13:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "Werder Bremen",
+    "away_team": "RB Leipzig",
+    "lambda_home": 1.48,
+    "lambda_away": 2.38,
+    "probabilities": {
+      "home_win": 0.223,
+      "draw": 0.213,
+      "away_win": 0.564,
+      "over_25": 0.74,
+      "btts": 0.71
+    },
+    "odds": {
+      "home": 4.33,
+      "draw": 4.33,
+      "away": 1.81,
+      "over_25": 1.5,
+      "btts_yes": 1.5
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.74,
+    "value_edges": [
+      "O2.5 @1,50 (\u002B11 %)",
+      "BTTS @1,50 (\u002B7 %)"
+    ]
+  },
+  {
+    "fixture_id": 26304,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Doncaster",
+    "away_team": "Plymouth",
+    "lambda_home": 1.4,
+    "lambda_away": 1.42,
+    "probabilities": {
+      "home_win": 0.353,
+      "draw": 0.283,
+      "away_win": 0.364,
+      "over_25": 0.535,
+      "btts": 0.587
+    },
+    "odds": {
+      "home": 2.44,
+      "draw": 3.7,
+      "away": 2.85,
+      "over_25": 1.8,
+      "btts_yes": 1.65
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.587,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26283,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Premier League",
+    "home_team": "Brighton",
+    "away_team": "Leeds",
+    "lambda_home": 1.82,
+    "lambda_away": 1.21,
+    "probabilities": {
+      "home_win": 0.503,
+      "draw": 0.258,
+      "away_win": 0.239,
+      "over_25": 0.582,
+      "btts": 0.6
+    },
+    "odds": {
+      "home": 2.03,
+      "draw": 3.68,
+      "away": 3.98,
+      "over_25": 1.95,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.6,
+    "value_edges": [
+      "O2.5 @1,95 (\u002B13 %)",
+      "BTTS @1,75 (\u002B5 %)"
+    ]
+  },
+  {
+    "fixture_id": 26282,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Premier League",
+    "home_team": "Manchester City",
+    "away_team": "Coventry",
+    "lambda_home": 3.15,
+    "lambda_away": 0.86,
+    "probabilities": {
+      "home_win": 0.811,
+      "draw": 0.126,
+      "away_win": 0.063,
+      "over_25": 0.763,
+      "btts": 0.56
+    },
+    "odds": {
+      "home": 1.2,
+      "draw": 8.61,
+      "away": 15,
+      "over_25": 1.37,
+      "btts_yes": 1.95
+    },
+    "top_prediction": "1 (Manchester City)",
+    "top_probability": 0.811,
+    "value_edges": [
+      "Draw @8,61 (\u002B9 %)",
+      "BTTS @1,95 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26284,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Premier League",
+    "home_team": "Brentford",
+    "away_team": "Sunderland",
+    "lambda_home": 1.84,
+    "lambda_away": 1.14,
+    "probabilities": {
+      "home_win": 0.523,
+      "draw": 0.256,
+      "away_win": 0.221,
+      "over_25": 0.573,
+      "btts": 0.587
+    },
+    "odds": {
+      "home": 1.7,
+      "draw": 4.11,
+      "away": 5.5,
+      "over_25": 1.91,
+      "btts_yes": 1.85
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.587,
+    "value_edges": [
+      "Away @5,50 (\u002B22 %)",
+      "Draw @4,11 (\u002B5 %)",
+      "O2.5 @1,91 (\u002B9 %)",
+      "BTTS @1,85 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26285,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Premier League",
+    "home_team": "Nottingham Forest",
+    "away_team": "Tottenham",
+    "lambda_home": 1.36,
+    "lambda_away": 1.38,
+    "probabilities": {
+      "home_win": 0.352,
+      "draw": 0.288,
+      "away_win": 0.361,
+      "over_25": 0.516,
+      "btts": 0.572
+    },
+    "odds": {
+      "home": 2.46,
+      "draw": 3.58,
+      "away": 3.04,
+      "over_25": 2,
+      "btts_yes": 1.74
+    },
+    "top_prediction": "2 (Tottenham)",
+    "top_probability": 0.361,
+    "value_edges": [
+      "Away @3,04 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26281,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Premier League",
+    "home_team": "Fulham",
+    "away_team": "Crystal Palace",
+    "lambda_home": 1.42,
+    "lambda_away": 1.14,
+    "probabilities": {
+      "home_win": 0.417,
+      "draw": 0.296,
+      "away_win": 0.287,
+      "over_25": 0.471,
+      "btts": 0.532
+    },
+    "odds": {
+      "home": 2.37,
+      "draw": 3.5,
+      "away": 3.25,
+      "over_25": 1.95,
+      "btts_yes": 1.7
+    },
+    "top_prediction": "1 (Fulham)",
+    "top_probability": 0.417,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26290,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "West Ham",
+    "away_team": "Derby",
+    "lambda_home": 2.29,
+    "lambda_away": 0.75,
+    "probabilities": {
+      "home_win": 0.708,
+      "draw": 0.195,
+      "away_win": 0.096,
+      "over_25": 0.585,
+      "btts": 0.486
+    },
+    "odds": {
+      "home": 1.39,
+      "draw": 5.2,
+      "away": 9,
+      "over_25": 1.75,
+      "btts_yes": 2.05
+    },
+    "top_prediction": "1 (West Ham)",
+    "top_probability": 0.708,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26322,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Scunthorpe",
+    "away_team": "Harrogate Town",
+    "lambda_home": 1.3,
+    "lambda_away": 1.27,
+    "probabilities": {
+      "home_win": 0.357,
+      "draw": 0.298,
+      "away_win": 0.344,
+      "over_25": 0.475,
+      "btts": 0.54
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "1 (Scunthorpe)",
+    "top_probability": 0.357,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26323,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Hartlepool",
+    "away_team": "Woking",
+    "lambda_home": 1.34,
+    "lambda_away": 1.26,
+    "probabilities": {
+      "home_win": 0.369,
+      "draw": 0.296,
+      "away_win": 0.335,
+      "over_25": 0.482,
+      "btts": 0.545
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "1 (Hartlepool)",
+    "top_probability": 0.369,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26324,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Barrow",
+    "away_team": "Sutton Utd",
+    "lambda_home": 1.61,
+    "lambda_away": 1.89,
+    "probabilities": {
+      "home_win": 0.319,
+      "draw": 0.244,
+      "away_win": 0.437,
+      "over_25": 0.679,
+      "btts": 0.691
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.691,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26325,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Gateshead",
+    "away_team": "Solihull Moors",
+    "lambda_home": 1.48,
+    "lambda_away": 1.43,
+    "probabilities": {
+      "home_win": 0.374,
+      "draw": 0.277,
+      "away_win": 0.349,
+      "over_25": 0.556,
+      "btts": 0.602
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.602,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26326,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "AFC Fylde",
+    "away_team": "Worthing",
+    "lambda_home": 1.45,
+    "lambda_away": 1.66,
+    "probabilities": {
+      "home_win": 0.322,
+      "draw": 0.265,
+      "away_win": 0.413,
+      "over_25": 0.599,
+      "btts": 0.633
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.633,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26327,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "AFC Hornchurch",
+    "away_team": "Forest Green",
+    "lambda_home": 1.63,
+    "lambda_away": 1.16,
+    "probabilities": {
+      "home_win": 0.468,
+      "draw": 0.276,
+      "away_win": 0.256,
+      "over_25": 0.527,
+      "btts": 0.566
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "1 (AFC Hornchurch)",
+    "top_probability": 0.468,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26328,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Tamworth",
+    "away_team": "Boston United",
+    "lambda_home": 1.43,
+    "lambda_away": 1.22,
+    "probabilities": {
+      "home_win": 0.404,
+      "draw": 0.292,
+      "away_win": 0.305,
+      "over_25": 0.493,
+      "btts": 0.551
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "1 (Tamworth)",
+    "top_probability": 0.404,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26329,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League 43",
+    "home_team": "Wealdstone",
+    "away_team": "Kidderminster Harriers",
+    "lambda_home": 1.88,
+    "lambda_away": 1.17,
+    "probabilities": {
+      "home_win": 0.527,
+      "draw": 0.252,
+      "away_win": 0.221,
+      "over_25": 0.588,
+      "btts": 0.598
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.598,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26294,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "QPR",
+    "away_team": "Middlesbrough",
+    "lambda_home": 1.26,
+    "lambda_away": 1.81,
+    "probabilities": {
+      "home_win": 0.252,
+      "draw": 0.257,
+      "away_win": 0.491,
+      "over_25": 0.593,
+      "btts": 0.613
+    },
+    "odds": {
+      "home": 3.35,
+      "draw": 3.7,
+      "away": 2.25,
+      "over_25": 1.81,
+      "btts_yes": 1.66
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.613,
+    "value_edges": [
+      "Away @2,25 (\u002B10 %)",
+      "O2.5 @1,81 (\u002B7 %)"
+    ]
+  },
+  {
+    "fixture_id": 26293,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Sheffield Utd",
+    "away_team": "Norwich",
+    "lambda_home": 1.25,
+    "lambda_away": 1.13,
+    "probabilities": {
+      "home_win": 0.374,
+      "draw": 0.311,
+      "away_win": 0.315,
+      "over_25": 0.425,
+      "btts": 0.5
+    },
+    "odds": {
+      "home": 2.6,
+      "draw": 3.61,
+      "away": 2.7,
+      "over_25": 1.83,
+      "btts_yes": 1.63
+    },
+    "top_prediction": "1 (Sheffield Utd)",
+    "top_probability": 0.374,
+    "value_edges": [
+      "Draw @3,61 (\u002B12 %)"
+    ]
+  },
+  {
+    "fixture_id": 26295,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Portsmouth",
+    "away_team": "Cardiff",
+    "lambda_home": 1.53,
+    "lambda_away": 1.23,
+    "probabilities": {
+      "home_win": 0.428,
+      "draw": 0.282,
+      "away_win": 0.29,
+      "over_25": 0.522,
+      "btts": 0.571
+    },
+    "odds": {
+      "home": 2.41,
+      "draw": 3.6,
+      "away": 3,
+      "over_25": 1.77,
+      "btts_yes": 1.62
+    },
+    "top_prediction": "1 (Portsmouth)",
+    "top_probability": 0.428,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26298,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Huddersfield",
+    "away_team": "Notts County",
+    "lambda_home": 2.02,
+    "lambda_away": 0.97,
+    "probabilities": {
+      "home_win": 0.603,
+      "draw": 0.235,
+      "away_win": 0.162,
+      "over_25": 0.575,
+      "btts": 0.552
+    },
+    "odds": {
+      "home": 1.7,
+      "draw": 4.07,
+      "away": 5.2,
+      "over_25": 1.87,
+      "btts_yes": 1.82
+    },
+    "top_prediction": "1 (Huddersfield)",
+    "top_probability": 0.603,
+    "value_edges": [
+      "O2.5 @1,87 (\u002B7 %)"
+    ]
+  },
+  {
+    "fixture_id": 26303,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Bradford",
+    "away_team": "Mansfield Town",
+    "lambda_home": 1.77,
+    "lambda_away": 1.12,
+    "probabilities": {
+      "home_win": 0.513,
+      "draw": 0.262,
+      "away_win": 0.224,
+      "over_25": 0.551,
+      "btts": 0.573
+    },
+    "odds": {
+      "home": 1.9,
+      "draw": 3.7,
+      "away": 4.1,
+      "over_25": 1.89,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "1 (Bradford)",
+    "top_probability": 0.513,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26289,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Burnley",
+    "away_team": "Bristol City",
+    "lambda_home": 1.75,
+    "lambda_away": 1.11,
+    "probabilities": {
+      "home_win": 0.51,
+      "draw": 0.265,
+      "away_win": 0.225,
+      "over_25": 0.544,
+      "btts": 0.568
+    },
+    "odds": {
+      "home": 1.91,
+      "draw": 3.8,
+      "away": 4.2,
+      "over_25": 1.87,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "1 (Burnley)",
+    "top_probability": 0.51,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26291,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Millwall",
+    "away_team": "Bolton",
+    "lambda_home": 1.27,
+    "lambda_away": 0.93,
+    "probabilities": {
+      "home_win": 0.425,
+      "draw": 0.319,
+      "away_win": 0.256,
+      "over_25": 0.38,
+      "btts": 0.455
+    },
+    "odds": {
+      "home": 1.95,
+      "draw": 3.7,
+      "away": 4.5,
+      "over_25": 2.16,
+      "btts_yes": 1.97
+    },
+    "top_prediction": "1 (Millwall)",
+    "top_probability": 0.425,
+    "value_edges": [
+      "Away @4,50 (\u002B15 %)",
+      "Draw @3,70 (\u002B18 %)"
+    ]
+  },
+  {
+    "fixture_id": 26292,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "Championship",
+    "home_team": "West Brom",
+    "away_team": "Watford",
+    "lambda_home": 1.71,
+    "lambda_away": 0.91,
+    "probabilities": {
+      "home_win": 0.549,
+      "draw": 0.268,
+      "away_win": 0.183,
+      "over_25": 0.487,
+      "btts": 0.504
+    },
+    "odds": {
+      "home": 1.91,
+      "draw": 3.65,
+      "away": 4.6,
+      "over_25": 1.96,
+      "btts_yes": 1.81
+    },
+    "top_prediction": "1 (West Brom)",
+    "top_probability": 0.549,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26299,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Leicester",
+    "away_team": "Oxford United",
+    "lambda_home": 2.3,
+    "lambda_away": 0.8,
+    "probabilities": {
+      "home_win": 0.7,
+      "draw": 0.197,
+      "away_win": 0.103,
+      "over_25": 0.598,
+      "btts": 0.506
+    },
+    "odds": {
+      "home": 1.75,
+      "draw": 4.04,
+      "away": 4.8,
+      "over_25": 1.83,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "1 (Leicester)",
+    "top_probability": 0.7,
+    "value_edges": [
+      "Home @1,75 (\u002B23 %)",
+      "O2.5 @1,83 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26300,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Reading",
+    "away_team": "Blackpool",
+    "lambda_home": 1.97,
+    "lambda_away": 1.41,
+    "probabilities": {
+      "home_win": 0.494,
+      "draw": 0.243,
+      "away_win": 0.263,
+      "over_25": 0.656,
+      "btts": 0.663
+    },
+    "odds": {
+      "home": 2.05,
+      "draw": 3.76,
+      "away": 3.75,
+      "over_25": 1.82,
+      "btts_yes": 1.67
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.663,
+    "value_edges": [
+      "O2.5 @1,82 (\u002B19 %)",
+      "BTTS @1,67 (\u002B11 %)"
+    ]
+  },
+  {
+    "fixture_id": 26301,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Barnsley",
+    "away_team": "Stevenage",
+    "lambda_home": 1.28,
+    "lambda_away": 1.08,
+    "probabilities": {
+      "home_win": 0.393,
+      "draw": 0.311,
+      "away_win": 0.296,
+      "over_25": 0.421,
+      "btts": 0.495
+    },
+    "odds": {
+      "home": 2.28,
+      "draw": 3.4,
+      "away": 3.36,
+      "over_25": 2.1,
+      "btts_yes": 1.81
+    },
+    "top_prediction": "1 (Barnsley)",
+    "top_probability": 0.393,
+    "value_edges": [
+      "Draw @3,40 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26302,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Burton Albion",
+    "away_team": "Cambridge United",
+    "lambda_home": 1.1,
+    "lambda_away": 1.12,
+    "probabilities": {
+      "home_win": 0.332,
+      "draw": 0.325,
+      "away_win": 0.344,
+      "over_25": 0.382,
+      "btts": 0.467
+    },
+    "odds": {
+      "home": 2.8,
+      "draw": 3.38,
+      "away": 2.7,
+      "over_25": 2.13,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "2 (Cambridge United)",
+    "top_probability": 0.344,
+    "value_edges": [
+      "Draw @3,38 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26305,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Wycombe",
+    "away_team": "Milton Keynes Dons",
+    "lambda_home": 1.41,
+    "lambda_away": 1.42,
+    "probabilities": {
+      "home_win": 0.357,
+      "draw": 0.282,
+      "away_win": 0.361,
+      "over_25": 0.536,
+      "btts": 0.588
+    },
+    "odds": {
+      "home": 2.31,
+      "draw": 3.63,
+      "away": 3,
+      "over_25": 1.8,
+      "btts_yes": 1.63
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.588,
+    "value_edges": [
+      "Away @3,00 (\u002B8 %)"
+    ]
+  },
+  {
+    "fixture_id": 26306,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League One",
+    "home_team": "Luton",
+    "away_team": "Leyton Orient",
+    "lambda_home": 1.94,
+    "lambda_away": 1.22,
+    "probabilities": {
+      "home_win": 0.528,
+      "draw": 0.247,
+      "away_win": 0.225,
+      "over_25": 0.611,
+      "btts": 0.616
+    },
+    "odds": {
+      "home": 1.69,
+      "draw": 4.1,
+      "away": 5.5,
+      "over_25": 1.62,
+      "btts_yes": 1.62
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.616,
+    "value_edges": [
+      "Away @5,50 (\u002B24 %)"
+    ]
+  },
+  {
+    "fixture_id": 26309,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Bristol Rovers",
+    "away_team": "Rotherham",
+    "lambda_home": 2.27,
+    "lambda_away": 1.11,
+    "probabilities": {
+      "home_win": 0.623,
+      "draw": 0.214,
+      "away_win": 0.163,
+      "over_25": 0.656,
+      "btts": 0.612
+    },
+    "odds": {
+      "home": 1.75,
+      "draw": 4.1,
+      "away": 4.48,
+      "over_25": 1.67,
+      "btts_yes": 1.66
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.656,
+    "value_edges": [
+      "Home @1,75 (\u002B9 %)",
+      "O2.5 @1,67 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26310,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Northampton",
+    "away_team": "Newport County",
+    "lambda_home": 1.67,
+    "lambda_away": 0.78,
+    "probabilities": {
+      "home_win": 0.572,
+      "draw": 0.27,
+      "away_win": 0.158,
+      "over_25": 0.444,
+      "btts": 0.455
+    },
+    "odds": {
+      "home": 1.8,
+      "draw": 3.7,
+      "away": 4.95,
+      "over_25": 2,
+      "btts_yes": 1.9
+    },
+    "top_prediction": "1 (Northampton)",
+    "top_probability": 0.572,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26311,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Rochdale",
+    "away_team": "Gillingham",
+    "lambda_home": 1.73,
+    "lambda_away": 0.83,
+    "probabilities": {
+      "home_win": 0.572,
+      "draw": 0.264,
+      "away_win": 0.164,
+      "over_25": 0.472,
+      "btts": 0.479
+    },
+    "odds": {
+      "home": 2.11,
+      "draw": 3.5,
+      "away": 3.5,
+      "over_25": 2.09,
+      "btts_yes": 1.87
+    },
+    "top_prediction": "1 (Rochdale)",
+    "top_probability": 0.572,
+    "value_edges": [
+      "Home @2,11 (\u002B21 %)"
+    ]
+  },
+  {
+    "fixture_id": 26312,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Chesterfield",
+    "away_team": "Barnet",
+    "lambda_home": 1.62,
+    "lambda_away": 1.19,
+    "probabilities": {
+      "home_win": 0.46,
+      "draw": 0.276,
+      "away_win": 0.264,
+      "over_25": 0.533,
+      "btts": 0.573
+    },
+    "odds": {
+      "home": 2.2,
+      "draw": 3.76,
+      "away": 3.3,
+      "over_25": 1.8,
+      "btts_yes": 1.65
+    },
+    "top_prediction": "1 (Chesterfield)",
+    "top_probability": 0.46,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26313,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Swindon Town",
+    "away_team": "Colchester",
+    "lambda_home": 1.2,
+    "lambda_away": 1.43,
+    "probabilities": {
+      "home_win": 0.301,
+      "draw": 0.292,
+      "away_win": 0.407,
+      "over_25": 0.489,
+      "btts": 0.548
+    },
+    "odds": {
+      "home": 2.65,
+      "draw": 3.51,
+      "away": 2.7,
+      "over_25": 1.94,
+      "btts_yes": 1.74
+    },
+    "top_prediction": "2 (Colchester)",
+    "top_probability": 0.407,
+    "value_edges": [
+      "Away @2,70 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26314,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Accrington ST",
+    "away_team": "Crawley Town",
+    "lambda_home": 1.51,
+    "lambda_away": 1.19,
+    "probabilities": {
+      "home_win": 0.431,
+      "draw": 0.286,
+      "away_win": 0.283,
+      "over_25": 0.505,
+      "btts": 0.557
+    },
+    "odds": {
+      "home": 2.06,
+      "draw": 3.7,
+      "away": 3.59,
+      "over_25": 1.8,
+      "btts_yes": 1.67
+    },
+    "top_prediction": "1 (Accrington ST)",
+    "top_probability": 0.431,
+    "value_edges": [
+      "Draw @3,70 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26315,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Crewe",
+    "away_team": "York",
+    "lambda_home": 1.41,
+    "lambda_away": 1.26,
+    "probabilities": {
+      "home_win": 0.388,
+      "draw": 0.291,
+      "away_win": 0.321,
+      "over_25": 0.5,
+      "btts": 0.559
+    },
+    "odds": {
+      "home": 3,
+      "draw": 3.5,
+      "away": 2.55,
+      "over_25": 1.93,
+      "btts_yes": 1.73
+    },
+    "top_prediction": "1 (Crewe)",
+    "top_probability": 0.388,
+    "value_edges": [
+      "Home @3,00 (\u002B17 %)"
+    ]
+  },
+  {
+    "fixture_id": 26316,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Exeter City",
+    "away_team": "Walsall",
+    "lambda_home": 1.24,
+    "lambda_away": 1.57,
+    "probabilities": {
+      "home_win": 0.286,
+      "draw": 0.279,
+      "away_win": 0.435,
+      "over_25": 0.533,
+      "btts": 0.578
+    },
+    "odds": {
+      "home": 2.5,
+      "draw": 3.5,
+      "away": 2.8,
+      "over_25": 1.87,
+      "btts_yes": 1.68
+    },
+    "top_prediction": "2 (Walsall)",
+    "top_probability": 0.435,
+    "value_edges": [
+      "Away @2,80 (\u002B22 %)"
+    ]
+  },
+  {
+    "fixture_id": 26317,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Cheltenham",
+    "away_team": "Grimsby",
+    "lambda_home": 1.21,
+    "lambda_away": 1.59,
+    "probabilities": {
+      "home_win": 0.275,
+      "draw": 0.278,
+      "away_win": 0.446,
+      "over_25": 0.53,
+      "btts": 0.573
+    },
+    "odds": {
+      "home": 3.65,
+      "draw": 3.7,
+      "away": 2.1,
+      "over_25": 1.8,
+      "btts_yes": 1.67
+    },
+    "top_prediction": "2 (Grimsby)",
+    "top_probability": 0.446,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26318,
+    "kickoff": "2026-09-05T14:00:00+00:00",
+    "league": "League Two",
+    "home_team": "Tranmere",
+    "away_team": "Oldham",
+    "lambda_home": 1.16,
+    "lambda_away": 1.35,
+    "probabilities": {
+      "home_win": 0.305,
+      "draw": 0.301,
+      "away_win": 0.394,
+      "over_25": 0.458,
+      "btts": 0.524
+    },
+    "odds": {
+      "home": 3.11,
+      "draw": 3.4,
+      "away": 2.4,
+      "over_25": 2.05,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "2 (Oldham)",
+    "top_probability": 0.394,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26344,
+    "kickoff": "2026-09-05T14:15:00+00:00",
+    "league": "La Liga",
+    "home_team": "Athletic Club",
+    "away_team": "Atletico Madrid",
+    "lambda_home": 1.25,
+    "lambda_away": 1.45,
+    "probabilities": {
+      "home_win": 0.309,
+      "draw": 0.289,
+      "away_win": 0.402,
+      "over_25": 0.504,
+      "btts": 0.56
+    },
+    "odds": {
+      "home": 3.21,
+      "draw": 3.56,
+      "away": 2.4,
+      "over_25": 1.97,
+      "btts_yes": 1.72
+    },
+    "top_prediction": "2 (Atletico Madrid)",
+    "top_probability": 0.402,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26346,
+    "kickoff": "2026-09-05T14:15:00+00:00",
+    "league": "La Liga 2",
+    "home_team": "Sporting Gijon",
+    "away_team": "Girona",
+    "lambda_home": 1.49,
+    "lambda_away": 1.42,
+    "probabilities": {
+      "home_win": 0.377,
+      "draw": 0.277,
+      "away_win": 0.346,
+      "over_25": 0.557,
+      "btts": 0.603
+    },
+    "odds": {
+      "home": 2.87,
+      "draw": 3.34,
+      "away": 2.6,
+      "over_25": 2.04,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.603,
+    "value_edges": [
+      "Home @2,87 (\u002B8 %)",
+      "O2.5 @2,04 (\u002B14 %)",
+      "BTTS @1,75 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26343,
+    "kickoff": "2026-09-05T14:30:00+00:00",
+    "league": "3. Liga",
+    "home_team": "Rot-weiss Essen",
+    "away_team": "FC Viktoria Koln",
+    "lambda_home": 1.94,
+    "lambda_away": 1.68,
+    "probabilities": {
+      "home_win": 0.432,
+      "draw": 0.24,
+      "away_win": 0.328,
+      "over_25": 0.702,
+      "btts": 0.709
+    },
+    "odds": {
+      "home": 1.83,
+      "draw": 4.53,
+      "away": 3.95,
+      "over_25": 1.5,
+      "btts_yes": 1.5
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.709,
+    "value_edges": [
+      "Away @3,95 (\u002B30 %)",
+      "Draw @4,53 (\u002B8 %)",
+      "O2.5 @1,50 (\u002B5 %)",
+      "BTTS @1,50 (\u002B6 %)"
+    ]
+  },
+  {
+    "fixture_id": 26365,
+    "kickoff": "2026-09-05T15:15:00+00:00",
+    "league": "Ligue 1",
+    "home_team": "Lens",
+    "away_team": "Lorient",
+    "lambda_home": 2.06,
+    "lambda_away": 0.93,
+    "probabilities": {
+      "home_win": 0.622,
+      "draw": 0.229,
+      "away_win": 0.149,
+      "over_25": 0.574,
+      "btts": 0.54
+    },
+    "odds": {
+      "home": 1.52,
+      "draw": 4.82,
+      "away": 7,
+      "over_25": 1.7,
+      "btts_yes": 1.82
+    },
+    "top_prediction": "1 (Lens)",
+    "top_probability": 0.622,
+    "value_edges": [
+      "Draw @4,82 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26363,
+    "kickoff": "2026-09-05T15:15:00+00:00",
+    "league": "Serie B",
+    "home_team": "Ascoli",
+    "away_team": "Benevento",
+    "lambda_home": 1.28,
+    "lambda_away": 1.11,
+    "probabilities": {
+      "home_win": 0.388,
+      "draw": 0.31,
+      "away_win": 0.302,
+      "over_25": 0.427,
+      "btts": 0.5
+    },
+    "odds": {
+      "home": 2.41,
+      "draw": 3.26,
+      "away": 3.2,
+      "over_25": 2.09,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "1 (Ascoli)",
+    "top_probability": 0.388,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26361,
+    "kickoff": "2026-09-05T16:00:00+00:00",
+    "league": "Serie A",
+    "home_team": "Inter",
+    "away_team": "Napoli",
+    "lambda_home": 1.8,
+    "lambda_away": 1.09,
+    "probabilities": {
+      "home_win": 0.526,
+      "draw": 0.26,
+      "away_win": 0.214,
+      "over_25": 0.551,
+      "btts": 0.568
+    },
+    "odds": {
+      "home": 1.71,
+      "draw": 3.96,
+      "away": 5.69,
+      "over_25": 2.1,
+      "btts_yes": 2.05
+    },
+    "top_prediction": "1 (Inter)",
+    "top_probability": 0.526,
+    "value_edges": [
+      "Away @5,69 (\u002B22 %)",
+      "O2.5 @2,10 (\u002B16 %)",
+      "BTTS @2,05 (\u002B16 %)"
+    ]
+  },
+  {
+    "fixture_id": 26358,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "La Liga 2",
+    "home_team": "Valladolid",
+    "away_team": "FC Andorra",
+    "lambda_home": 1.3,
+    "lambda_away": 1.64,
+    "probabilities": {
+      "home_win": 0.289,
+      "draw": 0.271,
+      "away_win": 0.44,
+      "over_25": 0.565,
+      "btts": 0.602
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.602,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26353,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "League 43",
+    "home_team": "Boreham Wood",
+    "away_team": "Carlisle",
+    "lambda_home": 1.8,
+    "lambda_away": 1.31,
+    "probabilities": {
+      "home_win": 0.474,
+      "draw": 0.258,
+      "away_win": 0.268,
+      "over_25": 0.601,
+      "btts": 0.624
+    },
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null,
+      "over_25": null,
+      "btts_yes": null
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.624,
+    "value_edges": []
+  },
+  {
+    "fixture_id": 26354,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "Bundesliga",
+    "home_team": "FC Schalke 04",
+    "away_team": "Bayern M\u00FCnchen",
+    "lambda_home": 1.15,
+    "lambda_away": 2.45,
+    "probabilities": {
+      "home_win": 0.152,
+      "draw": 0.199,
+      "away_win": 0.649,
+      "over_25": 0.697,
+      "btts": 0.634
+    },
+    "odds": {
+      "home": 15,
+      "draw": 9.74,
+      "away": 1.2,
+      "over_25": 1.3,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.697,
+    "value_edges": [
+      "Home @15,00 (\u002B128 %)",
+      "Draw @9,74 (\u002B94 %)",
+      "BTTS @1,75 (\u002B11 %)"
+    ]
+  },
+  {
+    "fixture_id": 26359,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "La Liga 2",
+    "home_team": "AD Ceuta FC",
+    "away_team": "Celta de Vigo II",
+    "lambda_home": 1.35,
+    "lambda_away": 1.31,
+    "probabilities": {
+      "home_win": 0.364,
+      "draw": 0.293,
+      "away_win": 0.343,
+      "over_25": 0.496,
+      "btts": 0.556
+    },
+    "odds": {
+      "home": 2.1,
+      "draw": 3.52,
+      "away": 3.65,
+      "over_25": 1.88,
+      "btts_yes": 1.7
+    },
+    "top_prediction": "1 (AD Ceuta FC)",
+    "top_probability": 0.364,
+    "value_edges": [
+      "Away @3,65 (\u002B25 %)"
+    ]
+  },
+  {
+    "fixture_id": 26351,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "Premier League",
+    "home_team": "Hull City",
+    "away_team": "Aston Villa",
+    "lambda_home": 0.9,
+    "lambda_away": 1.53,
+    "probabilities": {
+      "home_win": 0.204,
+      "draw": 0.289,
+      "away_win": 0.507,
+      "over_25": 0.438,
+      "btts": 0.48
+    },
+    "odds": {
+      "home": 4.26,
+      "draw": 3.8,
+      "away": 1.93,
+      "over_25": 1.95,
+      "btts_yes": 1.77
+    },
+    "top_prediction": "2 (Aston Villa)",
+    "top_probability": 0.507,
+    "value_edges": [
+      "Draw @3,80 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26356,
+    "kickoff": "2026-09-05T16:30:00+00:00",
+    "league": "La Liga",
+    "home_team": "Rayo Vallecano",
+    "away_team": "Racing Santander",
+    "lambda_home": 1.5,
+    "lambda_away": 1.35,
+    "probabilities": {
+      "home_win": 0.394,
+      "draw": 0.28,
+      "away_win": 0.327,
+      "over_25": 0.543,
+      "btts": 0.591
+    },
+    "odds": {
+      "home": 2.36,
+      "draw": 3.6,
+      "away": 3.3,
+      "over_25": 1.89,
+      "btts_yes": 1.66
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.591,
+    "value_edges": [
+      "Away @3,30 (\u002B8 %)"
+    ]
+  },
+  {
+    "fixture_id": 26364,
+    "kickoff": "2026-09-05T17:30:00+00:00",
+    "league": "Serie B",
+    "home_team": "Carrarese",
+    "away_team": "Empoli",
+    "lambda_home": 1.22,
+    "lambda_away": 1.3,
+    "probabilities": {
+      "home_win": 0.329,
+      "draw": 0.302,
+      "away_win": 0.37,
+      "over_25": 0.462,
+      "btts": 0.53
+    },
+    "odds": {
+      "home": 2.57,
+      "draw": 3.13,
+      "away": 3.03,
+      "over_25": 2.25,
+      "btts_yes": 1.91
+    },
+    "top_prediction": "2 (Empoli)",
+    "top_probability": 0.37,
+    "value_edges": [
+      "Away @3,03 (\u002B12 %)"
+    ]
+  },
+  {
+    "fixture_id": 26368,
+    "kickoff": "2026-09-05T18:00:00+00:00",
+    "league": "Ligue 2",
+    "home_team": "Saint Etienne",
+    "away_team": "Montpellier",
+    "lambda_home": 2.22,
+    "lambda_away": 1.21,
+    "probabilities": {
+      "home_win": 0.592,
+      "draw": 0.221,
+      "away_win": 0.187,
+      "over_25": 0.665,
+      "btts": 0.636
+    },
+    "odds": {
+      "home": 1.61,
+      "draw": 4.33,
+      "away": 5.8,
+      "over_25": 1.7,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "Over 2.5",
+    "top_probability": 0.665,
+    "value_edges": [
+      "Away @5,80 (\u002B8 %)",
+      "O2.5 @1,70 (\u002B13 %)",
+      "BTTS @1,80 (\u002B14 %)"
+    ]
+  },
+  {
+    "fixture_id": 26355,
+    "kickoff": "2026-09-05T18:30:00+00:00",
+    "league": "2. Bundesliga",
+    "home_team": "Dynamo Dresden",
+    "away_team": "VfL Bochum",
+    "lambda_home": 1.63,
+    "lambda_away": 1.51,
+    "probabilities": {
+      "home_win": 0.393,
+      "draw": 0.264,
+      "away_win": 0.343,
+      "over_25": 0.607,
+      "btts": 0.64
+    },
+    "odds": {
+      "home": 2.17,
+      "draw": 3.8,
+      "away": 3.4,
+      "over_25": 1.66,
+      "btts_yes": 1.55
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.64,
+    "value_edges": [
+      "Away @3,40 (\u002B17 %)"
+    ]
+  },
+  {
+    "fixture_id": 26366,
+    "kickoff": "2026-09-05T18:45:00+00:00",
+    "league": "Ligue 1",
+    "home_team": "Nice",
+    "away_team": "Le Mans",
+    "lambda_home": 1.54,
+    "lambda_away": 1.25,
+    "probabilities": {
+      "home_win": 0.424,
+      "draw": 0.281,
+      "away_win": 0.295,
+      "over_25": 0.529,
+      "btts": 0.577
+    },
+    "odds": {
+      "home": 1.9,
+      "draw": 3.88,
+      "away": 4.33,
+      "over_25": 1.89,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "1 (Nice)",
+    "top_probability": 0.424,
+    "value_edges": [
+      "Away @4,33 (\u002B28 %)",
+      "Draw @3,88 (\u002B9 %)"
+    ]
+  },
+  {
+    "fixture_id": 26367,
+    "kickoff": "2026-09-05T18:45:00+00:00",
+    "league": "Ligue 1",
+    "home_team": "Le Havre",
+    "away_team": "Stade Brestois 29",
+    "lambda_home": 1.27,
+    "lambda_away": 1.09,
+    "probabilities": {
+      "home_win": 0.388,
+      "draw": 0.312,
+      "away_win": 0.3,
+      "over_25": 0.42,
+      "btts": 0.494
+    },
+    "odds": {
+      "home": 2.74,
+      "draw": 3.37,
+      "away": 2.82,
+      "over_25": 2.18,
+      "btts_yes": 1.85
+    },
+    "top_prediction": "1 (Le Havre)",
+    "top_probability": 0.388,
+    "value_edges": [
+      "Home @2,74 (\u002B6 %)",
+      "Draw @3,37 (\u002B5 %)"
+    ]
+  },
+  {
+    "fixture_id": 26362,
+    "kickoff": "2026-09-05T18:45:00+00:00",
+    "league": "Serie A",
+    "home_team": "AS Roma",
+    "away_team": "Atalanta",
+    "lambda_home": 1.84,
+    "lambda_away": 1.04,
+    "probabilities": {
+      "home_win": 0.546,
+      "draw": 0.256,
+      "away_win": 0.198,
+      "over_25": 0.548,
+      "btts": 0.557
+    },
+    "odds": {
+      "home": 1.79,
+      "draw": 3.92,
+      "away": 5.01,
+      "over_25": 1.97,
+      "btts_yes": 1.85
+    },
+    "top_prediction": "1 (AS Roma)",
+    "top_probability": 0.546,
+    "value_edges": [
+      "O2.5 @1,97 (\u002B8 %)"
+    ]
+  },
+  {
+    "fixture_id": 26360,
+    "kickoff": "2026-09-05T19:00:00+00:00",
+    "league": "La Liga 2",
+    "home_team": "Eldense",
+    "away_team": "Mallorca",
+    "lambda_home": 1.09,
+    "lambda_away": 1.79,
+    "probabilities": {
+      "home_win": 0.216,
+      "draw": 0.261,
+      "away_win": 0.523,
+      "over_25": 0.549,
+      "btts": 0.567
+    },
+    "odds": {
+      "home": 3.68,
+      "draw": 3.52,
+      "away": 2.07,
+      "over_25": 2.03,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "2 (Mallorca)",
+    "top_probability": 0.523,
+    "value_edges": [
+      "Away @2,07 (\u002B8 %)",
+      "O2.5 @2,03 (\u002B11 %)"
+    ]
+  },
+  {
+    "fixture_id": 26352,
+    "kickoff": "2026-09-05T19:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Swansea",
+    "away_team": "Wrexham",
+    "lambda_home": 1.54,
+    "lambda_away": 1.35,
+    "probabilities": {
+      "home_win": 0.402,
+      "draw": 0.277,
+      "away_win": 0.321,
+      "over_25": 0.551,
+      "btts": 0.597
+    },
+    "odds": {
+      "home": 2.2,
+      "draw": 3.49,
+      "away": 3.32,
+      "over_25": 2,
+      "btts_yes": 1.75
+    },
+    "top_prediction": "BTTS Yes",
+    "top_probability": 0.597,
+    "value_edges": [
+      "Away @3,32 (\u002B7 %)",
+      "O2.5 @2,00 (\u002B10 %)"
+    ]
+  },
+  {
+    "fixture_id": 26357,
+    "kickoff": "2026-09-05T19:00:00+00:00",
+    "league": "La Liga",
+    "home_team": "Villarreal",
+    "away_team": "Deportivo La Coruna",
+    "lambda_home": 2.39,
+    "lambda_away": 0.88,
+    "probabilities": {
+      "home_win": 0.699,
+      "draw": 0.192,
+      "away_win": 0.109,
+      "over_25": 0.634,
+      "btts": 0.54
+    },
+    "odds": {
+      "home": 1.54,
+      "draw": 4.76,
+      "away": 7,
+      "over_25": 1.78,
+      "btts_yes": 1.88
+    },
+    "top_prediction": "1 (Villarreal)",
+    "top_probability": 0.699,
+    "value_edges": [
+      "Home @1,54 (\u002B8 %)",
+      "O2.5 @1,78 (\u002B13 %)"
+    ]
+  },
+  {
+    "fixture_id": 26370,
+    "kickoff": "2026-09-06T11:00:00+00:00",
+    "league": "Championship",
+    "home_team": "Birmingham",
+    "away_team": "Wolves",
+    "lambda_home": 1.23,
+    "lambda_away": 1.12,
+    "probabilities": {
+      "home_win": 0.372,
+      "draw": 0.313,
+      "away_win": 0.315,
+      "over_25": 0.418,
+      "btts": 0.495
+    },
+    "odds": {
+      "home": 2.93,
+      "draw": 3.3,
+      "away": 2.52,
+      "over_25": 2.1,
+      "btts_yes": 1.8
+    },
+    "top_prediction": "1 (Birmingham)",
+    "top_probability": 0.372,
+    "value_edges": [
+      "Home @2,93 (\u002B9 %)"
+    ]
+  }
+]

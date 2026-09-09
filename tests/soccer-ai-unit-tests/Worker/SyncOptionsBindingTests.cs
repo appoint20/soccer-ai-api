@@ -65,7 +65,7 @@ public class SyncOptionsBindingTests
 
         options.ScheduleUtc.Should().BeEmpty();
         SyncWorker.ParseSchedule(options.ScheduleUtc)
-            .Should().Equal(new TimeOnly(15, 30));
+            .Should().Equal(Enumerable.Range(0, 8).Select(i => new TimeOnly(i * 3, 20)));
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class SyncOptionsBindingTests
     {
         var options = Bind([]);
 
-        options.StartupSyncThresholdHours.Should().Be(20);
+        options.StartupSyncThresholdHours.Should().Be(3);
         options.OddsCaptureIntervalMinutes.Should().Be(30);
     }
 }

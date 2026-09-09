@@ -62,6 +62,8 @@ public static class DailyPickBoardMapper
             Selection = leg.Selection,
             Probability = Math.Round(leg.Probability, 4),
             Odds = leg.Odds,
+            OddsUpdatedAtUtc = fixture?.OddsUpdatedAtUtc,
+            OddsCheckedAtUtc = fixture?.OddsCheckedAtUtc,
             Ev = leg.Ev is null ? null : Math.Round(leg.Ev.Value, 4)
         };
 
@@ -74,6 +76,9 @@ public static class DailyPickBoardMapper
             Match = pick.Fixture.Match,
             Market = pick.Market,
             Selection = pick.Selection,
-            ModelProbability = Math.Round(pick.Probability, 4)
+            ModelProbability = Math.Round(pick.Probability, 4),
+            Odds = pick.Odds,
+            OddsUpdatedAtUtc = pick.Fixture.OddsUpdatedAtUtc,
+            OddsCheckedAtUtc = pick.Fixture.OddsCheckedAtUtc
         };
 }

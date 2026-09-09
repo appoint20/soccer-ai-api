@@ -9,7 +9,8 @@ namespace SoccerAi.Application.Features.Automation;
 
 public class RunDailySyncCommandHandler(
     ITeamSyncService teamSyncService, IFixtureSyncService fixtureSyncService,
-    IMlTrainingService mlTrainingService, IAiSyncService aiSyncService,
+    IMlTrainingService mlTrainingService, IGoalRateTrainingService goalRateTrainingService,
+    IAiSyncService aiSyncService,
     IAnalysisPrecomputeService precomputeService,
     IMediator mediator,
     ILogger<RunDailySyncCommandHandler> logger)
@@ -27,11 +28,33 @@ public class RunDailySyncCommandHandler(
             // 2. Sync Fixtures
             await fixtureSyncService.SyncAllLeaguesAsync(context.Message.Season, cancellationToken);
 
-            // 3. Train ML Models natively via ML.NET
+            // 3. Retrain the hybrid goal-rate model.
+            //
+            // This runs BEFORE the precompute below, so the day's snapshots are
+            // built from a model trained on results up to yesterday. Order
+            // matters: retraining afterwards would leave the published board a
+            // day behind the model that measured it.
+            //
+            // A training failure must not abort the sync — fixtures, odds and
+            // snapshots are all still worth refreshing, and the forecaster keeps
+            // serving the previous model until a run succeeds.
+            try
+            {
+                await goalRateTrainingService.TrainAsync(cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex,
+                    "Goal-rate training failed; continuing with the previously trained model");
+            }
+
+            // 3b. Legacy per-market binary trainer. Nothing loads its output —
+            // kept only so existing tooling and reports do not break.
             await mlTrainingService.TrainModelsAsync(cancellationToken);
 
             // 4. Generate AI Analysis
-            await aiSyncService.SyncUpcomingFixturesAsync(DateTime.UtcNow, false, cancellationToken);
+            await aiSyncService.SyncUpcomingFixturesAsync(
+                DateTime.UtcNow, force: false, cancellationToken: cancellationToken);
 
             // 5. Precompute analysis snapshots so GET /api/analyze is a pure DB read
             var nowUtc = DateTimeOffset.UtcNow;

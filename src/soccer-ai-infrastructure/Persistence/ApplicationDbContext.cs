@@ -22,10 +22,35 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
     public DbSet<ModelForecast> ModelForecasts { get; init; }
+    public DbSet<PredictionSnapshot> PredictionSnapshots { get; init; }
+    public DbSet<FixtureInjury> FixtureInjuries { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<FixtureInjury>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.PlayerName).HasMaxLength(150).IsRequired();
+            entity.Property(i => i.Type).HasMaxLength(60).IsRequired();
+            entity.Property(i => i.Reason).HasMaxLength(200).IsRequired();
+            entity.Ignore(i => i.IsPreMatch);
+            // One row per player per fixture per capture. Re-fetching an
+            // unchanged report must not duplicate it, and the capture loop
+            // relies on this constraint rather than a read-then-write.
+            entity.HasIndex(i => new { i.FixtureId, i.PlayerApiId, i.CapturedAtUtc }).IsUnique();
+            entity.HasIndex(i => i.FixtureId);
+            entity.ToTable("FixtureInjuries");
+        });
+
+        modelBuilder.Entity<PredictionSnapshot>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.ModelVersion).HasMaxLength(200).IsRequired();
+            entity.HasIndex(p => new { p.FixtureId, p.CaptureWindow }).IsUnique();
+            entity.HasIndex(p => p.KickoffUtc);
+            entity.ToTable("PredictionSnapshots");
+        });
 
         // ── Team ─────────────────────────────────────────────────────────────
         modelBuilder.Entity<Team>(entity =>

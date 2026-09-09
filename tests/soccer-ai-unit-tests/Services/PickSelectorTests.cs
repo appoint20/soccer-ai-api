@@ -188,11 +188,17 @@ public class PickSelectorTests
     [Fact]
     public void ConfidencePick_AppliesThePerMarketFloor()
     {
-        // Over 2.5 defaults to a 0.65 floor: baseline v9 measured the
-        // confidence-selected 60-65% band hitting 48.8% against a claimed 63.8%.
+        // The floor is set explicitly rather than leaned on as a default: the
+        // tuned values move whenever the model is retrained, and this test is
+        // about the per-market override being APPLIED, not about its value.
+        var opt = new ConfluenceOptions
+        {
+            ConfidencePickMinProbability = 0.55,
+            ConfidencePickMinProbabilityByMarket = { ["over25"] = 0.65 }
+        };
         var audit = AuditFor(Audit("over25", probability: 0.63));
 
-        PickSelector.Select(Fixture, audit, null, Opt).ConfidencePick.Should().BeNull();
+        PickSelector.Select(Fixture, audit, null, opt).ConfidencePick.Should().BeNull();
     }
 
     [Fact]
@@ -201,11 +207,16 @@ public class PickSelectorTests
         // Over 2.5 is the highest probability but sits under its own floor.
         // Selecting first and filtering second would drop the fixture entirely
         // and lose the perfectly publishable BTTS pick underneath it.
+        var opt = new ConfluenceOptions
+        {
+            ConfidencePickMinProbability = 0.55,
+            ConfidencePickMinProbabilityByMarket = { ["over25"] = 0.65 }
+        };
         var audit = AuditFor(
             Audit("over25", probability: 0.64),
             Audit("btts", probability: 0.62));
 
-        var pick = PickSelector.Select(Fixture, audit, null, Opt).ConfidencePick;
+        var pick = PickSelector.Select(Fixture, audit, null, opt).ConfidencePick;
 
         pick.Should().NotBeNull();
         pick!.Market.Should().Be("btts");
@@ -214,8 +225,12 @@ public class PickSelectorTests
     [Fact]
     public void ConfidencePick_MarketsWithoutAnOverride_UseTheGlobalFloor()
     {
+        // btts has no override, so it must fall through to the global floor;
+        // over25 has one and must use it. Asserted against the configured values
+        // so a retune of the thresholds does not break this.
         PickSelector.ConfidenceFloorFor("btts", Opt).Should().Be(Opt.ConfidencePickMinProbability);
-        PickSelector.ConfidenceFloorFor("over25", Opt).Should().Be(0.65);
+        PickSelector.ConfidenceFloorFor("over25", Opt)
+            .Should().Be(Opt.ConfidencePickMinProbabilityByMarket["over25"]);
     }
 
     [Fact]

@@ -12,7 +12,7 @@ namespace SoccerAi.Worker;
 /// (the old DailySyncBackgroundService used DateTime.Now — server-local time bug).
 ///
 /// Startup behavior: syncs immediately ONLY when the persisted last successful
-/// sync is older than the configured threshold (default 20h); otherwise it
+/// sync is older than the configured threshold (default 3h); otherwise it
 /// waits for the next scheduled UTC time.
 /// </summary>
 public sealed class SyncWorker(
@@ -98,7 +98,7 @@ public sealed class SyncWorker(
         }
 
         if (times.Count == 0)
-            times.Add(new TimeOnly(15, 30)); // safe default, UTC
+            times.AddRange(Enumerable.Range(0, 8).Select(i => new TimeOnly(i * 3, 20)));
 
         times.Sort();
         return times;

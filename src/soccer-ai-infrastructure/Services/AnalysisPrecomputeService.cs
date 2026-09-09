@@ -4,6 +4,7 @@ using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 using SoccerAi.Application.Services.Analysis;
+using SoccerAi.Application.Services.Statistics;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -16,6 +17,8 @@ public sealed class AnalysisPrecomputeService(
     IApplicationDbContext dbContext,
     IMatchAnalysisService analysisService,
     ILeagueTierService leagueTiers,
+    PredictionLedger predictionLedger,
+    IGoalRateForecaster goalRateForecaster,
     ILogger<AnalysisPrecomputeService> logger) : IAnalysisPrecomputeService
 {
     private static readonly string[] Languages = ["en", "de"];
@@ -80,11 +83,15 @@ public sealed class AnalysisPrecomputeService(
         }
 
         var results = new Dictionary<string, MatchAnalysis>();
+        FixtureAnalysisResult? scored = null;
 
         foreach (var lang in Languages)
         {
             // refresh: true → models run fresh; the AI narrative row is still used.
             var analysis = await analysisService.AnalyzeFixtureAsync(fixture, lang, refresh: true, ct);
+            // Probabilities do not vary by language — only the narrative does —
+            // so the ledger below records once from whichever ran first.
+            scored ??= analysis;
             var mapped = AnalysisResponseMapper.MapToResponse(
                 fixture, analysis, homeTeam, awayTeam, analysis.Ai);
             results[lang] = mapped;
@@ -95,7 +102,62 @@ public sealed class AnalysisPrecomputeService(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await RecordPredictionAsync(fixture, scored, ct);
         return results;
+    }
+
+    /// <summary>
+    /// Writes the immutable pre-match probabilities the statistics endpoint
+    /// scores against.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately separate from the snapshot cache written above. That cache
+    /// is rewritten on every recompute, so by the time a fixture finishes it
+    /// holds whatever the model last thought — which cannot answer "what did we
+    /// predict beforehand". The ledger keeps one immutable row per fixture per
+    /// capture window and never updates it.
+    ///
+    /// A failure here must not lose the analysis: the recompute has already
+    /// committed, and an unrecorded fixture costs one row of history, whereas a
+    /// thrown exception costs the whole precompute run.
+    /// </remarks>
+    private async Task RecordPredictionAsync(
+        Fixture fixture, FixtureAnalysisResult? analysis, CancellationToken ct)
+    {
+        if (analysis?.Prediction is not { } prediction) return;
+
+        try
+        {
+            var context = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                league = fixture.LeagueId,
+                // What the gate could actually see when this call was made. A
+                // pick made with no price is a different animal from one made
+                // against a live market, and the statistics have to be able to
+                // tell them apart after the fact.
+                priced = new
+                {
+                    home = fixture.HomeWinOdds,
+                    draw = fixture.DrawOdds,
+                    away = fixture.AwayWinOdds,
+                    over25 = fixture.Over25Odds,
+                    btts = fixture.BttsYesOdds
+                },
+                odds_checked_at = fixture.OddsCheckedAtUtc
+            });
+
+            await predictionLedger.RecordAsync(
+                fixture,
+                prediction,
+                analysis.RawPrediction ?? prediction,
+                goalRateForecaster.ModelVersion ?? "dixon-coles",
+                context,
+                ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "[Precompute] Could not record prediction for fixture {Id}", fixture.Id);
+        }
     }
 
     private async Task UpsertSnapshotAsync(

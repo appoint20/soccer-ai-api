@@ -14,7 +14,7 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("SoccerAi.Application.Entities.BacktestReport", b =>
                 {
@@ -104,6 +104,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double>("AwayGoalAvg")
                         .HasColumnType("REAL");
 
+                    b.Property<double?>("AwayObservedXg")
+                        .HasColumnType("REAL");
+
                     b.Property<int?>("AwayPassesAccurate")
                         .HasColumnType("INTEGER");
 
@@ -149,6 +152,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double>("HomeGoalAvg")
                         .HasColumnType("REAL");
 
+                    b.Property<double?>("HomeObservedXg")
+                        .HasColumnType("REAL");
+
                     b.Property<int?>("HomePassesAccurate")
                         .HasColumnType("INTEGER");
 
@@ -182,6 +188,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double>("HtHomeGoalAvg")
                         .HasColumnType("REAL");
 
+                    b.Property<long?>("InjuriesCheckedAtUtc")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsCurrentSeason")
                         .HasColumnType("INTEGER");
 
@@ -191,8 +200,17 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<int>("LeagueId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("OddsCheckedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("OddsUpdatedAtUtc")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double?>("Over25Odds")
                         .HasColumnType("REAL");
+
+                    b.Property<long?>("StatisticsUpdatedAtUtc")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -332,6 +350,52 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.ToTable("FixtureAnalyses", (string)null);
                 });
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.FixtureInjury", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CapturedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FixtureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("KickoffUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlayerApiId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PlayerName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TeamApiId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixtureId");
+
+                    b.HasIndex("FixtureId", "PlayerApiId", "CapturedAtUtc")
+                        .IsUnique();
+
+                    b.ToTable("FixtureInjuries", (string)null);
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.FixtureOddsQuote", b =>
                 {
                     b.Property<int>("Id")
@@ -357,11 +421,275 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double>("Price")
                         .HasColumnType("REAL");
 
+                    b.Property<long?>("ProviderUpdatedAtUtc")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FixtureId", "Market");
 
                     b.ToTable("FixtureOddsQuotes", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.ModelForecast", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ActualAwayGoals")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ActualHomeGoals")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("BttsProbability")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ExpectedGoals")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("FixtureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("KickoffUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Over25Probability")
+                        .HasColumnType("REAL");
+
+                    b.Property<long>("PredictedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PredictedAwayGoals")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PredictedHomeGoals")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Rationale")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("SettledAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("SystemBttsProbability")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("SystemExpectedGoals")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("SystemOver25Probability")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixtureId", "Model")
+                        .IsUnique();
+
+                    b.HasIndex("Model", "SettledAtUtc");
+
+                    b.HasIndex("SettledAtUtc", "KickoffUtc");
+
+                    b.ToTable("ModelForecasts", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.PredictionSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Away")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Btts")
+                        .HasColumnType("REAL");
+
+                    b.Property<bool>("BttsPick")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CaptureWindow")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CapturedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContextJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Draw")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("FixtureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Goals23")
+                        .HasColumnType("REAL");
+
+                    b.Property<bool>("Goals23Pick")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Home")
+                        .HasColumnType("REAL");
+
+                    b.Property<long>("KickoffUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ModelVersion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Over25")
+                        .HasColumnType("REAL");
+
+                    b.Property<bool>("Over25Pick")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("RawAway")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("RawBtts")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("RawDraw")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("RawGoals23")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("RawHome")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("RawOver25")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Winner")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KickoffUtc");
+
+                    b.HasIndex("FixtureId", "CaptureWindow")
+                        .IsUnique();
+
+                    b.ToTable("PredictionSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.PublishedTicket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BoardDateUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("CombinedProbability")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Ev")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("KellyStake")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("PublishedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("SettledAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("TotalOdds")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("BoardDateUtc", "Status");
+
+                    b.ToTable("PublishedTickets", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.PublishedTicketLeg", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Ev")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("FixtureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("League")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Market")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Odds")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Probability")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("PublishedTicketId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Selection")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixtureId");
+
+                    b.HasIndex("PublishedTicketId");
+
+                    b.ToTable("PublishedTicketLegs", (string)null);
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.SyncState", b =>
@@ -521,9 +849,23 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.PublishedTicketLeg", b =>
+                {
+                    b.HasOne("SoccerAi.Application.Entities.PublishedTicket", null)
+                        .WithMany("Legs")
+                        .HasForeignKey("PublishedTicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.Fixture", b =>
                 {
                     b.Navigation("Analyses");
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.PublishedTicket", b =>
+                {
+                    b.Navigation("Legs");
                 });
 #pragma warning restore 612, 618
         }

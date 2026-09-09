@@ -38,7 +38,7 @@ public sealed class BoolPrediction
     public double Probability { get; init; }
 
     [JsonPropertyName("is_qualified")]
-    public bool IsQualified { get; init; }
+    public bool IsQualified { get; set; }
 
     [JsonPropertyName("reason")]
     public string Reason { get; init; } = string.Empty;
@@ -53,7 +53,7 @@ public sealed class StringPrediction
     public double Confidence { get; init; }
 
     [JsonPropertyName("is_qualified")]
-    public bool IsQualified { get; init; }
+    public bool IsQualified { get; set; }
 
     [JsonPropertyName("reason")]
     public string Reason { get; init; } = string.Empty;
