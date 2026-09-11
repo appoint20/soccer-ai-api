@@ -25,9 +25,19 @@ services:
         value: Production
       - key: AISERVICE__BASEURL
         value: "https://openrouter.ai/api/v1"
+      # Must be a model OpenRouter still lists. The previous default,
+      # stealth/ox-alpha, was a time-limited free preview; when OpenRouter
+      # withdrew it every narrative request failed, and because the pipeline
+      # records a failed narrative as a completed step, nothing reported it.
+      # NOTE: this blueprint value does not update an existing service — change
+      # AISERVICE__DEFAULTMODEL in the dashboard too, or delete it there so
+      # appsettings.json applies.
       - key: AISERVICE__DEFAULTMODEL
-        value: "stealth/ox-alpha"
-      - key: ZAI_API_KEY
+        value: "anthropic/claude-sonnet-5"
+      # An OpenRouter key: starts with "sk-or-v1-". This used to be ZAI_API_KEY,
+      # which the code accepts only as a last-resort fallback — a Z.ai key sent
+      # to OpenRouter is rejected with 401 on every request.
+      - key: OPENROUTER_API_KEY
         sync: false # Set this manually in the Render dashboard
       # Admin key for /api/automation/* (header: X-API-Key). Any string of 16+
       # characters; the app hashes it on startup and never logs it. Added to the
@@ -71,7 +81,9 @@ services:
         value: Production
       - key: API_FOOTBALL_KEY
         sync: false # Set this manually in the Render dashboard
-      - key: ZAI_API_KEY
+      # OpenRouter key ("sk-or-v1-…") for the narrative step — see the note on
+      # the web service. A Z.ai key here fails every request with 401.
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: DATABASE__PROVIDER
         value: Postgres
@@ -123,8 +135,10 @@ services:
       # The AI narrative step. With this off, SyncPipeline skips the step and
       # marks it done, so every fixture's `ai` block stays permanently empty
       # ("", confidence 0, has_decision_layer false) and the app has no analysis
-      # text to show. It also needs ZAI_API_KEY set in the dashboard above —
-      # without a key the service returns empty results silently.
+      # text to show. It also needs OPENROUTER_API_KEY set in the dashboard
+      # above. A missing or wrong-provider key does not stop the sync: every
+      # request fails, the step still completes, and the run is recorded as a
+      # success — so check the worker log for "[OpenRouter]" errors.
       #
       # This costs money per sync: it is an LLM call per upcoming fixture.
       - key: SYNC__GENERATEAINARRATIVES

@@ -61,6 +61,42 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
               ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY")
               ?? Environment.GetEnvironmentVariable("ZAI_API_KEY")
               ?? string.Empty;
+
+        // Said once, loudly, at startup. A wrong key does not stop anything —
+        // every request fails with 401, the narrative step still completes,
+        // and the sync is recorded as a success — so without this line the
+        // only symptom is fixtures quietly missing their text.
+        if (DescribeKeyProblem(_options.BaseUrl, _apiKey) is { } problem)
+            _logger.LogError("[OpenRouter] {Problem}", problem);
+    }
+
+    /// <summary>
+    /// Why the configured key cannot work against the configured endpoint, or
+    /// null when nothing is visibly wrong. Never includes the key itself.
+    /// </summary>
+    /// <remarks>
+    /// The key is resolved from a chain that ends in other providers' variables
+    /// (ANTHROPIC_API_KEY, NVIDIA_API_KEY, ZAI_API_KEY). Against OpenRouter only
+    /// an OpenRouter key works, and those all start with "sk-or-". Production
+    /// was wired to ZAI_API_KEY, whose keys look like "&lt;32 hex&gt;.&lt;16 chars&gt;":
+    /// OpenRouter rejected every request and 142 upcoming fixtures ended up
+    /// with no narrative while every sync reported success.
+    /// </remarks>
+    public static string? DescribeKeyProblem(string? baseUrl, string? apiKey)
+    {
+        var endpoint = string.IsNullOrWhiteSpace(baseUrl) ? "https://openrouter.ai/api/v1" : baseUrl;
+        if (!endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return "No OpenRouter key is configured (set OPENROUTER_API_KEY or AiService:ApiKey). "
+                   + "Match narratives will not be generated.";
+
+        if (!apiKey.Trim().StartsWith("sk-or-", StringComparison.Ordinal))
+            return "The configured AI key is not an OpenRouter key — OpenRouter keys start with \"sk-or-\". "
+                   + "Every narrative request will be rejected with 401. Set OPENROUTER_API_KEY to an OpenRouter key.";
+
+        return null;
     }
 
     private ChatClient CreateClient(string model)
@@ -105,8 +141,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
         if (modelsToTry.Count == 0)
         {
-            modelsToTry.Add("anthropic/claude-3.5-sonnet");
-            modelsToTry.Add("stealth/ox-alpha");
+            modelsToTry.Add("anthropic/claude-sonnet-5");
+            modelsToTry.Add("anthropic/claude-haiku-4.5");
         }
 
         var messages = new List<ChatMessage>
@@ -240,7 +276,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 MaxOutputTokenCount = 8192
             };
 
-            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-3.5-sonnet");
+            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-sonnet-5");
             var completion = await client.CompleteChatAsync(messages, completionOptions);
             var json = ExtractJson(completion.Value.Content[0].Text);
 
@@ -275,7 +311,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 new UserChatMessage(query)
             };
 
-            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-3.5-sonnet");
+            var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-sonnet-5");
             var completion = await client.CompleteChatAsync(messages);
             var json = ExtractJson(completion.Value.Content[0].Text);
 
