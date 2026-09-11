@@ -1,5 +1,5 @@
 {
-  "GeneratedAtUtc": "2026-09-09T21:53:35.996407+00:00",
+  "GeneratedAtUtc": "2026-09-11T01:04:09.938223+00:00",
   "EvaluationProtocol": "Chronological UTC-day folds; disjoint fit/calibration/test; thresholds descriptive only; no odds/EV qualification",
   "FeatureSchema": "goal-rate-causal-v2",
   "PublicationGatePassed": false,
@@ -102,6 +102,12 @@
       "AwayScale": 1.095856
     }
   ],
+  "ErrorsAtHalf": {
+    "BttsFalsePositives": 4497,
+    "BttsPickedButNoBttsOver25": 1000,
+    "BttsPickedButNeither": 3497,
+    "Under25PickedButOver25": 3940
+  },
   "PriorOver25": {
     "Samples": 16261,
     "BaseRate": 51.85,

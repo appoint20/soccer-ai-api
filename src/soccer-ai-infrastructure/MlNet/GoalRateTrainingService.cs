@@ -188,6 +188,7 @@ public sealed class GoalRateTrainingService(
         var actualHome = new List<double>();
         var actualAway = new List<double>();
         var folds = new List<GoalRateFold>();
+        var errors = new GoalRateErrorCounts();
         var dc = featureBuilder.DixonColesSettings;
         for (var fold = 0; fold < _opt.WalkForwardFolds; fold++)
         {
@@ -218,6 +219,16 @@ public sealed class GoalRateTrainingService(
                 var yOver = test[i].GoalsHome + test[i].GoalsAway > 2;
                 var yBtts = test[i].GoalsHome > 0 && test[i].GoalsAway > 0;
                 over.Add((m.Over25, yOver)); btts.Add((m.Btts, yBtts));
+                // Outcome categories identify where to investigate; they do not
+                // claim why a particular team failed to score.
+                if (m.Btts >= .5 && !yBtts)
+                {
+                    errors.BttsFalsePositives++;
+                    if (yOver) errors.BttsPickedButNoBttsOver25++;
+                    else errors.BttsPickedButNeither++;
+                }
+                if (m.Over25 < .5 && yOver) errors.Under25PickedButOver25++;
+
                 priorOver.Add((pOver, yOver)); priorBtts.Add((pBtts, yBtts));
                 dcOver.Add((test[i].DcLambdaSum > 0 ? test[i].DcOver25 : pOver, yOver));
                 dcBtts.Add((test[i].DcLambdaSum > 0 ? test[i].DcBtts : pBtts, yBtts));
@@ -244,7 +255,7 @@ public sealed class GoalRateTrainingService(
             LambdaAwayMean = predictedAway.Count > 0 ? predictedAway.Average() : 0,
             ActualHomeGoalsMean = actualHome.Count > 0 ? actualHome.Average() : 0,
             ActualAwayGoalsMean = actualAway.Count > 0 ? actualAway.Average() : 0,
-            Over25 = overMetrics, Btts = bttsMetrics,
+            Over25 = overMetrics, Btts = bttsMetrics, ErrorsAtHalf = errors,
             PriorOver25 = priorOverMetrics, PriorBtts = priorBttsMetrics,
             DixonColesOver25 = dcOverMetrics, DixonColesBtts = dcBttsMetrics,
             Over25Thresholds = Sweep(over), BttsThresholds = Sweep(btts),
@@ -433,6 +444,7 @@ public sealed record GoalRateEvaluation
     public bool PublicationGatePassed { get; init; }
     public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; does not prove profitability or 80%";
     public IReadOnlyList<GoalRateFold> Folds { get; init; } = [];
+    public GoalRateErrorCounts ErrorsAtHalf { get; init; } = new();
     public MarketEvaluation PriorOver25 { get; init; } = new();
     public MarketEvaluation PriorBtts { get; init; } = new();
     public MarketEvaluation DixonColesOver25 { get; init; } = new();
@@ -511,3 +523,12 @@ public sealed class GoalRateCalibration
 public sealed record GoalRateFold(int FitRows, int CalibrationRows, int TestRows, DateTime FitThroughUtc,
     DateTime CalibrationFromUtc, DateTime CalibrationThroughUtc, DateTime TestFromUtc, DateTime TestThroughUtc,
     double HomeScale, double AwayScale);
+
+/// <summary>Out-of-fold classifications at 0.5, without odds or value gates.</summary>
+public sealed class GoalRateErrorCounts
+{
+    public int BttsFalsePositives { get; set; }
+    public int BttsPickedButNoBttsOver25 { get; set; }
+    public int BttsPickedButNeither { get; set; }
+    public int Under25PickedButOver25 { get; set; }
+}

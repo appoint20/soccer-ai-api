@@ -1,0 +1,9 @@
+{
+  "database": "/Users/shivm/Workspace/soccer-ai-api/src/soccer-ai-api/data/soccer.db",
+  "fixtures": 24481,
+  "finished": 24127,
+  "sha256": "c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec",
+  "exported_at_utc": "2026-09-09T21:37:40.473753+00:00",
+  "earliest": "2021-07-24T13:00:00+00:00",
+  "latest": "2026-08-17T19:30:00+00:00"
+}
