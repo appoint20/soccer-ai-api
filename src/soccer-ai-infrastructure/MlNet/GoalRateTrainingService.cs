@@ -31,11 +31,11 @@ public sealed class GoalRateTrainingService(
     {
         var directory = Path.Combine(Directory.GetCurrentDirectory(), _opt.ModelDirectory);
 
-        if (PublishedGenerationAge(directory) is { } age &&
+        if ((LastEvaluationAge(directory) ?? PublishedGenerationAge(directory)) is { } age &&
             age < TimeSpan.FromHours(_opt.RetrainIntervalHours))
         {
             logger.LogInformation(
-                "[GoalRate] Published generation is {Age:g} old, under the {Interval}h retrain "
+                "[GoalRate] Last training evaluation is {Age:g} old, under the {Interval}h retrain "
                 + "interval — skipping", age, _opt.RetrainIntervalHours);
             return;
         }
@@ -45,6 +45,23 @@ public sealed class GoalRateTrainingService(
         var fixtures = await db.Fixtures.AsNoTracking()
             .Where(f => f.Status == "FT").OrderBy(f => f.Date).ToListAsync(ct);
         await TrainAndEvaluateAsync(fixtures, directory, publish: true, ct);
+    }
+
+    private static TimeSpan? LastEvaluationAge(string directory)
+    {
+        // A rejected model is still a completed training attempt. Otherwise a
+        // failed gate retrains on every worker sync while no new data can help.
+        try
+        {
+            var path = Path.Combine(directory, "goal_rate_evaluation.json");
+            if (!File.Exists(path)) return null;
+            var report = JsonSerializer.Deserialize<GoalRateEvaluation>(File.ReadAllText(path));
+            if (report is null || report.FeatureSchema != GoalRateFeatureBuilder.SchemaVersion ||
+                report.GeneratedAtUtc == default || report.GeneratedAtUtc > DateTimeOffset.UtcNow) return null;
+            return DateTimeOffset.UtcNow - report.GeneratedAtUtc;
+        }
+        catch (IOException) { return null; }
+        catch (JsonException) { return null; }
     }
 
     /// <summary>
@@ -217,6 +234,8 @@ public sealed class GoalRateTrainingService(
         var bttsMetrics = Summarise(btts, bttsThreshold);
         var priorOverMetrics = Summarise(priorOver, overThreshold);
         var priorBttsMetrics = Summarise(priorBtts, bttsThreshold);
+        var dcOverMetrics = Summarise(dcOver, overThreshold);
+        var dcBttsMetrics = Summarise(dcBtts, bttsThreshold);
         return new GoalRateEvaluation
         {
             GeneratedAtUtc = DateTimeOffset.UtcNow, TrainRows = rows.Count, EvaluatedRows = over.Count,
@@ -227,11 +246,13 @@ public sealed class GoalRateTrainingService(
             ActualAwayGoalsMean = actualAway.Count > 0 ? actualAway.Average() : 0,
             Over25 = overMetrics, Btts = bttsMetrics,
             PriorOver25 = priorOverMetrics, PriorBtts = priorBttsMetrics,
-            DixonColesOver25 = Summarise(dcOver, overThreshold), DixonColesBtts = Summarise(dcBtts, bttsThreshold),
+            DixonColesOver25 = dcOverMetrics, DixonColesBtts = dcBttsMetrics,
             Over25Thresholds = Sweep(over), BttsThresholds = Sweep(btts),
             PublicationGatePassed = over.Count >= 500 &&
                 overMetrics.BrierScore <= priorOverMetrics.BrierScore && bttsMetrics.BrierScore <= priorBttsMetrics.BrierScore &&
-                overMetrics.LogLoss <= priorOverMetrics.LogLoss && bttsMetrics.LogLoss <= priorBttsMetrics.LogLoss
+                overMetrics.LogLoss <= priorOverMetrics.LogLoss && bttsMetrics.LogLoss <= priorBttsMetrics.LogLoss &&
+                overMetrics.BrierScore <= dcOverMetrics.BrierScore && bttsMetrics.BrierScore <= dcBttsMetrics.BrierScore &&
+                overMetrics.LogLoss <= dcOverMetrics.LogLoss && bttsMetrics.LogLoss <= dcBttsMetrics.LogLoss
         };
     }
 
@@ -410,7 +431,7 @@ public sealed record GoalRateEvaluation
     public string EvaluationProtocol { get; init; } = "Chronological UTC-day folds; disjoint fit/calibration/test; thresholds descriptive only; no odds/EV qualification";
     public string FeatureSchema { get; init; } = GoalRateFeatureBuilder.SchemaVersion;
     public bool PublicationGatePassed { get; init; }
-    public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior; does not prove profitability or 80%";
+    public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; does not prove profitability or 80%";
     public IReadOnlyList<GoalRateFold> Folds { get; init; } = [];
     public MarketEvaluation PriorOver25 { get; init; } = new();
     public MarketEvaluation PriorBtts { get; init; } = new();

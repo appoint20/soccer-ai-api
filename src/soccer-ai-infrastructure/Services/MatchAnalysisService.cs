@@ -49,18 +49,11 @@ public sealed class MatchAnalysisService(
         if (!refresh && cacheComplete)
         {
             // CACHE HIT: Use stored mathematical probabilities, skip the models
-            prediction = new WeightedPrediction
+            prediction = WeightedPrediction.FromCalibrated(new CalibratedProbabilities
             {
-                HomeProb = aiEntity!.HomeProb,
-                DrawProb = aiEntity.DrawProb,
-                AwayProb = aiEntity.AwayProb,
-                Over25Prob = aiEntity.Over25Prob,
-                BTTSProb = aiEntity.BttsProb,
-                TwoToThreeGoalsProb = aiEntity.Goals23Prob,
-                Confidence = aiEntity.Confidence,
-                MatchWinner = aiEntity.Recommendation.ToLower().Contains("home") ? "home" :
-                             aiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
-            };
+                HomeWin = aiEntity!.HomeProb, Draw = aiEntity.DrawProb, AwayWin = aiEntity.AwayProb,
+                Over25 = aiEntity.Over25Prob, Btts = aiEntity.BttsProb, TwoToThreeGoals = aiEntity.Goals23Prob
+            });
 
             models = new StatisticalModels();
         }
@@ -73,7 +66,7 @@ public sealed class MatchAnalysisService(
                 : null;
 
             models = bundle != null
-                ? new StatisticalModels { Poisson = bundle.Poisson }
+                ? new StatisticalModels { Poisson = bundle.Poisson, ModelVersion = bundle.ModelVersion }
                 : new StatisticalModels();
         }
 
@@ -101,12 +94,12 @@ public sealed class MatchAnalysisService(
         } : new AiAnalysisDto();
 
         // Walk-forward isotonic calibration: RAW probabilities stay in the math
-        // cache (training data); decisions and product output use calibrated.
+        // cache; the immutable ledger supplies training evidence. Product output uses calibrated.
         var rawPrediction = prediction;
         IReadOnlyList<CalibrationTraceEntry>? calibrationTrace = null;
         if (prediction != null)
         {
-            var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct);
+            var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct, models.ModelVersion);
             prediction = calibration.Calibrated;
             calibrationTrace = calibration.Trace;
         }

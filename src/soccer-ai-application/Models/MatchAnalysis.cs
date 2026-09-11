@@ -63,6 +63,13 @@ public sealed class MatchAnalysis
     
     // Flattened Decisions
     public PredictionResponse? Prediction { get; init; }
+    /// <remarks>
+    /// Named explicitly because the global SnakeCaseLower policy renders `H2H`
+    /// as "h2_h" — an unguessable key that no client was reading, which is why
+    /// the head-to-head section never appeared in the app. Clients accept both
+    /// spellings, so this can be corrected without a lockstep release.
+    /// </remarks>
+    [JsonPropertyName("h2h")]
     public HeadToHeadModel? H2H { get; init; }
     public AiAnalysisDto? Ai { get; set; }
 

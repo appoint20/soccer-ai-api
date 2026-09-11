@@ -18,7 +18,6 @@ public sealed class AnalysisPrecomputeService(
     IMatchAnalysisService analysisService,
     ILeagueTierService leagueTiers,
     PredictionLedger predictionLedger,
-    IGoalRateForecaster goalRateForecaster,
     ILogger<AnalysisPrecomputeService> logger) : IAnalysisPrecomputeService
 {
     private static readonly string[] Languages = ["en", "de"];
@@ -57,7 +56,7 @@ public sealed class AnalysisPrecomputeService(
                 await RecomputeAsync(fixture, ct);
                 done++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "[Precompute] Failed for fixture {Id}", fixture.Id);
             }
@@ -96,8 +95,8 @@ public sealed class AnalysisPrecomputeService(
                 fixture, analysis, homeTeam, awayTeam, analysis.Ai);
             results[lang] = mapped;
 
-            // Math cache stores the RAW prediction — it is the isotonic layer's
-            // training data; persisting calibrated values would self-correct.
+            // The mutable response cache and immutable raw calibration evidence
+            // serve different purposes. Only the ledger trains calibration.
             await UpsertSnapshotAsync(fixture.Id, lang, mapped, analysis.RawPrediction ?? analysis.Prediction, ct);
         }
 
@@ -150,7 +149,7 @@ public sealed class AnalysisPrecomputeService(
                 fixture,
                 prediction,
                 analysis.RawPrediction ?? prediction,
-                goalRateForecaster.ModelVersion ?? "dixon-coles",
+                analysis.Models.ModelVersion,
                 context,
                 ct);
         }

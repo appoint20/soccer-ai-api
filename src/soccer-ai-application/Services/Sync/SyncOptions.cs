@@ -22,6 +22,35 @@ public sealed class SyncOptions
     public string[] ScheduleUtc { get; set; } = [];
 
     /// <summary>
+    /// Generates the schedule at a fixed cadence instead of listing every slot.
+    /// 0 (the default) uses <see cref="ScheduleUtc"/> as written.
+    /// </summary>
+    /// <remarks>
+    /// A cadence is one number; the equivalent explicit grid is 24 configuration
+    /// entries, and on Render 24 separate indexed environment variables. That is
+    /// not merely verbose — the binder appends array entries rather than
+    /// replacing them, so a long indexed list is exactly the shape that produced
+    /// the duplicated schedule this class already warns about. One scalar cannot
+    /// half-apply.
+    ///
+    /// The generated slots are still absolute UTC times, not "every N minutes
+    /// since the process started", so a restart or a slow run cannot shift the
+    /// grid or let two runs overlap.
+    ///
+    /// An interval that does not divide 1440 evenly leaves one short or long gap
+    /// where the last slot of the day wraps to the first of the next; every slot
+    /// before that is exact.
+    /// </remarks>
+    public int IntervalMinutes { get; set; }
+
+    /// <summary>
+    /// Minutes past the hour the generated grid is anchored to. Matches the
+    /// hand-written schedule it replaces, which deliberately avoids the top of
+    /// the hour — the busiest moment for the upstream provider.
+    /// </summary>
+    public int IntervalAnchorMinute { get; set; } = 20;
+
+    /// <summary>
     /// On startup, sync immediately ONLY if the last successful sync is older
     /// than this many hours (persisted in the SyncStates table).
     /// </summary>

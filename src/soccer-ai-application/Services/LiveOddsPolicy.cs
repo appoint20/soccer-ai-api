@@ -42,7 +42,8 @@ public static class LiveOddsPolicy
             {
                 Odds = price, MinOdds = floor, Ev = ev, Qualified = qualified,
                 ComboEligible = m.ComboEligible && pricePassed && ev > 0,
-                KellyStake = qualified ? m.KellyStake : null,
+                KellyStake = qualified && price is { } currentOdds && m.KellyFraction is { } fraction
+                    ? ValueMath.FractionalKelly(m.Probability, currentOdds, fraction) : null,
                 GateOutcome = !fresh ? "stale_odds" : price is null ? GateOutcome.AnalysisOnlyNoOdds
                     : !pricePassed ? GateOutcome.BelowMinOdds : !edgePassed ? GateOutcome.BelowMinEdge : m.GateOutcome
             };

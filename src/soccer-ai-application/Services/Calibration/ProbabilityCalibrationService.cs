@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,8 +14,8 @@ namespace SoccerAi.Application.Services.Calibration;
 /// Per-market isotonic maps fitted strictly walk-forward:
 /// the map used for a fixture in ISO week k is trained ONLY on finished
 /// fixtures dated before the Monday of week k. Weekly fits are memoized in a
-/// static cache (models are immutable), so a 30-week backtest fits ~30 times
-/// and live serving refits once per week boundary.
+/// context-scoped cache, isolated by model version and minimum sample count.
+/// Mutable post-result analysis caches are never calibration evidence.
 /// </summary>
 public sealed class ProbabilityCalibrationService(
     IApplicationDbContext dbContext,
@@ -37,27 +38,33 @@ public sealed class ProbabilityCalibrationService(
         public double Predict(double p) => Model?.Predict(p) ?? p;
     }
 
-    private static readonly ConcurrentDictionary<DateTime, Task<Dictionary<string, FittedMarket>>> WeeklyCache = new();
-
-    /// <summary>Test hook: clears the static weekly model cache.</summary>
-    public static void ClearCache() => WeeklyCache.Clear();
+    // Cache per database context: isolated datasets/options/model generations cannot share a fit.
+    private static ConditionalWeakTable<IApplicationDbContext, ConcurrentDictionary<(DateTime Week, int MinSamples, string Version), Task<Dictionary<string, FittedMarket>>>> Caches = new();
+    public static void ClearCache() => Caches = new();
 
     public async Task<CalibrationResult> ApplyAsync(
-        WeightedPrediction raw, DateTimeOffset asOf, CancellationToken ct = default)
+        WeightedPrediction raw, DateTimeOffset asOf, CancellationToken ct = default, string modelVersion = "")
     {
         var opt = options.Value;
         if (!opt.IsotonicEnabled)
             return PassThrough(raw);
 
         var weekStart = IsoWeekStartUtc(asOf);
+        var cache = Caches.GetOrCreateValue(dbContext);
+        var key = (weekStart, opt.IsotonicMinSamples, modelVersion);
         Dictionary<string, FittedMarket> models;
         try
         {
-            models = await WeeklyCache.GetOrAdd(weekStart, ws => FitWeekAsync(ws, opt.IsotonicMinSamples));
+            models = await cache.GetOrAdd(key, k => FitWeekAsync(k.Week, k.MinSamples, k.Version, ct));
+        }
+        catch (OperationCanceledException)
+        {
+            cache.TryRemove(key, out _);
+            throw;
         }
         catch (Exception ex)
         {
-            WeeklyCache.TryRemove(weekStart, out _);
+            cache.TryRemove(key, out _);
             logger.LogError(ex, "Isotonic fit failed for week {Week} — passing through", weekStart);
             return PassThrough(raw);
         }
@@ -111,26 +118,25 @@ public sealed class ProbabilityCalibrationService(
         return new CalibrationResult(calibrated, trace);
     }
 
-    private async Task<Dictionary<string, FittedMarket>> FitWeekAsync(DateTime weekStartUtc, int minSamples)
+    private async Task<Dictionary<string, FittedMarket>> FitWeekAsync(DateTime weekStartUtc, int minSamples, string modelVersion, CancellationToken ct)
     {
         var cutoff = new DateTimeOffset(weekStartUtc, TimeSpan.Zero);
 
-        // Training pairs: finished fixtures strictly before the week start with a
-        // COMPLETE raw math cache (legacy rows with zeroed draw/goals23 excluded).
-        var rows = await (
+        // Analysis caches can be overwritten after results. Only raw forecasts actually
+        // recorded before the fixed T-1h horizon may train a probability map.
+        var candidates = await (
                 from f in dbContext.Fixtures.AsNoTracking()
-                join analysis in dbContext.FixtureAnalyses.AsNoTracking()
-                    on f.Id equals analysis.FixtureId
-                where f.Status == "FT" && f.Date < cutoff &&
-                      analysis.Lang == "en" &&
-                      analysis.HomeProb > 0 && analysis.DrawProb > 0 && analysis.Goals23Prob > 0
-                select new
-                {
-                    analysis.HomeProb, analysis.DrawProb, analysis.AwayProb,
-                    analysis.Over25Prob, analysis.BttsProb, analysis.Goals23Prob,
-                    f.HomeGoal, f.AwayGoal
-                })
-            .ToListAsync();
+                join p in dbContext.PredictionSnapshots.AsNoTracking() on f.Id equals p.FixtureId
+                where f.Status == "FT" && f.Date < cutoff && p.CapturedAtUtc < cutoff && p.KickoffUtc == f.Date &&
+                    (modelVersion == "" || p.ModelVersion == modelVersion)
+                select new { p.FixtureId, p.Id, p.CapturedAtUtc, p.KickoffUtc,
+                    HomeProb = p.RawHome, DrawProb = p.RawDraw, AwayProb = p.RawAway,
+                    Over25Prob = p.RawOver25, BttsProb = p.RawBtts, Goals23Prob = p.RawGoals23,
+                    f.HomeGoal, f.AwayGoal })
+            .ToListAsync(ct);
+        var rows = candidates.Where(p => p.CapturedAtUtc <= p.KickoffUtc.AddHours(-1))
+            .GroupBy(p => p.FixtureId).Select(g => g.OrderByDescending(p => p.CapturedAtUtc).ThenBy(p => p.Id).First())
+            .ToList();
 
         // Side-win model: pool BOTH sides so the map covers the full probability
         // range. Training only on the favourite (max) probability left the model

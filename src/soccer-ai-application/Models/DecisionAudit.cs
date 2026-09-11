@@ -41,6 +41,9 @@ public sealed record MarketRuleAudit(
     /// <summary>Fractional (quarter) Kelly stake as bankroll share (null unless qualified).</summary>
     [JsonPropertyName("kelly_stake")] public double? KellyStake { get; init; }
 
+    /// <summary>Configured Kelly multiplier; absent on older snapshots.</summary>
+    [JsonPropertyName("kelly_fraction")] public double? KellyFraction { get; init; }
+
     /// <summary>Which gate stopped (or passed) this market — see GateOutcome.</summary>
     [JsonPropertyName("gate_outcome")] public string GateOutcome { get; init; } = "";
 

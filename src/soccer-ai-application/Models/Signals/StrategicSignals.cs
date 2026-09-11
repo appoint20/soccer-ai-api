@@ -14,6 +14,14 @@ public sealed record SignalValue(
     public static SignalValue Of(double value, bool flag, string label) =>
         new(Math.Round(value, 4), flag, label);
 
+    /// <summary>
+    /// The placeholder label for a signal with nothing to say. Rule evidence is
+    /// assembled by joining labels, so two of these produced the "n/a; n/a"
+    /// that reached the app. Named here so the audit's evidence normaliser and
+    /// these defaults can never drift apart.
+    /// </summary>
+    public const string NotAvailable = "n/a";
+
     public static SignalValue Unavailable(string reason) => new(0, false, reason);
 }
 

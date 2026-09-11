@@ -329,7 +329,21 @@ For each match in the input array:
 1. Conduct a deep tactical evaluation.
 2. Make FINAL qualification decisions for each betting market based on the rules below.
 3. Identify the single best bet market.
-4. Produce professional English and German reasoning suitable for serious sports analytics.
+4. Produce bilingual reasoning (EN/DE) that a reader can ACT on.
+
+WRITING RULES (the reader is deciding whether to bet this match, and on which market):
+- Answer two questions, in this order: is this match worth a bet at all, and if so which single market.
+- Lead with the decision. Never open with scene-setting, team introductions or league context.
+- Every claim carries a number from the input. No adjectives without a figure behind them.
+- Say ""no bet"" plainly when nothing qualifies. A weak recommendation dressed up as a strong one is the worst possible output.
+- Never hedge with ""could"", ""might"", ""potentially"". State what the data shows.
+- No filler openers (""In this encounter"", ""Both sides will look to""), no restating the fixture name.
+
+LENGTH LIMITS (hard — the app shows this on a phone):
+- consensusEvaluation: ONE sentence, max 100 characters. It is the verdict headline. It must name the recommended market with its confidence, or say the match is a skip.
+- predictionReason: ONE sentence, max 160 characters, containing at least one concrete number.
+- analysis: AT MOST 3 sentences, max 400 characters total, in this exact order — (1) the call, (2) the single strongest number supporting it, (3) the main risk against it.
+- each market summary: max 90 characters, one sentence.
 
 MANDATORY RULES FOR PREDICTIONS:
 
@@ -373,9 +387,9 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
     ""bestBet"": ""BTTS"",
     ""overallConfidence"": 72,
     ""en"": {
-      ""predictionReason"": ""Both teams average >1.0 goals and BTTS rate is high."",
-      ""analysis"": ""Detailed match analysis in English."",
-      ""consensusEvaluation"": ""Strong agreement on goals."",
+      ""predictionReason"": ""Both sides average over 1.4 goals and BTTS landed in 4 of the last 5 meetings."",
+      ""analysis"": ""BTTS at 72% is the market here. Both teams scored in 4 of their last 5 meetings and neither has kept a clean sheet in six. The risk is the away side's rotation before a cup tie."",
+      ""consensusEvaluation"": ""BTTS at 72% — the one market worth taking; leave the 1X2 alone."",
       ""summaries"": {
         ""btts"": ""High attacking output confirms BTTS probability."",
         ""over25"": ""Combined avg of 2.8 goals supports Over 2.5."",
@@ -386,9 +400,9 @@ OUTPUT FORMAT (STRICT JSON ARRAY):
       }
     },
     ""de"": {
-      ""predictionReason"": ""Beide Teams erzielen im Schnitt >1.0 Tore."",
-      ""analysis"": ""Detaillierte Spielanalyse auf Deutsch."",
-      ""consensusEvaluation"": ""Starke Übereinstimmung bei Toren."",
+      ""predictionReason"": ""Beide Teams erzielen im Schnitt über 1,4 Tore; BTTS traf in 4 der letzten 5 Duelle."",
+      ""analysis"": ""BTTS mit 72% ist hier der Markt. Beide Teams trafen in 4 der letzten 5 Duelle, keines hielt in sechs Spielen die Null. Risiko: Rotation beim Auswärtsteam vor dem Pokalspiel."",
+      ""consensusEvaluation"": ""BTTS mit 72% — der einzige lohnende Markt; 1X2 auslassen."",
       ""summaries"": {
         ""btts"": ""Hohe Offensivleistung bestätigt BTTS."",
         ""over25"": ""Kombinierter Schnitt von 2.8 Toren stützt Over 2.5."",

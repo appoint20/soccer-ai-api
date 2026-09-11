@@ -1,0 +1,76 @@
+{
+  "dataset_sha256": "c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec",
+  "split_date": "2025-07-01",
+  "protocol": "Europe/Berlin calendar; Sunday targets, >=3 completed Friday/Saturday games in same league; trigger: fewer than half were Over25/GG; fixed 3h completion allowance. League prior uses only matches before Friday, >=50 history; 20-observation 50% shrinkage. Train an intercept-only logistic offset baseline and intercept+trigger before split; freeze coefficients for later test. No betting odds filter.",
+  "train_matches": 3700,
+  "test_matches": 1027,
+  "markets": {
+    "over25": {
+      "train_trigger_log_odds_coefficient": -0.007459407422047775,
+      "triggered_test_matches": 375,
+      "triggered_test_hit_rate": 0.5093333333333333,
+      "baseline": {
+        "n": 1027,
+        "brier": 0.24999980191023857,
+        "log_loss": 0.6931746514387706,
+        "mean_probability": 0.5014251455804262
+      },
+      "with_weekend_trigger": {
+        "n": 1027,
+        "brier": 0.24999514479172324,
+        "log_loss": 0.693165831276173,
+        "mean_probability": 0.501477514607133
+      },
+      "triggered_baseline": {
+        "n": 375,
+        "brier": 0.2500445713523311,
+        "log_loss": 0.6932678136319375,
+        "mean_probability": 0.4878887243648624
+      },
+      "triggered_pattern": {
+        "n": 375,
+        "brier": 0.2500924512052031,
+        "log_loss": 0.693367234748722,
+        "mean_probability": 0.4867740747773584
+      },
+      "test_brier_difference_pattern_minus_baseline_95_week_cluster_bootstrap": [
+        -5.5920328295008325e-05,
+        4.896931432597621e-05
+      ]
+    },
+    "btts": {
+      "train_trigger_log_odds_coefficient": 0.038300449829198994,
+      "triggered_test_matches": 350,
+      "triggered_test_hit_rate": 0.49714285714285716,
+      "baseline": {
+        "n": 1027,
+        "brier": 0.24767644569601802,
+        "log_loss": 0.6884742690516897,
+        "mean_probability": 0.5348619550946248
+      },
+      "with_weekend_trigger": {
+        "n": 1027,
+        "brier": 0.24794870366684688,
+        "log_loss": 0.6890200682787516,
+        "mean_probability": 0.5347892340676281
+      },
+      "triggered_baseline": {
+        "n": 350,
+        "brier": 0.2488746286463255,
+        "log_loss": 0.6908754416375537,
+        "mean_probability": 0.5311487854295948
+      },
+      "triggered_pattern": {
+        "n": 350,
+        "brier": 0.2493370205009915,
+        "log_loss": 0.6918007076395932,
+        "mean_probability": 0.537330354397493
+      },
+      "test_brier_difference_pattern_minus_baseline_95_week_cluster_bootstrap": [
+        -4.957441333950244e-05,
+        0.0005767479952055727
+      ]
+    }
+  },
+  "limitations": "Observational diagnostic, not causal proof; incomplete league/weekend coverage possible, no lineup/odds or fixture difficulty matching. Chronological split chosen before this run, but not preregistered externally. Intervals are exploratory and unadjusted for two markets. A weekend need not contain all league fixtures or exactly 11 games."
+}

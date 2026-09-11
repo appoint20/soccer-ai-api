@@ -47,6 +47,7 @@ public sealed class ProbabilityPipeline(
 
         return new ProbabilityBundle
         {
+            ModelVersion = "dixon-coles-market-v1",
             Poisson = ToPoissonModel(dc),
             Calibrated = marketCalibration.Calibrate(dc, fixture)
         };
@@ -72,6 +73,7 @@ public sealed class ProbabilityPipeline(
 
             return new ProbabilityBundle
             {
+                ModelVersion = forecast.ModelVersion ?? "hybrid-unknown",
                 Poisson = ToPoissonModel(p),
                 Calibrated = new CalibratedProbabilities
                 {
@@ -87,7 +89,7 @@ public sealed class ProbabilityPipeline(
                 }
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex,
                 "[GoalRate] Hybrid forecast failed for fixture {Id} — using Dixon-Coles", fixture.Id);

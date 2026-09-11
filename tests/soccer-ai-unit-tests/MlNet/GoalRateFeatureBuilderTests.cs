@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Options;
 using SoccerAi.Infrastructure.MlNet;
+using SoccerAi.Infrastructure.MlNet.Models;
 
 namespace soccer_ai_unit_tests.MlNet;
 
@@ -282,5 +283,48 @@ public class GoalRateFeatureBuilderTests
         columns.Should().NotContain("LeagueId");
         columns.Should().Contain("DcOver25");
         columns.Should().Contain("MktBttsImplied");
+    }
+
+    [Fact]
+    public void SameDayAndStoredFutureEloCannotChangeEarlierForecastFeatures()
+    {
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        var fixtures = Season(start, 40);
+        var target = Fx(100, 10, 11, start.AddDays(130), status: "NS");
+        var sameDay = Fx(101, 10, 12, target.Date.AddHours(-2), 0, 0);
+        fixtures.Add(target); fixtures.Add(sameDay);
+        var before = Builder().Build(fixtures).Single(r => r.FixtureId == 100);
+        sameDay.HomeGoal = 10; sameDay.AwayGoal = 9;
+        foreach (var f in fixtures) { f.HomeElo = 9999; f.AwayElo = 10; }
+        var after = Builder().Build(fixtures).Single(r => r.FixtureId == 100);
+        foreach (var column in GoalRateRow.FeatureColumns())
+            typeof(GoalRateRow).GetProperty(column)!.GetValue(after).Should()
+                .Be(typeof(GoalRateRow).GetProperty(column)!.GetValue(before), column);
+    }
+
+    [Fact]
+    public void CalibrationSplitKeepsEntireDaysOutOfTraining()
+    {
+        var rows = Enumerable.Range(0, 40).Select(i => new GoalRateRow {
+            FixtureId = i, Date = new DateTime(2026, 1, 1).AddDays(i / 4).AddHours(i % 4)
+        }).ToList();
+        var (fit, calibration) = GoalRateTrainingService.SplitCalibration(rows, .15);
+        fit.Max(r => r.Date.Date).Should().BeBefore(calibration.Min(r => r.Date.Date));
+        fit.Select(r => r.FixtureId).Intersect(calibration.Select(r => r.FixtureId)).Should().BeEmpty();
+        (fit.Count + calibration.Count).Should().Be(rows.Count);
+    }
+
+    [Fact]
+    public void ArtifactRejectsFeatureDriftAndDatesUsedForCalibration()
+    {
+        var dc = new DixonColesOptions(); var hybrid = new HybridModelOptions();
+        var artifact = new GoalRateArtifact { Features = GoalRateRow.FeatureColumns(), DixonColes = dc,
+            LambdaMin = hybrid.LambdaMin, LambdaMax = hybrid.LambdaMax,
+            TrainingThroughUtc = new DateTime(2026, 1, 1), CalibrationFromUtc = new DateTime(2026, 1, 2),
+            CalibrationThroughUtc = new DateTime(2026, 1, 9) };
+        artifact.Supports(dc, hybrid).Should().BeTrue();
+        artifact.CanScore(new DateTime(2026, 1, 9, 22, 0, 0)).Should().BeFalse();
+        artifact.CanScore(new DateTime(2026, 1, 10)).Should().BeTrue();
+        (artifact with { Features = artifact.Features.Reverse().ToArray() }).Supports(dc, hybrid).Should().BeFalse();
     }
 }

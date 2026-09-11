@@ -435,6 +435,41 @@ public static class ConfluenceRuleEngine
         new(id, RuleResult.Veto, fired, evidence);
 
     /// <summary>
+    /// Strips the bare "n/a" placeholders out of a rule's evidence.
+    /// </summary>
+    /// <remarks>
+    /// Evidence is written as "{home label}; {away label}", and an unmeasured
+    /// signal's label is literally "n/a" — so a fixture missing both sides
+    /// published "n/a; n/a" to the reader as though it were a finding. Dropping
+    /// the placeholders keeps whichever side WAS measured ("n/a; 2 clean sheets
+    /// in last 5 away matches" becomes the away half alone) and empties the
+    /// evidence only when nothing at all was measured.
+    ///
+    /// Done here rather than at each of the ~38 interpolation sites: one choke
+    /// point every rule already passes through cannot be forgotten by the next
+    /// rule someone adds.
+    ///
+    /// Descriptive absences ("No head-to-head history", "Standings not
+    /// available") are left alone — those explain themselves and are worth
+    /// reading.
+    /// </remarks>
+    public static RuleResult NormaliseEvidence(RuleResult rule)
+    {
+        if (string.IsNullOrWhiteSpace(rule.Evidence)) return rule;
+        if (!rule.Evidence.Contains(SignalValue.NotAvailable, StringComparison.OrdinalIgnoreCase))
+            return rule;
+
+        var kept = rule.Evidence
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(part => !part.Equals(SignalValue.NotAvailable, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        // Empty means "nothing was measurable here" — the client says so in
+        // words rather than printing a placeholder that reads like evidence.
+        return rule with { Evidence = string.Join("; ", kept) };
+    }
+
+    /// <summary>
     /// The value gate, in order:
     /// 1. valid odds exist (else analysis only)
     /// 2. odds ≥ MinOdds floor
@@ -448,6 +483,8 @@ public static class ConfluenceRuleEngine
         double? odds, double minOdds, double minEdge,
         List<RuleResult> rules, ConfluenceOptions opt)
     {
+        rules = rules.Select(NormaliseEvidence).ToList();
+
         var probabilityPassed = probability >= threshold;
         var confirms = rules.Count(r => r is { Kind: RuleResult.Confirm, Fired: true });
         var vetoes = rules.Count(r => r is { Kind: RuleResult.Veto, Fired: true });
@@ -487,6 +524,7 @@ public static class ConfluenceRuleEngine
             MinOdds = minOdds,
             Ev = ev,
             MinEdge = minEdge,
+            KellyFraction = opt.KellyFraction,
             KellyStake = qualified && odds is not null
                 ? ValueMath.FractionalKelly(probability, odds.Value, opt.KellyFraction)
                 : null,

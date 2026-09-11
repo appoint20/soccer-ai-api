@@ -79,27 +79,32 @@ services:
         fromDatabase:
           name: soccer-ai-db
           property: connectionString
-      # Eight runs a day. Each one re-prices fixtures and rebuilds snapshots, so
-      # a published pick is at most three hours behind the market rather than
-      # twelve. NOTE: the binder APPENDS array entries rather than replacing
-      # them, so these indices must cover every slot — leaving a gap does not
-      # clear it, it merges with whatever the code default holds.
-      - key: SYNC__SCHEDULEUTC__0
-        value: "00:20"
-      - key: SYNC__SCHEDULEUTC__1
-        value: "03:20"
-      - key: SYNC__SCHEDULEUTC__2
-        value: "06:20"
-      - key: SYNC__SCHEDULEUTC__3
-        value: "09:20"
-      - key: SYNC__SCHEDULEUTC__4
-        value: "12:20"
-      - key: SYNC__SCHEDULEUTC__5
-        value: "15:20"
-      - key: SYNC__SCHEDULEUTC__6
-        value: "18:20"
-      - key: SYNC__SCHEDULEUTC__7
-        value: "21:20"
+      # Hourly. One scalar replaces the 24 indexed SYNC__SCHEDULEUTC__n vars the
+      # same grid would otherwise need — and, because the binder APPENDS array
+      # entries instead of replacing them, a long indexed list is exactly the
+      # shape that produced the duplicated "03:30, 15:30, 03:30, 15:30" schedule
+      # this deployment has already been bitten by. A scalar cannot half-apply.
+      #
+      # IntervalMinutes takes precedence over SCHEDULEUTC, so the stale
+      # SYNC__SCHEDULEUTC__0..7 variables still sitting in the dashboard are
+      # ignored rather than merged. Delete them anyway to keep the dashboard
+      # honest about what is in effect.
+      #
+      # Measured cost: a full pipeline run — every step, narratives included —
+      # took 11.6 min in production (21:19:59 → 21:31:37 on 2026-09-09), so an
+      # hourly slot has ~48 min of headroom. Slots are absolute UTC times, so an
+      # over-running sync skips to the next free slot; it cannot overlap itself.
+      - key: SYNC__INTERVALMINUTES
+        value: "60"
+      # Minutes past the hour. Off the top of the hour on purpose — that is when
+      # the upstream provider is busiest.
+      - key: SYNC__INTERVALANCHORMINUTE
+        value: "20"
+      # Restart catch-up, matched to the cadence: with hourly slots a 3h
+      # threshold means a redeploy can leave the board unrefreshed for three
+      # slots before it decides anything is stale.
+      - key: SYNC__STARTUPSYNCTHRESHOLDHOURS
+        value: "1"
       # Odds cadence. The loop ticks every 30 min but only re-prices a fixture
       # once its newest quote is 3h old — or on every tick inside the last 6h,
       # where lines actually move.
@@ -111,7 +116,7 @@ services:
         value: "6"
       # Model training now runs inside the sync pipeline, between the fixture
       # fetch it learns from and the recompute that serves it. It self-throttles
-      # on the published generation's age, so eight syncs a day still cost one
+      # on the published generation's age, so 24 syncs a day still cost one
       # training run — raise this if the instance struggles with the fit.
       - key: HYBRIDMODEL__RETRAININTERVALHOURS
         value: "24"

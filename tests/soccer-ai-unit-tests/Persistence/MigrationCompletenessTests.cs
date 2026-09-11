@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using SoccerAi.Infrastructure.Persistence;
 
 namespace soccer_ai_unit_tests.Persistence;
@@ -75,5 +77,19 @@ public class MigrationCompletenessTests
 
         db.Model.GetEntityTypes().Should().HaveCount(13,
             "every entity must also be asserted in EveryEntityHasATableAfterMigrating");
+    }
+
+    [Fact]
+    public void PostgresMigrationScriptIncludesPredictionLedgerAndOddsProvenance()
+    {
+        // SQL generation does not connect to a database or apply any changes.
+        using var db = new PostgresDbContext(new DbContextOptionsBuilder<PostgresDbContext>()
+            .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused")
+            .Options);
+        var script = db.GetService<IMigrator>().GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+        script.Should().Contain("CREATE TABLE \"PredictionSnapshots\"");
+        script.Should().Contain("\"OddsUpdatedAtUtc\"");
+        script.Should().Contain("\"OddsCheckedAtUtc\"");
+        script.Should().Contain("\"FixtureInjuries\"");
     }
 }

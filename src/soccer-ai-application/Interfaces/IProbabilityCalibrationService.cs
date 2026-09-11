@@ -20,11 +20,11 @@ public sealed record CalibrationResult(
 /// frequencies using ONLY predictions+outcomes from strictly before the
 /// fixture's ISO week. Below the minimum sample count it is a pass-through.
 /// The EV gate and product output consume the calibrated probabilities; the
-/// math cache keeps storing RAW ones (they are the training data — feeding
-/// calibrated values back would self-referentially double-correct).
+/// immutable prediction ledger stores RAW ones for calibration training;
+/// mutable analysis caches must never be used as historical evidence.
 /// </summary>
 public interface IProbabilityCalibrationService
 {
     Task<CalibrationResult> ApplyAsync(
-        WeightedPrediction raw, DateTimeOffset asOf, CancellationToken ct = default);
+        WeightedPrediction raw, DateTimeOffset asOf, CancellationToken ct = default, string modelVersion = "");
 }

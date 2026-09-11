@@ -1,0 +1,8 @@
+{
+  "tools/ml/export_fixtures.py": "6089330005edb26856efa85c088685e3bfab512e516b2d79b208efecda1bb9e7",
+  "tools/ml/audit_weekend.py": "6756c4177299fdd822e33b41766f9706c257a3368012185dedf3937d9b8d5b01",
+  "src/soccer-ai-infrastructure/MlNet/GoalRateFeatureBuilder.cs": "55fa2c3f05349846a224144053bc7a676c2c626e22815c440b4b43bb29689679",
+  "src/soccer-ai-infrastructure/MlNet/Models/GoalRateRow.cs": "6c17214f4f960839fcb51916f5509d452300445ce8e6780b9b51c9c07a955892",
+  "src/soccer-ai-infrastructure/MlNet/GoalRateTrainingService.cs": "6e8b1d9f1a90d501f24b23c03468758cfe9f3a1685b00e4a69c1620d2558b7fc",
+  "src/soccer-ai-tools/AuditGoalRateCommand.cs": "935ffd9531f4deb0a0fe63a212b498b9b4b0306bfe7887d819389665faf1f3ac"
+}

@@ -66,8 +66,8 @@ public sealed class SyncPipeline(
         /// leave the published board permanently one training run behind.
         ///
         /// Self-throttling: the service skips unless the published generation is
-        /// older than HybridModel:RetrainIntervalHours, so eight syncs a day
-        /// still cost one training run. Like ModelForecasts, a failure here
+        /// older than HybridModel:RetrainIntervalHours, so a sync every hour
+        /// still costs one training run a day. Like ModelForecasts, a failure here
         /// never fails the run.
         /// </remarks>
         public const string TrainModel = "train_model";
