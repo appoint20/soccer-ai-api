@@ -155,6 +155,18 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 var results = JsonSerializer.Deserialize<List<AiBilingualResult>>(json, JsonOpts);
                 if (results != null && results.Count > 0)
                 {
+                    var captured = DateTimeOffset.UtcNow;
+                    string Hash(string text) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                        System.Text.Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
+                    var promptHash = Hash(Prompts.MatchAnalysisSystemPrompt);
+                    foreach (var result in results)
+                    {
+                        var input = items.FirstOrDefault(i => i.FixtureId == result.FixtureId);
+                        result.GeneratedAtUtc = captured;
+                        result.ModelVersion = model;
+                        result.PromptHash = promptHash;
+                        result.InputHash = input is null ? null : Hash(JsonSerializer.Serialize(input, JsonOpts));
+                    }
                     if (isPrimary) Volatile.Write(ref _primaryFailures, 0);
                     _logger.LogInformation("[OpenRouter] Successfully generated match analysis with {Model} for {Count} match(es).", model, results.Count);
                     return results.ToDictionary(r => r.FixtureId);

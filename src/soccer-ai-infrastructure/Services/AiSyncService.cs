@@ -342,6 +342,10 @@ public class AiSyncService(
             existing.AiBestBet            = aiResult.BestBet ?? "";
             existing.AiOverallConfidence  = aiResult.OverallConfidence;
 
+            existing.AiGeneratedAtUtc = aiResult.GeneratedAtUtc;
+            existing.AiModelVersion = aiResult.ModelVersion;
+            existing.AiPromptHash = aiResult.PromptHash;
+            existing.AiInputHash = aiResult.InputHash;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
         }
         else
@@ -377,6 +381,10 @@ public class AiSyncService(
                 AiHomeWinQualified  = aiResult.HomeWinQualified,
                 AiAwayWinQualified  = aiResult.AwayWinQualified,
                 AiBestBet           = aiResult.BestBet ?? "",
+                AiGeneratedAtUtc = aiResult.GeneratedAtUtc,
+                AiModelVersion = aiResult.ModelVersion,
+                AiPromptHash = aiResult.PromptHash,
+                AiInputHash = aiResult.InputHash,
                 AiOverallConfidence = aiResult.OverallConfidence
             });
         }

@@ -58,6 +58,12 @@ public class FixtureAnalysis
     public string AiBestBet { get; set; } = "";
     public int AiOverallConfidence { get; set; }
 
+    /// <summary>Written only when a real language-model response is persisted.</summary>
+    public DateTimeOffset? AiGeneratedAtUtc { get; set; }
+    public string? AiModelVersion { get; set; }
+    public string? AiPromptHash { get; set; }
+    public string? AiInputHash { get; set; }
+
     // ── Precomputed response snapshot (Task 1.5) ──────────────────
     /// <summary>
     /// Full serialized MatchAnalysis response for this fixture+language,

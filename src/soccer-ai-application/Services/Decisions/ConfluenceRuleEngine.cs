@@ -121,6 +121,8 @@ public static class ConfluenceRuleEngine
         AiAnalysisDto? ai,
         ConfluenceOptions opt)
     {
+        m = m with { ModelOnlyQualified = m.Qualified, ModelOnlyComboEligible = m.ComboEligible,
+            AiAgreementMode = opt.AiAgreement.ToString().ToLowerInvariant() };
         var backs = AiBacks(m.Market, prediction, ai);
         if (backs is null || opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Ignore)
             return m with { AiAgrees = backs };
@@ -168,6 +170,10 @@ public static class ConfluenceRuleEngine
             Qualified = stillQualified,
             GateOutcome = outcome,
             AiAgrees = backs,
+            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.Odds is not null && m.Ev > 0 &&
+                vetoes == 0 && confirms >= opt.MinConfirmations,
+            KellyStake = stillQualified && m.Odds is { } odds && m.KellyFraction is { } fraction
+                ? ValueMath.FractionalKelly(m.Probability, odds, fraction) : null,
         };
     }
 

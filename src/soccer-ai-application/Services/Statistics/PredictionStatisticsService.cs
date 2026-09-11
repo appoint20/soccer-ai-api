@@ -11,7 +11,10 @@ public sealed record LeagueStatistic(int LeagueId, string League, int Matches, d
 public sealed record ErrorBreakdown(int BttsPickedButNoBttsOver25, int Under25PickedButOver25, int BttsPickedButNeither, int TotalBttsErrors);
 public sealed record PredictionStatistics(DateTimeOffset From, DateTimeOffset Through, string Method, int EligibleFinishedMatches,
     int ScoredMatches, int MissingPreMatchPrediction, int PendingPredictions, List<MarketStatistic> Markets,
-    List<LeagueStatistic> Leagues, ErrorBreakdown Errors, string[] ModelVersions, string Note);
+    List<LeagueStatistic> Leagues, ErrorBreakdown Errors, string[] ModelVersions, string Note)
+{
+    public AiComparisonStatistic? AiComparison { get; init; }
+}
 
 public sealed class PredictionStatisticsService(IApplicationDbContext db, TimeProvider? clock = null)
 {
@@ -41,7 +44,7 @@ public sealed class PredictionStatisticsService(IApplicationDbContext db, TimePr
             markets, leagues, errors, paired.Select(x => x.Snapshot.ModelVersion).Distinct().Order().ToArray(),
             "Latest recorded forecast at least 1h before the actual kickoff; one per FT fixture. Missing history is excluded, never reconstructed. " +
             "Accuracy scores both Yes and No; precision scores the selected side. League mean weights four targets equally; it is not ROI. " +
-            "95% Wilson intervals are nominal and do not account for dependence or league selection. Error categories describe outcomes, not proven causes.");
+            "95% Wilson intervals are nominal and do not account for dependence or league selection. Error categories describe outcomes, not proven causes.") { AiComparison = AiComparisonStatistics.Build(paired) };
     }
 
     public static List<(Fixture Fixture, PredictionSnapshot Snapshot)> Pair(IEnumerable<Fixture> fixtures, IEnumerable<PredictionSnapshot> records)

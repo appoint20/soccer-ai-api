@@ -1,0 +1,290 @@
+{
+  "GeneratedAtUtc": "2026-09-11T14:09:24.00094+00:00",
+  "InputProvenance": {
+    "CapturedAtUtc": "2026-09-11T13:56:20.268113\u002B00:00",
+    "Source": "local_sqlite_copy",
+    "ReadOnly": true,
+    "Files": {
+      "fixtures": {
+        "Rows": 24481,
+        "Sha256": "c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec"
+      },
+      "ai-analyses": {
+        "Rows": 580,
+        "Sha256": "80774423e900838d1a0f8d8116c884fb78913c2894b293bd4eaf0bb08f4ae742"
+      },
+      "prediction-snapshots": {
+        "Rows": 0,
+        "Sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    }
+  },
+  "Fixtures": 24481,
+  "LatestFinishedKickoff": "2026-05-02T19:05:00+00:00",
+  "AiRows": 580,
+  "AiFixtures": 290,
+  "ImmutablePredictionRows": 0,
+  "ScoredPredictionFixtures": 0,
+  "Combined": {
+    "RecordedFixtures": 0,
+    "ComparableFixtures": 0,
+    "MissingAiFixtures": 0,
+    "UnverifiedAiFixtures": 0,
+    "StaleOddsFixtures": 0,
+    "Markets": [
+      {
+        "Market": "btts",
+        "Opportunities": 0,
+        "ModelOnly": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "Combined": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "StrictAgreement": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "AddedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "RemovedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        }
+      },
+      {
+        "Market": "over25",
+        "Opportunities": 0,
+        "ModelOnly": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "Combined": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "StrictAgreement": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "AddedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "RemovedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        }
+      },
+      {
+        "Market": "under25",
+        "Opportunities": 0,
+        "ModelOnly": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "Combined": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "StrictAgreement": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "AddedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "RemovedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        }
+      },
+      {
+        "Market": "match_winner",
+        "Opportunities": 0,
+        "ModelOnly": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "Combined": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "StrictAgreement": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "AddedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "RemovedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        }
+      },
+      {
+        "Market": "goals_2_3",
+        "Opportunities": 0,
+        "ModelOnly": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "Combined": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "StrictAgreement": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "AddedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        },
+        "RemovedByAi": {
+          "Picks": 0,
+          "Correct": 0,
+          "HitRate": null,
+          "Coverage": null,
+          "Lower95": null,
+          "Upper95": null
+        }
+      }
+    ],
+    "AiModels": [],
+    "Policies": [],
+    "Note": "T-1h recorded snapshots; same AI-available, freshly priced fixtures for all arms. Hit rate is precision of selected markets, not accuracy over every match. Strict agreement is a shadow filter, not necessarily the live policy. AI changes qualification, not probabilities. Added/removed picks expose its marginal decisions. AI saw model inputs, so agreement is not independent evidence. Missing provenance is excluded; no historical AI is regenerated. Intervals are nominal; differences in hit rate also reflect changes in coverage and match difficulty, not causal lift."
+  },
+  "LegacyDiagnostic": {
+    "Fixtures": 2,
+    "Note": "Mutable cache, latest update at least 1h before kickoff; one language per match. Not an immutable record, not ML\u002BAI accuracy, not causal lift. No model/prompt provenance. Qualification=false is abstention, not a prediction of the opposite result.",
+    "Markets": [
+      {
+        "Market": "btts",
+        "Picks": 2,
+        "Correct": 1,
+        "HitRate": 0.5,
+        "Lower95": 0.09453120573423074,
+        "Upper95": 0.9054687942657693
+      },
+      {
+        "Market": "over25",
+        "Picks": 2,
+        "Correct": 1,
+        "HitRate": 0.5,
+        "Lower95": 0.09453120573423074,
+        "Upper95": 0.9054687942657693
+      },
+      {
+        "Market": "under25",
+        "Picks": 0,
+        "Correct": 0,
+        "HitRate": null,
+        "Lower95": null,
+        "Upper95": null
+      }
+    ]
+  }
+}

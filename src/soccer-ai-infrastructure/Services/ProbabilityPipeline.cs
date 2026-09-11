@@ -9,17 +9,15 @@ namespace SoccerAi.Infrastructure.Services;
 /// The single probability flow.
 ///
 /// Preferred path (hybrid):
-///   rolling features → two learned goal rates → Dixon-Coles score matrix.
-/// The learned rates already take the bookmaker's prices as inputs, so the
-/// output is NOT blended with the market again — doing so would count the same
-/// information twice and pull every estimate back toward the price, which is
-/// precisely the flattening that made the previous model's probabilities
-/// cluster in a six-point band.
+///   rolling features → learned goal rates → score distribution, mixed with
+///   classical Dixon-Coles using a weight learned on separate calibration rows.
+/// Older versioned pure-ML generations retain their original distribution.
+/// Prices already enter the learned features; no second odds blend is applied.
 ///
 /// Fallback path (classic), used whenever no trained model is on disk:
 ///   Dixon-Coles → market calibration (Shin-cleaned odds), exactly as before.
 ///
-/// Either way there is no Monte Carlo and no consensus blending.
+/// AI opinions change selection qualification downstream, not these probabilities.
 /// </summary>
 public sealed class ProbabilityPipeline(
     IDixonColesModel dixonColesModel,

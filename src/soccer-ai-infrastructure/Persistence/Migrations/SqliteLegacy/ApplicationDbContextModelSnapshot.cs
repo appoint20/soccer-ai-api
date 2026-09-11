@@ -251,17 +251,29 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<bool>("AiBttsQualified")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("AiGeneratedAtUtc")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("AiGoals23Qualified")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("AiHomeWinQualified")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AiInputHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AiModelVersion")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("AiOver25Qualified")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("AiOverallConfidence")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AiPromptHash")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("AiUnder25Qualified")
                         .HasColumnType("INTEGER");

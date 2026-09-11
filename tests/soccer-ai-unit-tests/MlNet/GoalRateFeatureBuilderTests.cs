@@ -318,11 +318,13 @@ public class GoalRateFeatureBuilderTests
     public void ArtifactRejectsFeatureDriftAndDatesUsedForCalibration()
     {
         var dc = new DixonColesOptions(); var hybrid = new HybridModelOptions();
-        var artifact = new GoalRateArtifact { Features = GoalRateRow.FeatureColumns(), DixonColes = dc,
+        var artifact = new GoalRateArtifact { PredictionRecipe = GoalRateEnsemble.Recipe, Features = GoalRateRow.FeatureColumns(), DixonColes = dc,
             LambdaMin = hybrid.LambdaMin, LambdaMax = hybrid.LambdaMax,
             TrainingThroughUtc = new DateTime(2026, 1, 1), CalibrationFromUtc = new DateTime(2026, 1, 2),
             CalibrationThroughUtc = new DateTime(2026, 1, 9) };
         artifact.Supports(dc, hybrid).Should().BeTrue();
+        (artifact with { PredictionRecipe = "" }).Supports(dc, hybrid).Should().BeTrue();
+        (artifact with { PredictionRecipe = "unknown" }).Supports(dc, hybrid).Should().BeFalse();
         artifact.CanScore(new DateTime(2026, 1, 9, 22, 0, 0)).Should().BeFalse();
         artifact.CanScore(new DateTime(2026, 1, 10)).Should().BeTrue();
         (artifact with { Features = artifact.Features.Reverse().ToArray() }).Supports(dc, hybrid).Should().BeFalse();

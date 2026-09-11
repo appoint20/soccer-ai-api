@@ -72,6 +72,10 @@ public sealed class MatchAnalysisService(
 
         var ai = aiEntity != null ? new AiAnalysisDto
         {
+            GeneratedAtUtc = aiEntity.AiGeneratedAtUtc,
+            ModelVersion = aiEntity.AiModelVersion,
+            PromptHash = aiEntity.AiPromptHash,
+            InputHash = aiEntity.AiInputHash,
             Recommendation = aiEntity.Recommendation ?? "Avoid",
             Confidence = aiEntity.Confidence,
             Reasoning = aiEntity.PredictionReason ?? "",

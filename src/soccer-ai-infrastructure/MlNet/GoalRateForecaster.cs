@@ -79,6 +79,14 @@ public sealed class GoalRateForecaster(
             var h = Math.Clamp(home[i] * state.Calibration.HomeScale, _opt.LambdaMin, _opt.LambdaMax);
             var a = Math.Clamp(away[i] * state.Calibration.AwayScale, _opt.LambdaMin, _opt.LambdaMax);
             var m = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(h, a, _dc.Rho, _dc.MaxGoals));
+            if (state.Manifest.PredictionRecipe == GoalRateEnsemble.Recipe && rows[i].DcLambdaSum > 0)
+            {
+                var dc = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                    rows[i].DcLambdaHome, rows[i].DcLambdaAway, _dc.Rho, _dc.MaxGoals));
+                m = GoalRateEnsemble.Mix(m, dc, state.Calibration.MlWeight);
+                h = state.Calibration.MlWeight * h + (1 - state.Calibration.MlWeight) * rows[i].DcLambdaHome;
+                a = state.Calibration.MlWeight * a + (1 - state.Calibration.MlWeight) * rows[i].DcLambdaAway;
+            }
             output[(int)rows[i].FixtureId] = new GoalRateForecast(h, a, new PoissonProbabilities
             {
                 HomeWin = m.HomeWin, Draw = m.Draw, AwayWin = m.AwayWin,
@@ -133,6 +141,7 @@ public sealed class GoalRateForecaster(
                     throw new InvalidDataException($"Model checksum mismatch: {file}");
             var correction = JsonSerializer.Deserialize<GoalRateCalibration>(await File.ReadAllTextAsync(Path.Combine(dir, "calibration.json"), ct));
             if (correction is null || !double.IsFinite(correction.HomeScale) || !double.IsFinite(correction.AwayScale) ||
+                !double.IsFinite(correction.MlWeight) || correction.MlWeight is < 0 or > 1 ||
                 correction.HomeScale is < 0.5 or > 2 || correction.AwayScale is < 0.5 or > 2 || correction.ValidationRows <= 0)
                 throw new InvalidDataException("Invalid or missing held-out calibration");
             var next = new ModelState(_ml.Model.Load(Path.Combine(dir, "home.zip"), out _),

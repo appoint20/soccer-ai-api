@@ -24,6 +24,11 @@ public sealed record MarketRuleAudit(
     [property: JsonPropertyName("qualified")] bool Qualified,
     [property: JsonPropertyName("rules")] IReadOnlyList<RuleResult> Rules)
 {
+    /// <summary>Counterfactual decision before applying the language-model opinion.</summary>
+    [JsonPropertyName("model_only_qualified")] public bool? ModelOnlyQualified { get; init; }
+    [JsonPropertyName("model_only_combo_eligible")] public bool? ModelOnlyComboEligible { get; init; }
+    [JsonPropertyName("ai_agreement_mode")] public string? AiAgreementMode { get; init; }
+
     // ── Value gate (v3): EV-based qualification ──
 
     /// <summary>Guard-valid odds used for EV; null = analysis only.</summary>

@@ -129,7 +129,12 @@ public sealed class AnalysisPrecomputeService(
         {
             var context = System.Text.Json.JsonSerializer.Serialize(new
             {
+                schema = 2,
                 league = fixture.LeagueId,
+                ai = analysis.Ai,
+                audit = analysis.Decisions.Audit,
+                odds_updated_at = fixture.OddsUpdatedAtUtc,
+                live_odds = SoccerAi.Application.Services.LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow),
                 // What the gate could actually see when this call was made. A
                 // pick made with no price is a different animal from one made
                 // against a live market, and the statistics have to be able to

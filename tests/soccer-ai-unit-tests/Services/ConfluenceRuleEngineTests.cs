@@ -466,7 +466,25 @@ public class AiAgreementTests
 
         audit.Qualified.Should().BeFalse();
         audit.GateOutcome.Should().Be(GateOutcome.AiDisagrees);
+        audit.ModelOnlyQualified.Should().BeTrue();
+        audit.ModelOnlyComboEligible.Should().BeTrue();
+        audit.ComboEligible.Should().BeFalse();
+        audit.KellyStake.Should().BeNull();
+        audit.Probability.Should().Be(Prediction().BTTSProb);
         audit.Rules.Single(r => r.RuleId == "btts_veto_ai_disagrees").Fired.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AiConfirmationPromotionRecomputesComboAndStakeButKeepsCounterfactual()
+    {
+        var signals = new StrategicSignals { H2H = Friendly().H2H };
+        var audit = ConfluenceRuleEngine.Evaluate(Prediction(), signals, Prices, 0,
+            new ConfluenceOptions(), Strat, AiSaying(true)).Markets.Single(m => m.Market == "btts");
+        audit.ModelOnlyQualified.Should().BeFalse();
+        audit.ModelOnlyComboEligible.Should().BeFalse();
+        audit.Qualified.Should().BeTrue(); audit.ComboEligible.Should().BeTrue();
+        audit.KellyStake.Should().BeGreaterThan(0);
+        audit.Probability.Should().Be(Prediction().BTTSProb);
     }
 
     [Fact]

@@ -14,7 +14,7 @@ namespace SoccerAi.Infrastructure.Services;
 /// strategic signal catalog. Output: per-market qualifications with a full
 /// audit trail of which confirm/veto rules fired.
 ///
-/// No scoring engines, no additive boosts, no EV heuristics, no LLM influence.
+/// The LLM can confirm/veto a selection under the configured policy; it never changes probabilities.
 /// </summary>
 public sealed class DecisionService(
     ILeagueTierService leagueTiers,

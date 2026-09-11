@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using SoccerAi.Infrastructure.Persistence;
+using SoccerAi.Application.Entities;
 
 namespace soccer_ai_unit_tests.Persistence;
 
@@ -59,6 +60,19 @@ public class MigrationCompletenessTests
             var act = async () => await count();
             await act.Should().NotThrowAsync($"{name} must have a table created by a migration");
         }
+
+        // Querying a count cannot detect missing columns. Round-trip AI provenance
+        // through the migrated schema and an unrelated cache timestamp update.
+        var generated = new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero);
+        var analysis = new FixtureAnalysis { FixtureId = 101, AiGeneratedAtUtc = generated,
+            AiModelVersion = "model-v1", AiPromptHash = "prompt", AiInputHash = "input" };
+        db.FixtureAnalyses.Add(analysis); await db.SaveChangesAsync();
+        analysis.UpdatedAt = generated.AddHours(3); await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        var stored = await db.FixtureAnalyses.SingleAsync();
+        stored.AiGeneratedAtUtc.Should().Be(generated);
+        stored.AiModelVersion.Should().Be("model-v1");
+        stored.AiPromptHash.Should().Be("prompt"); stored.AiInputHash.Should().Be("input");
     }
 
     [Fact]
@@ -91,5 +105,7 @@ public class MigrationCompletenessTests
         script.Should().Contain("\"OddsUpdatedAtUtc\"");
         script.Should().Contain("\"OddsCheckedAtUtc\"");
         script.Should().Contain("\"FixtureInjuries\"");
+        foreach (var column in new[] { "AiGeneratedAtUtc", "AiModelVersion", "AiPromptHash", "AiInputHash" })
+            script.Should().Contain($"ADD \"{column}\"");
     }
 }

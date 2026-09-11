@@ -32,6 +32,12 @@ public static class Program
         if (args[0].Equals("audit-goal-rate", StringComparison.OrdinalIgnoreCase))
             return await AuditGoalRateCommand.RunAsync(args);
 
+        if (args[0].Equals("export-ml-audit", StringComparison.OrdinalIgnoreCase))
+            return await ExportMlAuditCommand.RunAsync(args);
+
+        if (args[0].Equals("audit-ai-combined", StringComparison.OrdinalIgnoreCase))
+            return await AuditAiCombinedCommand.RunAsync(args);
+
         using var host = BuildHost(args);
 
         var command = args[0].ToLowerInvariant();
@@ -770,6 +776,10 @@ public static class Program
             soccer-ai-tools — operational CLI for soccer-ai-api
 
             Commands:
+              export-ml-audit --settings=appsettings.json --output=directory
+                           Read-only PostgreSQL export; no host or migrations.
+              audit-ai-combined --input-dir=directory --output=report.json
+                           Compare recorded pre-AI decisions and actual AI-assisted choices.
               backtest     [--weeks=10] [--stake=1.0] [--output=backtest_result.json]
                            Run the backtest pipeline and write the JSON report.
               train-ml     [--cutoff=yyyy-MM-dd]
