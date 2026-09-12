@@ -6,7 +6,7 @@ namespace SoccerAi.Application.Interfaces;
 
 public interface IAiAnalysisService
 {
-    Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items);
+    Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items, CancellationToken cancellationToken = default);
     Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates, string? userMessage = null);
     Task<ChatCombinationIntent?> ParseChatIntentAsync(string query);
 }

@@ -35,7 +35,7 @@ public class GetAiCoverageHandler(IApplicationDbContext dbContext)
                 // hold the snapshot, so row existence alone reported full
                 // coverage while nothing had been written by the model.
                 HasAnalysis = dbContext.FixtureAnalyses.Any(
-                    a => a.FixtureId == f.Id && a.Lang == "en" && a.Confidence > 0)
+                    a => a.FixtureId == f.Id && a.Lang == "en" && a.Analysis != null && a.Analysis.Trim() != "")
             })
             .ToListAsync(cancellationToken);
 

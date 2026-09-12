@@ -14,10 +14,13 @@ namespace SoccerAi.Infrastructure.Services;
 public sealed class DisabledAiAnalysisService(
     ILogger<DisabledAiAnalysisService> logger) : IAiAnalysisService
 {
-    public Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items)
+    public Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items, CancellationToken cancellationToken = default)
     {
-        logger.LogWarning("AI analysis requested but the AI service is disabled (no API key) — skipping {Count} items", items.Count);
-        return Task.FromResult(new Dictionary<int, AiBilingualResult>());
+        cancellationToken.ThrowIfCancellationRequested();
+        if (items.Count == 0) return Task.FromResult(new Dictionary<int, AiBilingualResult>());
+        throw new SoccerAi.Application.Exceptions.ExternalApiException("AI narratives",
+            "AI narratives requested but AI is disabled or its provider key is missing. Check AiService:Enabled and the provider credential on the worker.",
+            System.Net.HttpStatusCode.ServiceUnavailable);
     }
 
     public Task<List<CombinationDto>> BuildCombinationsAsync(List<MatchAnalysis> candidates, string? userMessage = null)

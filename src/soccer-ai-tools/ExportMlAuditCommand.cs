@@ -41,7 +41,7 @@ public static class ExportMlAuditCommand
                     SELECT row_to_json(a)::text FROM (
                       SELECT "Id", "FixtureId", "Lang", "HomeProb", "DrawProb", "AwayProb", "Over25Prob", "BttsProb", "Goals23Prob",
                         "AiOver25Qualified", "AiBttsQualified", "AiUnder25Qualified", "AiGoals23Qualified", "AiHomeWinQualified",
-                        "AiAwayWinQualified", "AiOverallConfidence", "CreatedAt", "UpdatedAt", "SnapshotJson"
+                        "AiAwayWinQualified", "AiOverallConfidence", "CreatedAt", "UpdatedAt", "Analysis", "SnapshotJson"
                       FROM "FixtureAnalyses" WHERE "AiOverallConfidence" > 0
                       ORDER BY "FixtureId", "Lang"
                     ) a
@@ -50,6 +50,13 @@ public static class ExportMlAuditCommand
             await using (var exists = new NpgsqlCommand("SELECT to_regclass('\"PredictionSnapshots\"') IS NOT NULL", connection, transaction))
                 if ((bool)(await exists.ExecuteScalarAsync())!)
                     queries["prediction-snapshots"] = "SELECT row_to_json(p)::text FROM \"PredictionSnapshots\" p ORDER BY p.\"Id\"";
+            foreach (var (table, name) in new[] { ("ModelForecasts", "model-forecasts"), ("SyncStates", "sync-state") })
+            {
+                await using var exists = new NpgsqlCommand("SELECT to_regclass(@table) IS NOT NULL", connection, transaction);
+                exists.Parameters.AddWithValue("table", $"\"{table}\"");
+                if ((bool)(await exists.ExecuteScalarAsync())!)
+                    queries[name] = $"SELECT row_to_json(p)::text FROM \"{table}\" p ORDER BY p.\"Id\"";
+            }
             foreach (var (name, sql) in queries)
             {
                 var path = Path.Combine(output, name + ".json"); var count = 0;

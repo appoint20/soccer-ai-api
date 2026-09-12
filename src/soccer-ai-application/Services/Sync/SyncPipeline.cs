@@ -113,7 +113,9 @@ public sealed class SyncPipeline(
         var startIndex = 0;
         var previousRunIncomplete = state.LastCompletedStep != null &&
             (state.LastSuccessfulSyncUtc == null || state.LastSuccessfulSyncUtc < state.LastRunStartedUtc);
-        if (resume && previousRunIncomplete)
+        // A failed final AI step must not pin every later run to AI alone and
+        // stop football data, odds and model refreshes during an AI outage.
+        if (resume && previousRunIncomplete && state.LastCompletedStep != Steps.ModelForecasts)
         {
             startIndex = Array.IndexOf(StepOrder, state.LastCompletedStep) + 1;
             if (startIndex > 0)
@@ -197,9 +199,9 @@ public sealed class SyncPipeline(
         catch (ExternalApiException ex)
         {
             // Rate limit / quota: stop cleanly, resume at the next scheduled run.
-            state.LastError = $"API limit: {ex.Message}";
+            state.LastError = $"{ex.ServiceName}: {ex.Message}";
             await db.SaveChangesAsync(CancellationToken.None);
-            logger.LogWarning(ex, "[Sync] Aborted by external API limit — will resume next run");
+            logger.LogWarning(ex, "[Sync] External service failed — incomplete work will retry next run");
             return false;
         }
         catch (OperationCanceledException)

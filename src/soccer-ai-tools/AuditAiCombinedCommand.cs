@@ -32,7 +32,7 @@ public static class AuditAiCombinedCommand
                 throw new InvalidDataException($"Export row count mismatch for {name}");
         }
         async Task<List<T>> Read<T>(string name) => File.Exists(Path.Combine(input, name + ".json"))
-            ? JsonSerializer.Deserialize<List<T>>(await File.ReadAllTextAsync(Path.Combine(input, name + ".json"))) ?? [] : [];
+            ? JsonSerializer.Deserialize<List<T>>(await File.ReadAllTextAsync(Path.Combine(input, name + ".json")), FootballAuditJson.Options) ?? [] : [];
         var fixtures = await Read<Fixture>("fixtures"); var ai = await Read<FixtureAnalysis>("ai-analyses");
         var snapshots = await Read<PredictionSnapshot>("prediction-snapshots");
         var pairs = PredictionStatisticsService.Pair(fixtures, snapshots);

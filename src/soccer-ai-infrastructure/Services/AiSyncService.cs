@@ -5,6 +5,7 @@ using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 
 using SoccerAi.Application.Exceptions;
+using SoccerAi.Application.Services.Analysis;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -65,12 +66,13 @@ public class AiSyncService(
         var toAnalyze = new List<AiBatchItem>();
         var rawByFixture = new Dictionary<int, WeightedPrediction>();
         var skippedCount = 0;
+        var failedCount = 0;
 
         // 2. Filter BEFORE heavy ML prediction
         foreach (var fixture in fixtures)
         {
             var alreadyAnalyzedCount = await dbContext.FixtureAnalyses
-                .CountAsync(a => a.FixtureId == fixture.Id && (a.Lang == "en" || a.Lang == "de") && a.Confidence > 0, cancellationToken);
+                .CountAsync(a => a.FixtureId == fixture.Id && (a.Lang == "en" || a.Lang == "de") && a.Analysis != null && a.Analysis.Trim() != "", cancellationToken);
 
             if (!force && alreadyAnalyzedCount >= 2)
             {
@@ -125,6 +127,7 @@ public class AiSyncService(
                     logger.LogWarning(
                         "[AiSync] Fixture {FixtureId} produced no model probabilities — the narrative would be "
                         + "written from stats alone. Skipping.", fixture.Id);
+                    failedCount++;
                     toAnalyze.RemoveAt(toAnalyze.Count - 1);
                     continue;
                 }
@@ -134,8 +137,10 @@ public class AiSyncService(
                     logger.LogWarning("[AiSync] Fixture {FixtureId} has ZERO odds. AI analysis might be less accurate.", fixture.Id);
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch (Exception ex)
             {
+                failedCount++;
                 logger.LogError(ex, "[AiSync] Failed to run ML prediction for fixture {FixtureId}.", fixture.Id);
             }
         }
@@ -144,6 +149,8 @@ public class AiSyncService(
 
         if (toAnalyze.Count == 0)
         {
+            if (failedCount > 0)
+                throw new ExternalApiException("AI narratives", $"AI preparation failed for {failedCount} fixtures; no narratives generated.");
             logger.LogInformation("[AiSync] No matches remaining after filter. Sync complete.");
             return;
         }
@@ -158,14 +165,17 @@ public class AiSyncService(
             {
                 logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", i + 1, chunkList.Count);
                 
-                var results = await aiService.AnalyzeBatchAsync(chunkList);
+                var results = await aiService.AnalyzeBatchAsync(chunkList, cancellationToken);
+                if (results.Count != 1 || !results.TryGetValue(chunkList[0].FixtureId, out var candidate) ||
+                    AiNarrativeIntegrity.InvalidResult(candidate) is not null)
+                    throw new ExternalApiException("AI narratives", "AI returned no complete bilingual analysis for the requested fixture.");
                 
                 foreach (var (fixtureId, bilingualResult) in results)
                 {
                     logger.LogInformation("[AiSync] Ingesting result for Fixture {Id}: {Rec}", fixtureId, bilingualResult.Recommendation);
                     
                     // Find the original analysis to get the math probs
-                    var originalAnalysis = toAnalyze.FirstOrDefault(x => x.FixtureId == fixtureId);
+                    var originalAnalysis = chunkList.FirstOrDefault(x => x.FixtureId == fixtureId);
                     if (originalAnalysis == null)
                     {
                         logger.LogWarning("[AiSync] CRITICAL: AI returned FixtureId {Id} which was NOT in the source batch! Skipping.", fixtureId);
@@ -212,17 +222,22 @@ public class AiSyncService(
                 // Rate limiting to respect quota
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
             }
-            catch (Exception qEx) when (qEx.Message.Contains("quota"))
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+            catch (ExternalApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized
+                or System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.PaymentRequired
+                or System.Net.HttpStatusCode.TooManyRequests or System.Net.HttpStatusCode.ServiceUnavailable)
             {
-                logger.LogCritical(qEx, "[AiSync] ABORTING SYNC: Quota exceeded.");
-                return; 
+                throw; // Surface account/configuration failures to persisted sync status.
             }
             catch (Exception ex)
             {
+                failedCount++;
                 logger.LogError(ex, "[AiSync] Error processing batch starting at index {Idx}", i);
             }
         }
 
+        if (failedCount > 0)
+            throw new ExternalApiException("AI narratives", $"AI analysis incomplete: {totalProcessed} persisted, {failedCount} failed. Missing fixtures will retry next sync.");
         logger.LogInformation("All batches completed. Total matches analyzed and persisted: {Total}", totalProcessed);
     }
 
@@ -230,14 +245,12 @@ public class AiSyncService(
     {
         logger.LogInformation("Running targeted AI sync for Fixture {FixtureId}.", fixtureId);
 
-        // Confidence > 0 is what separates a real narrative from the empty row
-        // AnalysisPrecomputeService creates to hold a snapshot. Counting rows
-        // alone made every precomputed fixture look analysed, so a targeted
-        // sync could never fill one in.
+        // A narrative must contain text. Confidence metadata alone can survive
+        // a malformed response and must not suppress regeneration forever.
         var langCount = await dbContext.FixtureAnalyses
             .CountAsync(a => a.FixtureId == fixtureId
                              && (a.Lang == "en" || a.Lang == "de")
-                             && a.Confidence > 0, cancellationToken);
+                             && a.Analysis != null && a.Analysis.Trim() != "", cancellationToken);
 
         if (!force && langCount >= 2)
         {
@@ -251,6 +264,9 @@ public class AiSyncService(
             logger.LogWarning("Fixture {FixtureId} not found.", fixtureId);
             return;
         }
+
+        if (fixture.Date <= DateTimeOffset.UtcNow || fixture.Status is not ("NS" or "TBD"))
+            throw new InvalidOperationException("AI forecasts can only be generated for upcoming fixtures.");
 
         var teams = await dbContext.Teams
             .Where(t => t.ApiId == fixture.HomeTeamId || t.ApiId == fixture.AwayTeamId)
@@ -289,8 +305,9 @@ public class AiSyncService(
             OddsBTTS = analysis.OddsBttsYes
         };
 
-        var results = await aiService.AnalyzeBatchAsync([item]);
-        if (results.TryGetValue(fixtureId, out var bilingualResult))
+        var results = await aiService.AnalyzeBatchAsync([item], cancellationToken);
+        if (results.Count == 1 && results.TryGetValue(fixtureId, out var bilingualResult) &&
+            AiNarrativeIntegrity.InvalidResult(bilingualResult) is null)
         {
             var raw = analysis.RawPrediction ?? probs;
             await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", raw, cancellationToken);
@@ -301,7 +318,7 @@ public class AiSyncService(
         }
         else
         {
-            logger.LogWarning("AI service returned no results for Fixture {FixtureId}.", fixtureId);
+            throw new ExternalApiException("AI narratives", $"AI returned no complete bilingual analysis for fixture {fixtureId}.");
         }
     }
 

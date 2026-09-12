@@ -21,7 +21,7 @@ public static class AuditGoalRateCommand
         T Read<T>(string section) where T : new() => settings.RootElement.TryGetProperty(section, out var s)
             ? s.Deserialize<T>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new() : new();
         var bytes = await File.ReadAllBytesAsync(input);
-        var fixtures = JsonSerializer.Deserialize<List<Fixture>>(bytes) ?? throw new ArgumentException("Invalid fixtures JSON");
+        var fixtures = JsonSerializer.Deserialize<List<Fixture>>(bytes, FootballAuditJson.Options) ?? throw new ArgumentException("Invalid fixtures JSON");
         using var services = new ServiceCollection().AddLogging(b => b.AddSimpleConsole()).BuildServiceProvider();
         var dc = Read<DixonColesOptions>("DixonColes"); var hybrid = Read<HybridModelOptions>("HybridModel"); var confluence = Read<ConfluenceOptions>("Confluence");
         var builder = new GoalRateFeatureBuilder(Options.Create(dc), services.GetRequiredService<ILogger<GoalRateFeatureBuilder>>());

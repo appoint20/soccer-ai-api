@@ -88,7 +88,8 @@ public class GetMatchAnalysisHandler(
                         snapshotRows.GetValueOrDefault(fixture.Id)?.SnapshotJson);
 
                 // Stale: the fixture finished after the snapshot was computed.
-                var stale = snapshot is { Result: null } && fixture.Status == "FT";
+                var stale = (snapshot is { Result: null } && fixture.Status == "FT") ||
+                    AiNarrativeIntegrity.NeedsSnapshotRefresh(snapshot, snapshotRows.GetValueOrDefault(fixture.Id));
 
                 if (snapshot == null || stale)
                 {

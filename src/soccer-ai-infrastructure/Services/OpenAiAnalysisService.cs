@@ -11,6 +11,8 @@ using SoccerAi.Application.Features.Combinations;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
 using SoccerAi.Infrastructure.Options;
+using SoccerAi.Application.Exceptions;
+using SoccerAi.Application.Services.Analysis;
 
 namespace SoccerAi.Infrastructure.Services;
 
@@ -53,14 +55,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         _options = options.Value;
         _logger = logger;
 
-        _apiKey = !string.IsNullOrWhiteSpace(_options.ApiKey)
-            ? _options.ApiKey
-            : configuration["AiService:ApiKey"]
-              ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
-              ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
-              ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY")
-              ?? Environment.GetEnvironmentVariable("ZAI_API_KEY")
-              ?? string.Empty;
+        _apiKey = AiCredentials.Resolve(configuration, _options.ApiKey, _options.BaseUrl);
 
         // Said once, loudly, at startup. A wrong key does not stop anything —
         // every request fails with 401, the narrative step still completes,
@@ -85,7 +80,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     public static string? DescribeKeyProblem(string? baseUrl, string? apiKey)
     {
         var endpoint = string.IsNullOrWhiteSpace(baseUrl) ? "https://openrouter.ai/api/v1" : baseUrl;
-        if (!endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase))
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ||
+            !uri.Host.Equals("openrouter.ai", StringComparison.OrdinalIgnoreCase))
             return null;
 
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -129,9 +125,14 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         return new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
     }
 
-    public async Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items)
+    public async Task<Dictionary<int, AiBilingualResult>> AnalyzeBatchAsync(List<AiBatchItem> items, CancellationToken cancellationToken = default)
     {
-        if (items == null || items.Count == 0 || !_options.Enabled || string.IsNullOrWhiteSpace(_apiKey)) return new();
+        cancellationToken.ThrowIfCancellationRequested();
+        if (items.Count == 0) return new();
+        if (!_options.Enabled || string.IsNullOrWhiteSpace(_apiKey))
+            throw new ExternalApiException("AI narratives", "AI narratives are disabled or the configured provider key is missing.", System.Net.HttpStatusCode.ServiceUnavailable);
+        if (DescribeKeyProblem(_options.BaseUrl, _apiKey) is { } problem)
+            throw new ExternalApiException("OpenRouter", problem, System.Net.HttpStatusCode.Unauthorized);
 
         var modelsToTry = new List<string>();
         if (!string.IsNullOrWhiteSpace(_options.DefaultModel))
@@ -158,7 +159,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
         // Drop the primary while it is failing repeatedly, rather than paying
         // its timeout again on every remaining fixture.
-        if (modelsToTry.Count > 1 && Volatile.Read(ref _primaryFailures) >= _options.PrimaryFailuresBeforeSkip)
+        if (modelsToTry.Count > 1 && _options.PrimaryFailuresBeforeSkip > 0 &&
+            Volatile.Read(ref _primaryFailures) >= _options.PrimaryFailuresBeforeSkip)
         {
             _logger.LogWarning(
                 "[OpenRouter] Skipping {Model} for now — it failed {Count} times in a row. Using {Fallback}.",
@@ -176,21 +178,28 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                     model, items.Count, _options.TimeoutSeconds, DescribeReasoning(_options.Reasoning));
                 var started = System.Diagnostics.Stopwatch.StartNew();
                 var client = CreateClient(model);
-                var completion = await client.CompleteChatAsync(messages, completionOptions);
+                var completion = await client.CompleteChatAsync(messages, completionOptions, cancellationToken);
                 _logger.LogInformation(
                     "[OpenRouter] {Model} answered in {Elapsed:F1}s", model, started.Elapsed.TotalSeconds);
-                var rawText = completion.Value.Content[0].Text;
+                var rawText = string.Concat(completion.Value.Content.Select(c => c.Text));
                 var json = ExtractJson(rawText);
 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    _logger.LogWarning("[OpenRouter] Model {Model} returned non-JSON text. Raw: {Raw}", model, rawText);
-                    continue;
+                    throw new InvalidDataException("Model returned no JSON payload.");
                 }
 
                 var results = JsonSerializer.Deserialize<List<AiBilingualResult>>(json, JsonOpts);
                 if (results != null && results.Count > 0)
                 {
+                    var expected = items.Select(i => i.FixtureId).ToHashSet();
+                    if (results.Any(r => r is null) || results.Count != expected.Count ||
+                        results.Select(r => r.FixtureId).Distinct().Count() != results.Count ||
+                        results.Any(r => !expected.Contains(r.FixtureId)))
+                        throw new InvalidDataException("Model returned missing, duplicate or unexpected fixture IDs.");
+                    foreach (var result in results)
+                        if (AiNarrativeIntegrity.InvalidResult(result) is { } invalid)
+                            throw new InvalidDataException($"Invalid AI response: {invalid}.");
                     var captured = DateTimeOffset.UtcNow;
                     string Hash(string text) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
                         System.Text.Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
@@ -207,6 +216,16 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                     _logger.LogInformation("[OpenRouter] Successfully generated match analysis with {Model} for {Count} match(es).", model, results.Count);
                     return results.ToDictionary(r => r.FixtureId);
                 }
+                throw new InvalidDataException("Model returned an empty result array.");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+            catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 or 429)
+            {
+                // Another model cannot repair account authentication, credit or quota.
+                var reason = ex.Status == 402 ? "OpenRouter credits are unavailable. Check the account balance."
+                    : ex.Status == 429 ? "OpenRouter rate limit exceeded; retry on the next sync."
+                    : "OpenRouter rejected the provider credential or access. Check the key on the worker.";
+                throw new ExternalApiException("OpenRouter", reason, (System.Net.HttpStatusCode)ex.Status);
             }
             catch (Exception ex)
             {
@@ -222,7 +241,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         }
 
         _logger.LogError("[OpenRouter] All configured models failed to produce analysis for batch.");
-        return new();
+        throw new ExternalApiException("AI narratives", "All configured AI models failed to return complete, valid analysis.", System.Net.HttpStatusCode.BadGateway);
     }
 
 

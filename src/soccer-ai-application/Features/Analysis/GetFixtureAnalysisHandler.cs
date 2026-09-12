@@ -48,7 +48,8 @@ public sealed class GetFixtureAnalysisHandler(
         // Stale: the fixture finished after the snapshot was taken, so the
         // snapshot still has no result and the detail screen would show a
         // finished match with no score.
-        var stale = snapshot is { Result: null } && IsFinished(fixture.Status);
+        var stale = (snapshot is { Result: null } && IsFinished(fixture.Status)) ||
+            AiNarrativeIntegrity.NeedsSnapshotRefresh(snapshot, row);
 
         if (snapshot is null || stale)
         {
