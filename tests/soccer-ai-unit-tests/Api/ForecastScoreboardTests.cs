@@ -6,6 +6,9 @@ using Moq;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Features.Forecasts;
 using SoccerAi.Application.Services.Forecasts;
+using SoccerAi.Application.Services.Statistics;
+using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Models;
 using SoccerAi.Infrastructure.Persistence;
 
 namespace soccer_ai_unit_tests.Api;
@@ -50,6 +53,9 @@ public class ForecastScoreboardTests : IDisposable
         int homeGoals, int awayGoals,
         double modelExpectedGoals = 2.5, bool settled = true)
     {
+        if (!await _db.Fixtures.AnyAsync(f => f.Id == fixtureId))
+            _db.Fixtures.Add(new Fixture { Id = fixtureId, Date = Kickoff, Status = settled ? "FT" : "NS",
+                HomeGoal = homeGoals, AwayGoal = awayGoals });
         _db.ModelForecasts.Add(new ModelForecast
         {
             FixtureId = fixtureId,
@@ -100,15 +106,14 @@ public class ForecastScoreboardTests : IDisposable
     [Fact]
     public async Task Brier_is_zero_when_certain_and_right_and_one_when_certain_and_wrong()
     {
-        await SeedAsync(1, "right", modelOver25: 1.0, systemOver25: 0.0, homeGoals: 3, awayGoals: 0);
-        await SeedAsync(1, "wrong", modelOver25: 0.0, systemOver25: 0.0, homeGoals: 3, awayGoals: 0);
+        await SeedAsync(1, "right", modelOver25: 1.0, systemOver25: 0.5, homeGoals: 3, awayGoals: 0);
+        await SeedAsync(1, "wrong", modelOver25: 0.0, systemOver25: 0.5, homeGoals: 3, awayGoals: 0);
 
         var result = await RunAsync();
 
         Over25(result, "right").BrierScore.Should().Be(0.0);
         Over25(result, "wrong").BrierScore.Should().Be(1.0);
-        // The system said 0.0 on an over — same as the wrong model.
-        Over25(result, "system").BrierScore.Should().Be(1.0);
+        Over25(result, "system").BrierScore.Should().Be(0.25);
     }
 
     [Fact]
@@ -180,7 +185,7 @@ public class ForecastScoreboardTests : IDisposable
     [Fact]
     public async Task No_leader_is_named_on_a_thin_sample()
     {
-        await SeedAsync(1, "m", 1.0, 0.0, 3, 0);
+        await SeedAsync(1, "m", 1.0, 0.1, 3, 0);
 
         var result = await RunAsync();
 
@@ -216,6 +221,64 @@ public class ForecastScoreboardTests : IDisposable
 
         outside.SettledFixtures.Should().Be(0);
     }
+
+    [Fact]
+    public async Task Different_cohorts_do_not_create_a_false_global_leader()
+    {
+        for (var i = 1; i <= 60; i++)
+        {
+            await SeedAsync(i, "first", .9, .5, 2, 1);
+            await SeedAsync(i + 60, "second", .6, .5, 2, 1);
+        }
+        var result = await RunAsync();
+        result.Leader.Should().BeNull(); result.Forecasters.Should().BeEmpty();
+        result.PairedComparisons!.Models.Should().HaveCount(2).And.OnlyContain(m => m.ComparableFixtures == 60);
+    }
+
+    [Fact]
+    public async Task Hindsight_and_missing_statistical_inputs_are_excluded()
+    {
+        await SeedAsync(1, "m", .9, .5, 2, 1);
+        await SeedAsync(2, "m", .9, 0, 2, 1);
+        _db.ModelForecasts.Single(f => f.FixtureId == 1).PredictedAtUtc = Kickoff;
+        await _db.SaveChangesAsync();
+        var result = await RunAsync();
+        result.Forecasters.Should().BeEmpty();
+        var comparison = result.PairedComparisons!.Models.Single();
+        comparison.InvalidTiming.Should().Be(1); comparison.MissingSystemInputs.Should().Be(1);
+        comparison.Markets.Should().OnlyContain(m => m.Ai.Accuracy == null && m.System.Accuracy == null);
+    }
+}
+
+public class RecordedAiForecastStatisticsTests
+{
+    [Fact]
+    public void Paired_comparison_counts_switches_and_checks_actual_kickoff_and_duplicates()
+    {
+        var kickoff = new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero);
+        var fixtures = Enumerable.Range(1, 7).Select(id => new Fixture { Id = id, Status = "FT", Date = kickoff, HomeGoal = 3, AwayGoal = 0 }).ToList();
+        var rows = fixtures.Select(f => new ModelForecast { FixtureId = f.Id, Model = "m", KickoffUtc = kickoff,
+            PredictedAtUtc = kickoff.AddHours(-1), SystemOver25Probability = .4, SystemBttsProbability = .4,
+            Over25Probability = .7, BttsProbability = .7 }).ToList();
+        rows[1].PredictedAtUtc = kickoff.AddMinutes(-59);
+        rows[2].KickoffUtc = kickoff.AddHours(2);
+        rows[3].SystemOver25Probability = 0;
+        rows[4].BttsProbability = double.NaN;
+        fixtures[5].Status = "PST";
+        rows.Add(rows[6]);
+        var report = RecordedAiForecastStatistics.Build(fixtures, rows).Models.Single();
+        report.ComparableFixtures.Should().Be(1); report.InvalidTiming.Should().Be(2);
+        report.MissingSystemInputs.Should().Be(1); report.InvalidAiInputs.Should().Be(1);
+        report.UnfinishedOrMissingFixture.Should().Be(1); report.DuplicateRecords.Should().Be(2);
+        var over = report.Markets.Single(m => m.Market == "over25");
+        over.Ai.Correct.Should().Be(1); over.System.Correct.Should().Be(0);
+        over.ImprovedCalls.Should().Be(1); over.WorsenedCalls.Should().Be(0);
+        over.Ai.BrierScore.Should().BeApproximately(.09, 1e-12);
+        over.BrierDifference.Should().BeApproximately(-.27, 1e-12);
+        var btts = report.Markets.Single(m => m.Market == "btts");
+        btts.WorsenedCalls.Should().Be(1); btts.Ai.Accuracy.Should().Be(0);
+        RecordedAiForecastStatistics.Pair(fixtures, rows).Should().HaveCount(1);
+    }
 }
 
 /// <summary>The ledger is the evidence base, so its write rules are pinned too.</summary>
@@ -238,6 +301,24 @@ public class ModelForecastLedgerTests : IDisposable
     {
         _db.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    [Fact]
+    public async Task First_valid_forecast_is_frozen_and_kickoff_prevents_new_records()
+    {
+        var kickoff = DateTimeOffset.UtcNow.AddDays(1);
+        var fixture = new Fixture { Id = 1, Date = kickoff, Status = "NS" };
+        _db.Fixtures.Add(fixture); await _db.SaveChangesAsync();
+        var analysis = new MatchAnalysis { Id = 1, Date = kickoff, Prediction = new PredictionResponse {
+            Over25 = new BoolPrediction { Probability = .6 }, BTTS = new BoolPrediction { Probability = .55 } } };
+        var forecast = new GoalsForecast { Model = "m", Over25Probability = .7, BttsProbability = .7, Confidence = .7,
+            ExpectedGoals = 3, PredictedHomeGoals = 2, PredictedAwayGoals = 1, Rationale = "Recorded before kickoff" };
+        await _sut.RecordAsync(analysis, [forecast]);
+        await _sut.RecordAsync(analysis, [forecast with { Over25Probability = .9 }]);
+        _db.ModelForecasts.Single().Over25Probability.Should().Be(.7);
+        fixture.Date = DateTimeOffset.UtcNow.AddMinutes(-1); await _db.SaveChangesAsync();
+        await _sut.RecordAsync(analysis, [forecast with { Model = "new" }]);
+        _db.ModelForecasts.Should().HaveCount(1);
     }
 
     [Fact]

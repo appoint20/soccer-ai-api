@@ -16,6 +16,7 @@ public interface IApplicationDbContext
     DbSet<PublishedTicket> PublishedTickets { get; }
     DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
     DbSet<ModelForecast> ModelForecasts { get; }
+    DbSet<GoalRateModelGeneration> GoalRateModelGenerations { get; }
 
     /// <summary>
     /// Immutable pre-match probabilities, written once per fixture per capture
@@ -34,4 +35,3 @@ public interface IApplicationDbContext
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
 }
-

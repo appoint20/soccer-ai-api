@@ -23,6 +23,12 @@ namespace soccer_ai_unit_tests.Services;
 public class AiRecoveryTests
 {
     [Fact]
+    public void ProviderDiagnosticsExposeCategoriesWithoutEchoingSensitiveValues()
+    {
+        using var errors = JsonDocument.Parse("""{"requests":"secret-value","token":"secret-key","secret-in-field-name":"private"}""");
+        ApiFootballService.ErrorCategories(errors.RootElement).Should().Be("requests, token, unclassified");
+    }
+    [Fact]
     public void BlankConfiguredKeyFallsThroughOnlyToTheMatchingProvider()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
@@ -70,8 +76,10 @@ public class AiRecoveryTests
         payload.GeneratedAtUtc.Should().BeNull(); payload.ModelVersion.Should().BeNull();
     }
 
-    [Fact]
-    public async Task TargetedSyncRepairsBlankRowsDespitePositiveConfidenceAndPersistsBothLanguages()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TargetedSyncRepairsBlankRowsButRejectsResponsesThatCrossKickoff(bool crossKickoff)
     {
         await using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
@@ -88,9 +96,20 @@ public class AiRecoveryTests
         var provider = new Mock<IAiAnalysisService>(); var result = ValidResult();
         result.GeneratedAtUtc = DateTimeOffset.UtcNow; result.ModelVersion = "actual-model";
         provider.Setup(x => x.AnalyzeBatchAsync(It.IsAny<List<AiBatchItem>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<int, AiBilingualResult> { [1] = result });
+            .Returns(async () => {
+                if (crossKickoff) { fixture.Date = DateTimeOffset.UtcNow.AddMinutes(-1); await db.SaveChangesAsync(); }
+                return new Dictionary<int, AiBilingualResult> { [1] = result };
+            });
         var precompute = new Mock<IAnalysisPrecomputeService>();
         var sut = new AiSyncService(db, analysis.Object, provider.Object, precompute.Object, Mock.Of<ILeagueTierService>(), NullLogger<AiSyncService>.Instance);
+        if (crossKickoff)
+        {
+            var run = () => sut.SyncSingleFixtureAsync(1);
+            await run.Should().ThrowAsync<InvalidOperationException>();
+            (await db.FixtureAnalyses.ToListAsync()).Should().OnlyContain(r => string.IsNullOrEmpty(r.Analysis));
+            precompute.Verify(x => x.RecomputeFixtureAsync(1, It.IsAny<CancellationToken>()), Times.Never);
+            return;
+        }
         await sut.SyncSingleFixtureAsync(1);
         var stored = await db.FixtureAnalyses.ToListAsync();
         stored.Should().HaveCount(2).And.OnlyContain(r => r.Analysis.Length > 0 && r.AiModelVersion == "actual-model");

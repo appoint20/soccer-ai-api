@@ -1,5 +1,7 @@
 # ML improvement and ML + AI measurement — 11 September 2026
 
+Archived snapshot. The [12 September follow-up](AI_ML_STATUS_2026-09-12.md) includes newly accessible production data, a historical paired AI forecast ledger and deployment fixes.
+
 The new statistical ensemble improves several retrospective metrics, but **has not earned automatic release**. The 2–3 goals market slightly regresses on proper probability scores. There is **no defensible measured ML + language-model AI accuracy** in the available database. The implementation now records the evidence needed to measure it prospectively.
 
 ## Measured model results
@@ -93,4 +95,4 @@ dotnet run --project src/soccer-ai-tools -- audit-ai-combined --input-dir=/path/
 dotnet run --project src/soccer-ai-tools -- export-ml-audit --settings=/path/to/settings.json --output=/tmp/football-export
 ```
 
-Frozen input hash: `c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec`. Model settings are recorded in [ensemble input provenance](ensemble-audit-2026-09-11.input.json). Source hashes are in the adjacent source-provenance file. The report retains the unsuccessful release gate rather than rewriting the acceptance criteria after seeing the result.
+Frozen input hash: `c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec`. Model settings are recorded in [ensemble input provenance](ensemble-audit-2026-09-11.input.json). No separate source-hash snapshot was frozen for this September 11 audit. The report retains the unsuccessful release gate rather than rewriting the acceptance criteria after seeing the result.

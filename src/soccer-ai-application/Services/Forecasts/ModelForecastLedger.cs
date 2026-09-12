@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
+using SoccerAi.Application.Services.Statistics;
 
 namespace SoccerAi.Application.Services.Forecasts;
 
@@ -14,7 +15,7 @@ namespace SoccerAi.Application.Services.Forecasts;
 /// </summary>
 public interface IModelForecastLedger
 {
-    /// <summary>Records (or refreshes, pre-kickoff) each model's forecast for a fixture.</summary>
+    /// <summary>Records the first valid pre-kickoff forecast for each fixture and model.</summary>
     Task RecordAsync(
         MatchAnalysis analysis,
         IReadOnlyList<GoalsForecast> forecasts,
@@ -27,7 +28,7 @@ public interface IModelForecastLedger
 /// <inheritdoc />
 public sealed class ModelForecastLedger(
     IApplicationDbContext dbContext,
-    ILogger<ModelForecastLedger> logger) : IModelForecastLedger
+    ILogger<ModelForecastLedger> logger, TimeProvider? clock = null) : IModelForecastLedger
 {
     public async Task RecordAsync(
         MatchAnalysis analysis,
@@ -38,6 +39,14 @@ public sealed class ModelForecastLedger(
         ArgumentNullException.ThrowIfNull(forecasts);
 
         if (forecasts.Count == 0) return;
+
+        var fixture = await dbContext.Fixtures.AsNoTracking().SingleOrDefaultAsync(f => f.Id == analysis.Id, cancellationToken);
+        var now = (clock ?? TimeProvider.System).GetUtcNow();
+        if (fixture == null || fixture.Status is not ("NS" or "TBD") || fixture.Date != analysis.Date || fixture.Date <= now)
+        {
+            logger.LogWarning("[Forecast] Refusing stale or post-kickoff forecast for fixture {FixtureId}", analysis.Id);
+            return;
+        }
 
         var models = forecasts.Select(f => f.Model).ToList();
 
@@ -50,32 +59,34 @@ public sealed class ModelForecastLedger(
         var p = analysis.Prediction;
         var systemOver25 = p?.Over25.Probability ?? 0;
         var systemBtts = p?.BTTS.Probability ?? 0;
+        if (!RecordedAiForecastStatistics.HasSystemInputs(new ModelForecast {
+            SystemOver25Probability = systemOver25, SystemBttsProbability = systemBtts }))
+        {
+            logger.LogWarning("[Forecast] No valid statistical inputs for fixture {FixtureId}; no paired forecast recorded", analysis.Id);
+            return;
+        }
         var systemExpectedGoals =
             analysis.HomeStats.AvgGoalsScoredLast3 + analysis.AwayStats.AvgGoalsScoredLast3;
 
         foreach (var forecast in forecasts)
         {
+            if (!RecordedAiForecastStatistics.HasAiInputs(new ModelForecast { Model = forecast.Model,
+                Over25Probability = forecast.Over25Probability, BttsProbability = forecast.BttsProbability })) continue;
             if (existing.TryGetValue(forecast.Model, out var row))
             {
-                // Refuse to overwrite a forecast the result has already judged.
-                // Without this, a re-sync after kickoff would quietly replace a
-                // wrong call with a better-informed one and inflate the score.
-                if (row.IsSettled)
-                {
-                    logger.LogDebug(
-                        "[Forecast] Skipping settled forecast for fixture {FixtureId} / {Model}",
-                        analysis.Id, forecast.Model);
-                    continue;
-                }
+                // Freeze the first record even before settlement, so retries
+                // cannot silently replace earlier predictions.
+                continue;
             }
             else
             {
                 row = new ModelForecast { FixtureId = analysis.Id, Model = forecast.Model };
                 dbContext.ModelForecasts.Add(row);
+                existing[forecast.Model] = row;
             }
 
-            row.PredictedAtUtc = DateTimeOffset.UtcNow;
-            row.KickoffUtc = analysis.Date;
+            row.PredictedAtUtc = now;
+            row.KickoffUtc = fixture.Date;
 
             row.ExpectedGoals = forecast.ExpectedGoals;
             row.PredictedHomeGoals = forecast.PredictedHomeGoals;

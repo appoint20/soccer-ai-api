@@ -733,9 +733,14 @@ public class ApiFootballService(
                 ((errors.ValueKind == JsonValueKind.Object && errors.EnumerateObject().Any()) ||
                  (errors.ValueKind == JsonValueKind.Array && errors.GetArrayLength() > 0)))
             {
-                calls.RecordFailure("Provider returned an error envelope");
+                // Keep diagnostic categories without copying provider values,
+                // which can echo request inputs or credentials into logs/status.
+                var categories = ErrorCategories(errors);
+                var endpoint = relativeUrl.Split('?')[0];
+                var reason = $"Provider rejected {endpoint} (error categories: {categories}); no sync data accepted.";
+                calls.RecordFailure(reason);
                 throw new Application.Exceptions.ExternalApiException("API-Football",
-                    "Provider returned an error envelope; no sync data accepted.");
+                    reason);
             }
             calls.RecordSuccess();
             return doc.RootElement.Clone();
@@ -764,6 +769,16 @@ public class ApiFootballService(
             logger.LogError(ex, "API-Football unexpected error for {Url}", relativeUrl);
             return null;
         }
+    }
+
+    public static string ErrorCategories(JsonElement errors)
+    {
+        string[] allowed = ["requests", "rateLimit", "token", "access", "plan", "subscription", "endpoint",
+            "parameters", "required", "fields", "bug", "timeout", "season", "league", "fixture", "page", "date", "timezone"];
+        var keys = errors.ValueKind == JsonValueKind.Object
+            ? errors.EnumerateObject().Select(p => allowed.FirstOrDefault(a => a.Equals(p.Name, StringComparison.OrdinalIgnoreCase)) ?? "unclassified")
+            : ["unclassified"];
+        return string.Join(", ", keys.Distinct().Order(StringComparer.Ordinal));
     }
 
     private static string TrimForLog(string? value)

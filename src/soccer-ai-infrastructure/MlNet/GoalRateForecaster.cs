@@ -22,7 +22,7 @@ public sealed class GoalRateForecaster(
     GoalRateFeatureBuilder featureBuilder,
     IServiceScopeFactory scopeFactory,
     IOptions<HybridModelOptions> options,
-    IOptions<DixonColesOptions> dixonColesOptions) : IGoalRateForecaster, IDisposable
+    IOptions<DixonColesOptions> dixonColesOptions, GoalRateModelStore? modelStore = null) : IGoalRateForecaster, IDisposable
 {
     private readonly HybridModelOptions _opt = options.Value;
     private readonly DixonColesOptions _dc = dixonColesOptions.Value;
@@ -120,6 +120,7 @@ public sealed class GoalRateForecaster(
     private async Task EnsureLoadedAsync(CancellationToken ct)
     {
         var root = Path.Combine(Directory.GetCurrentDirectory(), _opt.ModelDirectory);
+        if (modelStore != null) await modelStore.RestoreLatestAsync(root, ct);
         var pointerPath = Path.Combine(root, GoalRateArtifact.PointerFile);
         if (!File.Exists(pointerPath)) return; // Older unversioned ZIPs are not certified for this feature contract.
         var pointerText = await File.ReadAllTextAsync(pointerPath, ct);

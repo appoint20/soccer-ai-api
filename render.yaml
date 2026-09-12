@@ -27,16 +27,16 @@ services:
         value: "https://openrouter.ai/api/v1"
       # Must be a model OpenRouter still lists. The previous default,
       # stealth/ox-alpha, was a time-limited free preview; when OpenRouter
-      # withdrew it every narrative request failed, and because the pipeline
-      # records a failed narrative as a completed step, nothing reported it.
+      # withdrew it every narrative request failed. Provider failures are now
+      # reported as an incomplete sync, with an actionable LastError.
       # NOTE: this blueprint value does not update an existing service — change
       # AISERVICE__DEFAULTMODEL in the dashboard too, or delete it there so
       # appsettings.json applies.
       - key: AISERVICE__DEFAULTMODEL
         value: "anthropic/claude-sonnet-5"
       # An OpenRouter key: starts with "sk-or-v1-". This used to be ZAI_API_KEY,
-      # which the code accepts only as a last-resort fallback — a Z.ai key sent
-      # to OpenRouter is rejected with 401 on every request.
+      # which must never be sent to OpenRouter. Credential lookup is now scoped
+      # to the configured provider; a Z.ai key cannot act as a fallback here.
       - key: OPENROUTER_API_KEY
         sync: false # Set this manually in the Render dashboard
       # Admin key for /api/automation/* (header: X-API-Key). Any string of 16+
@@ -136,9 +136,9 @@ services:
       # marks it done, so every fixture's `ai` block stays permanently empty
       # ("", confidence 0, has_decision_layer false) and the app has no analysis
       # text to show. It also needs OPENROUTER_API_KEY set in the dashboard
-      # above. A missing or wrong-provider key does not stop the sync: every
-      # request fails, the step still completes, and the run is recorded as a
-      # success — so check the worker log for "[OpenRouter]" errors.
+      # above. Missing or wrong-provider credentials fail the AI step and leave
+      # an error in sync status. An earlier API-Football failure can prevent this
+      # step from being reached at all; inspect the last completed step too.
       #
       # This costs money per sync: it is an LLM call per upcoming fixture.
       - key: SYNC__GENERATEAINARRATIVES

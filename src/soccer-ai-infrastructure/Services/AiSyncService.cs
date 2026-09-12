@@ -163,12 +163,16 @@ public class AiSyncService(
             var chunkList = toAnalyze.Skip(i).Take(1).ToList();
             try
             {
+                await RequireUpcomingFixtureAsync(chunkList[0].FixtureId, cancellationToken);
                 logger.LogInformation("[AiSync] Attempting batch {Num} ({Count} matches)...", i + 1, chunkList.Count);
                 
                 var results = await aiService.AnalyzeBatchAsync(chunkList, cancellationToken);
                 if (results.Count != 1 || !results.TryGetValue(chunkList[0].FixtureId, out var candidate) ||
                     AiNarrativeIntegrity.InvalidResult(candidate) is not null)
                     throw new ExternalApiException("AI narratives", "AI returned no complete bilingual analysis for the requested fixture.");
+                // A long provider call can cross kickoff. Do not save it as a
+                // pre-match assessment merely because preparation started early.
+                await RequireUpcomingFixtureAsync(chunkList[0].FixtureId, cancellationToken);
                 
                 foreach (var (fixtureId, bilingualResult) in results)
                 {
@@ -261,8 +265,7 @@ public class AiSyncService(
         var fixture = await dbContext.Fixtures.FirstOrDefaultAsync(f => f.Id == fixtureId, cancellationToken);
         if (fixture == null)
         {
-            logger.LogWarning("Fixture {FixtureId} not found.", fixtureId);
-            return;
+            throw new KeyNotFoundException($"Fixture {fixtureId} not found.");
         }
 
         if (fixture.Date <= DateTimeOffset.UtcNow || fixture.Status is not ("NS" or "TBD"))
@@ -276,14 +279,15 @@ public class AiSyncService(
         var awayTeam = teams.GetValueOrDefault(fixture.AwayTeamId);
         if (homeTeam == null || awayTeam == null)
         {
-            logger.LogWarning("Teams not found for context of fixture {FixtureId}.", fixtureId);
-            return;
+            throw new InvalidOperationException($"Team context is missing for fixture {fixtureId}.");
         }
 
         // refresh: true — see the batch path: a warm cache returns
         // PoissonModel.Empty and the model would be sent all-zero probabilities.
         var analysis = await analysisService.AnalyzeFixtureAsync(fixture, "en", refresh: true, cancellationToken);
         var probs = analysis.Prediction ?? new WeightedPrediction();
+        if (probs.HomeProb <= 0 && probs.Over25Prob <= 0)
+            throw new InvalidOperationException($"No model probabilities available for fixture {fixtureId}.");
         var item = new AiBatchItem
         {
             FixtureId = fixture.Id,
@@ -305,10 +309,12 @@ public class AiSyncService(
             OddsBTTS = analysis.OddsBttsYes
         };
 
+        await RequireUpcomingFixtureAsync(fixtureId, cancellationToken);
         var results = await aiService.AnalyzeBatchAsync([item], cancellationToken);
         if (results.Count == 1 && results.TryGetValue(fixtureId, out var bilingualResult) &&
             AiNarrativeIntegrity.InvalidResult(bilingualResult) is null)
         {
+            await RequireUpcomingFixtureAsync(fixtureId, cancellationToken);
             var raw = analysis.RawPrediction ?? probs;
             await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.En, "en", raw, cancellationToken);
             await UpsertAnalysisAsync(fixture.Id, bilingualResult, bilingualResult.De, "de", raw, cancellationToken);
@@ -320,6 +326,14 @@ public class AiSyncService(
         {
             throw new ExternalApiException("AI narratives", $"AI returned no complete bilingual analysis for fixture {fixtureId}.");
         }
+    }
+
+    private async Task RequireUpcomingFixtureAsync(int fixtureId, CancellationToken ct)
+    {
+        var current = await dbContext.Fixtures.AsNoTracking().Where(f => f.Id == fixtureId)
+            .Select(f => new { f.Date, f.Status }).SingleOrDefaultAsync(ct);
+        if (current == null || current.Date <= DateTimeOffset.UtcNow || current.Status is not ("NS" or "TBD"))
+            throw new InvalidOperationException($"Fixture {fixtureId} is no longer upcoming; no pre-match AI forecast accepted.");
     }
 
     private async Task UpsertAnalysisAsync(int fixtureId, AiBilingualResult aiResult, AiLanguageBlock block, string lang, WeightedPrediction math, CancellationToken ct)

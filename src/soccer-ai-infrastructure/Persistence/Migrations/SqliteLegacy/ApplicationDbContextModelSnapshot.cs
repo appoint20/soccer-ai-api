@@ -443,6 +443,42 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.ToTable("FixtureOddsQuotes", (string)null);
                 });
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.GoalRateModelGeneration", b =>
+                {
+                    b.Property<string>("Generation")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("AwayModel")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("CalibrationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EvaluationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("HomeModel")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("ManifestJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Generation");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("GoalRateModelGenerations");
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.ModelForecast", b =>
                 {
                     b.Property<int>("Id")

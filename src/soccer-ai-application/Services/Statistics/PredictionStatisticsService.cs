@@ -14,6 +14,7 @@ public sealed record PredictionStatistics(DateTimeOffset From, DateTimeOffset Th
     List<LeagueStatistic> Leagues, ErrorBreakdown Errors, string[] ModelVersions, string Note)
 {
     public AiComparisonStatistic? AiComparison { get; init; }
+    public RecordedAiForecastReport? RecordedAiForecasts { get; init; }
 }
 
 public sealed class PredictionStatisticsService(IApplicationDbContext db, TimeProvider? clock = null)
@@ -25,6 +26,8 @@ public sealed class PredictionStatisticsService(IApplicationDbContext db, TimePr
         var fixtures = await db.Fixtures.AsNoTracking().Where(f => f.Date >= periodStart && f.Date <= through && f.Status == "FT").ToListAsync(ct);
         var records = await db.PredictionSnapshots.AsNoTracking().Where(p => p.KickoffUtc >= periodStart && p.KickoffUtc <= through).ToListAsync(ct);
         var paired = Pair(fixtures, records);
+        var forecasts = await db.ModelForecasts.AsNoTracking()
+            .Where(p => p.KickoffUtc >= periodStart && p.KickoffUtc <= through).ToListAsync(ct);
         var markets = Metrics(paired);
         var leagues = paired.GroupBy(x => x.Fixture.LeagueId).Select(g =>
         {
@@ -44,7 +47,8 @@ public sealed class PredictionStatisticsService(IApplicationDbContext db, TimePr
             markets, leagues, errors, paired.Select(x => x.Snapshot.ModelVersion).Distinct().Order().ToArray(),
             "Latest recorded forecast at least 1h before the actual kickoff; one per FT fixture. Missing history is excluded, never reconstructed. " +
             "Accuracy scores both Yes and No; precision scores the selected side. League mean weights four targets equally; it is not ROI. " +
-            "95% Wilson intervals are nominal and do not account for dependence or league selection. Error categories describe outcomes, not proven causes.") { AiComparison = AiComparisonStatistics.Build(paired) };
+            "95% Wilson intervals are nominal and do not account for dependence or league selection. Error categories describe outcomes, not proven causes.")
+            { AiComparison = AiComparisonStatistics.Build(paired), RecordedAiForecasts = RecordedAiForecastStatistics.Build(fixtures, forecasts) };
     }
 
     public static List<(Fixture Fixture, PredictionSnapshot Snapshot)> Pair(IEnumerable<Fixture> fixtures, IEnumerable<PredictionSnapshot> records)

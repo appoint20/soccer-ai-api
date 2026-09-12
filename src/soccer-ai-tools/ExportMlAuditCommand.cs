@@ -41,8 +41,12 @@ public static class ExportMlAuditCommand
                     SELECT row_to_json(a)::text FROM (
                       SELECT "Id", "FixtureId", "Lang", "HomeProb", "DrawProb", "AwayProb", "Over25Prob", "BttsProb", "Goals23Prob",
                         "AiOver25Qualified", "AiBttsQualified", "AiUnder25Qualified", "AiGoals23Qualified", "AiHomeWinQualified",
-                        "AiAwayWinQualified", "AiOverallConfidence", "CreatedAt", "UpdatedAt", "Analysis", "SnapshotJson"
-                      FROM "FixtureAnalyses" WHERE "AiOverallConfidence" > 0
+                        "AiAwayWinQualified", "AiOverallConfidence", "CreatedAt", "UpdatedAt", "Analysis", "SnapshotJson",
+                        to_jsonb("FixtureAnalyses")->'AiGeneratedAtUtc' AS "AiGeneratedAtUtc",
+                        to_jsonb("FixtureAnalyses")->'AiModelVersion' AS "AiModelVersion",
+                        to_jsonb("FixtureAnalyses")->'AiPromptHash' AS "AiPromptHash",
+                        to_jsonb("FixtureAnalyses")->'AiInputHash' AS "AiInputHash"
+                      FROM "FixtureAnalyses" WHERE "AiOverallConfidence" > 0 OR NULLIF(trim("Analysis"), '') IS NOT NULL
                       ORDER BY "FixtureId", "Lang"
                     ) a
                     """

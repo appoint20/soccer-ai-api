@@ -77,6 +77,7 @@ public static class DependencyInjection
         // would dominate the cost of a prediction.
         services.AddScoped<IGoalRateTrainingService, GoalRateTrainingService>();
         services.AddSingleton<GoalRateFeatureBuilder>();
+        services.AddSingleton<GoalRateModelStore>();
         services.AddSingleton<IGoalRateForecaster, GoalRateForecaster>();
 
         // Legacy per-market binary trainer. Retained so existing tooling keeps

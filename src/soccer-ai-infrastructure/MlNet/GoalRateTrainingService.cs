@@ -21,7 +21,7 @@ public sealed class GoalRateTrainingService(
     GoalRateFeatureBuilder featureBuilder,
     IOptions<HybridModelOptions> options,
     IOptions<ConfluenceOptions> confluenceOptions,
-    IServiceScopeFactory scopeFactory) : IGoalRateTrainingService
+    IServiceScopeFactory scopeFactory, GoalRateModelStore? modelStore = null) : IGoalRateTrainingService
 {
     private readonly HybridModelOptions _opt = options.Value;
     private readonly ConfluenceOptions _confluence = confluenceOptions.Value;
@@ -37,6 +37,7 @@ public sealed class GoalRateTrainingService(
             logger.LogInformation(
                 "[GoalRate] Last training evaluation is {Age:g} old, under the {Interval}h retrain "
                 + "interval — skipping", age, _opt.RetrainIntervalHours);
+            if (modelStore != null) await modelStore.PublishCurrentAsync(directory, ct);
             return;
         }
 
@@ -45,6 +46,7 @@ public sealed class GoalRateTrainingService(
         var fixtures = await db.Fixtures.AsNoTracking()
             .Where(f => f.Status == "FT").OrderBy(f => f.Date).ToListAsync(ct);
         await TrainAndEvaluateAsync(fixtures, directory, publish: true, ct);
+        if (modelStore != null) await modelStore.PublishCurrentAsync(directory, ct);
     }
 
     private static TimeSpan? LastEvaluationAge(string directory)

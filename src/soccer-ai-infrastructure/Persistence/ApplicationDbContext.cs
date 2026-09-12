@@ -22,12 +22,19 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
     public DbSet<ModelForecast> ModelForecasts { get; init; }
+    public DbSet<GoalRateModelGeneration> GoalRateModelGenerations { get; init; }
     public DbSet<PredictionSnapshot> PredictionSnapshots { get; init; }
     public DbSet<FixtureInjury> FixtureInjuries { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<GoalRateModelGeneration>(entity =>
+        {
+            entity.HasKey(m => m.Generation);
+            entity.Property(m => m.Generation).HasMaxLength(32).ValueGeneratedNever();
+            entity.HasIndex(m => m.CreatedAtUtc);
+        });
         modelBuilder.Entity<FixtureInjury>(entity =>
         {
             entity.HasKey(i => i.Id);

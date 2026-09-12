@@ -1,0 +1,50 @@
+{
+  "CapturedAtUtc": "2026-09-12T21:43:58.345967+00:00",
+  "InputProvenance": {
+    "CapturedAtUtc": "2026-09-12T21:43:58.345967+00:00",
+    "Source": "configured_postgresql",
+    "ReadOnly": true,
+    "Isolation": "repeatable_read",
+    "Files": {
+      "fixtures": {
+        "Rows": 26151,
+        "Sha256": "c09dfbd23ff86c4dbf1e4220e24ef2857223a9a6ea880a4b18f69ed6841a505c"
+      },
+      "ai-analyses": {
+        "Rows": 1308,
+        "Sha256": "3e430a31941e857254a2a3f7bcbb5b53e01d711591a4b5dcbbf48b6db5aced09"
+      },
+      "prediction-snapshots": {
+        "Rows": 1492,
+        "Sha256": "7174681c3c854b76bcc6fea6ecffd0be123f89495ee861e11a08da1607446e7b"
+      },
+      "model-forecasts": {
+        "Rows": 151,
+        "Sha256": "5646e48dbb7b449fe40e179f3204dc5e26cae3e8783009dda2cef8112149e69a"
+      },
+      "sync-state": {
+        "Rows": 1,
+        "Sha256": "2f10bbcfb2a706efbf0e294fef68608409ead0f84788c02768c0c4277fe0d549"
+      }
+    }
+  },
+  "SyncState": {
+    "Id": 1,
+    "LastSuccessfulSyncUtc": "2026-09-12T21:29:06.769726+00:00",
+    "LastRunStartedUtc": "2026-09-12T21:20:00.000654+00:00",
+    "LastCompletedStep": "ai_narratives",
+    "LastError": null
+  },
+  "UpcomingDays": 5,
+  "UpcomingNotStartedFixtures": 56,
+  "WithEnglishNarrative": 2,
+  "WithGermanNarrative": 2,
+  "WithBothNarratives": 2,
+  "AllExportedAiRows": 1308,
+  "NarrativeRowsWithoutPositiveAiConfidence": 0,
+  "PredictionSnapshotRows": 1492,
+  "PredictionModelVersions": [
+    "dixon-coles"
+  ],
+  "VerifiedAiProvenanceRows": 0
+}

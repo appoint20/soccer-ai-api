@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Mediator.Net.Contracts;
+using SoccerAi.Application.Services.Statistics;
 
 namespace SoccerAi.Application.Features.Forecasts;
 
@@ -81,6 +82,12 @@ public sealed record ForecasterScoreDto
 
 public sealed record GetForecastScoreboardResponse : IResponse
 {
+    [JsonPropertyName("paired_comparisons")] public RecordedAiForecastReport? PairedComparisons { get; init; }
+    [JsonPropertyName("note")] public string Note { get; init; } =
+        "Flat scores use only common fixtures with identical statistical inputs for all eligible models. " +
+        "Leader is descriptive lowest mean Brier, not evidence of superiority. " +
+        "Per-model paired comparisons retain additional eligible fixtures. System goals MAE is unavailable: " +
+        "the legacy ledger stored a recent-goals average instead of the model expected-goals estimate.";
     [JsonPropertyName("from")] public required DateOnly? From { get; init; }
     [JsonPropertyName("to")] public required DateOnly? To { get; init; }
 
