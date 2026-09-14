@@ -54,10 +54,11 @@ public sealed class DecisionService(
         // Guard-sanitized prices — the EV gate only ever sees real odds.
         var prices = MarketPrices.FromRaw(
             context.OddsHome, context.OddsDraw, context.OddsAway,
-            context.OddsOver25, context.OddsUnder25, context.OddsBttsYes);
+            context.OddsOver25, context.OddsUnder25, context.OddsBttsYes, context.OddsGoals23, context.OddsBttsAndOver25);
 
         var audit = ConfluenceRuleEngine.Evaluate(
-            prediction, signals, prices, tierExtra, opt, strategyOptions.Value, aiContext);
+            prediction, signals, prices, tierExtra, opt, strategyOptions.Value, aiContext,
+            stats.Poisson.IsValid ? stats.Poisson.BttsAndOver25 : null);
 
         var drawAudit = audit.Markets.First(m => m.Market == ConfluenceRuleEngine.Markets.Draw);
         var markets = new QualificationDecisions

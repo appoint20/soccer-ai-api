@@ -88,9 +88,22 @@ public sealed class PriceCustomTicketHandler(
             snapshots[id] = snapshot;
         }
 
+        // One fixture contributes one bookmaker selection. Resolve a requested
+        // GG + Over pair to the dedicated combined quote before checking 1.70.
+        var requestedMarkets = new List<(int FixtureId, string? Market)>();
+        foreach (var group in legs.GroupBy(l => l.FixtureId))
+        {
+            var keys = group.Select(l => l.Market?.Trim().ToLowerInvariant()).ToHashSet();
+            if (group.Count() == 2 && keys.SetEquals([ConfluenceRuleEngine.Markets.Btts, ConfluenceRuleEngine.Markets.Over25]))
+                requestedMarkets.Add((group.Key, ConfluenceRuleEngine.Markets.BttsAndOver25));
+            else if (group.Count() > 1)
+                return PriceCustomTicketResponse.Fail("Only BTTS with Over 2.5 has a supported combined market; a real combined quote is required.");
+            else requestedMarkets.Add((group.Key, group.Single().Market));
+        }
+
         // ── Resolve each leg against its audited market ──
         var resolved = new List<ResolvedLeg>(legs.Count);
-        foreach (var requested in legs)
+        foreach (var requested in requestedMarkets)
         {
             var market = requested.Market?.Trim().ToLowerInvariant() ?? "";
             var snapshot = snapshots[requested.FixtureId];
@@ -101,6 +114,9 @@ public sealed class PriceCustomTicketHandler(
             if (audit is null)
                 return PriceCustomTicketResponse.Fail(
                     $"Fixture {requested.FixtureId} has no market '{requested.Market}'.");
+
+            if (market == ConfluenceRuleEngine.Markets.BttsAndOver25 && !audit.Qualified)
+                return PriceCustomTicketResponse.Fail("The combined market does not pass the current price, probability and evidence checks.");
 
             var odds = OddsGuard.Sanitize(audit.Odds);
             if (odds is null || odds < LiveOddsPolicy.MinimumOdds)

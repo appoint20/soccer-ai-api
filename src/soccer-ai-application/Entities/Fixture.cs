@@ -52,6 +52,10 @@ public class Fixture
     public double? Over25Odds { get; set; }
     public double? Under25Odds { get; set; }
     public double? BttsYesOdds { get; set; }
+    public double? Goals23Odds { get; set; }
+    public double? BttsAndOver25Odds { get; set; }
+    /// <summary>Bookmaker supplying current live columns; null on legacy/mixed-source rows.</summary>
+    public string? OddsBookmaker { get; set; }
 
     /// <summary>Last odds request; independent of whether the price moved.</summary>
     public DateTimeOffset? OddsCheckedAtUtc { get; set; }

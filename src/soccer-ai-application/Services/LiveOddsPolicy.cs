@@ -8,6 +8,7 @@ namespace SoccerAi.Application.Services;
 public static class LiveOddsPolicy
 {
     public const double MinimumOdds = 1.70;
+    public const string Bookmaker = "Bet365";
     public static readonly TimeSpan MaximumAge = TimeSpan.FromHours(3);
 
     public static bool IsFresh(Fixture fixture, DateTimeOffset now) =>
@@ -18,6 +19,8 @@ public static class LiveOddsPolicy
     public static double? PriceFor(Fixture fixture, MarketRuleAudit market) => market.Market switch
     {
         ConfluenceRuleEngine.Markets.Btts => fixture.BttsYesOdds,
+        ConfluenceRuleEngine.Markets.Goals23 => fixture.Goals23Odds,
+        ConfluenceRuleEngine.Markets.BttsAndOver25 => fixture.BttsAndOver25Odds,
         ConfluenceRuleEngine.Markets.Over25 => fixture.Over25Odds,
         ConfluenceRuleEngine.Markets.Under25 => fixture.Under25Odds,
         ConfluenceRuleEngine.Markets.Draw => fixture.DrawOdds,
@@ -55,6 +58,7 @@ public static class LiveOddsPolicy
         snapshot.OddsCheckedAtUtc = fixture.OddsCheckedAtUtc;
         snapshot.OddsUpdatedAtUtc = fixture.OddsUpdatedAtUtc;
         snapshot.Status = fixture.Status;
+        snapshot.OddsBookmaker = fixture.OddsBookmaker;
         if (snapshot.Result is not null) return; // historical outcomes keep their recorded analysis
         var fresh = IsFresh(fixture, now);
         snapshot.OddsHomeWin = fresh ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null;
@@ -63,6 +67,8 @@ public static class LiveOddsPolicy
         snapshot.OddsOver25 = fresh ? OddsGuard.Sanitize(fixture.Over25Odds) : null;
         snapshot.OddsUnder25 = fresh ? OddsGuard.Sanitize(fixture.Under25Odds) : null;
         snapshot.OddsBttsYes = fresh ? OddsGuard.Sanitize(fixture.BttsYesOdds) : null;
+        snapshot.OddsGoals23 = fresh ? OddsGuard.Sanitize(fixture.Goals23Odds) : null;
+        snapshot.OddsBttsAndOver25 = fresh ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null;
         if (snapshot.DecisionAudit is not { } audit) return;
         snapshot.DecisionAudit = Reprice(audit, fixture, now);
         bool Qualified(string market) => snapshot.DecisionAudit.Markets.Any(m => m.Market == market && m.Qualified);
@@ -74,6 +80,6 @@ public static class LiveOddsPolicy
         p.HomeWin.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.MatchWinner);
         p.AwayWin.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.MatchWinner);
         p.Draw.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Draw);
-        p.TwoToThreeGoals.IsQualified = false;
+        p.TwoToThreeGoals.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Goals23);
     }
 }

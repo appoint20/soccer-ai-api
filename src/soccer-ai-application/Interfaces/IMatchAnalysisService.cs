@@ -42,6 +42,8 @@ public sealed class FixtureAnalysisResult
     public double? OddsOver25 { get; init; }
     public double? OddsUnder25 { get; init; }
     public double? OddsBttsYes { get; init; }
+    public double? OddsGoals23 { get; init; }
+    public double? OddsBttsAndOver25 { get; init; }
     public double? OddsHomeWin { get; init; }
     public double? OddsAwayWin { get; init; }
     public double? OddsDraw { get; init; }

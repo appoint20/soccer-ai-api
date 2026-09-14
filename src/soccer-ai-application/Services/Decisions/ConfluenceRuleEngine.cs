@@ -19,6 +19,7 @@ public static class ConfluenceRuleEngine
         public const string Btts = "btts";
         public const string Over25 = "over25";
         public const string Goals23 = "goals_2_3";
+        public const string BttsAndOver25 = "btts_and_over25";
         public const string MatchWinner = "match_winner";
         public const string Under25 = "under25";
         public const string Draw = "draw";
@@ -33,6 +34,7 @@ public static class ConfluenceRuleEngine
         public const string Btts = "BTTS";
         public const string Over25 = "Over 2.5 Goals";
         public const string Goals23 = "2-3 Goals";
+        public const string BttsAndOver25 = "BTTS & Over 2.5 Goals";
         public const string MatchWinnerHome = "Match Winner (Home)";
         public const string MatchWinnerAway = "Match Winner (Away)";
         public const string Under25 = "Under 2.5 Goals";
@@ -51,7 +53,8 @@ public static class ConfluenceRuleEngine
         double tierExtraProbability,
         ConfluenceOptions opt,
         StrategyOptions strat,
-        AiAnalysisDto? ai = null)
+        AiAnalysisDto? ai = null,
+        double? bttsAndOver25Probability = null)
     {
         // Winner pick = the stronger non-draw side; the draw is its own market.
         var favoriteIsHome = prediction.HomeProb >= prediction.AwayProb;
@@ -73,6 +76,22 @@ public static class ConfluenceRuleEngine
             EvaluateDraw(prediction.DrawProb, s, opt.DrawMinProbability + tierExtraProbability,
                 prices.Draw, strat.MinOdds1X2, opt.DrawMinEdge, opt)
         };
+
+        // Evaluate the combined outcome on its own real price. Low individual
+        // leg odds do not disqualify it, but neither can they price it.
+        // Calibration may make a raw joint incompatible with the marginals;
+        // suppress that combination rather than inventing a new probability.
+        if (bttsAndOver25Probability is > 0 and < 1 &&
+            bttsAndOver25Probability <= Math.Min(prediction.BTTSProb, prediction.Over25Prob) + 1e-9 &&
+            bttsAndOver25Probability >= Math.Max(0, prediction.BTTSProb + prediction.Over25Prob - 1) - 1e-9)
+        {
+            var rules = markets.Where(m => m.Market is Markets.Btts or Markets.Over25)
+                .SelectMany(m => m.Rules).ToList();
+            markets.Add(Assemble(Markets.BttsAndOver25, Selections.BttsAndOver25,
+                bttsAndOver25Probability.Value, opt.BttsAndOver25MinProbability + tierExtraProbability,
+                prices.BttsAndOver25, Math.Max(LiveOddsPolicy.MinimumOdds, strat.MinOddsSameMatchPair),
+                opt.BttsAndOver25MinEdge, rules, opt));
+        }
 
         // The language model's view is folded in last, as one visible rule per
         // market, so agreement and disagreement are both auditable rather than
@@ -101,6 +120,7 @@ public static class ConfluenceRuleEngine
             Markets.Over25 => ai.AiOver25Qualified,
             Markets.Under25 => ai.AiUnder25Qualified,
             Markets.Goals23 => ai.AiGoals23Qualified,
+            Markets.BttsAndOver25 => ai.AiBttsQualified && ai.AiOver25Qualified,
             // The winner market is evaluated for one side only, so the AI is
             // asked about that same side rather than about "a winner".
             Markets.MatchWinner => prediction.HomeProb >= prediction.AwayProb

@@ -69,6 +69,7 @@ public static class PickSelector
     [
         ConfluenceRuleEngine.Markets.Btts,
         ConfluenceRuleEngine.Markets.Over25,
+        ConfluenceRuleEngine.Markets.BttsAndOver25,
         ConfluenceRuleEngine.Markets.Under25,
         ConfluenceRuleEngine.Markets.MatchWinner
     ];
@@ -84,6 +85,7 @@ public static class PickSelector
         ConfluenceRuleEngine.Markets.Over25 => ConfluenceRuleEngine.Selections.Over25,
         ConfluenceRuleEngine.Markets.Under25 => ConfluenceRuleEngine.Selections.Under25,
         ConfluenceRuleEngine.Markets.Goals23 => ConfluenceRuleEngine.Selections.Goals23,
+        ConfluenceRuleEngine.Markets.BttsAndOver25 => ConfluenceRuleEngine.Selections.BttsAndOver25,
         ConfluenceRuleEngine.Markets.Draw => ConfluenceRuleEngine.Selections.Draw,
         ConfluenceRuleEngine.Markets.MatchWinner => "Match Winner",
         _ => market
@@ -140,7 +142,7 @@ public static class PickSelector
             fixture,
             qualified,
             comboEligible,
-            BuildSameMatchPair(fixture, audit, bttsAndOver25JointProbability),
+            null, // The combined market is now one audited, genuinely priced leg.
             BuildConfidencePick(fixture, audit, opt, requireLivePrice),
             unpriced);
     }
@@ -231,26 +233,6 @@ public static class PickSelector
     /// Both legs must be combo-eligible on their own — pairing two bets we would
     /// not otherwise take would multiply their errors, not cancel them.
     /// </summary>
-    private static SameMatchPair? BuildSameMatchPair(
-        FixtureRef fixture, DecisionAudit audit, double? jointProbability)
-    {
-        if (jointProbability is not > 0) return null;
-
-        var btts = audit.Markets.FirstOrDefault(m => m.Market == ConfluenceRuleEngine.Markets.Btts);
-        var over25 = audit.Markets.FirstOrDefault(m => m.Market == ConfluenceRuleEngine.Markets.Over25);
-
-        if (btts is not { ComboEligible: true } || over25 is not { ComboEligible: true })
-            return null;
-
-        var bttsOdds = OddsGuard.Sanitize(btts.Odds);
-        var over25Odds = OddsGuard.Sanitize(over25.Odds);
-        if (bttsOdds is null || over25Odds is null) return null;
-
-        return new SameMatchPair(
-            fixture.FixtureId, fixture.League,
-            jointProbability.Value, bttsOdds.Value, over25Odds.Value);
-    }
-
     /// <summary>
     /// Minimum probability this market must reach to be publishable, falling
     /// back to the global floor.

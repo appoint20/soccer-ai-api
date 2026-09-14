@@ -28,7 +28,9 @@ public static class OddsQuoteAggregator
             Best(OddsMarkets.Over25),
             Best(OddsMarkets.Under25),
             Best(OddsMarkets.BttsYes),
-            Best(OddsMarkets.BttsNo));
+            Best(OddsMarkets.BttsNo),
+            Best(OddsMarkets.Goals23),
+            Best(OddsMarkets.BttsAndOver25));
     }
 
     /// <summary>

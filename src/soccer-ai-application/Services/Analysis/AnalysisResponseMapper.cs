@@ -56,6 +56,9 @@ public class AnalysisResponseMapper
             OddsOver25 = analysis.OddsOver25,
             OddsUnder25 = analysis.OddsUnder25,
             OddsBttsYes = analysis.OddsBttsYes,
+            OddsGoals23 = analysis.OddsGoals23,
+            OddsBttsAndOver25 = analysis.OddsBttsAndOver25,
+            OddsBookmaker = fixture.OddsBookmaker,
             // Same-match doubles are priced off the joint, and Models is not
             // serialized into the snapshot — so carry the joint explicitly.
             BttsAndOver25Probability = analysis.Models.Poisson is { IsValid: true } poisson
