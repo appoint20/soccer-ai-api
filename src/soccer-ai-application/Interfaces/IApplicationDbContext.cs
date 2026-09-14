@@ -33,5 +33,7 @@ public interface IApplicationDbContext
     DbSet<FixtureInjury> FixtureInjuries { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    /// <summary>Atomically keeps the first forecast for a fixture/model; false means already recorded or no longer upcoming.</summary>
+    Task<bool> TryInsertModelForecastAsync(ModelForecast forecast, CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
 }

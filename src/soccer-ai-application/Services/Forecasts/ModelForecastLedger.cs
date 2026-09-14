@@ -78,12 +78,7 @@ public sealed class ModelForecastLedger(
                 // cannot silently replace earlier predictions.
                 continue;
             }
-            else
-            {
-                row = new ModelForecast { FixtureId = analysis.Id, Model = forecast.Model };
-                dbContext.ModelForecasts.Add(row);
-                existing[forecast.Model] = row;
-            }
+            row = new ModelForecast { FixtureId = analysis.Id, Model = forecast.Model };
 
             row.PredictedAtUtc = now;
             row.KickoffUtc = fixture.Date;
@@ -99,9 +94,12 @@ public sealed class ModelForecastLedger(
             row.SystemExpectedGoals = systemExpectedGoals;
             row.SystemOver25Probability = systemOver25;
             row.SystemBttsProbability = systemBtts;
+            // The initial lookup is an optimization only. Another worker/API
+            // can insert after it; the unique-key conflict is handled atomically
+            // by the database without changing the original forecast.
+            await dbContext.TryInsertModelForecastAsync(row, cancellationToken);
+            existing[forecast.Model] = row;
         }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> SettleAsync(CancellationToken cancellationToken = default)

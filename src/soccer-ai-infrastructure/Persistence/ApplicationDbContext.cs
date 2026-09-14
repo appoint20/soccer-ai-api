@@ -26,6 +26,40 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<PredictionSnapshot> PredictionSnapshots { get; init; }
     public DbSet<FixtureInjury> FixtureInjuries { get; init; }
 
+    public async Task<bool> TryInsertModelForecastAsync(ModelForecast forecast, CancellationToken ct)
+    {
+        if (!Database.IsRelational())
+        {
+            // EF's in-memory provider is used only in tests. Production uses
+            // the database-enforced insert below, not a read-then-add race.
+            if (await ModelForecasts.AnyAsync(f => f.FixtureId == forecast.FixtureId && f.Model == forecast.Model, ct)) return false;
+            ModelForecasts.Add(forecast);
+            await SaveChangesAsync(ct);
+            return true;
+        }
+
+        // Raw commands do not apply EF value converters. SQLite stores UTC
+        // ticks, while PostgreSQL uses timestamptz (see OnModelCreating).
+        object predictedAt = Database.IsSqlite() ? forecast.PredictedAtUtc.UtcTicks : forecast.PredictedAtUtc;
+        object kickoff = Database.IsSqlite() ? forecast.KickoffUtc.UtcTicks : forecast.KickoffUtc;
+        var inserted = await Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "ModelForecasts" (
+                "FixtureId", "Model", "PredictedAtUtc", "KickoffUtc", "ExpectedGoals",
+                "PredictedHomeGoals", "PredictedAwayGoals", "Over25Probability", "BttsProbability",
+                "Confidence", "Rationale", "SystemExpectedGoals", "SystemOver25Probability", "SystemBttsProbability")
+            SELECT {forecast.FixtureId}, {forecast.Model}, {predictedAt}, {kickoff}, {forecast.ExpectedGoals},
+                {forecast.PredictedHomeGoals}, {forecast.PredictedAwayGoals}, {forecast.Over25Probability}, {forecast.BttsProbability},
+                {forecast.Confidence}, {forecast.Rationale}, {forecast.SystemExpectedGoals}, {forecast.SystemOver25Probability}, {forecast.SystemBttsProbability}
+            FROM "Fixtures" f
+            WHERE f."Id" = {forecast.FixtureId} AND f."Date" = {kickoff}
+                AND f."Date" > {predictedAt} AND f."Status" IN ('NS', 'TBD')
+            ON CONFLICT ("FixtureId", "Model") DO NOTHING
+            """, ct);
+        // No Added entity is left tracked. An overlapping API/worker run keeps
+        // the first forecast and cannot poison a later SaveChanges call.
+        return inserted == 1;
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

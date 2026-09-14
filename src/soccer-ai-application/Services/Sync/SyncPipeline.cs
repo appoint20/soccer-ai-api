@@ -113,9 +113,10 @@ public sealed class SyncPipeline(
         var startIndex = 0;
         var previousRunIncomplete = state.LastCompletedStep != null &&
             (state.LastSuccessfulSyncUtc == null || state.LastSuccessfulSyncUtc < state.LastRunStartedUtc);
-        // A failed final AI step must not pin every later run to AI alone and
-        // stop football data, odds and model refreshes during an AI outage.
-        if (resume && previousRunIncomplete && state.LastCompletedStep != Steps.ModelForecasts)
+        // Failures after publishing must not pin later runs to forecasts/AI and
+        // prevent football data and odds from refreshing. This also recovers
+        // workers previously stuck on a duplicate ModelForecast insert.
+        if (resume && previousRunIncomplete && state.LastCompletedStep is not (Steps.PublishPicks or Steps.ModelForecasts))
         {
             startIndex = Array.IndexOf(StepOrder, state.LastCompletedStep) + 1;
             if (startIndex > 0)
@@ -152,7 +153,12 @@ public sealed class SyncPipeline(
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 logger.LogInformation("[Sync] Step '{Step}' starting...", step);
 
-                await ExecuteStepAsync(scope.ServiceProvider, step, season, opt, ct);
+                // The state context must never track a step's data writes. A
+                // failed SaveChanges leaves Added/Modified entities pending;
+                // sharing that context retries the failed write when saving
+                // LastError, masking the original failure and breaking resume.
+                using (var stepScope = scopeFactory.CreateScope())
+                    await ExecuteStepAsync(stepScope.ServiceProvider, step, season, opt, ct);
 
                 sw.Stop();
                 logger.LogInformation("[Sync] Step '{Step}' completed in {Elapsed:F1}s", step, sw.Elapsed.TotalSeconds);
@@ -284,9 +290,17 @@ public sealed class SyncPipeline(
                 break;
 
             case Steps.ModelForecasts:
-                await services.GetRequiredService<
-                        Forecasts.IModelForecastSyncService>()
-                    .RunAsync(opt.ForecastDaysAhead, ct);
+                try
+                {
+                    await services.GetRequiredService<Forecasts.IModelForecastSyncService>()
+                        .RunAsync(opt.ForecastDaysAhead, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogError(ex,
+                        "[Sync] Optional model forecast measurement failed — continuing to AI narratives; "
+                        + "forecast measurement will retry next run");
+                }
                 break;
 
             case Steps.AiNarratives:

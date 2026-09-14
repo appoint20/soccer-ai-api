@@ -40,6 +40,60 @@ public class AiSyncService(
         logger.LogInformation("[AiSync] Window: {Start:u} to {End:u} ({Days} days ahead)",
             startUtc, endUtc, daysAhead);
 
+        var report = await RunWindowAsync(startUtc, endUtc, force, cancellationToken);
+
+        // The pipeline turns this into LastError. A run that left fixtures
+        // without text must not be recorded as a clean success.
+        if (report.Failed > 0)
+            throw new ExternalApiException("AI narratives", report.Attempted == 0
+                ? $"AI preparation failed for {report.Failed} fixtures; no narratives generated."
+                : $"AI analysis incomplete: {report.Generated} persisted, {report.Failed} failed. Missing fixtures will retry next sync.");
+    }
+
+    public async Task<AiSyncReport> SyncDateAsync(
+        DateOnly dateUtc, bool force = false, CancellationToken cancellationToken = default)
+    {
+        // The calendar day GET /api/analyze returns (FixtureQueryHelper): UTC
+        // midnight to midnight, so "this date" means the matches the app lists.
+        var dayStart = new DateTimeOffset(dateUtc.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var dayEnd = dayStart.AddDays(1);
+
+        // A narrative is a pre-match forecast. For today the window opens now:
+        // a fixture that has kicked off is counted, never narrated.
+        var now = DateTimeOffset.UtcNow;
+        var startUtc = now > dayStart ? now : dayStart;
+
+        var onDate = await dbContext.Fixtures.AsNoTracking()
+            .Where(f => f.Date >= dayStart && f.Date < dayEnd)
+            .Select(f => new { f.LeagueId, f.Status, f.Date })
+            .ToListAsync(cancellationToken);
+
+        var scope = leagueTiers.GetSyncLeagueIds().ToHashSet();
+        var outOfScope = onDate.Count(f => !scope.Contains(f.LeagueId));
+        var notUpcoming = onDate.Count(f => scope.Contains(f.LeagueId)
+                                            && (f.Date < startUtc || f.Status is not ("NS" or "TBD")));
+
+        logger.LogInformation(
+            "[AiSync] Date run for {Date:yyyy-MM-dd} (force {Force}): {Total} fixtures, {OutOfScope} outside the synced leagues, {NotUpcoming} started or not scheduled",
+            dateUtc, force, onDate.Count, outOfScope, notUpcoming);
+
+        var report = await RunWindowAsync(startUtc, dayEnd, force, cancellationToken);
+        return report with { FixturesOnDate = onDate.Count, OutOfScope = outOfScope, NotUpcoming = notUpcoming };
+    }
+
+    /// <summary>
+    /// Narrates every not-yet-started, in-scope fixture kicking off in
+    /// [<paramref name="startUtc"/>, <paramref name="endUtc"/>).
+    /// </summary>
+    /// <remarks>
+    /// Per-fixture failures are counted and returned rather than thrown, so each
+    /// caller decides what an incomplete run means: the scheduled sync fails its
+    /// step, a manual date run reports which fixtures to retry. Account and
+    /// configuration failures (401, 402, 403, 429, 503) still throw at once.
+    /// </remarks>
+    private async Task<AiSyncReport> RunWindowAsync(
+        DateTimeOffset startUtc, DateTimeOffset endUtc, bool force, CancellationToken cancellationToken)
+    {
         // 1. Fetch raw fixtures from DB (focus leagues only). Not-yet-started
         //    only: a finished match already has a result, so paying an LLM to
         //    predict one is pure waste.
@@ -57,7 +111,7 @@ public class AiSyncService(
             logger.LogWarning(
                 "[AiSync] Found 0 upcoming fixtures between {Start:u} and {End:u}. Check the fixture sync.",
                 startUtc, endUtc);
-            return;
+            return new AiSyncReport { WindowStartUtc = startUtc, WindowEndUtc = endUtc };
         }
 
         logger.LogInformation("[AiSync] Found {Count} total fixtures in window.", fixtures.Count);
@@ -66,7 +120,7 @@ public class AiSyncService(
         var toAnalyze = new List<AiBatchItem>();
         var rawByFixture = new Dictionary<int, WeightedPrediction>();
         var skippedCount = 0;
-        var failedCount = 0;
+        var failedIds = new List<int>();
 
         // 2. Filter BEFORE heavy ML prediction
         foreach (var fixture in fixtures)
@@ -127,7 +181,7 @@ public class AiSyncService(
                     logger.LogWarning(
                         "[AiSync] Fixture {FixtureId} produced no model probabilities — the narrative would be "
                         + "written from stats alone. Skipping.", fixture.Id);
-                    failedCount++;
+                    failedIds.Add(fixture.Id);
                     toAnalyze.RemoveAt(toAnalyze.Count - 1);
                     continue;
                 }
@@ -140,7 +194,7 @@ public class AiSyncService(
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch (Exception ex)
             {
-                failedCount++;
+                failedIds.Add(fixture.Id);
                 logger.LogError(ex, "[AiSync] Failed to run ML prediction for fixture {FixtureId}.", fixture.Id);
             }
         }
@@ -149,10 +203,9 @@ public class AiSyncService(
 
         if (toAnalyze.Count == 0)
         {
-            if (failedCount > 0)
-                throw new ExternalApiException("AI narratives", $"AI preparation failed for {failedCount} fixtures; no narratives generated.");
-            logger.LogInformation("[AiSync] No matches remaining after filter. Sync complete.");
-            return;
+            if (failedIds.Count == 0)
+                logger.LogInformation("[AiSync] No matches remaining after filter. Sync complete.");
+            return Report();
         }
 
         logger.LogInformation("[AiSync] Prepared {Count} matches for AI. Processing one fixture per request...", toAnalyze.Count);
@@ -202,10 +255,12 @@ public class AiSyncService(
 
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.En, "en", mathProbs, cancellationToken);
                     await UpsertAnalysisAsync(fixtureId, bilingualResult, bilingualResult.De, "de", mathProbs, cancellationToken);
-                    totalProcessed++;
                 }
 
                 await dbContext.SaveChangesAsync(cancellationToken);
+                // After the save, not before: a failed save lands in the catch
+                // below, and must not be reported as generated as well.
+                totalProcessed += results.Count;
                 logger.LogInformation("[AiSync] Successfully called SaveChangesAsync for batch.");
 
                 // Recompute the cached snapshot so GET /api/analyze immediately contains the AI narrative
@@ -235,14 +290,26 @@ public class AiSyncService(
             }
             catch (Exception ex)
             {
-                failedCount++;
+                failedIds.Add(chunkList[0].FixtureId);
                 logger.LogError(ex, "[AiSync] Error processing batch starting at index {Idx}", i);
             }
         }
 
-        if (failedCount > 0)
-            throw new ExternalApiException("AI narratives", $"AI analysis incomplete: {totalProcessed} persisted, {failedCount} failed. Missing fixtures will retry next sync.");
-        logger.LogInformation("All batches completed. Total matches analyzed and persisted: {Total}", totalProcessed);
+        if (failedIds.Count == 0)
+            logger.LogInformation("All batches completed. Total matches analyzed and persisted: {Total}", totalProcessed);
+        return Report();
+
+        AiSyncReport Report() => new()
+        {
+            WindowStartUtc = startUtc,
+            WindowEndUtc = endUtc,
+            Candidates = fixtures.Count,
+            AlreadyAnalyzed = skippedCount,
+            Attempted = toAnalyze.Count,
+            Generated = totalProcessed,
+            Failed = failedIds.Count,
+            FailedFixtureIds = failedIds,
+        };
     }
 
     public async Task SyncSingleFixtureAsync(int fixtureId, bool force = false, CancellationToken cancellationToken = default)

@@ -1,7 +1,10 @@
+using System.Globalization;
 using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Hosting;
+using SoccerAi.Api.Automation;
+using SoccerAi.Api.Security;
 using SoccerAi.Application.Features.Automation;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
@@ -179,6 +182,85 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
             started_at = DateTime.UtcNow,
         }));
     }
+
+    /// <summary>
+    /// Generates AI match analysis for every upcoming fixture on one date.
+    /// </summary>
+    /// <remarks>
+    /// Returns 202 at once and runs in the background: narratives are written
+    /// one fixture per model request, and a full matchday takes far longer than
+    /// any HTTP timeout. Poll the returned <c>poll</c> URL for the report.
+    ///
+    /// The date is a UTC calendar day — the same day <c>GET /api/analyze</c>
+    /// returns — so it targets the matches the app lists. Only fixtures that
+    /// have not kicked off are narrated, since the analysis is a pre-match
+    /// forecast; the rest of the day is counted in the report, not dropped.
+    ///
+    /// Without <c>force</c>, fixtures that already have English and German text
+    /// are skipped. With it their text is regenerated, and each is a paid call.
+    ///
+    /// Requires the admin API key (<c>X-API-Key</c>), not just a signed-in user.
+    /// The controller's policy also accepts app users' tokens, and every call
+    /// here can spend money — with <c>force</c>, again and again.
+    /// </remarks>
+    /// <param name="jobs">The job runner.</param>
+    /// <param name="date">UTC date, <c>yyyy-MM-dd</c>; today or later.</param>
+    /// <param name="force">Regenerate narratives that already exist.</param>
+    [HttpPost("ai-analysis")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public IActionResult RunAiAnalysisForDate(
+        [FromServices] AiAnalysisJobs jobs,
+        [FromQuery] string? date,
+        [FromQuery] bool force = false)
+    {
+        if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+            return BadRequest(ApiResponse<object>.Fail("date is required, formatted yyyy-MM-dd (UTC)."));
+
+        if (day < DateOnly.FromDateTime(DateTime.UtcNow))
+            return BadRequest(ApiResponse<object>.Fail(
+                "date is in the past. AI analysis is a pre-match forecast, and every fixture on that date has kicked off."));
+
+        var job = jobs.TryStart(day, force);
+        if (job is null)
+        {
+            var running = jobs.Current;
+            return Conflict(ApiResponse<object>.Fail(running is null
+                ? "An AI analysis job is already running."
+                : $"An AI analysis job for {running.Date:yyyy-MM-dd} is already running. Poll /api/automation/ai-analysis/jobs/{running.Id}"));
+        }
+
+        var poll = $"/api/automation/ai-analysis/jobs/{job.Id}";
+        logger.LogInformation("[AutomationAi] Started AI analysis job {JobId} for {Date:yyyy-MM-dd} (force {Force})",
+            job.Id, day, force);
+
+        return Accepted(poll, ApiResponse<object>.Ok(new
+        {
+            message = $"AI analysis started for {day:yyyy-MM-dd}.",
+            job_id = job.Id,
+            date = day,
+            force,
+            poll,
+            started_at = job.StartedAtUtc,
+        }));
+    }
+
+    /// <summary>Status and report of a manual AI analysis job.</summary>
+    /// <remarks>
+    /// Jobs are held in memory: a restart forgets them, though narratives already
+    /// written stay written.
+    /// </remarks>
+    [HttpGet("ai-analysis/jobs/{jobId:guid}")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    [ProducesResponseType<ApiResponse<AiAnalysisJob>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult GetAiAnalysisJob(Guid jobId, [FromServices] AiAnalysisJobs jobs) =>
+        jobs.Get(jobId) is { } job
+            ? Ok(ApiResponse<AiAnalysisJob>.Ok(job))
+            : NotFound(ApiResponse<object>.Fail(
+                $"No AI analysis job {jobId}. Jobs are kept in memory and cleared on restart."));
 
     /// <summary>
     /// Liveness only: confirms this process is serving requests.
