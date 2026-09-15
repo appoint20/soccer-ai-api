@@ -27,7 +27,8 @@ public sealed record AiAnalysisJob(
 /// memory for polling.
 /// </summary>
 /// <remarks>
-/// One job at a time. Narratives are written one fixture per model request, so
+/// One background automation job at a time in this API process, sharing the
+/// gate with full date sync and sync-pipeline. Narratives are written one fixture per model request, so
 /// a second concurrent job would pay twice for the same fixtures and race the
 /// same rows. The gate is per process: it cannot see the worker's scheduled
 /// narrative step, which can still overlap — the per-fixture "already has text"
@@ -40,17 +41,17 @@ public sealed record AiAnalysisJob(
 public sealed class AiAnalysisJobs(
     IServiceScopeFactory scopeFactory,
     IHostApplicationLifetime lifetime,
-    ILogger<AiAnalysisJobs> logger)
+    ILogger<AiAnalysisJobs> logger,
+    ManualAutomationGate gate)
 {
     private const int RetainedJobs = 20;
 
-    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly ConcurrentDictionary<Guid, AiAnalysisJob> _jobs = new();
 
     /// <summary>Starts a job, or returns null when one is already running.</summary>
     public AiAnalysisJob? TryStart(DateOnly date, bool force)
     {
-        if (!_gate.Wait(0)) return null;
+        if (!gate.TryEnter()) return null;
 
         var job = new AiAnalysisJob(Guid.NewGuid(), date, force, AiAnalysisJob.Running, DateTimeOffset.UtcNow);
         _jobs[job.Id] = job;
@@ -95,7 +96,7 @@ public sealed class AiAnalysisJobs(
                 // Release before publishing the outcome: a poller that sees the
                 // job finish must be able to start the next one at once, not
                 // race the release and get a spurious 409.
-                _gate.Release();
+                gate.Exit();
                 Finish(outcome);
             }
         }, CancellationToken.None);

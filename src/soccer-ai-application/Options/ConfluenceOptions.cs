@@ -84,7 +84,7 @@ public sealed class ConfluenceOptions
     /// lost money (n=47, 48.9%, −4.7%). Note that .NET configuration binding
     /// appends to array defaults, so an override here adds to this list.
     /// </summary>
-    public string[] GoalsMarkets { get; set; } = ["btts", "over25", "under25"];
+    public string[] GoalsMarkets { get; set; } = ["btts", "over25", "under25", "btts_and_over25", "goals_2_3"];
 
     /// <summary>
     /// Guaranteed daily slots for tickets containing a focus market.

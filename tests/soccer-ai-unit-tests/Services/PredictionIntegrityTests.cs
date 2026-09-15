@@ -18,7 +18,7 @@ public sealed class PredictionIntegrityTests
         .UseSqlite("Data Source=:memory:")
         .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)).Options);
     private static Fixture Match(int id = 1) => new() { Id = id, ApiId = id, HomeTeamId = 10, AwayTeamId = 20, Status = "NS", Date = Now.AddHours(6), LeagueId = 39,
-        OddsCheckedAtUtc = Now, OddsUpdatedAtUtc = Now.AddMinutes(-10), BttsYesOdds = 1.9 };
+        OddsBookmaker = "Bet365", OddsCheckedAtUtc = Now, OddsUpdatedAtUtc = Now.AddMinutes(-10), BttsYesOdds = 1.9 };
     // bttsProb is a parameter because WeightedPrediction is init-only: the NaN
     // case below has to be built, not mutated after construction.
     private static WeightedPrediction Prediction(double bttsProb = .7) => new() {

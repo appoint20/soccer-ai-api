@@ -48,7 +48,9 @@ public static class FixtureOddsWriter
         fixture.OddsBookmaker = LiveOddsPolicy.Bookmaker;
         var fresh = quotes.Where(q => q.Bookmaker.Equals(LiveOddsPolicy.Bookmaker, StringComparison.OrdinalIgnoreCase) && OddsGuard.IsValid(q.Price) &&
             q.ProviderUpdatedAtUtc is { } updated && updated <= capturedAt &&
-            capturedAt - updated <= LiveOddsPolicy.MaximumAge).ToList();
+            capturedAt - updated <= LiveOddsPolicy.MaximumAge)
+            .GroupBy(q => q.Market)
+            .Select(g => g.OrderByDescending(q => q.ProviderUpdatedAtUtc).ThenBy(q => q.Price).First()).ToList();
         var best = OddsQuoteAggregator.BestPrices(fresh);
         fixture.HomeWinOdds = best.HomeWin;
         fixture.DrawOdds = best.Draw;

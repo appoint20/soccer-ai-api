@@ -53,6 +53,7 @@ public class FixtureAnalysis
     public bool AiBttsQualified { get; set; }
     public bool AiUnder25Qualified { get; set; }
     public bool AiGoals23Qualified { get; set; }
+    public bool? AiBttsAndOver25Qualified { get; set; }
     public bool AiHomeWinQualified { get; set; }
     public bool AiAwayWinQualified { get; set; }
     public string AiBestBet { get; set; } = "";
@@ -70,6 +71,9 @@ public class FixtureAnalysis
     /// computed during sync so GET /api/analyze is a pure DB read.
     /// </summary>
     public string? SnapshotJson { get; set; }
+
+    /// <summary>Versioned AI explanation of the final decision; separate from the AI opinion.</summary>
+    public string? DecisionExplanationJson { get; set; }
 
     // ── Audit ──────────────────────────────────────────────────────
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

@@ -34,6 +34,7 @@ public class AiBatchItem
     [JsonPropertyName("drawProb")]
     public double ModelDraw { get; set; }
     public double ModelGoals23 { get; set; }
+    public double? ModelBttsAndOver25 { get; set; }
     
     [JsonPropertyName("awayWinProb")]
     public double ModelAwayWin { get; set; }

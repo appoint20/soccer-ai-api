@@ -13,6 +13,7 @@ public static class LiveOddsPolicy
 
     public static bool IsFresh(Fixture fixture, DateTimeOffset now) =>
         fixture.Status == "NS" && fixture.Date > now &&
+        string.Equals(fixture.OddsBookmaker, Bookmaker, StringComparison.OrdinalIgnoreCase) &&
         fixture.OddsCheckedAtUtc is { } captured && captured <= now && now - captured <= MaximumAge &&
         fixture.OddsUpdatedAtUtc is { } updated && updated <= captured && now - updated <= MaximumAge;
 
@@ -44,7 +45,7 @@ public static class LiveOddsPolicy
             return m with
             {
                 Odds = price, MinOdds = floor, Ev = ev, Qualified = qualified,
-                ComboEligible = m.ComboEligible && pricePassed && ev > 0,
+                ComboEligible = m.ComboEligible && pricePassed && edgePassed && m.ProbabilityPassed,
                 KellyStake = qualified && price is { } currentOdds && m.KellyFraction is { } fraction
                     ? ValueMath.FractionalKelly(m.Probability, currentOdds, fraction) : null,
                 GateOutcome = !fresh ? "stale_odds" : price is null ? GateOutcome.AnalysisOnlyNoOdds
@@ -59,7 +60,11 @@ public static class LiveOddsPolicy
         snapshot.OddsUpdatedAtUtc = fixture.OddsUpdatedAtUtc;
         snapshot.Status = fixture.Status;
         snapshot.OddsBookmaker = fixture.OddsBookmaker;
-        if (snapshot.Result is not null) return; // historical outcomes keep their recorded analysis
+        if (snapshot.Result is not null)
+        {
+            Analysis.DecisionExplanationPolicy.Refresh(snapshot);
+            return; // historical outcomes keep their recorded analysis
+        }
         var fresh = IsFresh(fixture, now);
         snapshot.OddsHomeWin = fresh ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null;
         snapshot.OddsDraw = fresh ? OddsGuard.Sanitize(fixture.DrawOdds) : null;
@@ -71,6 +76,7 @@ public static class LiveOddsPolicy
         snapshot.OddsBttsAndOver25 = fresh ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null;
         if (snapshot.DecisionAudit is not { } audit) return;
         snapshot.DecisionAudit = Reprice(audit, fixture, now);
+        Analysis.DecisionExplanationPolicy.Refresh(snapshot);
         bool Qualified(string market) => snapshot.DecisionAudit.Markets.Any(m => m.Market == market && m.Qualified);
         if (snapshot.Prediction is not { } p) return;
         p.BTTS.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Btts);

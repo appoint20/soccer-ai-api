@@ -27,7 +27,7 @@ public class AiAnalysisJobsTests
         return new AiAnalysisJobs(
             services.GetRequiredService<IServiceScopeFactory>(),
             Mock.Of<IHostApplicationLifetime>(l => l.ApplicationStopping == CancellationToken.None),
-            NullLogger<AiAnalysisJobs>.Instance);
+            NullLogger<AiAnalysisJobs>.Instance, new ManualAutomationGate());
     }
 
     private static async Task<AiAnalysisJob> FinishedAsync(AiAnalysisJobs jobs, Guid id)

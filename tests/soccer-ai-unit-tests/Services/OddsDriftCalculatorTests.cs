@@ -86,15 +86,15 @@ public class OddsDriftCalculatorTests
 public class InformationalOnlyGateTests
 {
     [Fact]
-    public void Goals23_IsInformationalOnly_EvenWithOddsAndConfluence()
+    public void ExplicitMarketExclusionOverridesOddsAndConfluence()
     {
-        var opt = new SoccerAi.Application.Options.ConfluenceOptions();
+        var opt = new SoccerAi.Application.Options.ConfluenceOptions { InformationalOnlyMarkets = ["goals_2_3"] };
         var audit = SoccerAi.Application.Services.Decisions.ConfluenceRuleEngine.EvaluateGoals23(
             0.55, new SoccerAi.Application.Models.Signals.StrategicSignals(), 0.50,
             odds: 2.0, minOdds: 1.7, minEdge: 0.05, opt);
 
         audit.GateOutcome.Should().Be(SoccerAi.Application.Services.Decisions.GateOutcome.InformationalOnly);
-        audit.Qualified.Should().BeFalse("goals_2_3 has no odds at source — permanently analysis-only");
+        audit.Qualified.Should().BeFalse("the configured market exclusion is respected");
     }
 
     [Fact]

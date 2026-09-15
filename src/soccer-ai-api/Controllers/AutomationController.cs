@@ -20,9 +20,6 @@ namespace SoccerAi.Api.Controllers;
 [Authorize(Policy = "CombinedPolicy")]
 public class AutomationController(IMediator mediator, IHostApplicationLifetime lifetime, ILogger<AutomationController> logger) : ControllerBase
 {
-    /// <summary>Serialises pipeline runs across requests in this process.</summary>
-    private static readonly SemaphoreSlim _pipelineGate = new(1, 1);
-
     /// <summary>
     /// Executes the full daily synchronization job:
     /// Standings -> Fixtures -> ML retraining -> AI analysis.
@@ -136,18 +133,20 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
     /// against one database would double every API call and interleave writes.
     /// </remarks>
     /// <param name="pipeline">The shared pipeline.</param>
+    /// <param name="gate">Serializes background automation within this API process.</param>
     /// <param name="resume">Resume an interrupted run from its last completed step.</param>
     [HttpPost("sync-pipeline")]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public IActionResult RunSyncPipeline(
         [FromServices] SoccerAi.Application.Services.Sync.SyncPipeline pipeline,
+        [FromServices] ManualAutomationGate gate,
         [FromQuery] bool resume = true)
     {
-        if (!_pipelineGate.Wait(0))
+        if (!gate.TryEnter())
         {
             return Conflict(ApiResponse<object>.Fail(
-                "A sync is already running. Poll /api/automation/sync-status for progress."));
+                "A background automation job is already running. Poll its status URL before starting another run."));
         }
 
         // ApplicationStopping, not the request token: the run must outlive the
@@ -171,7 +170,7 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
             }
             finally
             {
-                _pipelineGate.Release();
+                gate.Exit();
             }
         }, CancellationToken.None);
 
@@ -228,7 +227,7 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
         {
             var running = jobs.Current;
             return Conflict(ApiResponse<object>.Fail(running is null
-                ? "An AI analysis job is already running."
+                ? "A background automation job is already running. Poll its status URL before starting another run."
                 : $"An AI analysis job for {running.Date:yyyy-MM-dd} is already running. Poll /api/automation/ai-analysis/jobs/{running.Id}"));
         }
 
@@ -261,6 +260,58 @@ public class AutomationController(IMediator mediator, IHostApplicationLifetime l
             ? Ok(ApiResponse<AiAnalysisJob>.Ok(job))
             : NotFound(ApiResponse<object>.Fail(
                 $"No AI analysis job {jobId}. Jobs are kept in memory and cleared on restart."));
+
+    /// <summary>Sync data, refresh odds, predict, analyze with AI, and publish picks for one UTC date.</summary>
+    /// <remarks>
+    /// Returns 202 and a job-specific polling URL. Supporting league standings
+    /// and season history are refreshed, then odds and predictions target the
+    /// chosen day. Uses the accepted prediction model, without retraining.
+    /// Final decisions and combinations are built after AI. Started fixtures
+    /// are excluded from pre-match analysis and no historical ledger is rewritten.
+    /// force_ai=true regenerates existing AI opinions (paid provider calls).
+    /// Otherwise current AI text is reused and stale explanations refreshed.
+    /// The gate covers background automation in this process, not other replicas
+    /// or the scheduled worker. Job status is lost on application restart.
+    /// </remarks>
+    [HttpPost("sync-date")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public IActionResult RunSyncForDate(
+        [FromServices] DateSyncJobs jobs,
+        [FromQuery] string? date,
+        [FromQuery(Name = "force_ai")] bool forceAi = false)
+    {
+        if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+            return BadRequest(ApiResponse<object>.Fail("date is required, formatted yyyy-MM-dd (UTC)."));
+        if (day < DateOnly.FromDateTime(DateTime.UtcNow) || day == DateOnly.MaxValue)
+            return BadRequest(ApiResponse<object>.Fail("Choose today or a future UTC date before 9999-12-31. Past dates cannot receive new pre-match predictions."));
+        var job = jobs.TryStart(day, forceAi);
+        if (job is null)
+        {
+            var running = jobs.Current;
+            return Conflict(ApiResponse<object>.Fail(running is null
+                ? "A background automation job is already running. Poll its status URL before starting another run."
+                : $"Date sync is already running. Poll /api/automation/sync-date/jobs/{running.Id}"));
+        }
+        var poll = $"/api/automation/sync-date/jobs/{job.Id}";
+        return Accepted(poll, ApiResponse<object>.Ok(new
+        {
+            message = $"Full date sync started for {day:yyyy-MM-dd}.",
+            job_id = job.Id, date = day, force_ai = forceAi, poll, started_at = job.StartedAtUtc
+        }));
+    }
+
+    /// <summary>Per-step progress and results of a manual date sync.</summary>
+    [HttpGet("sync-date/jobs/{jobId:guid}")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    [ProducesResponseType<ApiResponse<DateSyncJob>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult GetDateSyncJob(Guid jobId, [FromServices] DateSyncJobs jobs) =>
+        jobs.Get(jobId) is { } job
+            ? Ok(ApiResponse<DateSyncJob>.Ok(job))
+            : NotFound(ApiResponse<object>.Fail("Job not found. Recent job statuses are held in memory and cleared on restart."));
 
     /// <summary>
     /// Liveness only: confirms this process is serving requests.

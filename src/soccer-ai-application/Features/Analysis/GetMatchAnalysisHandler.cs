@@ -100,6 +100,7 @@ public class GetMatchAnalysisHandler(
                 if (snapshot != null)
                 {
                     SoccerAi.Application.Services.LiveOddsPolicy.RefreshResponse(snapshot, fixture, DateTimeOffset.UtcNow);
+                    DecisionExplanationPolicy.Refresh(snapshot, lang);
                     analysisList.Add(snapshot);
                 }
             }

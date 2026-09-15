@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();
         services.AddScoped<IAnalysisPrecomputeService, AnalysisPrecomputeService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
+        services.AddScoped<IDateFixtureSyncService, FixtureSyncService>();
         services.AddScoped<IOddsBackfillService, OddsBackfillService>();
         services.AddScoped<IHistoricalOddsImportService, HistoricalOddsImportService>();
         services.AddScoped<IAiSyncService, AiSyncService>();

@@ -27,7 +27,7 @@ public sealed class AiMarketExplanation
 public sealed record DecisionExplanationInput(
     int Version, int FixtureId, DateTimeOffset Kickoff, string HomeTeam, string AwayTeam,
     TeamStats HomeStats, TeamStats AwayStats, HeadToHeadModel? H2H,
-    IReadOnlyList<DecisionExplanationMarket> Markets);
+    IReadOnlyList<DecisionExplanationMarket> Markets, IReadOnlyList<string> SelectedMarkets);
 
 public sealed record DecisionExplanationMarket(
     string Market, string Selection, bool Qualified, string Gate, double Probability,

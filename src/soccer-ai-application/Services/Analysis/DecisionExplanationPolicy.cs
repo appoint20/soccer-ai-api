@@ -23,7 +23,8 @@ public static class DecisionExplanationPolicy
         Version, match.Id, match.Date, match.HomeTeam, match.AwayTeam, match.HomeStats, match.AwayStats, match.H2H,
         (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).OrderBy(m => m.Market)
         .Select(m => new DecisionExplanationMarket(m.Market, m.Selection, m.Qualified, m.GateOutcome,
-            m.Probability, m.Odds, match.OddsBookmaker, Facts(m, "en"))).ToList());
+            m.Probability, m.Odds, match.OddsBookmaker, Facts(m, "en"))).ToList(),
+        (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified).Select(m => m.Market).Order().ToList());
 
     public static string Hash(DecisionExplanationInput input) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(input))));
@@ -40,13 +41,27 @@ public static class DecisionExplanationPolicy
             if (block?.SummaryLines is not { Count: 4 } || block.Markets is null) return "four summary sentences required";
             if (!block.Markets.Select(m => m.Market).Order().SequenceEqual(input.Markets.Select(m => m.Market).Order()))
                 return "market list differs from final audit";
-            if (block.SummaryLines.Any(s => !ShortSentence(s, 180))) return "summary sentence too long or invalid";
+            if (block.SummaryLines.Any(s => !ShortSentence(s, 180) ||
+                Regex.IsMatch(s, @"\b(bet|bets|pick|picks|recommend|selected|wette|wetten|empfehlen|empfehlung)\b", RegexOptions.IgnoreCase)))
+                return "summary must contain four short context sentences without betting advice";
+            var supportedNumbers = Numbers(JsonSerializer.Serialize(input)).ToHashSet();
+            if (block.SummaryLines.SelectMany(Numbers).Except(supportedNumbers).Any())
+                return "summary introduces an unsupported number";
             foreach (var market in block.Markets)
+            {
                 if (market.Checks is not { Count: 5 } || market.Checks.Any(s => !ShortSentence(s, 220)))
                     return "five short checks required per market";
+                var facts = input.Markets.Single(m => m.Market == market.Market).Facts;
+                for (var i = 0; i < 5; i++)
+                    if (Numbers(market.Checks[i]).Except(Numbers(facts[i])).Any()) return "check introduces an unsupported number";
+            }
         }
         return null;
     }
+
+    private static IEnumerable<string> Numbers(string s) => Regex.Matches(s, @"\d+(?:[.,]\d+)?")
+        .Select(m => decimal.TryParse(m.Value.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out var n)
+            ? n.ToString("G29", CultureInfo.InvariantCulture) : m.Value);
 
     private static bool ShortSentence(string? text, int max) => !string.IsNullOrWhiteSpace(text) &&
         text.Length <= max && !text.Contains('\n') && !text.Contains('\r') &&
@@ -60,16 +75,18 @@ public static class DecisionExplanationPolicy
         var block = de ? match.DecisionExplanation?.De : match.DecisionExplanation?.En;
         var lines = current ? block!.SummaryLines.ToList() : new List<string>();
         var markets = (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).ToList();
-        var selected = markets.Where(m => m.Qualified).OrderByDescending(m => m.Ev).ToList();
+        // The card visibility filter must not rewrite the system's decision
+        // (a configured draw threshold can, for example, be below 50%).
+        var selected = (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified).OrderByDescending(m => m.Ev).ToList();
         var best = selected.FirstOrDefault();
         if (best is not null)
         {
             lines.Add(de ? $"Das System wählt: {string.Join(", ", selected.Select(m => Label(m, true)))}."
                 : $"The system selects: {string.Join(", ", selected.Select(m => Label(m, false)))}.");
-            var required = Math.Max(best.MinOdds, (1 + best.MinEdge) / best.Probability);
+            var required = Math.Ceiling(Math.Max(best.MinOdds, (1 + best.MinEdge) / best.Probability) * 100 - 1e-10) / 100;
             lines.Add(de
-                ? $"{Label(best, true)} besteht die Datenchecks: {Pct(best.Probability)} Chance und Quote {Num(best.Odds)} über der benötigten {Num(required)}."
-                : $"{Label(best, false)} passes the evidence checks: {Pct(best.Probability)} chance and odds {Num(best.Odds)} above the required {Num(required)}.");
+                ? $"{Label(best, true)} besteht die Datenchecks: {Pct(best.Probability)} Chance, Quote {Num(best.Odds)} bei benötigten {Num(required)}."
+                : $"{Label(best, false)} passes the evidence checks: {Pct(best.Probability)} chance; odds {Num(best.Odds)} meet the required {Num(required)}.");
         }
         else
         {

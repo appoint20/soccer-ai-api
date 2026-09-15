@@ -140,6 +140,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<double>("AwayXg")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("BttsAndOver25Odds")
+                        .HasColumnType("double precision");
+
                     b.Property<double?>("BttsYesOdds")
                         .HasColumnType("double precision");
 
@@ -150,6 +153,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<double?>("DrawOdds")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Goals23Odds")
                         .HasColumnType("double precision");
 
                     b.Property<int?>("HomeBallPossession")
@@ -212,6 +218,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<int>("LeagueId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("OddsBookmaker")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("OddsCheckedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -261,6 +270,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<string>("AiBestBet")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool?>("AiBttsAndOver25Qualified")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("AiBttsQualified")
                         .HasColumnType("boolean");
@@ -317,6 +329,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecisionExplanationJson")
+                        .HasColumnType("text");
 
                     b.Property<double>("DrawProb")
                         .HasColumnType("double precision");

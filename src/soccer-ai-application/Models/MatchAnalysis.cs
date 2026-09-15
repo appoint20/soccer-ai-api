@@ -71,6 +71,9 @@ public sealed class MatchAnalysis
     [JsonPropertyName("h2h")]
     public HeadToHeadModel? H2H { get; init; }
     public AiAnalysisDto? Ai { get; set; }
+    public AiDecisionExplanation? DecisionExplanation { get; set; }
+    public string PresentationLanguage { get; set; } = "en";
+    public DecisionPresentation? Presentation { get; set; }
 
     /// <summary>Strategic signal catalog — persisted in the snapshot; LLM narratives cite the labels.</summary>
     public Signals.StrategicSignals? Signals { get; init; }

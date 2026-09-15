@@ -75,6 +75,8 @@ builder.Services.AddSingleton<AdminApiKeyRegistry>();
 // Manual AI analysis runs (POST /api/automation/ai-analysis). A singleton: the
 // one-job gate and the job statuses must outlive the request that started them.
 builder.Services.AddSingleton<SoccerAi.Api.Automation.AiAnalysisJobs>();
+builder.Services.AddSingleton<SoccerAi.Api.Automation.ManualAutomationGate>();
+builder.Services.AddSingleton<SoccerAi.Api.Automation.DateSyncJobs>();
 
 // Supabase owns identity once a project URL is configured. Its tokens are
 // validated here rather than by calling Supabase on every request: an access

@@ -16,6 +16,7 @@ public class AiBilingualResult
     public bool BttsQualified { get; set; }
     public bool Under25Qualified { get; set; }
     public bool Goals23Qualified { get; set; }
+    public bool? BttsAndOver25Qualified { get; set; }
     public bool HomeWinQualified { get; set; }
     public bool AwayWinQualified { get; set; }
     public string BestBet { get; set; } = "";

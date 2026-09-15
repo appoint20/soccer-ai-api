@@ -120,7 +120,7 @@ public static class ConfluenceRuleEngine
             Markets.Over25 => ai.AiOver25Qualified,
             Markets.Under25 => ai.AiUnder25Qualified,
             Markets.Goals23 => ai.AiGoals23Qualified,
-            Markets.BttsAndOver25 => ai.AiBttsQualified && ai.AiOver25Qualified,
+            Markets.BttsAndOver25 => ai.AiBttsAndOver25Qualified,
             // The winner market is evaluated for one side only, so the AI is
             // asked about that same side rather than about "a winner".
             Markets.MatchWinner => prediction.HomeProb >= prediction.AwayProb
@@ -190,7 +190,7 @@ public static class ConfluenceRuleEngine
             Qualified = stillQualified,
             GateOutcome = outcome,
             AiAgrees = backs,
-            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.Odds is not null && m.Ev > 0 &&
+            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.Odds >= Math.Max(LiveOddsPolicy.MinimumOdds, m.MinOdds) && m.Ev >= m.MinEdge && m.ProbabilityPassed &&
                 vetoes == 0 && confirms >= opt.MinConfirmations,
             KellyStake = stillQualified && m.Odds is { } odds && m.KellyFraction is { } fraction
                 ? ValueMath.FractionalKelly(m.Probability, odds, fraction) : null,
@@ -517,10 +517,12 @@ public static class ConfluenceRuleEngine
 
         var ev = odds is not null ? (double?)Math.Round(ValueMath.Ev(probability, odds.Value), 4) : null;
 
-        // v5: MinOdds is enforced at TICKET level (TicketBuilder), not per leg.
+        // Every offered selection must meet its own floor. A same-match
+        // combined market has its own quote and passes this gate independently.
         var outcome =
             opt.InformationalOnlyMarkets.Contains(market) ? GateOutcome.InformationalOnly
             : odds is null ? GateOutcome.AnalysisOnlyNoOdds
+            : odds < Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) ? GateOutcome.BelowMinOdds
             : ev < minEdge ? GateOutcome.BelowMinEdge
             : !probabilityPassed ? GateOutcome.BelowProbabilityFloor
             : vetoes > 0 ? GateOutcome.Vetoed
@@ -533,7 +535,7 @@ public static class ConfluenceRuleEngine
         // 'qualified' (no MinEdge/floor) — sub-floor favorites become combo legs.
         var comboEligible =
             !opt.InformationalOnlyMarkets.Contains(market) &&
-            odds is not null && ev > 0 &&
+            odds >= Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) && ev >= minEdge && probabilityPassed &&
             vetoes == 0 && confirms >= opt.MinConfirmations;
 
         return new MarketRuleAudit(

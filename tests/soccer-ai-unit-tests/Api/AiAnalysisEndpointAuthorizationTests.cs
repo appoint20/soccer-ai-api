@@ -17,6 +17,8 @@ public class AiAnalysisEndpointAuthorizationTests
     [Theory]
     [InlineData(nameof(AutomationController.RunAiAnalysisForDate))]
     [InlineData(nameof(AutomationController.GetAiAnalysisJob))]
+    [InlineData(nameof(AutomationController.RunSyncForDate))]
+    [InlineData(nameof(AutomationController.GetDateSyncJob))]
     public void ManualAiAnalysisRequiresTheAdminKey(string action)
     {
         var method = typeof(AutomationController).GetMethod(action, BindingFlags.Public | BindingFlags.Instance)!;

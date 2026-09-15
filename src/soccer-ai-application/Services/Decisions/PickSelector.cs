@@ -225,15 +225,6 @@ public static class PickSelector
     }
 
     /// <summary>
-    /// A same-match BTTS + Over 2.5 double. This exists to rescue a fixture the
-    /// model likes but the bookmaker prices below the single-bet floor: pairing
-    /// the two correlated goals markets lifts the price without reaching for a
-    /// selection the model does not believe in.
-    ///
-    /// Both legs must be combo-eligible on their own — pairing two bets we would
-    /// not otherwise take would multiply their errors, not cancel them.
-    /// </summary>
-    /// <summary>
     /// Minimum probability this market must reach to be publishable, falling
     /// back to the global floor.
     /// </summary>

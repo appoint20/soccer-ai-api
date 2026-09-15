@@ -41,25 +41,21 @@ public class ValueGateTests
     }
 
     [Fact]
-    public void SubFloorOdds_NoLongerRejectLegs_MinOddsIsTicketLevel()
+    public void SubFloorOddsCannotQualifyOrEnterACombination()
     {
-        // v5: odds 1.65 < the 1.70 floor, but EV = 0.65×1.65−1 = 0.0725 ≥ 0.05 —
-        // the pick qualifies; the floor is enforced when building TICKETS.
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, 1.65, 1.70, 0.05, Opt);
-
-        audit.GateOutcome.Should().Be(GateOutcome.Qualified);
-        audit.ComboEligible.Should().BeTrue();
+        var audit = ConfluenceRuleEngine.EvaluateBtts(.65, ConfluentBtts(), .50, 1.65, 1.70, .05, Opt);
+        audit.GateOutcome.Should().Be(GateOutcome.BelowMinOdds);
+        audit.Qualified.Should().BeFalse();
+        audit.ComboEligible.Should().BeFalse();
     }
 
     [Fact]
-    public void ComboEligible_NeedsOnlyPositiveEvAndConfluence()
+    public void ThinEdgeCannotBeRescuedByACombination()
     {
-        // EV = 0.65×1.60−1 = 0.04: below MinEdge (no single pick) but positive → combo leg.
-        var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, 1.60, 1.70, 0.05, Opt);
-
+        var audit = ConfluenceRuleEngine.EvaluateBtts(.59, ConfluentBtts(), .50, 1.75, 1.70, .05, Opt);
         audit.GateOutcome.Should().Be(GateOutcome.BelowMinEdge);
         audit.Qualified.Should().BeFalse();
-        audit.ComboEligible.Should().BeTrue("EV > 0 with full confluence makes a valid combo leg");
+        audit.ComboEligible.Should().BeFalse();
     }
 
     [Fact]

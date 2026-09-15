@@ -8,9 +8,8 @@ using SoccerAi.Application.Interfaces;
 namespace SoccerAi.Worker;
 
 /// <summary>
-/// Lightweight interval loop for T-schedule odds captures (first availability,
-/// T-24h, T-1h). Runs independently of the twice-daily full sync so line
-/// movement close to kickoff is not missed. All times UTC.
+/// Independent odds capture loop: the configured three-hour refresh, with
+/// more frequent checks in the final approach to kickoff. All times UTC.
 /// </summary>
 public sealed class OddsCaptureWorker(
     IServiceScopeFactory scopeFactory,

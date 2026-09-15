@@ -14,6 +14,7 @@ public static class AiNarrativeIntegrity
         null => "missing result",
         { Confidence: < 0 or > 100 } or { OverallConfidence: < 0 or > 100 } => "confidence outside 0–100",
         { Over25Qualified: true, Under25Qualified: true } => "contradictory Over/Under decisions",
+        { BttsAndOver25Qualified: true, Under25Qualified: true } => "contradictory combined/Under decisions",
         { HomeWinQualified: true, AwayWinQualified: true } => "contradictory winner decisions",
         _ when string.IsNullOrWhiteSpace(result.En?.Analysis) || string.IsNullOrWhiteSpace(result.De?.Analysis) => "missing English or German narrative",
         _ => null

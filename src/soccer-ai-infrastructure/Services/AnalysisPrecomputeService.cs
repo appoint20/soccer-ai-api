@@ -92,7 +92,10 @@ public sealed class AnalysisPrecomputeService(
             // so the ledger below records once from whichever ran first.
             scored ??= analysis;
             var mapped = AnalysisResponseMapper.MapToResponse(
-                fixture, analysis, homeTeam, awayTeam, analysis.Ai);
+                fixture, analysis, homeTeam, awayTeam, analysis.Ai, lang);
+            // Internal job reporting needs the actual model version/validity.
+            // Models is JsonIgnore, so this never expands the public snapshot.
+            mapped.Models = analysis.Models;
             results[lang] = mapped;
 
             // The mutable response cache and immutable raw calibration evidence

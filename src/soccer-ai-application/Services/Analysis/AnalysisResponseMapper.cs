@@ -27,7 +27,7 @@ public class AnalysisResponseMapper
         FixtureAnalysisResult analysis,
         Team homeTeam,
         Team awayTeam,
-        AiAnalysisDto? aiAnalysis)
+        AiAnalysisDto? aiAnalysis, string lang = "en")
     {
         var prediction = BuildPredictionResponse(analysis, aiAnalysis);
         var matchResult = ValidateMatchResult(fixture, analysis);
@@ -37,7 +37,7 @@ public class AnalysisResponseMapper
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
         var includeModels = env.Equals("Development", StringComparison.OrdinalIgnoreCase);
 
-        return new MatchAnalysis
+        var response = new MatchAnalysis
         {
             Id = fixture.Id,
             Date = fixture.Date,
@@ -74,8 +74,12 @@ public class AnalysisResponseMapper
                 : aiAnalysis,
             Signals = analysis.Signals,
             DecisionAudit = analysis.Decisions.Audit,
-            CalibrationTrace = analysis.CalibrationTrace
+            CalibrationTrace = analysis.CalibrationTrace,
+            DecisionExplanation = analysis.DecisionExplanation,
+            PresentationLanguage = lang
         };
+        DecisionExplanationPolicy.Refresh(response);
+        return response;
     }
 
     /// <summary>
@@ -96,7 +100,7 @@ public class AnalysisResponseMapper
             Over25 = new BoolPrediction
             {
                 Prediction = wp.Over25,
-                Probability = Math.Round(wp.Over25Prob, 2),
+                Probability = Math.Round(wp.Over25Prob, 4),
                 IsQualified = d.Markets.Over25.IsQualified,
                 Reason = !string.IsNullOrWhiteSpace(ai?.Over25Summary)
                     ? ai.Over25Summary
@@ -105,7 +109,7 @@ public class AnalysisResponseMapper
             BTTS = new BoolPrediction
             {
                 Prediction = wp.BTTS,
-                Probability = Math.Round(wp.BTTSProb, 2),
+                Probability = Math.Round(wp.BTTSProb, 4),
                 IsQualified = d.Markets.BTTS.IsQualified,
                 Reason = !string.IsNullOrWhiteSpace(ai?.BttsSummary)
                     ? ai.BttsSummary
@@ -114,7 +118,7 @@ public class AnalysisResponseMapper
             TwoToThreeGoals = new BoolPrediction
             {
                 Prediction = wp.TwoToThreeGoals,
-                Probability = Math.Round(wp.TwoToThreeGoalsProb, 2),
+                Probability = Math.Round(wp.TwoToThreeGoalsProb, 4),
                 IsQualified = d.Markets.TwoToThreeGoals.IsQualified,
                 Reason = d.Markets.TwoToThreeGoals.Reason
             },

@@ -24,6 +24,7 @@ public sealed class AiAnalysisDto
     public bool AiBttsQualified { get; init; }
     public bool AiUnder25Qualified { get; init; }
     public bool AiGoals23Qualified { get; init; }
+    public bool? AiBttsAndOver25Qualified { get; set; }
     public bool AiHomeWinQualified { get; init; }
     public bool AiAwayWinQualified { get; init; }
     public string AiBestBet { get; init; } = "";

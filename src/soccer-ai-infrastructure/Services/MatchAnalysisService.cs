@@ -91,6 +91,7 @@ public sealed class MatchAnalysisService(
             AiBttsQualified = aiEntity.AiBttsQualified,
             AiUnder25Qualified = aiEntity.AiUnder25Qualified,
             AiGoals23Qualified = aiEntity.AiGoals23Qualified,
+            AiBttsAndOver25Qualified = aiEntity.AiBttsAndOver25Qualified,
             AiHomeWinQualified = aiEntity.AiHomeWinQualified,
             AiAwayWinQualified = aiEntity.AiAwayWinQualified,
             AiBestBet = aiEntity.AiBestBet ?? "",
@@ -136,6 +137,7 @@ public sealed class MatchAnalysisService(
             OddsAwayWin = odds.OddsAway,
             OddsDraw = odds.OddsDraw,
             Ai = ai,
+            DecisionExplanation = SoccerAi.Application.Services.Analysis.DecisionExplanationPolicy.Read(aiEntity?.DecisionExplanationJson),
             HomeRestDays = homeRest,
             AwayRestDays = awayRest,
             Signals = signals,
@@ -148,23 +150,26 @@ public sealed class MatchAnalysisService(
 
     // ── Helpers ───────────────────────────────────────────────────
 
-    private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null) => new()
+    private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null)
     {
+        var usable = fixture.Status is "FT" or "AET" or "PEN" || LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow);
+        return new MatchContext
+        {
         Date = fixture.Date,
         LeagueId = fixture.LeagueId,
         // Sanity-guarded raw odds. Corrupted values (locale bug) are surfaced
         // as null — never rescaled: EV math must only ever see real prices.
-        OddsOver25 = OddsGuard.Sanitize(fixture.Over25Odds),
-        OddsUnder25 = OddsGuard.Sanitize(fixture.Under25Odds),
-        OddsBttsYes = OddsGuard.Sanitize(fixture.BttsYesOdds),
-        OddsGoals23 = OddsGuard.Sanitize(fixture.Goals23Odds),
-        OddsBttsAndOver25 = OddsGuard.Sanitize(fixture.BttsAndOver25Odds),
-        OddsHome = OddsGuard.Sanitize(fixture.HomeWinOdds),
-        OddsAway = OddsGuard.Sanitize(fixture.AwayWinOdds),
-        OddsDraw = OddsGuard.Sanitize(fixture.DrawOdds),
+        OddsOver25 = usable ? OddsGuard.Sanitize(fixture.Over25Odds) : null,
+        OddsUnder25 = usable ? OddsGuard.Sanitize(fixture.Under25Odds) : null,
+        OddsBttsYes = usable ? OddsGuard.Sanitize(fixture.BttsYesOdds) : null,
+        OddsGoals23 = usable ? OddsGuard.Sanitize(fixture.Goals23Odds) : null,
+        OddsBttsAndOver25 = usable ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null,
+        OddsHome = usable ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null,
+        OddsAway = usable ? OddsGuard.Sanitize(fixture.AwayWinOdds) : null,
+        OddsDraw = usable ? OddsGuard.Sanitize(fixture.DrawOdds) : null,
         LeagueName = LeagueCatalog.Name(fixture.LeagueId),
         HomeRestDays = homeRest,
         AwayRestDays = awayRest
-    };
-
+        };
+    }
 }
