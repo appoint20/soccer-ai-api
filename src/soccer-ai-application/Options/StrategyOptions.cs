@@ -86,7 +86,7 @@ public sealed class StrategyOptions
         [40] = new LeagueZoneProfile { LeagueSize = 24, RelegationSpots = 3, PlayoffStart = 3, PlayoffEnd = 6 },         // Championship
         [41] = new LeagueZoneProfile { LeagueSize = 24, RelegationSpots = 4, PlayoffStart = 3, PlayoffEnd = 6 },         // League One
         [42] = new LeagueZoneProfile { LeagueSize = 24, RelegationSpots = 2, PlayoffStart = 4, PlayoffEnd = 7 },         // League Two
-        [46] = new LeagueZoneProfile { LeagueSize = 24, RelegationSpots = 4, PlayoffStart = 2, PlayoffEnd = 7 },         // National League
+        [43] = new LeagueZoneProfile { LeagueSize = 24, RelegationSpots = 4, PlayoffStart = 2, PlayoffEnd = 7 },         // National League
         [78] = new LeagueZoneProfile { LeagueSize = 18, RelegationSpots = 3, EuropeanSpots = 6 },                        // Bundesliga
         [79] = new LeagueZoneProfile { LeagueSize = 18, RelegationSpots = 3, PlayoffStart = 3, PlayoffEnd = 3 },         // 2. Bundesliga
         [80] = new LeagueZoneProfile { LeagueSize = 20, RelegationSpots = 4, PlayoffStart = 3, PlayoffEnd = 3 },         // 3. Liga

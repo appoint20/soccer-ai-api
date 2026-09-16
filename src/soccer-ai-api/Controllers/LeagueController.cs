@@ -35,8 +35,7 @@ public class LeagueController(IMediator mediator, ILeagueTierService leagueTiers
         [40] = "Championship",
         [41] = "League One",
         [42] = "League Two",
-        [46] = "National League",
-        [5] = "National League",
+        [43] = "National League",
         [78] = "Bundesliga",
         [79] = "2. Bundesliga",
         [80] = "3. Liga",
@@ -52,19 +51,12 @@ public class LeagueController(IMediator mediator, ILeagueTierService leagueTiers
     };
 
     /// <summary>
-    /// Ids that name a competition already listed under another id. 5 is a
-    /// legacy placeholder for the National League, which syncs as 46; listing
-    /// both would show one competition twice.
-    /// </summary>
-    private static readonly HashSet<int> LegacyAliasIds = [5];
-
-    /// <summary>
     /// The leagues this deployment tracks.
     /// </summary>
     /// <remarks>
     /// Derived from the sync scope, not from a hand-maintained list. The two
     /// had drifted apart: this endpoint advertised the National League under id
-    /// 43 while the sync fetched it as 46, and offered the Champions and Europa
+    /// 43 while the sync fetched 46 — the EFL Trophy — and offered the Champions and Europa
     /// Leagues, which are Tier 2 and not synced at all unless
     /// <c>LeagueTiers:IncludeTier2</c> is on. Both mistakes are invisible from
     /// the client — a league is simply listed and then never has fixtures.
@@ -77,7 +69,6 @@ public class LeagueController(IMediator mediator, ILeagueTierService leagueTiers
     public IActionResult GetLeagues([FromQuery] PageQuery query)
     {
         var leagues = leagueTiers.GetSyncLeagueIds()
-            .Where(id => !LegacyAliasIds.Contains(id))
             .Select(id => new LeagueDto
             {
                 Id = id,

@@ -30,22 +30,9 @@ public class TeamSyncService(
         
         foreach (var leagueId in leagueTiers.GetSyncLeagueIds())
         {
-            var targetLeagueId = leagueId;
-
-            // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
-            if (leagueId == 5)
-            {
-                var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
-                if (resolvedId.HasValue)
-                {
-                    logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
-                    targetLeagueId = resolvedId.Value;
-                }
-            }
-
             try
             {
-                var leagueResult = await SyncLeagueStandingsAsync(targetLeagueId, season, cancellationToken);
+                var leagueResult = await SyncLeagueStandingsAsync(leagueId, season, cancellationToken);
                 result.Updated += leagueResult.Updated;
                 result.Created += leagueResult.Created;
                 result.LeaguesSynced++;
@@ -73,22 +60,9 @@ public class TeamSyncService(
     public async Task<SyncResult> SyncLeagueStandingsAsync(int leagueId, int season, CancellationToken ct)
     {
         var result = new SyncResult();
-        var targetLeagueId = leagueId;
-
-        // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
-        if (leagueId == 5)
-        {
-            var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
-            if (resolvedId.HasValue)
-            {
-                logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
-                targetLeagueId = resolvedId.Value;
-            }
-        }
+        logger.LogInformation("Syncing standings for league {LeagueId} season {Season}", leagueId, season);
         
-        logger.LogInformation("Syncing standings for league {LeagueId} season {Season}", targetLeagueId, season);
-        
-        var standings = await apiService.GetStandingsAsync(targetLeagueId, season, ct);
+        var standings = await apiService.GetStandingsAsync(leagueId, season, ct);
         if (standings.Count == 0)
         {
             logger.LogWarning("No standings returned for league {LeagueId}", leagueId);

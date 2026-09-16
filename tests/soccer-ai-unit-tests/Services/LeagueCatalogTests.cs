@@ -8,6 +8,7 @@ public class LeagueCatalogTests
     [Theory]
     [InlineData(39, "Premier League")]
     [InlineData(41, "League One")]
+    [InlineData(43, "National League")]
     [InlineData(80, "3. Liga")]
     [InlineData(848, "Conference League")]
     public void KnownIds_CarryTheirName(int id, string expected) =>

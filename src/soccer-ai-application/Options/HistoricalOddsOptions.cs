@@ -28,7 +28,7 @@ public sealed class HistoricalOddsOptions
         [40] = "E1",    // Championship
         [41] = "E2",    // League One
         [42] = "E3",    // League Two
-        [46] = "EC",    // National League
+        [43] = "EC",    // National League
         [78] = "D1",    // Bundesliga
         [79] = "D2",    // 2. Bundesliga
         [140] = "SP1",  // La Liga

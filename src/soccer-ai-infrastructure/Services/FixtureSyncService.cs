@@ -174,22 +174,9 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         foreach (var leagueId in leagueTiers.GetSyncLeagueIds())
         {
-            var targetLeagueId = leagueId;
-            
-            // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
-            if (leagueId == 5)
-            {
-                var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
-                if (resolvedId.HasValue)
-                {
-                    logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
-                    targetLeagueId = resolvedId.Value;
-                }
-            }
-
             try
             {
-                var leagueResult = await SyncLeagueFixturesAsync(targetLeagueId, season, ct);
+                var leagueResult = await SyncLeagueFixturesAsync(leagueId, season, ct);
                 result.Updated += leagueResult.Updated;
                 result.Created += leagueResult.Created;
                 result.LeaguesSynced++;
@@ -232,34 +219,21 @@ public class FixtureSyncService(IApiFootballService apiService,
         int leagueId, int season, CancellationToken ct, DateOnly? targetDate = null)
     {
         var result = new SyncResult();
-        var targetLeagueId = leagueId;
-
-        // DYNAMIC RESOLUTION for National League (if placeholder ID 5 is used)
-        if (leagueId == 5)
-        {
-            var resolvedId = await apiService.GetLeagueIdByNameAsync("National League", "England");
-            if (resolvedId.HasValue)
-            {
-                logger.LogInformation("National League ID 5 redirected to Resolved ID {ResolvedId}", resolvedId.Value);
-                targetLeagueId = resolvedId.Value;
-            }
-        }
-
-        logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", targetLeagueId, season);
+        logger.LogInformation("Syncing fixtures for league {LeagueId} season {Season}", leagueId, season);
 
         // Coverage check (one call per league+season, cached): skip odds work
         // entirely for competitions API-Football does not price.
-        var hasOddsCoverage = await HasOddsCoverageCachedAsync(targetLeagueId, season, ct);
+        var hasOddsCoverage = await HasOddsCoverageCachedAsync(leagueId, season, ct);
         if (!hasOddsCoverage)
             logger.LogWarning("[Coverage] League {LeagueId} season {Season} has no odds coverage — skipping all odds calls",
-                targetLeagueId, season);
+                leagueId, season);
 
         // Define status categories
         var completedStatuses = new[] { "FT", "AET", "PEN", "ABD", "AWD", "WO" };
         var liveStatuses = new[] { "1H", "HT", "2H", "ET", "BT", "P", "LIVE" };
         var cancelledStatuses = new[] { "PST", "CANC", "INT", "SUSP" };
 
-        var apiFixtures = await apiService.GetFixturesAsync(targetLeagueId, season);
+        var apiFixtures = await apiService.GetFixturesAsync(leagueId, season);
 
         HashSet<int> previouslyOnDate = [];
         if (targetDate.HasValue)
@@ -267,7 +241,7 @@ public class FixtureSyncService(IApiFootballService apiService,
             var start = new DateTimeOffset(targetDate.Value.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
             var end = start.AddDays(1);
             previouslyOnDate = await dbContext.Fixtures.AsNoTracking()
-                .Where(f => f.LeagueId == targetLeagueId && f.Date >= start && f.Date < end)
+                .Where(f => f.LeagueId == leagueId && f.Date >= start && f.Date < end)
                 .Select(f => f.ApiId).ToHashSetAsync(ct);
         }
         
@@ -288,8 +262,8 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         foreach (var apiFixture in upcomingFixtures)
         {
-            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, targetLeagueId, existingTeamIdsPhase1, ct);
-            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, targetLeagueId, existingTeamIdsPhase1, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIdsPhase1, ct);
+            await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIdsPhase1, ct);
 
             var existingFixture = await dbContext.Fixtures
                 .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
@@ -297,7 +271,7 @@ public class FixtureSyncService(IApiFootballService apiService,
             if (existingFixture == null)
             {
                 // New upcoming fixture - capture odds now
-                var fixture = await CreateUpcomingFixtureAsync(apiFixture, targetLeagueId, season);
+                var fixture = await CreateUpcomingFixtureAsync(apiFixture, leagueId, season);
                 if (fixture == null)
                 {
                     if (targetDate.HasValue) throw new InvalidOperationException($"Fixture {apiFixture.ApiId} could not be created.");
@@ -372,8 +346,8 @@ public class FixtureSyncService(IApiFootballService apiService,
             try
             {
                 // Ensure teams exist using local set for speed
-                await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, targetLeagueId, existingTeamIds, ct);
-                await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, targetLeagueId, existingTeamIds, ct);
+                await EnsureTeamExistsOptimizedAsync(apiFixture.HomeTeamApiId, apiFixture.HomeTeamName, leagueId, existingTeamIds, ct);
+                await EnsureTeamExistsOptimizedAsync(apiFixture.AwayTeamApiId, apiFixture.AwayTeamName, leagueId, existingTeamIds, ct);
 
                 var existingFixture = await dbContext.Fixtures
                     .FirstOrDefaultAsync(f => f.ApiId == apiFixture.ApiId, ct);
@@ -392,7 +366,7 @@ public class FixtureSyncService(IApiFootballService apiService,
                 if (existingFixture == null)
                 {
                     // Fixture we never captured - create with full enrichment
-                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, targetLeagueId, season, ct,
+                    var fixture = await CreateEnrichedFixtureAsync(apiFixture, leagueId, season, ct,
                         fetchOdds: false,
                         prefetched: batchedDetails.GetValueOrDefault(apiFixture.ApiId));
                     if (fixture != null)
@@ -416,7 +390,7 @@ public class FixtureSyncService(IApiFootballService apiService,
                     if (statusChanged || scoreChanged || liveStatuses.Contains(apiFixture.StatusShort) || isVeryRecent ||
                         (existingFixture.StatisticsUpdatedAtUtc is null && batchedDetails.ContainsKey(apiFixture.ApiId)))
                     {
-                        await UpdateCompletedFixtureAsync(existingFixture, apiFixture, targetLeagueId, ct,
+                        await UpdateCompletedFixtureAsync(existingFixture, apiFixture, leagueId, ct,
                             batchedDetails.GetValueOrDefault(apiFixture.ApiId));
                         result.Updated++;
                     }
@@ -443,7 +417,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         await dbContext.SaveChangesAsync(ct);
         // Stored-price inventory only. The separate odds step refreshes live
         // prices and reports current coverage after that refresh completes.
-        await LogOddsCoverageAsync(targetLeagueId, ct);
+        await LogOddsCoverageAsync(leagueId, ct);
         result.LeaguesSynced = 1;
 
         logger.LogInformation(

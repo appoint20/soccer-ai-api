@@ -19,6 +19,7 @@ public class LeagueTierServiceTests
     [InlineData(40)]   // Championship
     [InlineData(41)]   // League One
     [InlineData(42)]   // League Two
+    [InlineData(43)]   // National League
     [InlineData(78)]   // Bundesliga
     [InlineData(79)]   // 2. Bundesliga
     [InlineData(80)]   // 3. Liga
