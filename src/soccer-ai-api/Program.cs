@@ -14,6 +14,12 @@ using SoccerAi.Api.Configuration;
 using SoccerAi.Api.Security;
 using Microsoft.AspNetCore.HttpOverrides;
 
+if (args is ["--check-lightgbm"])
+{
+    Environment.ExitCode = SoccerAi.Infrastructure.MlNet.LightGbmRuntimeCheck.Run();
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

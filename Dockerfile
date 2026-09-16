@@ -18,12 +18,17 @@ WORKDIR /app
 # Password authentication still succeeds, so this is noise rather than a
 # failure — but it is logged as "Error", which makes every real connection
 # problem harder to spot in the deploy log. One small package removes it.
+# ML.NET's packaged lib_lightgbm.so also needs the GNU OpenMP runtime.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy .NET binaries
 COPY --from=dotnet-build /app/publish .
+
+# Exercise native loading and a tiny fit in the FINAL image. No database,
+# provider credentials or production models are used. Fail the build if broken.
+RUN dotnet soccer-ai-api.dll --check-lightgbm
 
 # Environment variables
 ENV PORT=8080

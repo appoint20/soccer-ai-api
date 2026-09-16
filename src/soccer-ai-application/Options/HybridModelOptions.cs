@@ -15,6 +15,12 @@ public sealed class HybridModelOptions
     /// </summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Explicit opt-in for offline audits on platforms without native LightGBM.
+    /// Ignored by publishing runs. Fallback evaluations cannot pass publication.
+    /// </summary>
+    public bool AllowOfflineTrainerFallback { get; set; }
+
     /// <summary>Directory holding the trained model files, relative to the content root.</summary>
     public string ModelDirectory { get; set; } = Path.Combine("data", "models");
 

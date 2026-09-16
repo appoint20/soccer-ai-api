@@ -8,6 +8,9 @@ using SoccerAi.Infrastructure;
 using SoccerAi.Infrastructure.Persistence;
 using SoccerAi.Worker;
 
+if (args is ["--check-lightgbm"])
+    return SoccerAi.Infrastructure.MlNet.LightGbmRuntimeCheck.Run();
+
 var builder = Host.CreateApplicationBuilder(args);
 
 // Relative SQLite paths depend on the caller's working directory; resolve the

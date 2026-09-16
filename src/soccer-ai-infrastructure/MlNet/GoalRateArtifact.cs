@@ -28,6 +28,7 @@ public sealed record GoalRateArtifact
 
     public bool Supports(DixonColesOptions dc, HybridModelOptions hybrid) =>
         SchemaVersion == GoalRateFeatureBuilder.SchemaVersion &&
+        Trainer == GoalRateTrainerPolicy.ProductionTrainer &&
         // Empty recipe is the preceding, versioned pure-ML generation. Keep it
         // usable while a new candidate is evaluated; unknown recipes fail closed.
         (PredictionRecipe == "" || PredictionRecipe == GoalRateEnsemble.Recipe) &&

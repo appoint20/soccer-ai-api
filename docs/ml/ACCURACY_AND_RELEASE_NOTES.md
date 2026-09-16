@@ -64,6 +64,12 @@ dotnet test --no-restore
 
 `audit-goal-rate` dispatches before host construction, so it does not start hosted services, migrate a database, call a provider, or publish a model. Configuration provenance contains model options, not API keys. Other operational CLI commands may migrate/connect to the configured database and should not be substituted for the isolated audit.
 
+Native LightGBM is required by default. On an unsupported local platform, an
+explicit `--allow-trainer-fallback` permits an offline FastTreeTweedie audit.
+Its results identify the different trainer and cannot pass the production
+publication gate. Publishing runs always require LightGBM, even with this option.
+See [the runtime repair notes](LIGHTGBM_RUNTIME_2026-09-16.md).
+
 Validation includes real SQLite migrations and ledger/statistics queries, PostgreSQL idempotent SQL generation (not a live PostgreSQL migration), causal feature and calibration splits, odds withdrawal and repricing, model artifact compatibility, native cached-price expiry and entitlement loss. **Latest full suites: 561 backend tests and 32 native iOS tests passed on 11 September 2026.** Existing XML documentation/AppIntents warnings do not represent test failures.
 
 For deployment, apply the included provider-specific migrations through the existing deployment process before enabling ledger writes, deploy the API/worker and native client, and inspect actual sync/odds timestamps. Migration execution on production, current-season results, StoreKit sandbox/server verification and live monitoring are not claimed by these local tests.

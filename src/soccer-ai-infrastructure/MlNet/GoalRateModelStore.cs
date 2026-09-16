@@ -114,6 +114,7 @@ public sealed class GoalRateModelStore(IServiceScopeFactory scopes, IOptions<Hyb
         if (manifest == null || !Guid.TryParseExact(bundle.Generation, "N", out _) || manifest.Generation != bundle.Generation ||
             !manifest.Supports(dc.Value, options.Value) || manifest.CreatedAtUtc == default || manifest.CreatedAtUtc > DateTimeOffset.UtcNow ||
             evaluation?.PublicationGatePassed != true || evaluation.FeatureSchema != manifest.SchemaVersion ||
+            evaluation.Trainer != manifest.Trainer ||
             evaluation.PredictionRecipe != manifest.PredictionRecipe)
             throw new InvalidDataException("Model bundle failed compatibility or publication gate checks");
         string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

@@ -66,7 +66,7 @@ public sealed class GoalRateModelStoreTests : IDisposable
         await publish.Should().ThrowAsync<InvalidDataException>();
         var evaluation = Path.Combine(worker, "goal-rate-generations", generation, "evaluation.json");
         await File.WriteAllTextAsync(evaluation, JsonSerializer.Serialize(new GoalRateEvaluation {
-            PublicationGatePassed = true, PredictionRecipe = GoalRateEnsemble.Recipe }));
+            Trainer = "LightGbm", PublicationGatePassed = true, PredictionRecipe = GoalRateEnsemble.Recipe }));
         await publisher.PublishCurrentAsync(worker, CancellationToken.None);
         using (var reader = Store()) await reader.RestoreLatestAsync(api, CancellationToken.None);
         var pointerBefore = await File.ReadAllTextAsync(Path.Combine(api, GoalRateArtifact.PointerFile));
@@ -83,6 +83,28 @@ public sealed class GoalRateModelStoreTests : IDisposable
         (await File.ReadAllTextAsync(Path.Combine(api, GoalRateArtifact.PointerFile))).Should().Be(pointerBefore);
     }
 
+    [Theory]
+    [InlineData("FastTreeTweedie", "FastTreeTweedie")]
+    [InlineData("LightGbm", "FastTreeTweedie")]
+    [InlineData("LightGbm", "")]
+    public async Task FallbackOrMismatchedTrainerCannotBePublishedEvenWithAnOldPassingEvaluation(string trainer, string evaluatedTrainer)
+    {
+        var worker = Path.Combine(_root, "worker");
+        var generation = await Bundle(worker);
+        var dir = Path.Combine(worker, "goal-rate-generations", generation);
+        var manifestPath = Path.Combine(dir, "manifest.json");
+        var manifest = JsonSerializer.Deserialize<GoalRateArtifact>(await File.ReadAllTextAsync(manifestPath))!;
+        await File.WriteAllTextAsync(manifestPath, JsonSerializer.Serialize(manifest with { Trainer = trainer }));
+        var evaluationPath = Path.Combine(dir, "evaluation.json");
+        var evaluation = JsonSerializer.Deserialize<GoalRateEvaluation>(await File.ReadAllTextAsync(evaluationPath))!;
+        await File.WriteAllTextAsync(evaluationPath, JsonSerializer.Serialize(evaluation with { Trainer = evaluatedTrainer }));
+
+        using var publisher = Store();
+        await FluentActions.Awaiting(() => publisher.PublishCurrentAsync(worker, default)).Should().ThrowAsync<InvalidDataException>();
+        using var scope = _services.CreateScope();
+        (await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().GoalRateModelGenerations.CountAsync()).Should().Be(0);
+    }
+
     private async Task<string> Bundle(string root, bool accepted = true)
     {
         // Small deterministic test transformers exercise real ML.NET save/load
@@ -94,7 +116,7 @@ public sealed class GoalRateModelStoreTests : IDisposable
         ml.Model.Save(ml.Transforms.CopyColumns("Score", nameof(GoalRateRow.DcLambdaAway)).Fit(data), data.Schema, Path.Combine(dir, "away.zip"));
         await File.WriteAllTextAsync(Path.Combine(dir, "calibration.json"), JsonSerializer.Serialize(new GoalRateCalibration {
             HomeScale = 1, AwayScale = 1, MlWeight = .5, ValidationRows = 100 }));
-        var manifest = new GoalRateArtifact { Generation = generation, CreatedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-1),
+        var manifest = new GoalRateArtifact { Trainer = "LightGbm", Generation = generation, CreatedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-1),
             PredictionRecipe = GoalRateEnsemble.Recipe, Features = GoalRateRow.FeatureColumns(), DixonColes = _dc,
             LambdaMin = _options.LambdaMin, LambdaMax = _options.LambdaMax,
             TrainingThroughUtc = new DateTime(2020, 1, 1), CalibrationFromUtc = new DateTime(2020, 1, 2),
@@ -102,7 +124,7 @@ public sealed class GoalRateModelStoreTests : IDisposable
             Sha256 = new[] { "home.zip", "away.zip", "calibration.json" }.ToDictionary(n => n, n => GoalRateArtifact.Hash(Path.Combine(dir, n))) };
         await File.WriteAllTextAsync(Path.Combine(dir, "manifest.json"), JsonSerializer.Serialize(manifest));
         await File.WriteAllTextAsync(Path.Combine(dir, "evaluation.json"), JsonSerializer.Serialize(new GoalRateEvaluation {
-            PublicationGatePassed = accepted, PredictionRecipe = GoalRateEnsemble.Recipe }));
+            Trainer = "LightGbm", PublicationGatePassed = accepted, PredictionRecipe = GoalRateEnsemble.Recipe }));
         await File.WriteAllTextAsync(Path.Combine(root, GoalRateArtifact.PointerFile), JsonSerializer.Serialize(new GoalRateGenerationPointer(generation)));
         return generation;
     }

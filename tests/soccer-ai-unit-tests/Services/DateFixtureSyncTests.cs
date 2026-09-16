@@ -1,6 +1,7 @@
 using System.Net;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -24,6 +25,7 @@ public class DateFixtureSyncTests
         public readonly ApplicationDbContext Db = new(new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         public readonly Mock<IApiFootballService> Api = new();
+        public readonly Mock<ILogger<FixtureSyncService>> Logger = new();
         public readonly FixtureSyncService Sync;
         public Harness()
         {
@@ -33,13 +35,87 @@ public class DateFixtureSyncTests
             Api.Setup(x => x.GetFixturesAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync([]);
             Api.Setup(x => x.GetFixtureOddsQuotesAsync(It.IsAny<int>())).ReturnsAsync([]);
             Sync = new(Api.Object, Db, tiers.Object, quota, Options.Create(new OddsSyncOptions()),
-                Options.Create(new SyncOptions()), NullLogger<FixtureSyncService>.Instance);
+                Options.Create(new SyncOptions()), Logger.Object);
         }
         public void Dispose() => Db.Dispose();
     }
 
     private static ApiFixture ApiMatch(int id, DateTimeOffset date, string status = "NS") =>
         new(id, date, status, null, null, null, null, 10, "Home", 20, "Away");
+
+    private static (LogLevel Level, Dictionary<string, object?> Data) Log(Harness h, string marker)
+    {
+        var call = h.Logger.Invocations.Single(i => i.Method.Name == nameof(ILogger.Log) &&
+            i.Arguments[2].ToString()!.Contains(marker));
+        return ((LogLevel)call.Arguments[0],
+            ((IEnumerable<KeyValuePair<string, object?>>)call.Arguments[2]).ToDictionary());
+    }
+
+    private static List<OddsQuote> CompleteQuotes(DateTimeOffset updatedAt) =>
+        new[] { OddsMarkets.HomeWin, OddsMarkets.Draw, OddsMarkets.AwayWin, OddsMarkets.Over25,
+            OddsMarkets.Under25, OddsMarkets.BttsYes }.Select(m => new OddsQuote("Bet365", m, 2, updatedAt)).ToList();
+
+    [Fact]
+    public async Task StoredInventoryIsInformationalAndIncludesNewlySavedFixtures()
+    {
+        using var h = new Harness();
+        h.Db.Fixtures.Add(new() { ApiId = 101, LeagueId = 39, Status = "FT", Date = DateTimeOffset.UtcNow.AddDays(-2) });
+        await h.Db.SaveChangesAsync();
+        h.Api.Setup(x => x.GetFixturesAsync(39, It.IsAny<int>())).ReturnsAsync([ApiMatch(100, At(Day))]);
+        await h.Sync.SyncLeagueForDateAsync(39, Day, default);
+
+        var log = Log(h, "[StoredOddsInventory]");
+        log.Level.Should().Be(LogLevel.Information);
+        log.Data["N"].Should().Be(2);
+        log.Data["PBtts"].Should().Be(0.0);
+        log.Data["{OriginalFormat}"].ToString().Should().Contain("freshness not assessed");
+    }
+
+    [Fact]
+    public async Task LiveCoverageAfterManualCaptureExcludesHistoryOtherDaysAndStaleQuotes()
+    {
+        using var h = new Harness();
+        var now = DateTimeOffset.UtcNow;
+        h.Db.Fixtures.AddRange(
+            new Fixture { ApiId = 100, LeagueId = 39, Date = At(Day), Status = "NS" },
+            new Fixture { ApiId = 101, LeagueId = 39, Date = At(Day), Status = "NS" },
+            new Fixture { ApiId = 102, LeagueId = 39, Date = now.AddDays(-1), Status = "FT" },
+            new Fixture { ApiId = 103, LeagueId = 39, Date = At(Day.AddDays(1)), Status = "NS" });
+        await h.Db.SaveChangesAsync();
+        h.Api.Setup(x => x.GetFixtureOddsQuotesAsync(100)).ReturnsAsync(CompleteQuotes(now));
+        h.Api.Setup(x => x.GetFixtureOddsQuotesAsync(101)).ReturnsAsync(CompleteQuotes(now.AddHours(-4)));
+        await h.Sync.CaptureDateOddsAsync(Day, default);
+
+        var log = Log(h, "[LiveOddsCoverage]");
+        log.Level.Should().Be(LogLevel.Warning);
+        log.Data["Count"].Should().Be(2);
+        log.Data["P1X2"].Should().Be(50.0);
+        log.Data["POu"].Should().Be(50.0);
+        log.Data["PBtts"].Should().Be(50.0);
+        log.Data["Unchecked"].Should().Be(0);
+        log.Data["StaleOrUnavailable"].Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ScheduledLiveCoverageExcludesFixturesBeyondItsHorizon()
+    {
+        using var h = new Harness();
+        var now = DateTimeOffset.UtcNow;
+        h.Db.Fixtures.AddRange(
+            new Fixture { ApiId = 100, LeagueId = 39, Date = now.AddHours(12), Status = "NS",
+                HomeWinOdds = 2, DrawOdds = 2, AwayWinOdds = 2, Over25Odds = 2, Under25Odds = 2, BttsYesOdds = 2,
+                OddsBookmaker = "Bet365", OddsCheckedAtUtc = now, OddsUpdatedAtUtc = now },
+            new Fixture { ApiId = 101, LeagueId = 39, Date = now.AddDays(4), Status = "NS" },
+            new Fixture { ApiId = 102, LeagueId = 39, Date = now.AddDays(-1), Status = "FT" });
+        await h.Db.SaveChangesAsync();
+        await h.Sync.CaptureUpcomingOddsAsync(default);
+
+        var log = Log(h, "[LiveOddsCoverage]");
+        log.Level.Should().Be(LogLevel.Information);
+        log.Data["Count"].Should().Be(1);
+        log.Data["P1X2"].Should().Be(100.0);
+        log.Data["PBtts"].Should().Be(100.0);
+    }
 
     [Fact]
     public async Task DateBeyondScheduledWindowIsImportedWithHistoryButNoOtherUpcomingDay()
