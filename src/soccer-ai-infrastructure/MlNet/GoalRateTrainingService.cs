@@ -26,6 +26,7 @@ public sealed class GoalRateTrainingService(
     private readonly HybridModelOptions _opt = options.Value;
     private readonly ConfluenceOptions _confluence = confluenceOptions.Value;
     private readonly MLContext _ml = new(seed: 42);
+    private GoalRateTrainerPolicy _trainer = new(publish: true, allowOfflineFallback: false);
 
     public async Task TrainAsync(CancellationToken ct = default)
     {
@@ -59,6 +60,7 @@ public sealed class GoalRateTrainingService(
             if (!File.Exists(path)) return null;
             var report = JsonSerializer.Deserialize<GoalRateEvaluation>(File.ReadAllText(path));
             if (report is null || report.FeatureSchema != GoalRateFeatureBuilder.SchemaVersion ||
+                report.Trainer != GoalRateTrainerPolicy.ProductionTrainer ||
                 report.PredictionRecipe != GoalRateEnsemble.Recipe ||
                 report.GeneratedAtUtc == default || report.GeneratedAtUtc > DateTimeOffset.UtcNow) return null;
             return DateTimeOffset.UtcNow - report.GeneratedAtUtc;
@@ -92,7 +94,8 @@ public sealed class GoalRateTrainingService(
             if (!File.Exists(manifestPath)) return null;
 
             var manifest = JsonSerializer.Deserialize<GoalRateArtifact>(File.ReadAllText(manifestPath));
-            if (manifest is null || manifest.CreatedAtUtc == default) return null;
+            if (manifest is null || manifest.CreatedAtUtc == default ||
+                manifest.Trainer != GoalRateTrainerPolicy.ProductionTrainer) return null;
 
             return DateTimeOffset.UtcNow - manifest.CreatedAtUtc;
         }
@@ -108,6 +111,7 @@ public sealed class GoalRateTrainingService(
         IReadOnlyCollection<Fixture> fixtures, string directory, bool publish = false,
         CancellationToken ct = default)
     {
+        _trainer = new GoalRateTrainerPolicy(publish, _opt.AllowOfflineTrainerFallback);
         if (_opt.ValidationFraction is <= 0 or >= 0.5 ||
             _opt.WalkForwardWarmupFraction is <= 0 or >= 0.9 || _opt.WalkForwardFolds < 1)
             throw new InvalidOperationException("Invalid chronological training fractions/folds");
@@ -300,7 +304,8 @@ public sealed class GoalRateTrainingService(
             PriorOver25 = priorOverMetrics, PriorBtts = priorBttsMetrics,
             DixonColesOver25 = dcOverMetrics, DixonColesBtts = dcBttsMetrics,
             Over25Thresholds = Sweep(over), BttsThresholds = Sweep(btts),
-            PublicationGatePassed = over.Count >= 500 &&
+            PublicationGatePassed = !_trainer.UsedFallback && TrainerUsed == GoalRateTrainerPolicy.ProductionTrainer &&
+                over.Count >= 500 &&
                 overMetrics.BrierScore <= priorOverMetrics.BrierScore && bttsMetrics.BrierScore <= priorBttsMetrics.BrierScore &&
                 overMetrics.LogLoss <= priorOverMetrics.LogLoss && bttsMetrics.LogLoss <= priorBttsMetrics.LogLoss &&
                 overMetrics.BrierScore <= dcOverMetrics.BrierScore && bttsMetrics.BrierScore <= dcBttsMetrics.BrierScore &&
@@ -311,7 +316,7 @@ public sealed class GoalRateTrainingService(
     }
 
     /// <summary>Which trainer actually produced the models on the last run.</summary>
-    public string TrainerUsed { get; private set; } = "";
+    public string TrainerUsed => _trainer.TrainerUsed;
 
     private ITransformer TrainOne(IDataView trainView, string labelColumn)
     {
@@ -323,34 +328,20 @@ public sealed class GoalRateTrainingService(
             .Append(_ml.Transforms.ReplaceMissingValues(
                 "Features", replacementMode: MissingValueReplacingEstimator.ReplacementMode.Mean));
 
-        // Native LightGBM is unavailable on some platforms; record any fallback.
-        try
-        {
-            var model = prefix.Append(_ml.Regression.Trainers.LightGbm(BuildLightGbmOptions(labelColumn)))
-                .Fit(trainView);
-            TrainerUsed = "LightGbm";
-            return model;
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException
-                                       or EntryPointNotFoundException)
-        {
-            logger.LogWarning(
-                "[GoalRate] Native LightGBM unavailable on this platform ({Message}). "
-                + "Falling back to FastTreeTweedie — "
-                + "models trained here are NOT equivalent to a production build",
-                ex.Message.Split('\n')[0]);
-
-            var model = prefix.Append(_ml.Regression.Trainers.FastTreeTweedie(
+        return _trainer.Fit<ITransformer>(
+            () => prefix.Append(_ml.Regression.Trainers.LightGbm(BuildLightGbmOptions(labelColumn))).Fit(trainView),
+            () => prefix.Append(_ml.Regression.Trainers.FastTreeTweedie(
                     labelColumnName: labelColumn,
                     featureColumnName: "Features",
                     numberOfTrees: _opt.Trees,
                     numberOfLeaves: _opt.Leaves,
                     minimumExampleCountPerLeaf: _opt.MinExamplesPerLeaf,
                     learningRate: _opt.LearningRate))
-                .Fit(trainView);
-            TrainerUsed = "FastTreeTweedie";
-            return model;
-        }
+                .Fit(trainView),
+            ex => logger.LogWarning(
+                "[GoalRate] Native LightGBM unavailable ({Message}). Explicit offline fallback to FastTreeTweedie; "
+                + "this evaluation cannot pass the publication gate. Remaining fits in this audit use the fallback.",
+                ex.Message.Split('\n')[0]));
     }
 
     // ML.NET exposes squared-error regression here; this is not a Poisson loss.
@@ -507,7 +498,7 @@ public sealed record GoalRateEvaluation
     public string EvaluationProtocol { get; init; } = "Chronological UTC-day folds; disjoint fit/calibration/test; thresholds descriptive only; no odds/EV qualification";
     public string FeatureSchema { get; init; } = GoalRateFeatureBuilder.SchemaVersion;
     public bool PublicationGatePassed { get; init; }
-    public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; winner/goals23 Brier and log-loss also no worse than DC; does not prove profitability or 80%";
+    public string PublicationGate { get; init; } = "LightGbm training without algorithm fallback; at least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; winner/goals23 Brier and log-loss also no worse than DC; does not prove profitability or 80%";
     public IReadOnlyList<GoalRateFold> Folds { get; init; } = [];
     public GoalRateErrorCounts ErrorsAtHalf { get; init; } = new();
     public MarketEvaluation PriorOver25 { get; init; } = new();

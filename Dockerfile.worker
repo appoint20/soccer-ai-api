@@ -18,10 +18,15 @@ WORKDIR /app
 # Password authentication still succeeds, so this is noise rather than a
 # failure — but it is logged as "Error", which makes every real connection
 # problem harder to spot in the deploy log. One small package removes it.
+# ML.NET's packaged lib_lightgbm.so also needs the GNU OpenMP runtime.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=dotnet-build /app/publish .
+
+# Test the native trainer before deployment, without starting the worker or
+# requiring any database/provider credentials.
+RUN dotnet soccer-ai-worker.dll --check-lightgbm
 
 # The host watches appsettings*.json for changes by default, and every watcher
 # is an inotify instance. Config files are baked into this image and can never

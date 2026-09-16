@@ -440,10 +440,10 @@ public class FixtureSyncService(IApiFootballService apiService,
         // Phase 3: Sync Coaches for all teams in the league (once per season sync to keep it fresh)
         // Coach changes are optional enrichment; do not refetch every team eight times per day.
 
-        // Odds coverage report for this league (target ≥85%)
-        await LogOddsCoverageAsync(targetLeagueId, ct);
-
         await dbContext.SaveChangesAsync(ct);
+        // Stored-price inventory only. The separate odds step refreshes live
+        // prices and reports current coverage after that refresh completes.
+        await LogOddsCoverageAsync(targetLeagueId, ct);
         result.LeaguesSynced = 1;
 
         logger.LogInformation(
@@ -626,6 +626,11 @@ public class FixtureSyncService(IApiFootballService apiService,
             if (LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow)) priced++;
             await Task.Delay(quota.SuggestedDelay, ct);
         }
+        LogFreshOddsCoverage(fixtures, DateTimeOffset.UtcNow);
+        logger.LogInformation(
+            "[OddsCapture] Date {Date}: checked {Checked}/{Candidates} upcoming fixtures; "
+            + "{Priced} had fresh Bet365 prices when checked; {Skipped} skipped after kickoff",
+            date, checkedCount, fixtures.Count, priced, fixtures.Count - checkedCount);
         return new(fixtures.Count, checkedCount, priced, fixtures.Count - checkedCount);
     }
 
@@ -677,12 +682,14 @@ public class FixtureSyncService(IApiFootballService apiService,
                 captured, upcoming.Count);
         }
 
+        LogFreshOddsCoverage(upcoming, DateTimeOffset.UtcNow);
         return captured;
     }
 
     /// <summary>
-    /// Coverage over the recent + upcoming window (last 30d and forward):
-    /// share of fixtures with guard-valid odds per market. Target ≥85%.
+    /// Inventory of stored prices, including history and far-future fixtures.
+    /// This cannot measure live coverage: odds capture runs separately, and
+    /// stored prices may be stale or from an older bookmaker policy.
     /// </summary>
     private async Task LogOddsCoverageAsync(int leagueId, CancellationToken ct)
     {
@@ -706,14 +713,44 @@ public class FixtureSyncService(IApiFootballService apiService,
             var pBtts = Math.Round(rows.Count(r =>
                 Application.Services.OddsGuard.IsValid(r.BttsYesOdds)) * 100.0 / rows.Count, 1);
 
-            var level = p1X2 >= 85 && pOu >= 85 && pBtts >= 85 ? LogLevel.Information : LogLevel.Warning;
-            logger.Log(level,
-                "[OddsCoverage] League {LeagueId}: n={N} (last 30d + upcoming) — 1X2 {P1X2}%, O/U2.5 {POu}%, BTTS {PBtts}% (target ≥85%)",
+            logger.LogInformation(
+                "[StoredOddsInventory] League {LeagueId}: n={N} (last 30d + upcoming) — "
+                + "1X2 {P1X2}%, O/U2.5 {POu}%, BTTS {PBtts}%. "
+                + "Stored-price inventory before the separate odds refresh; freshness not assessed. This is not a sync failure.",
                 leagueId, rows.Count, p1X2, pOu, pBtts);
         }
         catch (Exception ex) when (ex is not OperationCanceledException && ex is not Application.Exceptions.ExternalApiException)
         {
             logger.LogWarning(ex, "Odds coverage report failed for league {LeagueId}", leagueId);
+        }
+    }
+
+    /// <summary>Only the still-upcoming fixtures in the actual capture window.</summary>
+    private void LogFreshOddsCoverage(IEnumerable<Fixture> fixtures, DateTimeOffset now)
+    {
+        foreach (var league in fixtures.Where(f => f.Status == "NS" && f.Date > now).GroupBy(f => f.LeagueId))
+        {
+            var rows = league.ToList();
+            var fresh = rows.Where(f => LiveOddsPolicy.IsFresh(f, now)).ToList();
+            var winners = fresh.Count(f => OddsGuard.IsValid(f.HomeWinOdds) &&
+                OddsGuard.IsValid(f.DrawOdds) && OddsGuard.IsValid(f.AwayWinOdds));
+            var totals = fresh.Count(f => OddsGuard.IsValid(f.Over25Odds) && OddsGuard.IsValid(f.Under25Odds));
+            var btts = fresh.Count(f => OddsGuard.IsValid(f.BttsYesOdds));
+            var uncheckedCount = rows.Count(f => f.OddsCheckedAtUtc is null);
+            var staleOrUnavailable = rows.Count - fresh.Count - uncheckedCount;
+            var p1X2 = Math.Round(100.0 * winners / rows.Count, 1);
+            var pOu = Math.Round(100.0 * totals / rows.Count, 1);
+            var pBtts = Math.Round(100.0 * btts / rows.Count, 1);
+            var level = winners >= .85 * rows.Count && totals >= .85 * rows.Count && btts >= .85 * rows.Count
+                ? LogLevel.Information : LogLevel.Warning;
+            logger.Log(level,
+                "[LiveOddsCoverage] League {LeagueId}: {Count} upcoming fixtures in this capture window, "
+                + "after odds capture — fresh Bet365 1X2 {Winners} ({P1X2}%), "
+                + "O/U2.5 {Totals} ({POu}%), BTTS {Btts} ({PBtts}%). "
+                + "Never checked: {Unchecked}; checked but stale/unavailable: {StaleOrUnavailable}. "
+                + "Price-coverage target ≥85%; this is not prediction accuracy or a sync failure.",
+                league.Key, rows.Count, winners, p1X2, totals, pOu,
+                btts, pBtts, uncheckedCount, staleOrUnavailable);
         }
     }
 

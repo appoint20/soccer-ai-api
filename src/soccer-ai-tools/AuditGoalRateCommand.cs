@@ -24,6 +24,8 @@ public static class AuditGoalRateCommand
         var fixtures = JsonSerializer.Deserialize<List<Fixture>>(bytes, FootballAuditJson.Options) ?? throw new ArgumentException("Invalid fixtures JSON");
         using var services = new ServiceCollection().AddLogging(b => b.AddSimpleConsole()).BuildServiceProvider();
         var dc = Read<DixonColesOptions>("DixonColes"); var hybrid = Read<HybridModelOptions>("HybridModel"); var confluence = Read<ConfluenceOptions>("Confluence");
+        if (args.Contains("--allow-trainer-fallback", StringComparer.OrdinalIgnoreCase))
+            hybrid.AllowOfflineTrainerFallback = true;
         var builder = new GoalRateFeatureBuilder(Options.Create(dc), services.GetRequiredService<ILogger<GoalRateFeatureBuilder>>());
         var trainer = new GoalRateTrainingService(services.GetRequiredService<ILogger<GoalRateTrainingService>>(), builder,
             Options.Create(hybrid), Options.Create(confluence), services.GetRequiredService<IServiceScopeFactory>());
