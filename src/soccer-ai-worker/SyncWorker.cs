@@ -24,8 +24,11 @@ public sealed class SyncWorker(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var opt = options.Value;
-        logger.LogInformation("Sync worker starting. Schedule (UTC): {Schedule}",
-            string.Join(", ", opt.ScheduleUtc));
+        var schedule = BuildSchedule(opt);
+        logger.LogInformation(
+            "Sync worker starting. {Count} slots/day, every {Gap} (UTC): {Schedule}",
+            schedule.Count, DescribeCadence(schedule),
+            string.Join(", ", schedule.Select(t => t.ToString("HH:mm"))));
 
         // ── Startup: sync only if stale (> threshold since last success) ──
         try
@@ -50,7 +53,7 @@ public sealed class SyncWorker(
         // ── Scheduled loop ──
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = TimeUntilNextRun(DateTimeOffset.UtcNow, ParseSchedule(opt.ScheduleUtc));
+            var delay = TimeUntilNextRun(DateTimeOffset.UtcNow, schedule);
             logger.LogInformation("Next sync at {Next:u} (in {Delay})",
                 DateTimeOffset.UtcNow + delay, delay);
 
@@ -87,6 +90,57 @@ public sealed class SyncWorker(
     }
 
     // ── Pure scheduling math (unit-tested) ────────────────────────────────────
+
+    private const int MinutesPerDay = 24 * 60;
+
+    /// <summary>
+    /// The schedule the loop actually runs: a generated cadence when
+    /// <see cref="SyncOptions.IntervalMinutes"/> is set, otherwise the
+    /// explicitly listed times.
+    /// </summary>
+    public static List<TimeOnly> BuildSchedule(SyncOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (options.IntervalMinutes <= 0)
+            return ParseSchedule(options.ScheduleUtc);
+
+        // A cadence longer than a day cannot produce a daily grid; fall back
+        // rather than emitting a single slot and quietly dropping to one run a
+        // day, which is the failure ParseSchedule's own fallback guards against.
+        if (options.IntervalMinutes >= MinutesPerDay)
+            return ParseSchedule(options.ScheduleUtc);
+
+        var anchor = ((options.IntervalAnchorMinute % MinutesPerDay) + MinutesPerDay) % MinutesPerDay;
+
+        var times = new List<TimeOnly>();
+        for (var minute = anchor; minute < MinutesPerDay; minute += options.IntervalMinutes)
+            times.Add(new TimeOnly(minute / 60, minute % 60));
+
+        // Anchoring past the first interval leaves the pre-anchor part of the
+        // day uncovered — 23:40 with a 60-minute cadence would otherwise mean
+        // one slot a day. Fill backwards from the anchor to cover it.
+        for (var minute = anchor - options.IntervalMinutes; minute >= 0; minute -= options.IntervalMinutes)
+            times.Add(new TimeOnly(minute / 60, minute % 60));
+
+        times.Sort();
+        return times;
+    }
+
+    /// <summary>The smallest gap in the schedule, for the startup log line.</summary>
+    private static TimeSpan DescribeCadence(List<TimeOnly> schedule)
+    {
+        if (schedule.Count < 2) return TimeSpan.FromDays(1);
+
+        var smallest = TimeSpan.FromDays(1) - (schedule[^1] - schedule[0]);
+        for (var i = 1; i < schedule.Count; i++)
+        {
+            var gap = schedule[i] - schedule[i - 1];
+            if (gap < smallest) smallest = gap;
+        }
+
+        return smallest;
+    }
 
     public static List<TimeOnly> ParseSchedule(string[] scheduleUtc)
     {

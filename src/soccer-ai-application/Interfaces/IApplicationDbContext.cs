@@ -16,6 +16,7 @@ public interface IApplicationDbContext
     DbSet<PublishedTicket> PublishedTickets { get; }
     DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
     DbSet<ModelForecast> ModelForecasts { get; }
+    DbSet<GoalRateModelGeneration> GoalRateModelGenerations { get; }
 
     /// <summary>
     /// Immutable pre-match probabilities, written once per fixture per capture
@@ -32,6 +33,7 @@ public interface IApplicationDbContext
     DbSet<FixtureInjury> FixtureInjuries { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    /// <summary>Atomically keeps the first forecast for a fixture/model; false means already recorded or no longer upcoming.</summary>
+    Task<bool> TryInsertModelForecastAsync(ModelForecast forecast, CancellationToken cancellationToken);
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
 }
-

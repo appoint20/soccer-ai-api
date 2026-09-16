@@ -18,7 +18,7 @@ public class FixtureSyncService(IApiFootballService apiService,
     Microsoft.Extensions.Options.IOptions<Application.Options.OddsSyncOptions> oddsOptions,
     Microsoft.Extensions.Options.IOptions<Application.Services.Sync.SyncOptions> syncOptions,
     ILogger<FixtureSyncService> logger)
-    : IFixtureSyncService
+    : IFixtureSyncService, IDateFixtureSyncService
 {
     private HashSet<int>? _existingTeamIds;
 
@@ -222,7 +222,14 @@ public class FixtureSyncService(IApiFootballService apiService,
     /// Phase 1: Capture odds for upcoming fixtures (within 14 days)
     /// Phase 2: Update completed fixtures with results (preserve pre-captured odds)
     /// </summary>
-    public async Task<SyncResult> SyncLeagueFixturesAsync(int leagueId, int season, CancellationToken ct)
+    public Task<SyncResult> SyncLeagueFixturesAsync(int leagueId, int season, CancellationToken ct) =>
+        SyncLeagueFixturesCoreAsync(leagueId, season, ct);
+
+    public Task<SyncResult> SyncLeagueForDateAsync(int leagueId, DateOnly date, CancellationToken ct) =>
+        SyncLeagueFixturesCoreAsync(leagueId, date.Month >= 7 ? date.Year : date.Year - 1, ct, date);
+
+    private async Task<SyncResult> SyncLeagueFixturesCoreAsync(
+        int leagueId, int season, CancellationToken ct, DateOnly? targetDate = null)
     {
         var result = new SyncResult();
         var targetLeagueId = leagueId;
@@ -253,10 +260,23 @@ public class FixtureSyncService(IApiFootballService apiService,
         var cancelledStatuses = new[] { "PST", "CANC", "INT", "SUSP" };
 
         var apiFixtures = await apiService.GetFixturesAsync(targetLeagueId, season);
+
+        HashSet<int> previouslyOnDate = [];
+        if (targetDate.HasValue)
+        {
+            var start = new DateTimeOffset(targetDate.Value.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            var end = start.AddDays(1);
+            previouslyOnDate = await dbContext.Fixtures.AsNoTracking()
+                .Where(f => f.LeagueId == targetLeagueId && f.Date >= start && f.Date < end)
+                .Select(f => f.ApiId).ToHashSetAsync(ct);
+        }
         
         // Phase 1: Upcoming fixtures (capture pre-match odds before they expire)
         var upcomingFixtures = apiFixtures
-            .Where(f => f.StatusShort == "NS" && f.Date > DateTimeOffset.UtcNow && f.Date <= DateTimeOffset.UtcNow.AddDays(14))
+            .Where(f => f.StatusShort == "NS" && f.Date > DateTimeOffset.UtcNow &&
+                (targetDate.HasValue
+                    ? DateOnly.FromDateTime(f.Date.UtcDateTime) == targetDate.Value || previouslyOnDate.Contains(f.ApiId)
+                    : f.Date <= DateTimeOffset.UtcNow.AddDays(14)))
             .ToList();
 
         // Pre-fetch existing team IDs globally and cache per request to avoid duplicate team errors
@@ -278,7 +298,11 @@ public class FixtureSyncService(IApiFootballService apiService,
             {
                 // New upcoming fixture - capture odds now
                 var fixture = await CreateUpcomingFixtureAsync(apiFixture, targetLeagueId, season);
-                if (fixture == null) continue;
+                if (fixture == null)
+                {
+                    if (targetDate.HasValue) throw new InvalidOperationException($"Fixture {apiFixture.ApiId} could not be created.");
+                    continue;
+                }
                 dbContext.Fixtures.Add(fixture);
                 result.Created++;
             }
@@ -303,8 +327,17 @@ public class FixtureSyncService(IApiFootballService apiService,
             .Where(f => (f.Date >= cutoff && f.Date <= DateTimeOffset.UtcNow.AddHours(2)) || 
                         completedStatuses.Contains(f.StatusShort) || 
                         liveStatuses.Contains(f.StatusShort) ||
-                        cancelledStatuses.Contains(f.StatusShort))
+                        cancelledStatuses.Contains(f.StatusShort) ||
+                        (targetDate.HasValue && (DateOnly.FromDateTime(f.Date.UtcDateTime) == targetDate.Value ||
+                                                previouslyOnDate.Contains(f.ApiId))))
             .ToList();
+
+        // The manual path refreshes supporting results, but only creates
+        // upcoming fixtures for its requested UTC date.
+        if (targetDate.HasValue)
+            recentOrActiveFixtures = recentOrActiveFixtures
+                .Where(f => f.Date <= DateTimeOffset.UtcNow || f.StatusShort != "NS")
+                .ToList();
 
         // ── Batched detail prefetch: ONE /fixtures?ids= call per 20 fixtures
         //    replaces 2 calls (statistics + events) PER fixture. ──
@@ -367,6 +400,8 @@ public class FixtureSyncService(IApiFootballService apiService,
                         dbContext.Fixtures.Add(fixture);
                         result.Created++;
                     }
+                    else if (targetDate.HasValue)
+                        throw new InvalidOperationException($"Supporting fixture {apiFixture.ApiId} could not be created.");
                 }
                 else
                 {
@@ -392,6 +427,10 @@ public class FixtureSyncService(IApiFootballService apiService,
             catch (Exception ex) when (ex is not OperationCanceledException && ex is not Application.Exceptions.ExternalApiException)
             {
                 logger.LogWarning(ex, "Failed to process recent/active fixture {ApiId} — skipping.", apiFixture.ApiId);
+                result.ErrorMessages.Add($"Fixture {apiFixture.ApiId} could not be synced.");
+                // Do not continue a manual pipeline with a potentially poisoned
+                // change tracker or incomplete supporting data.
+                if (targetDate.HasValue) throw;
             }
 
             // Quota-aware spacing (grows as the per-minute budget shrinks)
@@ -563,6 +602,33 @@ public class FixtureSyncService(IApiFootballService apiService,
         return captured;
     }
 
+    public async Task<DateOddsReport> CaptureDateOddsAsync(DateOnly date, CancellationToken ct)
+    {
+        var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var end = start.AddDays(1);
+        var now = DateTimeOffset.UtcNow;
+        var leagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+        var fixtures = await dbContext.Fixtures
+            .Where(f => leagueIds.Contains(f.LeagueId) && f.Date >= start && f.Date < end &&
+                        f.Status == "NS" && f.Date > now)
+            .OrderBy(f => f.Date).ToListAsync(ct);
+        var checkedCount = 0;
+        var priced = 0;
+        foreach (var fixture in fixtures)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (fixture.Date <= DateTimeOffset.UtcNow) continue;
+            // A manual request explicitly refreshes this day, even if the
+            // scheduled capture is not due or a cached coverage flag is false.
+            await UpdateFixtureOddsAsync(fixture, fixture.ApiId, ct);
+            await dbContext.SaveChangesAsync(ct);
+            checkedCount++;
+            if (LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow)) priced++;
+            await Task.Delay(quota.SuggestedDelay, ct);
+        }
+        return new(fixtures.Count, checkedCount, priced, fixtures.Count - checkedCount);
+    }
+
     public async Task<int> CaptureUpcomingOddsAsync(CancellationToken ct)
     {
         const int maxFixturesPerRun = 500;
@@ -673,8 +739,8 @@ public class FixtureSyncService(IApiFootballService apiService,
 
     private async Task UpdateFixtureOddsAsync(Fixture fixture, int apiId, CancellationToken ct)
     {
-        var capturedAt = DateTimeOffset.UtcNow;
         var quotes = await apiService.GetFixtureOddsQuotesAsync(apiId);
+        var capturedAt = DateTimeOffset.UtcNow;
         // Keep every successful observation, including an unchanged price. A
         // movement-only history cannot establish when an old price was verified.
         foreach (var quote in quotes.Where(q => OddsGuard.IsValid(q.Price)))

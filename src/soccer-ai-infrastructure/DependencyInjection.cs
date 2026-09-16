@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchDataProvider, MatchDataProvider>();
         services.AddScoped<IAnalysisPrecomputeService, AnalysisPrecomputeService>();
         services.AddScoped<IFixtureSyncService, FixtureSyncService>();
+        services.AddScoped<IDateFixtureSyncService, FixtureSyncService>();
         services.AddScoped<IOddsBackfillService, OddsBackfillService>();
         services.AddScoped<IHistoricalOddsImportService, HistoricalOddsImportService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
@@ -77,6 +78,7 @@ public static class DependencyInjection
         // would dominate the cost of a prediction.
         services.AddScoped<IGoalRateTrainingService, GoalRateTrainingService>();
         services.AddSingleton<GoalRateFeatureBuilder>();
+        services.AddSingleton<GoalRateModelStore>();
         services.AddSingleton<IGoalRateForecaster, GoalRateForecaster>();
 
         // Legacy per-market binary trainer. Retained so existing tooling keeps
@@ -213,7 +215,7 @@ public static class DependencyInjection
         // The LLM only generates narrative text — it must NEVER be required for
         // the statistical flow (model, calibration, decisions, backtest).
         // Without a key (or with AiService:Enabled=false) a no-op service is used.
-        var apiKey = ResolveAiApiKey(configuration);
+        var apiKey = AiCredentials.Resolve(configuration);
         var enabled = configuration.GetValue("AiService:Enabled", true) && !string.IsNullOrWhiteSpace(apiKey);
 
         if (!enabled)
@@ -223,18 +225,6 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IAiAnalysisService, OpenAiAnalysisService>();
-    }
-
-    /// <summary>AiService:ApiKey with OPENROUTER_API_KEY, ANTHROPIC_API_KEY, NVIDIA_API_KEY fallback.</summary>
-    private static string? ResolveAiApiKey(IConfiguration configuration)
-    {
-        var key = configuration["AiService:ApiKey"];
-        return string.IsNullOrWhiteSpace(key)
-            ? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
-              ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
-              ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY")
-              ?? Environment.GetEnvironmentVariable("ZAI_API_KEY")
-            : key;
     }
 
 }

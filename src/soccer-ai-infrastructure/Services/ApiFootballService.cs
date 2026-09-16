@@ -24,10 +24,10 @@ public class ApiFootballService(
         {
             var response = await GetApiResponseAsync($"/fixtures?league={leagueId}&season={season}");
             if (response is null)
-                return fixtures;
+                throw new Application.Exceptions.ExternalApiException("API-Football", "Fixture request failed; data was not refreshed.");
             
             if (!response.Value.TryGetProperty("response", out var data))
-                return fixtures;
+                throw new Application.Exceptions.ExternalApiException("API-Football", "Fixture response is missing its data array.");
 
             foreach (var item in data.EnumerateArray())
             {
@@ -84,6 +84,7 @@ public class ApiFootballService(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to fetch fixtures for league {LeagueId}", leagueId);
+            throw new Application.Exceptions.ExternalApiException("API-Football", "Fixture response could not be read.", innerException: ex);
         }
 
         return fixtures;
@@ -354,8 +355,10 @@ public class ApiFootballService(
             for (var page = 1; page <= 20; page++)
             {
                 var response = await GetApiResponseAsync($"/odds?fixture={fixtureId}&page={page}");
-                if (response is null) return []; // a partial fetch must not look complete
-                if (!response.Value.TryGetProperty("response", out var data)) return [];
+                if (response is null)
+                    throw new Application.Exceptions.ExternalApiException("API-Football", "Odds request failed; prices were not refreshed.");
+                if (!response.Value.TryGetProperty("response", out var data))
+                    throw new Application.Exceptions.ExternalApiException("API-Football", "Odds response is missing its data array.");
                 foreach (var item in data.EnumerateArray())
                 {
                     DateTimeOffset? updatedAt = item.TryGetProperty("update", out var update) &&
@@ -384,6 +387,21 @@ public class ApiFootballService(
                                     AddQuotes(quotes, bookmaker, values, updatedAt,
                                         ("Yes", OddsMarkets.BttsYes), ("No", OddsMarkets.BttsNo));
                                     break;
+                                // Full-time markets only. Never construct a range
+                                // or same-match price from separate selections.
+                                case "Goals Range":
+                                case "Total Goals":
+                                case "Exact Goals Number":
+                                    AddQuotes(quotes, bookmaker, values, updatedAt,
+                                        ("2-3", OddsMarkets.Goals23), ("2 - 3", OddsMarkets.Goals23));
+                                    break;
+                                case "Total Goals/Both Teams Score":
+                                case "Total Goals/Both Teams To Score":
+                                case "Goals Over/Under/Both Teams Score":
+                                    AddQuotes(quotes, bookmaker, values, updatedAt,
+                                        ("Over 2.5/Yes", OddsMarkets.BttsAndOver25),
+                                        ("Yes/Over 2.5", OddsMarkets.BttsAndOver25));
+                                    break;
                             }
                         }
                     }
@@ -391,7 +409,8 @@ public class ApiFootballService(
                 var totalPages = response.Value.TryGetProperty("paging", out var paging) &&
                     paging.TryGetProperty("total", out var total) ? total.GetInt32() : 1;
                 if (page >= totalPages) break;
-                if (page == 20) return []; // fail closed if a response exceeds the bounded paging window
+                if (page == 20)
+                    throw new Application.Exceptions.ExternalApiException("API-Football", "Odds response exceeded the paging limit; prices were not refreshed.");
             }
         }
         catch (Application.Exceptions.ExternalApiException)
@@ -401,6 +420,7 @@ public class ApiFootballService(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to fetch odds quotes for fixture {FixtureId}", fixtureId);
+            throw new Application.Exceptions.ExternalApiException("API-Football", "Odds response could not be read.", innerException: ex);
         }
         return quotes;
     }
@@ -436,9 +456,11 @@ public class ApiFootballService(
                 $"/standings?league={leagueId}&season={season}",
                 cancellationToken);
             if (response is null)
-                return teams;
+                throw new Application.Exceptions.ExternalApiException("API-Football", "Standings request failed; data was not refreshed.");
             
-            if (!response.Value.TryGetProperty("response", out var data) || data.GetArrayLength() == 0)
+            if (!response.Value.TryGetProperty("response", out var data))
+                throw new Application.Exceptions.ExternalApiException("API-Football", "Standings response is missing its data array.");
+            if (data.GetArrayLength() == 0)
             {
                 logger.LogWarning("No standings data for league {LeagueId} season {Season}", leagueId, season);
                 return teams;
@@ -486,6 +508,7 @@ public class ApiFootballService(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to fetch standings for league {LeagueId}", leagueId);
+            throw new Application.Exceptions.ExternalApiException("API-Football", "Standings response could not be read.", innerException: ex);
         }
         
         return teams;
@@ -733,9 +756,14 @@ public class ApiFootballService(
                 ((errors.ValueKind == JsonValueKind.Object && errors.EnumerateObject().Any()) ||
                  (errors.ValueKind == JsonValueKind.Array && errors.GetArrayLength() > 0)))
             {
-                calls.RecordFailure("Provider returned an error envelope");
+                // Keep diagnostic categories without copying provider values,
+                // which can echo request inputs or credentials into logs/status.
+                var categories = ErrorCategories(errors);
+                var endpoint = relativeUrl.Split('?')[0];
+                var reason = $"Provider rejected {endpoint} (error categories: {categories}); no sync data accepted.";
+                calls.RecordFailure(reason);
                 throw new Application.Exceptions.ExternalApiException("API-Football",
-                    "Provider returned an error envelope; no sync data accepted.");
+                    reason);
             }
             calls.RecordSuccess();
             return doc.RootElement.Clone();
@@ -764,6 +792,16 @@ public class ApiFootballService(
             logger.LogError(ex, "API-Football unexpected error for {Url}", relativeUrl);
             return null;
         }
+    }
+
+    public static string ErrorCategories(JsonElement errors)
+    {
+        string[] allowed = ["requests", "rateLimit", "token", "access", "plan", "subscription", "endpoint",
+            "parameters", "required", "fields", "bug", "timeout", "season", "league", "fixture", "page", "date", "timezone"];
+        var keys = errors.ValueKind == JsonValueKind.Object
+            ? errors.EnumerateObject().Select(p => allowed.FirstOrDefault(a => a.Equals(p.Name, StringComparison.OrdinalIgnoreCase)) ?? "unclassified")
+            : ["unclassified"];
+        return string.Join(", ", keys.Distinct().Order(StringComparer.Ordinal));
     }
 
     private static string TrimForLog(string? value)

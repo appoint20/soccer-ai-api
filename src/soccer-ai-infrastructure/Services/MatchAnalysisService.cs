@@ -49,18 +49,11 @@ public sealed class MatchAnalysisService(
         if (!refresh && cacheComplete)
         {
             // CACHE HIT: Use stored mathematical probabilities, skip the models
-            prediction = new WeightedPrediction
+            prediction = WeightedPrediction.FromCalibrated(new CalibratedProbabilities
             {
-                HomeProb = aiEntity!.HomeProb,
-                DrawProb = aiEntity.DrawProb,
-                AwayProb = aiEntity.AwayProb,
-                Over25Prob = aiEntity.Over25Prob,
-                BTTSProb = aiEntity.BttsProb,
-                TwoToThreeGoalsProb = aiEntity.Goals23Prob,
-                Confidence = aiEntity.Confidence,
-                MatchWinner = aiEntity.Recommendation.ToLower().Contains("home") ? "home" :
-                             aiEntity.Recommendation.ToLower().Contains("away") ? "away" : "draw"
-            };
+                HomeWin = aiEntity!.HomeProb, Draw = aiEntity.DrawProb, AwayWin = aiEntity.AwayProb,
+                Over25 = aiEntity.Over25Prob, Btts = aiEntity.BttsProb, TwoToThreeGoals = aiEntity.Goals23Prob
+            });
 
             models = new StatisticalModels();
         }
@@ -73,12 +66,16 @@ public sealed class MatchAnalysisService(
                 : null;
 
             models = bundle != null
-                ? new StatisticalModels { Poisson = bundle.Poisson }
+                ? new StatisticalModels { Poisson = bundle.Poisson, ModelVersion = bundle.ModelVersion }
                 : new StatisticalModels();
         }
 
         var ai = aiEntity != null ? new AiAnalysisDto
         {
+            GeneratedAtUtc = aiEntity.AiGeneratedAtUtc,
+            ModelVersion = aiEntity.AiModelVersion,
+            PromptHash = aiEntity.AiPromptHash,
+            InputHash = aiEntity.AiInputHash,
             Recommendation = aiEntity.Recommendation ?? "Avoid",
             Confidence = aiEntity.Confidence,
             Reasoning = aiEntity.PredictionReason ?? "",
@@ -94,6 +91,7 @@ public sealed class MatchAnalysisService(
             AiBttsQualified = aiEntity.AiBttsQualified,
             AiUnder25Qualified = aiEntity.AiUnder25Qualified,
             AiGoals23Qualified = aiEntity.AiGoals23Qualified,
+            AiBttsAndOver25Qualified = aiEntity.AiBttsAndOver25Qualified,
             AiHomeWinQualified = aiEntity.AiHomeWinQualified,
             AiAwayWinQualified = aiEntity.AiAwayWinQualified,
             AiBestBet = aiEntity.AiBestBet ?? "",
@@ -101,12 +99,12 @@ public sealed class MatchAnalysisService(
         } : new AiAnalysisDto();
 
         // Walk-forward isotonic calibration: RAW probabilities stay in the math
-        // cache (training data); decisions and product output use calibrated.
+        // cache; the immutable ledger supplies training evidence. Product output uses calibrated.
         var rawPrediction = prediction;
         IReadOnlyList<CalibrationTraceEntry>? calibrationTrace = null;
         if (prediction != null)
         {
-            var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct);
+            var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct, models.ModelVersion);
             prediction = calibration.Calibrated;
             calibrationTrace = calibration.Trace;
         }
@@ -133,10 +131,13 @@ public sealed class MatchAnalysisService(
             OddsOver25 = odds.OddsOver25,
             OddsUnder25 = odds.OddsUnder25,
             OddsBttsYes = odds.OddsBttsYes,
+            OddsGoals23 = odds.OddsGoals23,
+            OddsBttsAndOver25 = odds.OddsBttsAndOver25,
             OddsHomeWin = odds.OddsHome,
             OddsAwayWin = odds.OddsAway,
             OddsDraw = odds.OddsDraw,
             Ai = ai,
+            DecisionExplanation = SoccerAi.Application.Services.Analysis.DecisionExplanationPolicy.Read(aiEntity?.DecisionExplanationJson),
             HomeRestDays = homeRest,
             AwayRestDays = awayRest,
             Signals = signals,
@@ -149,21 +150,26 @@ public sealed class MatchAnalysisService(
 
     // ── Helpers ───────────────────────────────────────────────────
 
-    private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null) => new()
+    private static MatchContext BuildMatchContext(Fixture fixture, float? homeRest = null, float? awayRest = null)
     {
+        var usable = fixture.Status is "FT" or "AET" or "PEN" || LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow);
+        return new MatchContext
+        {
         Date = fixture.Date,
         LeagueId = fixture.LeagueId,
         // Sanity-guarded raw odds. Corrupted values (locale bug) are surfaced
         // as null — never rescaled: EV math must only ever see real prices.
-        OddsOver25 = OddsGuard.Sanitize(fixture.Over25Odds),
-        OddsUnder25 = OddsGuard.Sanitize(fixture.Under25Odds),
-        OddsBttsYes = OddsGuard.Sanitize(fixture.BttsYesOdds),
-        OddsHome = OddsGuard.Sanitize(fixture.HomeWinOdds),
-        OddsAway = OddsGuard.Sanitize(fixture.AwayWinOdds),
-        OddsDraw = OddsGuard.Sanitize(fixture.DrawOdds),
+        OddsOver25 = usable ? OddsGuard.Sanitize(fixture.Over25Odds) : null,
+        OddsUnder25 = usable ? OddsGuard.Sanitize(fixture.Under25Odds) : null,
+        OddsBttsYes = usable ? OddsGuard.Sanitize(fixture.BttsYesOdds) : null,
+        OddsGoals23 = usable ? OddsGuard.Sanitize(fixture.Goals23Odds) : null,
+        OddsBttsAndOver25 = usable ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null,
+        OddsHome = usable ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null,
+        OddsAway = usable ? OddsGuard.Sanitize(fixture.AwayWinOdds) : null,
+        OddsDraw = usable ? OddsGuard.Sanitize(fixture.DrawOdds) : null,
         LeagueName = LeagueCatalog.Name(fixture.LeagueId),
         HomeRestDays = homeRest,
         AwayRestDays = awayRest
-    };
-
+        };
+    }
 }

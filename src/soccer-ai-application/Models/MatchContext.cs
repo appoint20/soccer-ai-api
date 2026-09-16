@@ -24,6 +24,8 @@ public sealed class MatchContext
     public double? OddsOver25 { get; init; }
     public double? OddsUnder25 { get; init; }
     public double? OddsBttsYes { get; init; }
+    public double? OddsGoals23 { get; init; }
+    public double? OddsBttsAndOver25 { get; init; }
     
     public float? HomeRestDays { get; init; }
     public float? AwayRestDays { get; init; }

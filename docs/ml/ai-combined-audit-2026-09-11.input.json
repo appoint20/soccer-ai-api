@@ -1,0 +1,19 @@
+{
+  "CapturedAtUtc": "2026-09-11T13:56:20.268113+00:00",
+  "Source": "local_sqlite_copy",
+  "ReadOnly": true,
+  "Files": {
+    "fixtures": {
+      "Rows": 24481,
+      "Sha256": "c27b9f4f37f3ac95512deb5d2a9a74032afe98ad0ec2493f1bbc83a4b045d1ec"
+    },
+    "ai-analyses": {
+      "Rows": 580,
+      "Sha256": "80774423e900838d1a0f8d8116c884fb78913c2894b293bd4eaf0bb08f4ae742"
+    },
+    "prediction-snapshots": {
+      "Rows": 0,
+      "Sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  }
+}

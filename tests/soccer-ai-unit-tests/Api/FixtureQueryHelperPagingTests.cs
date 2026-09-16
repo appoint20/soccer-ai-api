@@ -125,17 +125,17 @@ public class FixtureQueryHelperPagingTests : IDisposable
 
         _db.FixtureAnalyses.Add(new FixtureAnalysis
         {
-            FixtureId = 1, Lang = "en", SnapshotJson = "{}", Confidence = 70
+            FixtureId = 1, Lang = "en", SnapshotJson = "{}", Confidence = 70, Analysis = "Recorded English analysis."
         });
         _db.FixtureAnalyses.Add(new FixtureAnalysis
         {
-            FixtureId = 2, Lang = "en", SnapshotJson = "{}", Confidence = 65
+            FixtureId = 2, Lang = "en", SnapshotJson = "{}", Confidence = 65, Analysis = "Another recorded analysis."
         });
 
         // Snapshot-only row: written by the precompute step, no narrative.
         // "Analysed" must not include it, or the filter returns matches whose
         // ai block is empty.
-        _db.FixtureAnalyses.Add(new FixtureAnalysis { FixtureId = 3, Lang = "en", SnapshotJson = "{}" });
+        _db.FixtureAnalyses.Add(new FixtureAnalysis { FixtureId = 3, Lang = "en", SnapshotJson = "{}", Confidence = 80, Analysis = "  " });
         await _db.SaveChangesAsync(CancellationToken.None);
 
         var (page, _, total) = await _sut.GetFixturesWithTeamsAsync(

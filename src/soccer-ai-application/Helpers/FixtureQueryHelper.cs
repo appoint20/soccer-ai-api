@@ -37,7 +37,7 @@ public class FixtureQueryHelper(IApplicationDbContext dbContext)
             // creates a row for every in-scope fixture to hold its snapshot,
             // so the old predicate let through matches with an empty ai block.
             query = query.Where(f => dbContext.FixtureAnalyses.Any(
-                a => a.FixtureId == f.Id && a.Confidence > 0));
+                a => a.FixtureId == f.Id && a.Analysis != null && a.Analysis.Trim() != ""));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

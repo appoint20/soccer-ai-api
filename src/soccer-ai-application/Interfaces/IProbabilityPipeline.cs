@@ -19,6 +19,7 @@ public interface IProbabilityPipeline
 /// </summary>
 public sealed class ProbabilityBundle
 {
+    public string ModelVersion { get; init; } = "unknown";
     public required PoissonModel Poisson { get; init; }
     public required CalibratedProbabilities Calibrated { get; init; }
 }

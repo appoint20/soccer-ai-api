@@ -38,10 +38,9 @@ public sealed class MatchAnalysis
     public double? OddsOver25 { get; set; }
     public double? OddsUnder25 { get; set; }
     public double? OddsBttsYes { get; set; }
-    // odds_goals23 removed: it was a hardcoded 1.90 placeholder, never a real
-    // quote. 2-3 goals is informational and never becomes a bet, so a synthetic
-    // price on it is exactly the placeholder the product rules forbid. The
-    // MinOddsGoals23 strategy threshold is unrelated and still applies.
+    public double? OddsGoals23 { get; set; }
+    public double? OddsBttsAndOver25 { get; set; }
+    public string? OddsBookmaker { get; set; }
 
     /// <summary>
     /// True joint P(BTTS ∧ Over 2.5) from the Dixon-Coles score matrix, needed
@@ -63,8 +62,18 @@ public sealed class MatchAnalysis
     
     // Flattened Decisions
     public PredictionResponse? Prediction { get; init; }
+    /// <remarks>
+    /// Named explicitly because the global SnakeCaseLower policy renders `H2H`
+    /// as "h2_h" — an unguessable key that no client was reading, which is why
+    /// the head-to-head section never appeared in the app. Clients accept both
+    /// spellings, so this can be corrected without a lockstep release.
+    /// </remarks>
+    [JsonPropertyName("h2h")]
     public HeadToHeadModel? H2H { get; init; }
     public AiAnalysisDto? Ai { get; set; }
+    public AiDecisionExplanation? DecisionExplanation { get; set; }
+    public string PresentationLanguage { get; set; } = "en";
+    public DecisionPresentation? Presentation { get; set; }
 
     /// <summary>Strategic signal catalog — persisted in the snapshot; LLM narratives cite the labels.</summary>
     public Signals.StrategicSignals? Signals { get; init; }

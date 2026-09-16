@@ -26,37 +26,34 @@ public class SameMatchTicketTests
     }
 
     [Fact]
-    public void SameMatchPair_RescuesSubFloorMatch_WhenPriceReaches185()
+    public void SameMatchPair_UsesActualCombinedQuoteEvenWhenIndividualPricesAreLower()
     {
-        // Both legs below the 1.70 single floor, product 1.55×1.35 = 2.09 ≥ 1.85
-        var pair = new SameMatchPair(1, "Premier League", JointProbability: 0.55,
-            BttsOdds: 1.55, Over25Odds: 1.35);
-
-        var tickets = TicketBuilder.Build([], [], Strat, Opt, [pair]);
-
-        tickets.Should().ContainSingle();
-        var t = tickets[0];
-        t.IsSameMatchPair.Should().BeTrue();
-        t.TotalOdds.Should().BeApproximately(2.09, 0.01);
-        t.CombinedProbability.Should().Be(0.55, "the TRUE joint, not 0.55 × 0.55");
-        t.Ev.Should().BeApproximately(0.55 * 2.0925 - 1, 0.01);
+        var pair = new SameMatchPair(1, "Premier League", JointProbability: 0.65,
+            BttsOdds: 1.55, Over25Odds: 1.35, QuotedCombinedOdds: 1.80);
+        var ticket = TicketBuilder.Build([], [], Strat, Opt, [pair]).Should().ContainSingle().Subject;
+        ticket.TotalOdds.Should().Be(1.80);
+        ticket.CombinedProbability.Should().Be(.65);
+        ticket.Ev.Should().BeApproximately(.17, .0001);
+        ticket.Legs.Should().ContainSingle().Which.Market.Should().Be("btts_and_over25");
+        TicketBuilder.Build([], [], Strat, Opt, [pair with { QuotedCombinedOdds = null }])
+            .Should().BeEmpty("individual odds cannot supply a combined quote");
     }
 
     [Fact]
     public void SameMatchPair_BelowMinimumPrice_Rejected()
     {
-        // 1.30 × 1.35 = 1.755 < 1.85
-        var pair = new SameMatchPair(1, "Premier League", 0.60, 1.30, 1.35);
+        // The combined quote is below 1.70.
+        var pair = new SameMatchPair(1, "Premier League", 0.70, 1.30, 1.35, 1.69);
 
         TicketBuilder.Build([], [], Strat, Opt, [pair])
-            .Should().BeEmpty("same-match pairs must reach 1.85");
+            .Should().BeEmpty("same-match pairs must reach 1.70");
     }
 
     [Fact]
-    public void SameMatchPair_NegativeEv_Rejected()
+    public void SameMatchPair_InsufficientEdge_Rejected()
     {
-        // 0.40 × 2.10 = 0.84 → EV −16%
-        var pair = new SameMatchPair(1, "Premier League", 0.40, 1.40, 1.50);
+        // The real quote produces only 2% edge, below the required 5%.
+        var pair = new SameMatchPair(1, "Premier League", 0.60, 1.40, 1.50, 1.70);
 
         TicketBuilder.Build([], [], Strat, Opt, [pair]).Should().BeEmpty();
     }

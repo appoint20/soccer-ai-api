@@ -57,7 +57,7 @@ public sealed class StrategyOptions
     /// goals floor because the pair exists to rescue "sure" matches priced
     /// below 1.70 — it must clear a worthwhile price to be sellable.
     /// </summary>
-    public double MinOddsSameMatchPair { get; set; } = 1.85;
+    public double MinOddsSameMatchPair { get; set; } = 1.70;
 
     // ── G. Market flags ──
     public double ModelMarketDivergenceFlag { get; set; } = 0.15;

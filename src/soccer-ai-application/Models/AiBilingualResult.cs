@@ -2,6 +2,11 @@ namespace SoccerAi.Application.Models;
 
 public class AiBilingualResult
 {
+    // Assigned by the provider adapter, never trusted from model-generated JSON.
+    [System.Text.Json.Serialization.JsonIgnore] public DateTimeOffset? GeneratedAtUtc { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? ModelVersion { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? PromptHash { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? InputHash { get; set; }
     public int FixtureId { get; set; }
     public string Recommendation { get; set; } = "";
     public int Confidence { get; set; }
@@ -11,6 +16,7 @@ public class AiBilingualResult
     public bool BttsQualified { get; set; }
     public bool Under25Qualified { get; set; }
     public bool Goals23Qualified { get; set; }
+    public bool? BttsAndOver25Qualified { get; set; }
     public bool HomeWinQualified { get; set; }
     public bool AwayWinQualified { get; set; }
     public string BestBet { get; set; } = "";

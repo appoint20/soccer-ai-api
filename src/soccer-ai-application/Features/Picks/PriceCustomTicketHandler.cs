@@ -88,9 +88,22 @@ public sealed class PriceCustomTicketHandler(
             snapshots[id] = snapshot;
         }
 
+        // One fixture contributes one bookmaker selection. Resolve a requested
+        // GG + Over pair to the dedicated combined quote before checking 1.70.
+        var requestedMarkets = new List<(int FixtureId, string? Market)>();
+        foreach (var group in legs.GroupBy(l => l.FixtureId))
+        {
+            var keys = group.Select(l => l.Market?.Trim().ToLowerInvariant()).ToHashSet();
+            if (group.Count() == 2 && keys.SetEquals([ConfluenceRuleEngine.Markets.Btts, ConfluenceRuleEngine.Markets.Over25]))
+                requestedMarkets.Add((group.Key, ConfluenceRuleEngine.Markets.BttsAndOver25));
+            else if (group.Count() > 1)
+                return PriceCustomTicketResponse.Fail("Only BTTS with Over 2.5 has a supported combined market; a real combined quote is required.");
+            else requestedMarkets.Add((group.Key, group.Single().Market));
+        }
+
         // ── Resolve each leg against its audited market ──
         var resolved = new List<ResolvedLeg>(legs.Count);
-        foreach (var requested in legs)
+        foreach (var requested in requestedMarkets)
         {
             var market = requested.Market?.Trim().ToLowerInvariant() ?? "";
             var snapshot = snapshots[requested.FixtureId];
@@ -102,6 +115,9 @@ public sealed class PriceCustomTicketHandler(
                 return PriceCustomTicketResponse.Fail(
                     $"Fixture {requested.FixtureId} has no market '{requested.Market}'.");
 
+            if (market == ConfluenceRuleEngine.Markets.BttsAndOver25 && !audit.Qualified)
+                return PriceCustomTicketResponse.Fail("The combined market does not pass the current price, probability and evidence checks.");
+
             var odds = OddsGuard.Sanitize(audit.Odds);
             if (odds is null || odds < LiveOddsPolicy.MinimumOdds)
                 return PriceCustomTicketResponse.Fail(
@@ -112,15 +128,9 @@ public sealed class PriceCustomTicketHandler(
                 fixtures[requested.FixtureId].Date));
         }
 
-        // ── Joint probability ──
-        double jointProbability = 1.0;
-        foreach (var group in resolved.GroupBy(l => l.FixtureId))
-        {
-            var probability = JointProbabilityFor(group.ToList(), out var error);
-            if (error is not null) return PriceCustomTicketResponse.Fail(error);
-
-            jointProbability *= probability;
-        }
+        // Each resolved selection now belongs to a distinct fixture. A combined
+        // market already carries its joint probability as one selection.
+        var jointProbability = resolved.Aggregate(1.0, (acc, leg) => acc * leg.Audit.Probability);
 
         var totalOdds = resolved.Aggregate(1.0, (acc, l) => acc * l.Odds);
         var opt = confluenceOptions.Value;
@@ -139,53 +149,6 @@ public sealed class PriceCustomTicketHandler(
         };
 
         return new PriceCustomTicketResponse { Ticket = ticket };
-    }
-
-    /// <summary>
-    /// Probability for the legs a single fixture contributes.
-    /// </summary>
-    /// <remarks>
-    /// One leg is its own probability. Two legs are only priceable when they
-    /// are BTTS and Over 2.5, because that is the one same-fixture joint the
-    /// score matrix gives us. Multiplying any other pair would understate the
-    /// correlation badly enough to invent edge that is not there.
-    /// </remarks>
-    private static double JointProbabilityFor(IReadOnlyList<ResolvedLeg> legs, out string? error)
-    {
-        error = null;
-
-        if (legs.Count == 1)
-            return legs[0].Audit.Probability;
-
-        var fixtureId = legs[0].FixtureId;
-
-        if (legs.Count > 2)
-        {
-            error = $"Fixture {fixtureId} has {legs.Count} legs. At most two markets from one fixture "
-                  + "can be priced together, and only BTTS with Over 2.5.";
-            return 0;
-        }
-
-        var markets = legs.Select(l => l.Market).OrderBy(m => m, StringComparer.Ordinal).ToList();
-        var isBttsOver25 =
-            markets.SequenceEqual([ConfluenceRuleEngine.Markets.Btts, ConfluenceRuleEngine.Markets.Over25]);
-
-        if (!isBttsOver25)
-        {
-            error = $"Markets '{string.Join("' and '", markets)}' on fixture {fixtureId} are correlated and "
-                  + "the model has no joint probability for that pair. Only BTTS with Over 2.5 can be "
-                  + "combined on one fixture.";
-            return 0;
-        }
-
-        var joint = legs[0].Snapshot.BttsAndOver25Probability;
-        if (joint is not > 0)
-        {
-            error = $"Fixture {fixtureId} has no joint BTTS/Over 2.5 probability, so the pair cannot be priced.";
-            return 0;
-        }
-
-        return joint.Value;
     }
 
     private static PickLegDto ToLegDto(ResolvedLeg leg) => new()

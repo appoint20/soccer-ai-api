@@ -51,6 +51,8 @@ public sealed class ConfluenceOptions
     public double BttsMinProbability { get; set; } = 0.50;
     public double Over25MinProbability { get; set; } = 0.50;
     public double Goals23MinProbability { get; set; } = 0.50;
+    public double BttsAndOver25MinProbability { get; set; } = 0.60;
+    public double BttsAndOver25MinEdge { get; set; } = 0.05;
     public double WinnerMinProbability { get; set; } = 0.50;
     public double Under25MinProbability { get; set; } = 0.50;
     public double DrawMinProbability { get; set; } = 0.30; // draws rarely exceed ~35%
@@ -82,7 +84,7 @@ public sealed class ConfluenceOptions
     /// lost money (n=47, 48.9%, −4.7%). Note that .NET configuration binding
     /// appends to array defaults, so an override here adds to this list.
     /// </summary>
-    public string[] GoalsMarkets { get; set; } = ["btts", "over25", "under25"];
+    public string[] GoalsMarkets { get; set; } = ["btts", "over25", "under25", "btts_and_over25", "goals_2_3"];
 
     /// <summary>
     /// Guaranteed daily slots for tickets containing a focus market.
@@ -193,10 +195,10 @@ public sealed class ConfluenceOptions
     public double Tier2ExtraProbability { get; set; } = 0.05;
 
     /// <summary>
-    /// Markets that are permanently analysis-only: API-Football offers no odds
-    /// for them, so they can never be priced picks. Full analysis still runs.
+    /// Optional market exclusions. Missing real quotes are handled by the price
+    /// gate, not by permanently banning markets whose coverage can change.
     /// </summary>
-    public string[] InformationalOnlyMarkets { get; set; } = ["goals_2_3"];
+    public string[] InformationalOnlyMarkets { get; set; } = [];
 
     // ── Shadow cohort: named winner-band hypothesis ──
     public double ShadowWinnerMinProbability { get; set; } = 0.62;

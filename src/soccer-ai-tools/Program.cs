@@ -29,6 +29,15 @@ public static class Program
             return 1;
         }
 
+        if (args[0].Equals("audit-goal-rate", StringComparison.OrdinalIgnoreCase))
+            return await AuditGoalRateCommand.RunAsync(args);
+
+        if (args[0].Equals("export-ml-audit", StringComparison.OrdinalIgnoreCase))
+            return await ExportMlAuditCommand.RunAsync(args);
+
+        if (args[0].Equals("audit-ai-combined", StringComparison.OrdinalIgnoreCase))
+            return await AuditAiCombinedCommand.RunAsync(args);
+
         using var host = BuildHost(args);
 
         var command = args[0].ToLowerInvariant();
@@ -767,12 +776,18 @@ public static class Program
             soccer-ai-tools — operational CLI for soccer-ai-api
 
             Commands:
+              export-ml-audit --settings=appsettings.json --output=directory
+                           Read-only PostgreSQL export; no host or migrations.
+              audit-ai-combined --input-dir=directory --output=report.json
+                           Compare recorded pre-AI decisions and actual AI-assisted choices.
               backtest     [--weeks=10] [--stake=1.0] [--output=backtest_result.json]
                            Run the backtest pipeline and write the JSON report.
               train-ml     [--cutoff=yyyy-MM-dd]
               capture-injuries
               backfill-odds-provenance [--dry-run]
               train-goal-rate
+              audit-goal-rate --input=fixtures.json --output=directory [--settings=appsettings.json]
+                           Offline evaluation only: no host, database changes, provider calls or model publication.
               forecast     [--days=N] [--from=yyyy-MM-dd]
                            Train the ML.NET models with a temporal train/test split.
                            Rows before the cutoff train; rows on/after it are held out.
@@ -786,8 +801,8 @@ public static class Program
                            Coverage + cause diagnosis per league/season (never
                            fetched vs market missing vs corrupted legacy).
               backfill-analysis [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--chunk-days=7]
-                           Recompute analysis for historical finished fixtures so
-                           the calibration layer gets training data. 0 API calls.
+                           Recompute historical display caches. These are excluded
+                           from calibration and recorded prediction statistics.
               backfill-odds [--from=yyyy-MM-dd] [--to=yyyy-MM-dd] [--max-calls=N] [--probe]
                            Repair odds for fixtures missed while the worker was
                            down. API-Football keeps only 7 days of pre-match odds,

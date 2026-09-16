@@ -75,6 +75,7 @@ public static class MarketOutcome
             ConfluenceRuleEngine.Markets.Under25 => totalGoals < 3,
             LowScoring => totalGoals < 3,
             ConfluenceRuleEngine.Markets.Goals23 => totalGoals is 2 or 3,
+            ConfluenceRuleEngine.Markets.BttsAndOver25 => homeGoals > 0 && awayGoals > 0 && totalGoals > 2,
             ConfluenceRuleEngine.Markets.Draw => homeGoals == awayGoals,
             ConfluenceRuleEngine.Markets.MatchWinner => WinnerWon(selection, homeGoals, awayGoals),
             _ => null

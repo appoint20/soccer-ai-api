@@ -1,0 +1,39 @@
+# Match summaries, decision checks and bet365 odds
+
+Implementation status: source changes and migrations prepared locally. No production migration, deployment, paid AI request, or successful live special-market coverage check was performed in this task. The current native iOS client and backend must be released together for the new presentation.
+
+## What changed
+
+1. **Short EN/DE summaries after the decision.** The existing AI opinion still contributes according to the configured Confirm/Veto/Ignore policy. A separate AI call then receives the completed decision, supporting evidence and actual price gates. It writes exactly four short context sentences. The server appends two sentences naming the actual selections and explaining the price/evidence gate. The explanatory call cannot alter a probability or qualification.
+2. **Five readable checks.** Each visible market receives five AI rewrites of explicitly supplied facts: probability, supporting evidence, risk, AI opinion, and price/verdict. The adapter validates the fixture and market IDs, count, length, missing-text markers, unsupported numerical claims and obvious certainty claims. These checks reduce errors; they do not prove that every possible language-model paraphrase is factually perfect. Failed or stale wording falls back to five localized system checks, visibly labelled as awaiting AI wording.
+3. **Consistency when inputs change.** A versioned hash covers the explanation inputs and selections. Any relevant odds, facts or decision change invalidates old AI wording immediately at read time. The two final decision sentences always use the current audit. The worker regenerates outdated wording; unchanged provider timestamps with the same prices do not trigger another AI request. The new opinion prompt version also refreshes old upcoming analyses once, including the newly supported joint-market opinion. Already-started fixtures are not retrospectively narrated.
+4. **Markets below 50% hidden in the detail market section.** Cards, goal rings and radar axes use the unrounded probability, so 49.99% stays hidden and 50% is visible. This is a display filter, not a change to the statistical model. If a configured lower threshold selected a hidden market (for example a draw), the final summary still truthfully reports that selection.
+5. **bet365 live prices.** All bookmakers remain in the quote history, while the live fixture columns use bet365 only, selecting the newest provider observation per market. An older or higher quote cannot mask a price drop, and a different bookmaker cannot silently supply a bet365 price. Missing, stale or legacy mixed-source quotes fail the live price check. The iOS screen names the bookmaker and provider update time. Required odds now include both the minimum price and the configured advantage: `max(min_odds, (1 + min_edge) / probability)`, rounded upward to two decimal places for display.
+6. **2–3 goals.** The permanent informational-only exclusion and iOS ban are removed. A genuine quote can now pass the normal probability, evidence, price and edge gates. Missing quotes remain missing; the former synthetic 1.90 price has not been restored.
+7. **GG + Over 2.5.** The combined market has its own bookmaker quote, AI opinion and decision audit. It uses the score model's joint probability. A joint incompatible with the marginal probabilities is suppressed. Individual prices below 1.70 do not block the combined market, but the combined quote must reach 1.70, the joint must reach the configured probability threshold (default 60%), and the evidence/edge gates must pass. Automatic picks and custom tickets represent it as one bookmaker selection. Its outcome requires both teams to score and at least three total goals in 90 minutes. Combining events cannot make their joint probability exceed either individual probability.
+
+## Data-source boundary
+
+The supported special-market parser accepts explicit full-time range quotes (`2-3`) and explicit full-time `Over 2.5/Yes` combined quotes. It does not derive prices from exact-score selections, separate GG/Over prices, team totals or first-half markets. Parser tests use constructed provider-contract payloads; they are not evidence that bet365 currently supplies those markets through API-Football.
+
+**Live availability remains unverified.** The football API probe could not obtain a usable live catalogue in this environment. Before claiming full special-market coverage, inspect `/odds/bets`, `/odds/bookmakers?search=bet365`, and an upcoming fixture's `/odds` payload with the production provider account. Compare exact market names and outcome values against the strict parser in `ApiFootballService`. If the account/feed does not publish those quotes, the app cannot truthfully offer them as priced bets; a provider with that coverage is required.
+
+API-Football documents pre-match odds updates every three hours. Existing worker scheduling keeps the three-hour refresh and more frequent checks during the final six hours. More requests cannot make the upstream bookmaker feed instantaneous. Source: [API-Football's official endpoint guide](https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide).
+
+## Release
+
+- Include both `AddDecisionExplanationsAndSpecialOdds` migrations and the corresponding EF model snapshots. The added nullable fields are `Fixtures.Goals23Odds`, `Fixtures.BttsAndOver25Odds`, `Fixtures.OddsBookmaker`, `FixtureAnalyses.AiBttsAndOver25Qualified` and `FixtureAnalyses.DecisionExplanationJson`.
+- Deploy the complete API and worker change set with the normal database migration procedure; then release the native iOS changes. This task has not done those production actions.
+- Let the worker capture bet365 prices and regenerate upcoming analyses. Existing unlabelled mixed-bookmaker prices are deliberately unusable until recaptured.
+- The existing admin endpoint can target a UTC day: `POST /api/automation/ai-analysis?date=YYYY-MM-DD`. Poll its returned job URL. Valid admin API-key authorization is required. Old opinion prompt versions and stale final-decision wording are repaired without needing `force=true`. A new analysis uses an opinion call plus an explanation call; subsequent wording refreshes use the explanation call only.
+- Check an actual generated EN/DE example and compare its selections and provider timestamps with the detail view before considering the production feature verified.
+
+## Verification
+
+- Backend suite: 629 passed, one optional PostgreSQL test skipped; `/tmp/soccer-detail-verified-tests.log`. The final required-price wording/rounding check is in `/tmp/soccer-summary-final-check.log`.
+- Native iOS: 36 tests passed, including the 50% boundary, five checks, summary source, combined settlement and required-price calculation. Build and tests ran on the iOS Simulator.
+- SQLite migrations run in the relational regression suite. EF reports no pending PostgreSQL model changes. The optional local PostgreSQL concurrency test was skipped because a test database was not running; it had passed during the preceding worker-error fix, before this change set.
+- The real AI SDK/adapter was exercised against a loopback mock HTTP server, catching and fixing JSON object extraction with nested arrays. No real-model language-quality or predictive-accuracy result is claimed from that test.
+- Regression cases cover bet365 price drops, source substitution, newest versus highest quotes, null special-market odds, the independent combined-price floor, actual combined ticket pricing, stale explanation invalidation and unchanged-input caching.
+
+These changes improve decision consistency and pricing integrity. They do not establish an 80% accuracy rate or profitability, and no new ML model was trained or promoted as part of this request.

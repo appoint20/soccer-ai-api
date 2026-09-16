@@ -4,6 +4,10 @@ namespace SoccerAi.Application.Models;
 
 public sealed class AiAnalysisDto
 {
+    public DateTimeOffset? GeneratedAtUtc { get; init; }
+    public string? ModelVersion { get; init; }
+    public string? PromptHash { get; init; }
+    public string? InputHash { get; init; }
     public string Recommendation { get; init; } = string.Empty;
     public double Confidence { get; init; }
     public string Reasoning { get; init; } = string.Empty;
@@ -20,6 +24,7 @@ public sealed class AiAnalysisDto
     public bool AiBttsQualified { get; init; }
     public bool AiUnder25Qualified { get; init; }
     public bool AiGoals23Qualified { get; init; }
+    public bool? AiBttsAndOver25Qualified { get; set; }
     public bool AiHomeWinQualified { get; init; }
     public bool AiAwayWinQualified { get; init; }
     public string AiBestBet { get; init; } = "";

@@ -21,7 +21,7 @@ public sealed class GoalRateTrainingService(
     GoalRateFeatureBuilder featureBuilder,
     IOptions<HybridModelOptions> options,
     IOptions<ConfluenceOptions> confluenceOptions,
-    IServiceScopeFactory scopeFactory) : IGoalRateTrainingService
+    IServiceScopeFactory scopeFactory, GoalRateModelStore? modelStore = null) : IGoalRateTrainingService
 {
     private readonly HybridModelOptions _opt = options.Value;
     private readonly ConfluenceOptions _confluence = confluenceOptions.Value;
@@ -31,12 +31,13 @@ public sealed class GoalRateTrainingService(
     {
         var directory = Path.Combine(Directory.GetCurrentDirectory(), _opt.ModelDirectory);
 
-        if (PublishedGenerationAge(directory) is { } age &&
+        if ((LastEvaluationAge(directory) ?? PublishedGenerationAge(directory)) is { } age &&
             age < TimeSpan.FromHours(_opt.RetrainIntervalHours))
         {
             logger.LogInformation(
-                "[GoalRate] Published generation is {Age:g} old, under the {Interval}h retrain "
+                "[GoalRate] Last training evaluation is {Age:g} old, under the {Interval}h retrain "
                 + "interval — skipping", age, _opt.RetrainIntervalHours);
+            if (modelStore != null) await modelStore.PublishCurrentAsync(directory, ct);
             return;
         }
 
@@ -45,6 +46,25 @@ public sealed class GoalRateTrainingService(
         var fixtures = await db.Fixtures.AsNoTracking()
             .Where(f => f.Status == "FT").OrderBy(f => f.Date).ToListAsync(ct);
         await TrainAndEvaluateAsync(fixtures, directory, publish: true, ct);
+        if (modelStore != null) await modelStore.PublishCurrentAsync(directory, ct);
+    }
+
+    private static TimeSpan? LastEvaluationAge(string directory)
+    {
+        // A rejected model is still a completed training attempt. Otherwise a
+        // failed gate retrains on every worker sync while no new data can help.
+        try
+        {
+            var path = Path.Combine(directory, "goal_rate_evaluation.json");
+            if (!File.Exists(path)) return null;
+            var report = JsonSerializer.Deserialize<GoalRateEvaluation>(File.ReadAllText(path));
+            if (report is null || report.FeatureSchema != GoalRateFeatureBuilder.SchemaVersion ||
+                report.PredictionRecipe != GoalRateEnsemble.Recipe ||
+                report.GeneratedAtUtc == default || report.GeneratedAtUtc > DateTimeOffset.UtcNow) return null;
+            return DateTimeOffset.UtcNow - report.GeneratedAtUtc;
+        }
+        catch (IOException) { return null; }
+        catch (JsonException) { return null; }
     }
 
     /// <summary>
@@ -122,6 +142,7 @@ public sealed class GoalRateTrainingService(
         VerifySavedModel(Path.Combine(target, "away.zip"), away, calibrationRows);
         var manifest = new GoalRateArtifact
         {
+            PredictionRecipe = GoalRateEnsemble.Recipe,
             Generation = generation, CreatedAtUtc = DateTimeOffset.UtcNow, Trainer = TrainerUsed,
             TrainingThroughUtc = fit[^1].Date, CalibrationFromUtc = calibrationRows[0].Date,
             CalibrationThroughUtc = calibrationRows[^1].Date, Features = GoalRateRow.FeatureColumns(),
@@ -166,11 +187,19 @@ public sealed class GoalRateTrainingService(
         var priorBtts = new List<(double P, bool Y)>();
         var dcOver = new List<(double P, bool Y)>();
         var dcBtts = new List<(double P, bool Y)>();
+        var unmixedOver = new List<(double P, bool Y)>();
+        var unmixedBtts = new List<(double P, bool Y)>();
+        var goals23 = new List<(double P, bool Y)>(); var dcGoals23 = new List<(double P, bool Y)>();
+        var winnerRows = new List<(double Home, double Draw, double Away, int Actual)>();
+        var dcWinnerRows = new List<(double Home, double Draw, double Away, int Actual)>();
+        var pairedOver = new List<(DateTime Date, double Candidate, double Baseline, bool Actual)>();
+        var pairedBtts = new List<(DateTime Date, double Candidate, double Baseline, bool Actual)>();
         var predictedHome = new List<double>();
         var predictedAway = new List<double>();
         var actualHome = new List<double>();
         var actualAway = new List<double>();
         var folds = new List<GoalRateFold>();
+        var errors = new GoalRateErrorCounts();
         var dc = featureBuilder.DixonColesSettings;
         for (var fold = 0; fold < _opt.WalkForwardFolds; fold++)
         {
@@ -191,6 +220,9 @@ public sealed class GoalRateTrainingService(
             var la = away.Transform(testView).GetColumn<float>("Score").ToArray();
             if (lh.Length != test.Count || la.Length != test.Count) throw new InvalidDataException("Prediction row mismatch");
             var pOver = history.Count(r => r.GoalsHome + r.GoalsAway > 2) / (double)history.Count;
+            var priorHome = history.Count(r => r.GoalsHome > r.GoalsAway) / (double)history.Count;
+            var priorDraw = history.Count(r => r.GoalsHome == r.GoalsAway) / (double)history.Count;
+            var priorGoals23 = history.Count(r => r.GoalsHome + r.GoalsAway >= 2 && r.GoalsHome + r.GoalsAway <= 3) / (double)history.Count;
             var pBtts = history.Count(r => r.GoalsHome > 0 && r.GoalsAway > 0) / (double)history.Count;
             for (var i = 0; i < test.Count; i++)
             {
@@ -198,17 +230,48 @@ public sealed class GoalRateTrainingService(
                 var h = Math.Clamp(lh[i] * correction.HomeScale, _opt.LambdaMin, _opt.LambdaMax);
                 var a = Math.Clamp(la[i] * correction.AwayScale, _opt.LambdaMin, _opt.LambdaMax);
                 var m = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(h, a, dc.Rho, dc.MaxGoals));
+                var original = m;
+                if (test[i].DcLambdaSum > 0)
+                {
+                    var baseline = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                        test[i].DcLambdaHome, test[i].DcLambdaAway, dc.Rho, dc.MaxGoals));
+                    m = GoalRateEnsemble.Mix(m, baseline, correction.MlWeight);
+                    h = correction.MlWeight * h + (1 - correction.MlWeight) * test[i].DcLambdaHome;
+                    a = correction.MlWeight * a + (1 - correction.MlWeight) * test[i].DcLambdaAway;
+                }
                 var yOver = test[i].GoalsHome + test[i].GoalsAway > 2;
                 var yBtts = test[i].GoalsHome > 0 && test[i].GoalsAway > 0;
                 over.Add((m.Over25, yOver)); btts.Add((m.Btts, yBtts));
+                unmixedOver.Add((original.Over25, yOver)); unmixedBtts.Add((original.Btts, yBtts));
+                // Outcome categories identify where to investigate; they do not
+                // claim why a particular team failed to score.
+                if (m.Btts >= .5 && !yBtts)
+                {
+                    errors.BttsFalsePositives++;
+                    if (yOver) errors.BttsPickedButNoBttsOver25++;
+                    else errors.BttsPickedButNeither++;
+                }
+                if (m.Over25 < .5 && yOver) errors.Under25PickedButOver25++;
+
                 priorOver.Add((pOver, yOver)); priorBtts.Add((pBtts, yBtts));
                 dcOver.Add((test[i].DcLambdaSum > 0 ? test[i].DcOver25 : pOver, yOver));
                 dcBtts.Add((test[i].DcLambdaSum > 0 ? test[i].DcBtts : pBtts, yBtts));
+                pairedOver.Add((test[i].Date, m.Over25, dcOver[^1].P, yOver));
+                pairedBtts.Add((test[i].Date, m.Btts, dcBtts[^1].P, yBtts));
+                var y23 = test[i].GoalsHome + test[i].GoalsAway >= 2 && test[i].GoalsHome + test[i].GoalsAway <= 3;
+                goals23.Add((m.TwoToThreeGoals, y23));
+                var dcMarket = test[i].DcLambdaSum > 0 ? DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                    test[i].DcLambdaHome, test[i].DcLambdaAway, dc.Rho, dc.MaxGoals)) : new MatrixMarkets(
+                    priorHome, priorDraw, 1 - priorHome - priorDraw, pOver, pBtts, priorGoals23, 0);
+                dcGoals23.Add((dcMarket.TwoToThreeGoals, y23));
+                var actualWinner = test[i].GoalsHome > test[i].GoalsAway ? 0 : test[i].GoalsHome == test[i].GoalsAway ? 1 : 2;
+                winnerRows.Add((m.HomeWin, m.Draw, m.AwayWin, actualWinner));
+                dcWinnerRows.Add((dcMarket.HomeWin, dcMarket.Draw, dcMarket.AwayWin, actualWinner));
                 predictedHome.Add(h); predictedAway.Add(a);
                 actualHome.Add(test[i].GoalsHome); actualAway.Add(test[i].GoalsAway);
             }
             folds.Add(new GoalRateFold(fit.Count, cal.Count, test.Count, fit[^1].Date, cal[0].Date, cal[^1].Date,
-                test[0].Date, test[^1].Date, correction.HomeScale, correction.AwayScale));
+                test[0].Date, test[^1].Date, correction.HomeScale, correction.AwayScale, correction.MlWeight));
             logger.LogInformation("[GoalRate] Fold {Fold}: fit {Fit}; unseen calibration {Cal}; test {Test}", fold + 1, fit.Count, cal.Count, test.Count);
         }
         var overThreshold = PickSelector.ConfidenceFloorFor(ConfluenceRuleEngine.Markets.Over25, _confluence);
@@ -217,21 +280,33 @@ public sealed class GoalRateTrainingService(
         var bttsMetrics = Summarise(btts, bttsThreshold);
         var priorOverMetrics = Summarise(priorOver, overThreshold);
         var priorBttsMetrics = Summarise(priorBtts, bttsThreshold);
+        var dcOverMetrics = Summarise(dcOver, overThreshold);
+        var dcBttsMetrics = Summarise(dcBtts, bttsThreshold);
+        var goals23Metrics = Summarise(goals23, .5); var dcGoals23Metrics = Summarise(dcGoals23, .5);
+        var winnerMetrics = PairedModelMetrics.Winner(winnerRows); var dcWinnerMetrics = PairedModelMetrics.Winner(dcWinnerRows);
         return new GoalRateEvaluation
         {
+            PredictionRecipe = GoalRateEnsemble.Recipe,
+            Winner = winnerMetrics, DixonColesWinner = dcWinnerMetrics, Goals23 = goals23Metrics, DixonColesGoals23 = dcGoals23Metrics,
+            Over25DifferenceVsDc = PairedModelMetrics.Brier(pairedOver), BttsDifferenceVsDc = PairedModelMetrics.Brier(pairedBtts),
             GeneratedAtUtc = DateTimeOffset.UtcNow, TrainRows = rows.Count, EvaluatedRows = over.Count,
             HeldOutFrom = folds.Count > 0 ? folds[0].TestFromUtc : default, Trainer = TrainerUsed, Folds = folds,
             LambdaHomeMean = predictedHome.Count > 0 ? predictedHome.Average() : 0,
             LambdaAwayMean = predictedAway.Count > 0 ? predictedAway.Average() : 0,
             ActualHomeGoalsMean = actualHome.Count > 0 ? actualHome.Average() : 0,
             ActualAwayGoalsMean = actualAway.Count > 0 ? actualAway.Average() : 0,
-            Over25 = overMetrics, Btts = bttsMetrics,
+            Over25 = overMetrics, Btts = bttsMetrics, ErrorsAtHalf = errors,
+            UnmixedMlOver25 = Summarise(unmixedOver, overThreshold), UnmixedMlBtts = Summarise(unmixedBtts, bttsThreshold),
             PriorOver25 = priorOverMetrics, PriorBtts = priorBttsMetrics,
-            DixonColesOver25 = Summarise(dcOver, overThreshold), DixonColesBtts = Summarise(dcBtts, bttsThreshold),
+            DixonColesOver25 = dcOverMetrics, DixonColesBtts = dcBttsMetrics,
             Over25Thresholds = Sweep(over), BttsThresholds = Sweep(btts),
             PublicationGatePassed = over.Count >= 500 &&
                 overMetrics.BrierScore <= priorOverMetrics.BrierScore && bttsMetrics.BrierScore <= priorBttsMetrics.BrierScore &&
-                overMetrics.LogLoss <= priorOverMetrics.LogLoss && bttsMetrics.LogLoss <= priorBttsMetrics.LogLoss
+                overMetrics.LogLoss <= priorOverMetrics.LogLoss && bttsMetrics.LogLoss <= priorBttsMetrics.LogLoss &&
+                overMetrics.BrierScore <= dcOverMetrics.BrierScore && bttsMetrics.BrierScore <= dcBttsMetrics.BrierScore &&
+                overMetrics.LogLoss <= dcOverMetrics.LogLoss && bttsMetrics.LogLoss <= dcBttsMetrics.LogLoss &&
+                winnerMetrics.BrierScore <= dcWinnerMetrics.BrierScore && winnerMetrics.LogLoss <= dcWinnerMetrics.LogLoss &&
+                goals23Metrics.BrierScore <= dcGoals23Metrics.BrierScore && goals23Metrics.LogLoss <= dcGoals23Metrics.LogLoss
         };
     }
 
@@ -320,10 +395,23 @@ public sealed class GoalRateTrainingService(
             return Math.Clamp(a / p, 0.5, 2.0);
         }
 
+        var homeScale = Math.Round(Scale(predHome, rows.Select(r => r.GoalsHome)), 6);
+        var awayScale = Math.Round(Scale(predAway, rows.Select(r => r.GoalsAway)), 6);
+        var dc = featureBuilder.DixonColesSettings;
+        var samples = rows.Select((row, i) => (row, i)).Where(x => x.row.DcLambdaSum > 0).Select(x =>
+        {
+            var ml = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                Math.Clamp(predHome[x.i] * homeScale, _opt.LambdaMin, _opt.LambdaMax),
+                Math.Clamp(predAway[x.i] * awayScale, _opt.LambdaMin, _opt.LambdaMax), dc.Rho, dc.MaxGoals));
+            var baseline = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                x.row.DcLambdaHome, x.row.DcLambdaAway, dc.Rho, dc.MaxGoals));
+            return (ml, baseline, x.row.GoalsHome + x.row.GoalsAway > 2, x.row.GoalsHome > 0 && x.row.GoalsAway > 0);
+        }).ToList();
         return new GoalRateCalibration
         {
-            HomeScale = Math.Round(Scale(predHome, rows.Select(r => r.GoalsHome)), 6),
-            AwayScale = Math.Round(Scale(predAway, rows.Select(r => r.GoalsAway)), 6),
+            HomeScale = homeScale,
+            AwayScale = awayScale,
+            MlWeight = GoalRateEnsemble.FitWeight(samples),
             FittedAtUtc = DateTimeOffset.UtcNow,
             ValidationRows = rows.Count
         };
@@ -406,12 +494,22 @@ public sealed class GoalRateTrainingService(
 
 public sealed record GoalRateEvaluation
 {
+    public string PredictionRecipe { get; init; } = "";
+    public WinnerEvaluation? Winner { get; init; }
+    public WinnerEvaluation? DixonColesWinner { get; init; }
+    public MarketEvaluation Goals23 { get; init; } = new();
+    public MarketEvaluation DixonColesGoals23 { get; init; } = new();
+    public PairedBrierInterval? Over25DifferenceVsDc { get; init; }
+    public PairedBrierInterval? BttsDifferenceVsDc { get; init; }
+    public MarketEvaluation UnmixedMlOver25 { get; init; } = new();
+    public MarketEvaluation UnmixedMlBtts { get; init; } = new();
     public DateTimeOffset GeneratedAtUtc { get; init; }
     public string EvaluationProtocol { get; init; } = "Chronological UTC-day folds; disjoint fit/calibration/test; thresholds descriptive only; no odds/EV qualification";
     public string FeatureSchema { get; init; } = GoalRateFeatureBuilder.SchemaVersion;
     public bool PublicationGatePassed { get; init; }
-    public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior; does not prove profitability or 80%";
+    public string PublicationGate { get; init; } = "At least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; winner/goals23 Brier and log-loss also no worse than DC; does not prove profitability or 80%";
     public IReadOnlyList<GoalRateFold> Folds { get; init; } = [];
+    public GoalRateErrorCounts ErrorsAtHalf { get; init; } = new();
     public MarketEvaluation PriorOver25 { get; init; } = new();
     public MarketEvaluation PriorBtts { get; init; } = new();
     public MarketEvaluation DixonColesOver25 { get; init; } = new();
@@ -483,10 +581,20 @@ public sealed class GoalRateCalibration
 {
     public double HomeScale { get; init; } = 1.0;
     public double AwayScale { get; init; } = 1.0;
+    public double MlWeight { get; init; } = 1.0;
     public DateTimeOffset FittedAtUtc { get; init; }
     public int ValidationRows { get; init; }
 }
 
 public sealed record GoalRateFold(int FitRows, int CalibrationRows, int TestRows, DateTime FitThroughUtc,
     DateTime CalibrationFromUtc, DateTime CalibrationThroughUtc, DateTime TestFromUtc, DateTime TestThroughUtc,
-    double HomeScale, double AwayScale);
+    double HomeScale, double AwayScale, double MlWeight);
+
+/// <summary>Out-of-fold classifications at 0.5, without odds or value gates.</summary>
+public sealed class GoalRateErrorCounts
+{
+    public int BttsFalsePositives { get; set; }
+    public int BttsPickedButNoBttsOver25 { get; set; }
+    public int BttsPickedButNeither { get; set; }
+    public int Under25PickedButOver25 { get; set; }
+}

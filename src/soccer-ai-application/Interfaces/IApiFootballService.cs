@@ -34,7 +34,9 @@ public record FixtureOdds(
     double? Over25,
     double? Under25,
     double? BttsYes,
-    double? BttsNo);
+    double? BttsNo,
+    double? Goals23 = null,
+    double? BttsAndOver25 = null);
 
 /// <summary>One bookmaker's price for one market outcome.</summary>
 public record OddsQuote(string Bookmaker, string Market, double Price, DateTimeOffset? ProviderUpdatedAtUtc = null);
@@ -53,9 +55,11 @@ public static class OddsMarkets
     public const string Under25 = "under25";
     public const string BttsYes = "btts_yes";
     public const string BttsNo = "btts_no";
+    public const string Goals23 = "goals_2_3";
+    public const string BttsAndOver25 = "btts_and_over25";
 
     public static readonly string[] All =
-        [HomeWin, Draw, AwayWin, Over25, Under25, BttsYes, BttsNo];
+        [HomeWin, Draw, AwayWin, Over25, Under25, BttsYes, BttsNo, Goals23, BttsAndOver25];
 }
 
 /// <summary>

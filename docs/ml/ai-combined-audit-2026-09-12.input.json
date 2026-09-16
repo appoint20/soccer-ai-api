@@ -1,0 +1,28 @@
+{
+  "CapturedAtUtc": "2026-09-12T10:27:05.518557+00:00",
+  "Source": "configured_postgresql",
+  "ReadOnly": true,
+  "Isolation": "repeatable_read",
+  "Files": {
+    "fixtures": {
+      "Rows": 26123,
+      "Sha256": "ff1b9c62a0f20884e0be5f9c7516f5f0de66ecf42092866d76045eb411454bd0"
+    },
+    "ai-analyses": {
+      "Rows": 1308,
+      "Sha256": "fca6422c5283a777cd3f9a8fec7028fedb57b2769ccfed225bc9607ab846c278"
+    },
+    "prediction-snapshots": {
+      "Rows": 1228,
+      "Sha256": "418e773e94116de64227bd23a2ce04e92e29fa67015043c83c0656b6f6b7e24b"
+    },
+    "model-forecasts": {
+      "Rows": 151,
+      "Sha256": "5646e48dbb7b449fe40e179f3204dc5e26cae3e8783009dda2cef8112149e69a"
+    },
+    "sync-state": {
+      "Rows": 1,
+      "Sha256": "aee9ae262c523cde3aa9a15ec1146d459cb6de747d51e274c734d5db3955f145"
+    }
+  }
+}

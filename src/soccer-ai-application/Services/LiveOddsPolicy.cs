@@ -8,16 +8,20 @@ namespace SoccerAi.Application.Services;
 public static class LiveOddsPolicy
 {
     public const double MinimumOdds = 1.70;
+    public const string Bookmaker = "Bet365";
     public static readonly TimeSpan MaximumAge = TimeSpan.FromHours(3);
 
     public static bool IsFresh(Fixture fixture, DateTimeOffset now) =>
         fixture.Status == "NS" && fixture.Date > now &&
+        string.Equals(fixture.OddsBookmaker, Bookmaker, StringComparison.OrdinalIgnoreCase) &&
         fixture.OddsCheckedAtUtc is { } captured && captured <= now && now - captured <= MaximumAge &&
         fixture.OddsUpdatedAtUtc is { } updated && updated <= captured && now - updated <= MaximumAge;
 
     public static double? PriceFor(Fixture fixture, MarketRuleAudit market) => market.Market switch
     {
         ConfluenceRuleEngine.Markets.Btts => fixture.BttsYesOdds,
+        ConfluenceRuleEngine.Markets.Goals23 => fixture.Goals23Odds,
+        ConfluenceRuleEngine.Markets.BttsAndOver25 => fixture.BttsAndOver25Odds,
         ConfluenceRuleEngine.Markets.Over25 => fixture.Over25Odds,
         ConfluenceRuleEngine.Markets.Under25 => fixture.Under25Odds,
         ConfluenceRuleEngine.Markets.Draw => fixture.DrawOdds,
@@ -41,8 +45,9 @@ public static class LiveOddsPolicy
             return m with
             {
                 Odds = price, MinOdds = floor, Ev = ev, Qualified = qualified,
-                ComboEligible = m.ComboEligible && pricePassed && ev > 0,
-                KellyStake = qualified ? m.KellyStake : null,
+                ComboEligible = m.ComboEligible && pricePassed && edgePassed && m.ProbabilityPassed,
+                KellyStake = qualified && price is { } currentOdds && m.KellyFraction is { } fraction
+                    ? ValueMath.FractionalKelly(m.Probability, currentOdds, fraction) : null,
                 GateOutcome = !fresh ? "stale_odds" : price is null ? GateOutcome.AnalysisOnlyNoOdds
                     : !pricePassed ? GateOutcome.BelowMinOdds : !edgePassed ? GateOutcome.BelowMinEdge : m.GateOutcome
             };
@@ -54,7 +59,12 @@ public static class LiveOddsPolicy
         snapshot.OddsCheckedAtUtc = fixture.OddsCheckedAtUtc;
         snapshot.OddsUpdatedAtUtc = fixture.OddsUpdatedAtUtc;
         snapshot.Status = fixture.Status;
-        if (snapshot.Result is not null) return; // historical outcomes keep their recorded analysis
+        snapshot.OddsBookmaker = fixture.OddsBookmaker;
+        if (snapshot.Result is not null)
+        {
+            Analysis.DecisionExplanationPolicy.Refresh(snapshot);
+            return; // historical outcomes keep their recorded analysis
+        }
         var fresh = IsFresh(fixture, now);
         snapshot.OddsHomeWin = fresh ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null;
         snapshot.OddsDraw = fresh ? OddsGuard.Sanitize(fixture.DrawOdds) : null;
@@ -62,8 +72,11 @@ public static class LiveOddsPolicy
         snapshot.OddsOver25 = fresh ? OddsGuard.Sanitize(fixture.Over25Odds) : null;
         snapshot.OddsUnder25 = fresh ? OddsGuard.Sanitize(fixture.Under25Odds) : null;
         snapshot.OddsBttsYes = fresh ? OddsGuard.Sanitize(fixture.BttsYesOdds) : null;
+        snapshot.OddsGoals23 = fresh ? OddsGuard.Sanitize(fixture.Goals23Odds) : null;
+        snapshot.OddsBttsAndOver25 = fresh ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null;
         if (snapshot.DecisionAudit is not { } audit) return;
         snapshot.DecisionAudit = Reprice(audit, fixture, now);
+        Analysis.DecisionExplanationPolicy.Refresh(snapshot);
         bool Qualified(string market) => snapshot.DecisionAudit.Markets.Any(m => m.Market == market && m.Qualified);
         if (snapshot.Prediction is not { } p) return;
         p.BTTS.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Btts);
@@ -73,6 +86,6 @@ public static class LiveOddsPolicy
         p.HomeWin.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.MatchWinner);
         p.AwayWin.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.MatchWinner);
         p.Draw.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Draw);
-        p.TwoToThreeGoals.IsQualified = false;
+        p.TwoToThreeGoals.IsQualified &= Qualified(ConfluenceRuleEngine.Markets.Goals23);
     }
 }

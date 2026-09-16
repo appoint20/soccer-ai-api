@@ -25,9 +25,19 @@ services:
         value: Production
       - key: AISERVICE__BASEURL
         value: "https://openrouter.ai/api/v1"
+      # Must be a model OpenRouter still lists. The previous default,
+      # stealth/ox-alpha, was a time-limited free preview; when OpenRouter
+      # withdrew it every narrative request failed. Provider failures are now
+      # reported as an incomplete sync, with an actionable LastError.
+      # NOTE: this blueprint value does not update an existing service — change
+      # AISERVICE__DEFAULTMODEL in the dashboard too, or delete it there so
+      # appsettings.json applies.
       - key: AISERVICE__DEFAULTMODEL
-        value: "stealth/ox-alpha"
-      - key: ZAI_API_KEY
+        value: "anthropic/claude-sonnet-5"
+      # An OpenRouter key: starts with "sk-or-v1-". This used to be ZAI_API_KEY,
+      # which must never be sent to OpenRouter. Credential lookup is now scoped
+      # to the configured provider; a Z.ai key cannot act as a fallback here.
+      - key: OPENROUTER_API_KEY
         sync: false # Set this manually in the Render dashboard
       # Admin key for /api/automation/* (header: X-API-Key). Any string of 16+
       # characters; the app hashes it on startup and never logs it. Added to the
@@ -71,7 +81,9 @@ services:
         value: Production
       - key: API_FOOTBALL_KEY
         sync: false # Set this manually in the Render dashboard
-      - key: ZAI_API_KEY
+      # OpenRouter key ("sk-or-v1-…") for the narrative step — see the note on
+      # the web service. A Z.ai key here fails every request with 401.
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: DATABASE__PROVIDER
         value: Postgres
@@ -79,27 +91,32 @@ services:
         fromDatabase:
           name: soccer-ai-db
           property: connectionString
-      # Eight runs a day. Each one re-prices fixtures and rebuilds snapshots, so
-      # a published pick is at most three hours behind the market rather than
-      # twelve. NOTE: the binder APPENDS array entries rather than replacing
-      # them, so these indices must cover every slot — leaving a gap does not
-      # clear it, it merges with whatever the code default holds.
-      - key: SYNC__SCHEDULEUTC__0
-        value: "00:20"
-      - key: SYNC__SCHEDULEUTC__1
-        value: "03:20"
-      - key: SYNC__SCHEDULEUTC__2
-        value: "06:20"
-      - key: SYNC__SCHEDULEUTC__3
-        value: "09:20"
-      - key: SYNC__SCHEDULEUTC__4
-        value: "12:20"
-      - key: SYNC__SCHEDULEUTC__5
-        value: "15:20"
-      - key: SYNC__SCHEDULEUTC__6
-        value: "18:20"
-      - key: SYNC__SCHEDULEUTC__7
-        value: "21:20"
+      # Hourly. One scalar replaces the 24 indexed SYNC__SCHEDULEUTC__n vars the
+      # same grid would otherwise need — and, because the binder APPENDS array
+      # entries instead of replacing them, a long indexed list is exactly the
+      # shape that produced the duplicated "03:30, 15:30, 03:30, 15:30" schedule
+      # this deployment has already been bitten by. A scalar cannot half-apply.
+      #
+      # IntervalMinutes takes precedence over SCHEDULEUTC, so the stale
+      # SYNC__SCHEDULEUTC__0..7 variables still sitting in the dashboard are
+      # ignored rather than merged. Delete them anyway to keep the dashboard
+      # honest about what is in effect.
+      #
+      # Measured cost: a full pipeline run — every step, narratives included —
+      # took 11.6 min in production (21:19:59 → 21:31:37 on 2026-09-09), so an
+      # hourly slot has ~48 min of headroom. Slots are absolute UTC times, so an
+      # over-running sync skips to the next free slot; it cannot overlap itself.
+      - key: SYNC__INTERVALMINUTES
+        value: "60"
+      # Minutes past the hour. Off the top of the hour on purpose — that is when
+      # the upstream provider is busiest.
+      - key: SYNC__INTERVALANCHORMINUTE
+        value: "20"
+      # Restart catch-up, matched to the cadence: with hourly slots a 3h
+      # threshold means a redeploy can leave the board unrefreshed for three
+      # slots before it decides anything is stale.
+      - key: SYNC__STARTUPSYNCTHRESHOLDHOURS
+        value: "1"
       # Odds cadence. The loop ticks every 30 min but only re-prices a fixture
       # once its newest quote is 3h old — or on every tick inside the last 6h,
       # where lines actually move.
@@ -111,15 +128,17 @@ services:
         value: "6"
       # Model training now runs inside the sync pipeline, between the fixture
       # fetch it learns from and the recompute that serves it. It self-throttles
-      # on the published generation's age, so eight syncs a day still cost one
+      # on the published generation's age, so 24 syncs a day still cost one
       # training run — raise this if the instance struggles with the fit.
       - key: HYBRIDMODEL__RETRAININTERVALHOURS
         value: "24"
       # The AI narrative step. With this off, SyncPipeline skips the step and
       # marks it done, so every fixture's `ai` block stays permanently empty
       # ("", confidence 0, has_decision_layer false) and the app has no analysis
-      # text to show. It also needs ZAI_API_KEY set in the dashboard above —
-      # without a key the service returns empty results silently.
+      # text to show. It also needs OPENROUTER_API_KEY set in the dashboard
+      # above. Missing or wrong-provider credentials fail the AI step and leave
+      # an error in sync status. An earlier API-Football failure can prevent this
+      # step from being reached at all; inspect the last completed step too.
       #
       # This costs money per sync: it is an LLM call per upcoming fixture.
       - key: SYNC__GENERATEAINARRATIVES

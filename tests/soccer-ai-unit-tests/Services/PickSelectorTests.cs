@@ -114,20 +114,11 @@ public class PickSelectorTests
     // ── Same-match pair ──────────────────────────────────────────────────────
 
     [Fact]
-    public void SameMatchPair_UsesTheTrueJointNotTheProduct()
+    public void IndividualMarketsDoNotInventACombinedBookmakerQuote()
     {
-        var audit = AuditFor(
-            Audit("btts", probability: 0.60, odds: 1.55),
-            Audit("over25", probability: 0.58, odds: 1.35));
-
-        var pair = PickSelector.Select(Fixture, audit, 0.52, Opt).SameMatchPair;
-
-        pair.Should().NotBeNull();
-        pair!.JointProbability.Should().Be(0.52);
-        pair.JointProbability.Should().BeGreaterThan(0.60 * 0.58,
-            "the two markets are correlated, so the joint exceeds the product");
-        pair.BttsOdds.Should().Be(1.55);
-        pair.Over25Odds.Should().Be(1.35);
+        var audit = AuditFor(Audit("btts", probability: .8, odds: 1.55),
+            Audit("over25", probability: .8, odds: 1.35));
+        PickSelector.Select(Fixture, audit, .7, Opt).SameMatchPair.Should().BeNull();
     }
 
     [Fact]

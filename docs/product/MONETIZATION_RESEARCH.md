@@ -108,3 +108,10 @@ Predefine the minimum effect and sample size after observing baseline conversion
 For retention, use opt-in summaries, saved research, transparent model changes and honest post-match explanations. Let users manage/cancel through the standard subscription UI. Avoid loss-chasing messages, artificial countdowns, rewards for staking or misleading “guaranteed winner” language.
 
 The next business inputs needed are launch countries, existing active users and returning-weekend users, actual subscription transactions/refunds, current API/LLM/hosting bills, and available distribution channels. Those determine whether €7.99, €9.99 or a different product is viable.
+
+
+## Implementation follow-up, 11 September 2026
+
+The native app now uses current StoreKit entitlement state rather than a persisted premium flag; entitlement loss removes access, supported product IDs and expiry/revocation are checked, and the proof helper returns signed JWS. The management button opens Apple's subscription settings. The paywall no longer displays a fallback price when products are unavailable. These changes address local correctness only: server-side Apple verification, premium API authorization, App Store configuration, sandbox purchase/renewal/refund validation and actual customer demand remain unverified. No live prices were changed and no ads or outreach were activated.
+
+The offline model audit does not establish 80% accuracy. The local dataset ends its finished matches in May 2026 and contains no provider-observed xG values in the new fields. Review the accompanying ML audit before using performance claims in a paywall or marketing copy.

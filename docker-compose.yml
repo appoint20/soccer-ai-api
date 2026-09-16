@@ -33,7 +33,8 @@ services:
       - CONNECTIONSTRINGS__POSTGRESCONNECTION=Host=postgres;Port=5432;Database=soccer_ai;Username=postgres;Password=postgres
       - SYNC__SCHEDULEUTC__0=03:30
       - SYNC__SCHEDULEUTC__1=15:30
-      - SYNC__GENERATEAINARRATIVES=false
+      - SYNC__GENERATEAINARRATIVES=true
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     volumes:
       - sqlite_data:/app/data
     depends_on:

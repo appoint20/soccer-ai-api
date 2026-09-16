@@ -22,7 +22,8 @@ public static class FixtureOddsWriter
 
         var wrote =
             best.HomeWin is not null || best.Draw is not null || best.AwayWin is not null ||
-            best.Over25 is not null || best.Under25 is not null || best.BttsYes is not null;
+            best.Over25 is not null || best.Under25 is not null || best.BttsYes is not null ||
+            best.Goals23 is not null || best.BttsAndOver25 is not null;
 
         fixture.HomeWinOdds = best.HomeWin ?? fixture.HomeWinOdds;
         fixture.DrawOdds = best.Draw ?? fixture.DrawOdds;
@@ -30,6 +31,8 @@ public static class FixtureOddsWriter
         fixture.Over25Odds = best.Over25 ?? fixture.Over25Odds;
         fixture.Under25Odds = best.Under25 ?? fixture.Under25Odds;
         fixture.BttsYesOdds = best.BttsYes ?? fixture.BttsYesOdds;
+        fixture.Goals23Odds = best.Goals23 ?? fixture.Goals23Odds;
+        fixture.BttsAndOver25Odds = best.BttsAndOver25 ?? fixture.BttsAndOver25Odds;
 
         if (wrote) fixture.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -41,9 +44,13 @@ public static class FixtureOddsWriter
         DateTimeOffset capturedAt)
     {
         fixture.OddsCheckedAtUtc = capturedAt;
-        var fresh = quotes.Where(q => OddsGuard.IsValid(q.Price) &&
+        // Historical quote rows retain all bookmakers; live picks use bet365 only.
+        fixture.OddsBookmaker = LiveOddsPolicy.Bookmaker;
+        var fresh = quotes.Where(q => q.Bookmaker.Equals(LiveOddsPolicy.Bookmaker, StringComparison.OrdinalIgnoreCase) && OddsGuard.IsValid(q.Price) &&
             q.ProviderUpdatedAtUtc is { } updated && updated <= capturedAt &&
-            capturedAt - updated <= LiveOddsPolicy.MaximumAge).ToList();
+            capturedAt - updated <= LiveOddsPolicy.MaximumAge)
+            .GroupBy(q => q.Market)
+            .Select(g => g.OrderByDescending(q => q.ProviderUpdatedAtUtc).ThenBy(q => q.Price).First()).ToList();
         var best = OddsQuoteAggregator.BestPrices(fresh);
         fixture.HomeWinOdds = best.HomeWin;
         fixture.DrawOdds = best.Draw;
@@ -51,6 +58,8 @@ public static class FixtureOddsWriter
         fixture.Over25Odds = best.Over25;
         fixture.Under25Odds = best.Under25;
         fixture.BttsYesOdds = best.BttsYes;
+        fixture.Goals23Odds = best.Goals23;
+        fixture.BttsAndOver25Odds = best.BttsAndOver25;
         fixture.OddsUpdatedAtUtc = fresh.Count > 0 ? fresh.Min(q => q.ProviderUpdatedAtUtc) : null;
         fixture.UpdatedAt = capturedAt;
     }

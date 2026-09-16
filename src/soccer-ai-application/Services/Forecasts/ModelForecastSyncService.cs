@@ -51,7 +51,7 @@ public sealed class ModelForecastSyncService(
                   && fixture.Status == "NS"
                   && analysis.Lang == "en"
                   && analysis.SnapshotJson != null
-            select new { fixture.Id, analysis.SnapshotJson })
+            select new { fixture.Id, fixture.Date, analysis.SnapshotJson })
             .ToListAsync(cancellationToken);
 
         if (candidates.Count == 0)
@@ -64,11 +64,12 @@ public sealed class ModelForecastSyncService(
 
         // Skip fixtures every configured model has already forecast, so a second
         // run of the day costs nothing.
-        var modelCount = forecastService.Models.Count;
+        var configuredModels = forecastService.Models.Distinct().ToList();
+        var modelCount = configuredModels.Count;
         var fixtureIds = candidates.Select(c => c.Id).ToList();
 
         var alreadyDone = await dbContext.ModelForecasts
-            .Where(f => fixtureIds.Contains(f.FixtureId))
+            .Where(f => fixtureIds.Contains(f.FixtureId) && configuredModels.Contains(f.Model))
             .GroupBy(f => f.FixtureId)
             .Where(g => g.Count() >= modelCount)
             .Select(g => g.Key)
@@ -87,13 +88,20 @@ public sealed class ModelForecastSyncService(
             cancellationToken.ThrowIfCancellationRequested();
 
             var analysis = AnalysisSnapshotSerializer.Deserialize(candidate.SnapshotJson);
-            if (analysis is null) continue;
+            if (analysis is null || analysis.Id != candidate.Id || analysis.Date != candidate.Date || candidate.Date <= DateTimeOffset.UtcNow)
+                continue;
+            if (!Statistics.RecordedAiForecastStatistics.HasSystemInputs(new Application.Entities.ModelForecast {
+                SystemOver25Probability = analysis.Prediction?.Over25.Probability ?? 0,
+                SystemBttsProbability = analysis.Prediction?.BTTS.Probability ?? 0 }))
+                continue; // Missing statistical context must not trigger a paid request.
 
             var forecasts = await forecastService.ForecastAsync(analysis, cancellationToken);
             if (forecasts.Count == 0) continue;
 
+            var before = await dbContext.ModelForecasts.CountAsync(f => f.FixtureId == candidate.Id, cancellationToken);
             await ledger.RecordAsync(analysis, forecasts, cancellationToken);
-            forecast += forecasts.Count;
+            var after = await dbContext.ModelForecasts.CountAsync(f => f.FixtureId == candidate.Id, cancellationToken);
+            forecast += Math.Max(0, after - before);
         }
 
         logger.LogInformation(

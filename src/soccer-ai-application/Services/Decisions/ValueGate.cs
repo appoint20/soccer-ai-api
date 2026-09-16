@@ -10,14 +10,15 @@ public sealed record MarketPrices(
     double? Over25,
     double? Under25,
     double? BttsYes,
-    double? Goals23)
+    double? Goals23,
+    double? BttsAndOver25 = null)
 {
     public static MarketPrices FromRaw(
         double? homeWin, double? draw, double? awayWin,
-        double? over25, double? under25, double? bttsYes, double? goals23 = null) =>
+        double? over25, double? under25, double? bttsYes, double? goals23 = null, double? bttsAndOver25 = null) =>
         new(OddsGuard.Sanitize(homeWin), OddsGuard.Sanitize(draw), OddsGuard.Sanitize(awayWin),
             OddsGuard.Sanitize(over25), OddsGuard.Sanitize(under25),
-            OddsGuard.Sanitize(bttsYes), OddsGuard.Sanitize(goals23));
+            OddsGuard.Sanitize(bttsYes), OddsGuard.Sanitize(goals23), OddsGuard.Sanitize(bttsAndOver25));
 
     public static MarketPrices Empty { get; } = new(null, null, null, null, null, null, null);
 }

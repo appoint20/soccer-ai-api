@@ -76,4 +76,35 @@ public class SyncOptionsBindingTests
         options.StartupSyncThresholdHours.Should().Be(3);
         options.OddsCaptureIntervalMinutes.Should().Be(30);
     }
+
+    /// <summary>
+    /// The deployment path: Render sets SYNC__INTERVALMINUTES, which arrives as
+    /// "Sync:IntervalMinutes". A scalar binds by replacement, so unlike the
+    /// indexed schedule array it cannot merge with a stale value — which is the
+    /// whole reason the cadence is expressed this way.
+    /// </summary>
+    [Fact]
+    public void Interval_binds_from_configuration_and_wins_over_a_stale_schedule()
+    {
+        var options = Bind(new Dictionary<string, string?>
+        {
+            ["Sync:IntervalMinutes"] = "60",
+            // Left over from the eight-slot deployment.
+            ["Sync:ScheduleUtc:0"] = "03:20",
+            ["Sync:ScheduleUtc:1"] = "15:20"
+        });
+
+        options.IntervalMinutes.Should().Be(60);
+        SyncWorker.BuildSchedule(options).Should()
+            .Equal(Enumerable.Range(0, 24).Select(h => new TimeOnly(h, 20)));
+    }
+
+    [Fact]
+    public void Interval_is_off_by_default_so_listed_times_keep_working()
+    {
+        var options = Bind([]);
+
+        options.IntervalMinutes.Should().Be(0);
+        options.IntervalAnchorMinute.Should().Be(20);
+    }
 }

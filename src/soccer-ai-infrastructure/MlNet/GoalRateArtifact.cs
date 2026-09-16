@@ -11,6 +11,7 @@ public sealed record GoalRateArtifact
     public const string PointerFile = "goal-rate-current.json";
     public string SchemaVersion { get; init; } = GoalRateFeatureBuilder.SchemaVersion;
     public string Generation { get; init; } = "";
+    public string PredictionRecipe { get; init; } = "";
     public DateTimeOffset CreatedAtUtc { get; init; }
     public DateTime TrainingThroughUtc { get; init; }
     public DateTime CalibrationFromUtc { get; init; }
@@ -27,6 +28,9 @@ public sealed record GoalRateArtifact
 
     public bool Supports(DixonColesOptions dc, HybridModelOptions hybrid) =>
         SchemaVersion == GoalRateFeatureBuilder.SchemaVersion &&
+        // Empty recipe is the preceding, versioned pure-ML generation. Keep it
+        // usable while a new candidate is evaluated; unknown recipes fail closed.
+        (PredictionRecipe == "" || PredictionRecipe == GoalRateEnsemble.Recipe) &&
         Features.SequenceEqual(GoalRateRow.FeatureColumns()) &&
         JsonSerializer.Serialize(DixonColes) == JsonSerializer.Serialize(dc) &&
         LambdaMin == hybrid.LambdaMin && LambdaMax == hybrid.LambdaMax &&

@@ -66,10 +66,11 @@ public class UnpricedComboTests
     }
 
     [Fact]
-    public void InformationalMarketNeverBecomesAnUnpricedLeg()
+    public void UnpricedGoals23NeverBecomesAStakeableLeg()
     {
-        SelectUnpriced(1, Audit("goals_2_3", 0.80, odds: null))
-            .UnpricedComboLegs.Should().BeEmpty("2-3 goals can never become a bet");
+        var selection = SelectUnpriced(1, Audit("goals_2_3", .80, odds: null));
+        selection.QualifiedLegs.Should().BeEmpty();
+        selection.UnpricedComboLegs.Should().ContainSingle().Which.Odds.Should().BeNull();
     }
 
     [Fact]

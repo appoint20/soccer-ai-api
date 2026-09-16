@@ -128,6 +128,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double>("AwayXg")
                         .HasColumnType("REAL");
 
+                    b.Property<double?>("BttsAndOver25Odds")
+                        .HasColumnType("REAL");
+
                     b.Property<double?>("BttsYesOdds")
                         .HasColumnType("REAL");
 
@@ -138,6 +141,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<double?>("DrawOdds")
+                        .HasColumnType("REAL");
+
+                    b.Property<double?>("Goals23Odds")
                         .HasColumnType("REAL");
 
                     b.Property<int?>("HomeBallPossession")
@@ -200,6 +206,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<int>("LeagueId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("OddsBookmaker")
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("OddsCheckedAtUtc")
                         .HasColumnType("INTEGER");
 
@@ -248,7 +257,13 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool?>("AiBttsAndOver25Qualified")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("AiBttsQualified")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("AiGeneratedAtUtc")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("AiGoals23Qualified")
@@ -257,11 +272,20 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<bool>("AiHomeWinQualified")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AiInputHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AiModelVersion")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("AiOver25Qualified")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("AiOverallConfidence")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AiPromptHash")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("AiUnder25Qualified")
                         .HasColumnType("INTEGER");
@@ -291,6 +315,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
 
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("DecisionExplanationJson")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("DrawProb")
                         .HasColumnType("REAL");
@@ -429,6 +456,42 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.HasIndex("FixtureId", "Market");
 
                     b.ToTable("FixtureOddsQuotes", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.GoalRateModelGeneration", b =>
+                {
+                    b.Property<string>("Generation")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("AwayModel")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("CalibrationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EvaluationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("HomeModel")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("ManifestJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Generation");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("GoalRateModelGenerations");
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.ModelForecast", b =>

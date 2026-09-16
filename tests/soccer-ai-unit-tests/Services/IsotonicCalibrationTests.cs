@@ -144,11 +144,12 @@ public class ProbabilityCalibrationServiceTests : IDisposable
                 Status = "FT", Date = newest.AddDays(-1 - i / 5.0),
                 HomeGoal = over ? 2 : 1, AwayGoal = over ? 2 : 0
             });
-            _db.FixtureAnalyses.Add(new FixtureAnalysis
+            _db.PredictionSnapshots.Add(new PredictionSnapshot
             {
-                FixtureId = fixtureId, Lang = "en",
-                HomeProb = 0.5, DrawProb = 0.25, AwayProb = 0.25,
-                Over25Prob = 0.80, BttsProb = 0.5, Goals23Prob = 0.4
+                FixtureId = fixtureId, ModelVersion = "test",
+                KickoffUtc = newest.AddDays(-1 - i / 5.0), CapturedAtUtc = newest.AddDays(-1 - i / 5.0).AddHours(-2),
+                RawHome = 0.5, RawDraw = 0.25, RawAway = 0.25,
+                RawOver25 = 0.80, RawBtts = 0.5, RawGoals23 = 0.4
             });
         }
         await _db.SaveChangesAsync();
@@ -205,6 +206,41 @@ public class ProbabilityCalibrationServiceTests : IDisposable
 
         // 1e-3 tolerance: components are rounded to 4 decimals after renormalization
         (p.HomeProb + p.DrawProb + p.AwayProb).Should().BeApproximately(1.0, 1e-3);
+    }
+
+    [Fact]
+    public async Task DifferentModelVersionDoesNotReuseAnotherVersionsMap()
+    {
+        await SeedOverconfidentOver25Async(400, AsOf.AddDays(-7));
+        var known = await _sut.ApplyAsync(Raw(), AsOf, modelVersion: "test");
+        var unknown = await _sut.ApplyAsync(Raw(), AsOf, modelVersion: "new-model");
+        known.Trace.Should().Contain(t => t.Active);
+        unknown.Trace.Should().OnlyContain(t => !t.Active && t.TrainingSamples == 0);
+        unknown.Calibrated.Over25Prob.Should().Be(.8);
+    }
+
+    [Fact]
+    public async Task PostKickoffRowsCannotActivateCalibration()
+    {
+        await SeedOverconfidentOver25Async(400, AsOf.AddDays(-7));
+        foreach (var row in await _db.PredictionSnapshots.ToListAsync()) row.CapturedAtUtc = row.KickoffUtc.AddHours(2);
+        await _db.SaveChangesAsync();
+        var result = await _sut.ApplyAsync(Raw(), AsOf);
+        result.Trace.Should().OnlyContain(t => !t.Active && t.TrainingSamples == 0);
+    }
+
+    [Fact]
+    public async Task MultipleCapturesOfSameFixturesDoNotInflateSampleSize()
+    {
+        await SeedOverconfidentOver25Async(50, AsOf.AddDays(-7));
+        var rows = await _db.PredictionSnapshots.AsNoTracking().ToListAsync();
+        foreach (var row in rows)
+            for (var i = 1; i <= 10; i++)
+                _db.PredictionSnapshots.Add(new PredictionSnapshot { FixtureId = row.FixtureId, KickoffUtc = row.KickoffUtc,
+                    CapturedAtUtc = row.CapturedAtUtc.AddHours(-i), RawOver25 = .8, ModelVersion = "test" });
+        await _db.SaveChangesAsync();
+        var result = await _sut.ApplyAsync(Raw(), AsOf);
+        result.Trace.Should().Contain(t => t.Market == "over25" && !t.Active && t.TrainingSamples == 50);
     }
 
     [Fact]

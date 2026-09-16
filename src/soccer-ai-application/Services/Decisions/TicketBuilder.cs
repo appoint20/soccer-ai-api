@@ -24,16 +24,16 @@ public sealed record TicketLeg(
 /// <summary>
 /// A same-match BTTS + Over 2.5 pair. Its probability is the TRUE joint from
 /// the Dixon-Coles score matrix (the two markets are strongly correlated —
-/// multiplying them would badly understate the chance), while the price is the
-/// product of the two leg odds. Bookmakers price same-game doubles BELOW that
-/// product, so the pair's required odds state the minimum price worth taking.
+/// multiplying them would badly understate the chance), and the price must be a real combined bookmaker quote.
+/// Individual leg odds are retained only for backwards-compatible inputs.
 /// </summary>
 public sealed record SameMatchPair(
     int FixtureId,
     string League,
     double JointProbability,
     double BttsOdds,
-    double Over25Odds);
+    double Over25Odds,
+    double? QuotedCombinedOdds = null);
 
 /// <summary>A ticket: 1 leg (single), a same-match pair, or 2-3 legs.</summary>
 /// <param name="TotalOdds">
@@ -72,11 +72,10 @@ public sealed record Ticket(
 /// Ticket economics with goals-market priority.
 ///
 /// Rules (product):
-/// - Every ticket must reach the minimum price: 1.70 normally, 1.85 for
+/// - Every ticket must reach the minimum price: 1.70 normally, 1.70 for
 ///   same-match BTTS+Over2.5 pairs, 2.10 when a 1X2 leg is involved.
-/// - A "sure" match priced below 1.70 is not discarded: its BTTS and Over 2.5
-///   are paired into a same-match ticket to lift the price, and that pair can
-///   then be combined with another match.
+/// - A combined GG + Over 2.5 market needs its own bookmaker quote and audited
+///   joint probability. It can qualify even when individual leg prices are low.
 /// - BTTS / Over 2.5 tickets are built first and guaranteed up to
 ///   <see cref="ConfluenceOptions.MinGoalsMarketTickets"/> slots per day.
 /// - Legs need EV &gt; 0 + full confluence; never two markets from different
@@ -112,6 +111,7 @@ public static class TicketBuilder
         "over25" => strat.MinOddsOver25,
         "under25" => strat.MinOddsUnder25,
         "goals_2_3" => strat.MinOddsGoals23,
+        "btts_and_over25" => strat.MinOddsSameMatchPair,
         _ => strat.MinOddsBtts
     };
 
@@ -138,21 +138,21 @@ public static class TicketBuilder
         foreach (var leg in qualifiedSingles.Where(l => l.Odds >= MarketFloor(l.Market, strat)))
             tickets.Add(MakeTicket([leg], opt));
 
-        // ── 2. Same-match BTTS+Over2.5 pairs (rescues sub-floor "sure" matches) ──
+        // ── 2. Legacy pair input: requires an explicit combined bookmaker quote ──
         foreach (var pair in sameMatchPairs ?? [])
         {
-            var totalOdds = pair.BttsOdds * pair.Over25Odds;
-            if (totalOdds < strat.MinOddsSameMatchPair) continue;
+            if (OddsGuard.Sanitize(pair.QuotedCombinedOdds) is not { } totalOdds ||
+                totalOdds < Math.Max(LiveOddsPolicy.MinimumOdds, strat.MinOddsSameMatchPair) ||
+                !double.IsFinite(pair.JointProbability) ||
+                pair.JointProbability < opt.BttsAndOver25MinProbability || pair.JointProbability >= 1) continue;
 
             var ev = pair.JointProbability * totalOdds - 1;
-            if (ev <= 0) continue;
+            if (ev < opt.BttsAndOver25MinEdge || ev <= 0) continue;
 
             var legs = new List<TicketLeg>
             {
-                new(pair.FixtureId, pair.League, "btts", "BTTS",
-                    pair.JointProbability, pair.BttsOdds, ev),
-                new(pair.FixtureId, pair.League, "over25", "Over 2.5 Goals",
-                    pair.JointProbability, pair.Over25Odds, ev)
+                new(pair.FixtureId, pair.League, ConfluenceRuleEngine.Markets.BttsAndOver25,
+                    ConfluenceRuleEngine.Selections.BttsAndOver25, pair.JointProbability, totalOdds, ev)
             };
 
             tickets.Add(new Ticket(

@@ -11,16 +11,18 @@ public sealed class AiServiceOptions
     /// Primary model, as an OpenRouter slug.
     /// </summary>
     /// <remarks>
-    /// `stealth/ox-alpha` is a cloaked preview model: free while the preview
-    /// lasts, anonymous operator, and it can be withdrawn without notice. That
-    /// is exactly why <see cref="FallbackModel"/> is a named, paid model —
-    /// when the stealth slug stops resolving, narratives keep being written
-    /// instead of the sync silently producing none.
+    /// Must be a model OpenRouter still lists. This used to be
+    /// `stealth/ox-alpha`, a cloaked free preview; OpenRouter withdrew it in
+    /// September 2026 and every request to it started failing. Stealth and
+    /// preview slugs can disappear without notice, so neither default is one.
     /// </remarks>
-    public string DefaultModel { get; set; } = "stealth/ox-alpha";
+    public string DefaultModel { get; set; } = "anthropic/claude-sonnet-5";
 
-    /// <summary>Used when the primary model is unavailable.</summary>
-    public string FallbackModel { get; set; } = "anthropic/claude-sonnet-5";
+    /// <summary>
+    /// Used when the primary model is unavailable. A different, cheaper model,
+    /// so a provider-side problem with the primary does not stop narratives.
+    /// </summary>
+    public string FallbackModel { get; set; } = "anthropic/claude-haiku-4.5";
 
     /// <summary>
     /// HTTP timeout in seconds for inference calls. Applied to the client

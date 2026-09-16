@@ -41,6 +41,7 @@ public static class DependencyInjection
         // from a cron job. A worker that gets shut down should not be the only
         // way to run a sync.
         services.AddSingleton<Services.Sync.SyncPipeline>();
+        services.AddSingleton<Services.Sync.DateSyncPipeline>();
 
         // Helpers and Pipeline Services
         services.AddScoped<Helpers.FixtureQueryHelper>();
@@ -52,4 +53,3 @@ public static class DependencyInjection
         return services;
     }
 }
-

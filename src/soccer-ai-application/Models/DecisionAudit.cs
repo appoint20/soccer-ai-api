@@ -24,6 +24,11 @@ public sealed record MarketRuleAudit(
     [property: JsonPropertyName("qualified")] bool Qualified,
     [property: JsonPropertyName("rules")] IReadOnlyList<RuleResult> Rules)
 {
+    /// <summary>Counterfactual decision before applying the language-model opinion.</summary>
+    [JsonPropertyName("model_only_qualified")] public bool? ModelOnlyQualified { get; init; }
+    [JsonPropertyName("model_only_combo_eligible")] public bool? ModelOnlyComboEligible { get; init; }
+    [JsonPropertyName("ai_agreement_mode")] public string? AiAgreementMode { get; init; }
+
     // ── Value gate (v3): EV-based qualification ──
 
     /// <summary>Guard-valid odds used for EV; null = analysis only.</summary>
@@ -40,6 +45,9 @@ public sealed record MarketRuleAudit(
 
     /// <summary>Fractional (quarter) Kelly stake as bankroll share (null unless qualified).</summary>
     [JsonPropertyName("kelly_stake")] public double? KellyStake { get; init; }
+
+    /// <summary>Configured Kelly multiplier; absent on older snapshots.</summary>
+    [JsonPropertyName("kelly_fraction")] public double? KellyFraction { get; init; }
 
     /// <summary>Which gate stopped (or passed) this market — see GateOutcome.</summary>
     [JsonPropertyName("gate_outcome")] public string GateOutcome { get; init; } = "";

@@ -4,7 +4,7 @@ namespace SoccerAi.Application.Entities;
 /// One bookmaker's price for one market outcome at capture time.
 /// Insert-only: the first row per (fixture, bookmaker, market) is the opening
 /// price, later rows are line movements — drift is derivable. The fixture's
-/// odds columns always hold the BEST guard-valid price across bookmakers.
+/// live odds columns hold the latest bet365 prices; history retains all bookmakers.
 /// </summary>
 public class FixtureOddsQuote
 {

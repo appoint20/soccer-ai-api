@@ -140,6 +140,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<double>("AwayXg")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("BttsAndOver25Odds")
+                        .HasColumnType("double precision");
+
                     b.Property<double?>("BttsYesOdds")
                         .HasColumnType("double precision");
 
@@ -150,6 +153,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<double?>("DrawOdds")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Goals23Odds")
                         .HasColumnType("double precision");
 
                     b.Property<int?>("HomeBallPossession")
@@ -212,6 +218,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<int>("LeagueId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("OddsBookmaker")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("OddsCheckedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -262,8 +271,14 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool?>("AiBttsAndOver25Qualified")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("AiBttsQualified")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("AiGeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("AiGoals23Qualified")
                         .HasColumnType("boolean");
@@ -271,11 +286,20 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<bool>("AiHomeWinQualified")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("AiInputHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AiModelVersion")
+                        .HasColumnType("text");
+
                     b.Property<bool>("AiOver25Qualified")
                         .HasColumnType("boolean");
 
                     b.Property<int>("AiOverallConfidence")
                         .HasColumnType("integer");
+
+                    b.Property<string>("AiPromptHash")
+                        .HasColumnType("text");
 
                     b.Property<bool>("AiUnder25Qualified")
                         .HasColumnType("boolean");
@@ -305,6 +329,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecisionExplanationJson")
+                        .HasColumnType("text");
 
                     b.Property<double>("DrawProb")
                         .HasColumnType("double precision");
@@ -447,6 +474,42 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.HasIndex("FixtureId", "Market");
 
                     b.ToTable("FixtureOddsQuotes", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.GoalRateModelGeneration", b =>
+                {
+                    b.Property<string>("Generation")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<byte[]>("AwayModel")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("CalibrationJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EvaluationJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("HomeModel")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ManifestJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Generation");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("GoalRateModelGenerations");
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.ModelForecast", b =>

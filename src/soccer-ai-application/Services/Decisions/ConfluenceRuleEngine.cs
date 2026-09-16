@@ -19,6 +19,7 @@ public static class ConfluenceRuleEngine
         public const string Btts = "btts";
         public const string Over25 = "over25";
         public const string Goals23 = "goals_2_3";
+        public const string BttsAndOver25 = "btts_and_over25";
         public const string MatchWinner = "match_winner";
         public const string Under25 = "under25";
         public const string Draw = "draw";
@@ -33,6 +34,7 @@ public static class ConfluenceRuleEngine
         public const string Btts = "BTTS";
         public const string Over25 = "Over 2.5 Goals";
         public const string Goals23 = "2-3 Goals";
+        public const string BttsAndOver25 = "BTTS & Over 2.5 Goals";
         public const string MatchWinnerHome = "Match Winner (Home)";
         public const string MatchWinnerAway = "Match Winner (Away)";
         public const string Under25 = "Under 2.5 Goals";
@@ -51,7 +53,8 @@ public static class ConfluenceRuleEngine
         double tierExtraProbability,
         ConfluenceOptions opt,
         StrategyOptions strat,
-        AiAnalysisDto? ai = null)
+        AiAnalysisDto? ai = null,
+        double? bttsAndOver25Probability = null)
     {
         // Winner pick = the stronger non-draw side; the draw is its own market.
         var favoriteIsHome = prediction.HomeProb >= prediction.AwayProb;
@@ -73,6 +76,22 @@ public static class ConfluenceRuleEngine
             EvaluateDraw(prediction.DrawProb, s, opt.DrawMinProbability + tierExtraProbability,
                 prices.Draw, strat.MinOdds1X2, opt.DrawMinEdge, opt)
         };
+
+        // Evaluate the combined outcome on its own real price. Low individual
+        // leg odds do not disqualify it, but neither can they price it.
+        // Calibration may make a raw joint incompatible with the marginals;
+        // suppress that combination rather than inventing a new probability.
+        if (bttsAndOver25Probability is > 0 and < 1 &&
+            bttsAndOver25Probability <= Math.Min(prediction.BTTSProb, prediction.Over25Prob) + 1e-9 &&
+            bttsAndOver25Probability >= Math.Max(0, prediction.BTTSProb + prediction.Over25Prob - 1) - 1e-9)
+        {
+            var rules = markets.Where(m => m.Market is Markets.Btts or Markets.Over25)
+                .SelectMany(m => m.Rules).ToList();
+            markets.Add(Assemble(Markets.BttsAndOver25, Selections.BttsAndOver25,
+                bttsAndOver25Probability.Value, opt.BttsAndOver25MinProbability + tierExtraProbability,
+                prices.BttsAndOver25, Math.Max(LiveOddsPolicy.MinimumOdds, strat.MinOddsSameMatchPair),
+                opt.BttsAndOver25MinEdge, rules, opt));
+        }
 
         // The language model's view is folded in last, as one visible rule per
         // market, so agreement and disagreement are both auditable rather than
@@ -101,6 +120,7 @@ public static class ConfluenceRuleEngine
             Markets.Over25 => ai.AiOver25Qualified,
             Markets.Under25 => ai.AiUnder25Qualified,
             Markets.Goals23 => ai.AiGoals23Qualified,
+            Markets.BttsAndOver25 => ai.AiBttsAndOver25Qualified,
             // The winner market is evaluated for one side only, so the AI is
             // asked about that same side rather than about "a winner".
             Markets.MatchWinner => prediction.HomeProb >= prediction.AwayProb
@@ -121,6 +141,8 @@ public static class ConfluenceRuleEngine
         AiAnalysisDto? ai,
         ConfluenceOptions opt)
     {
+        m = m with { ModelOnlyQualified = m.Qualified, ModelOnlyComboEligible = m.ComboEligible,
+            AiAgreementMode = opt.AiAgreement.ToString().ToLowerInvariant() };
         var backs = AiBacks(m.Market, prediction, ai);
         if (backs is null || opt.AiAgreement == ConfluenceOptions.AiAgreementMode.Ignore)
             return m with { AiAgrees = backs };
@@ -168,6 +190,10 @@ public static class ConfluenceRuleEngine
             Qualified = stillQualified,
             GateOutcome = outcome,
             AiAgrees = backs,
+            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.Odds >= Math.Max(LiveOddsPolicy.MinimumOdds, m.MinOdds) && m.Ev >= m.MinEdge && m.ProbabilityPassed &&
+                vetoes == 0 && confirms >= opt.MinConfirmations,
+            KellyStake = stillQualified && m.Odds is { } odds && m.KellyFraction is { } fraction
+                ? ValueMath.FractionalKelly(m.Probability, odds, fraction) : null,
         };
     }
 
@@ -435,6 +461,41 @@ public static class ConfluenceRuleEngine
         new(id, RuleResult.Veto, fired, evidence);
 
     /// <summary>
+    /// Strips the bare "n/a" placeholders out of a rule's evidence.
+    /// </summary>
+    /// <remarks>
+    /// Evidence is written as "{home label}; {away label}", and an unmeasured
+    /// signal's label is literally "n/a" — so a fixture missing both sides
+    /// published "n/a; n/a" to the reader as though it were a finding. Dropping
+    /// the placeholders keeps whichever side WAS measured ("n/a; 2 clean sheets
+    /// in last 5 away matches" becomes the away half alone) and empties the
+    /// evidence only when nothing at all was measured.
+    ///
+    /// Done here rather than at each of the ~38 interpolation sites: one choke
+    /// point every rule already passes through cannot be forgotten by the next
+    /// rule someone adds.
+    ///
+    /// Descriptive absences ("No head-to-head history", "Standings not
+    /// available") are left alone — those explain themselves and are worth
+    /// reading.
+    /// </remarks>
+    public static RuleResult NormaliseEvidence(RuleResult rule)
+    {
+        if (string.IsNullOrWhiteSpace(rule.Evidence)) return rule;
+        if (!rule.Evidence.Contains(SignalValue.NotAvailable, StringComparison.OrdinalIgnoreCase))
+            return rule;
+
+        var kept = rule.Evidence
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(part => !part.Equals(SignalValue.NotAvailable, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        // Empty means "nothing was measurable here" — the client says so in
+        // words rather than printing a placeholder that reads like evidence.
+        return rule with { Evidence = string.Join("; ", kept) };
+    }
+
+    /// <summary>
     /// The value gate, in order:
     /// 1. valid odds exist (else analysis only)
     /// 2. odds ≥ MinOdds floor
@@ -448,16 +509,20 @@ public static class ConfluenceRuleEngine
         double? odds, double minOdds, double minEdge,
         List<RuleResult> rules, ConfluenceOptions opt)
     {
+        rules = rules.Select(NormaliseEvidence).ToList();
+
         var probabilityPassed = probability >= threshold;
         var confirms = rules.Count(r => r is { Kind: RuleResult.Confirm, Fired: true });
         var vetoes = rules.Count(r => r is { Kind: RuleResult.Veto, Fired: true });
 
         var ev = odds is not null ? (double?)Math.Round(ValueMath.Ev(probability, odds.Value), 4) : null;
 
-        // v5: MinOdds is enforced at TICKET level (TicketBuilder), not per leg.
+        // Every offered selection must meet its own floor. A same-match
+        // combined market has its own quote and passes this gate independently.
         var outcome =
             opt.InformationalOnlyMarkets.Contains(market) ? GateOutcome.InformationalOnly
             : odds is null ? GateOutcome.AnalysisOnlyNoOdds
+            : odds < Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) ? GateOutcome.BelowMinOdds
             : ev < minEdge ? GateOutcome.BelowMinEdge
             : !probabilityPassed ? GateOutcome.BelowProbabilityFloor
             : vetoes > 0 ? GateOutcome.Vetoed
@@ -470,7 +535,7 @@ public static class ConfluenceRuleEngine
         // 'qualified' (no MinEdge/floor) — sub-floor favorites become combo legs.
         var comboEligible =
             !opt.InformationalOnlyMarkets.Contains(market) &&
-            odds is not null && ev > 0 &&
+            odds >= Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) && ev >= minEdge && probabilityPassed &&
             vetoes == 0 && confirms >= opt.MinConfirmations;
 
         return new MarketRuleAudit(
@@ -487,6 +552,7 @@ public static class ConfluenceRuleEngine
             MinOdds = minOdds,
             Ev = ev,
             MinEdge = minEdge,
+            KellyFraction = opt.KellyFraction,
             KellyStake = qualified && odds is not null
                 ? ValueMath.FractionalKelly(probability, odds.Value, opt.KellyFraction)
                 : null,

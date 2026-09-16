@@ -3,6 +3,7 @@ using Mediator.Net.Contracts;
 using Microsoft.EntityFrameworkCore;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
+using SoccerAi.Application.Services.Statistics;
 
 namespace SoccerAi.Application.Features.Forecasts;
 
@@ -30,7 +31,24 @@ public sealed class GetForecastScoreboardHandler(IApplicationDbContext dbContext
     {
         var query = context.Message;
 
-        var rows = await LoadSettledAsync(query, cancellationToken);
+        var recorded = await LoadSettledAsync(query, cancellationToken);
+        var ids = recorded.Select(r => r.FixtureId).Distinct().ToList();
+        var fixtures = await dbContext.Fixtures.AsNoTracking().Where(f => ids.Contains(f.Id)).ToListAsync(cancellationToken);
+        var pairedReport = RecordedAiForecastStatistics.Build(fixtures, recorded);
+        var pairs = RecordedAiForecastStatistics.Pair(fixtures, recorded);
+        var modelCount = pairs.Select(p => p.Forecast.Model).Distinct().Count();
+        // A flat ranking requires the SAME fixtures and statistical baseline
+        // for every model. Per-model paired comparisons retain the other rows.
+        var common = pairs.GroupBy(p => p.Fixture.Id).Where(g => g.Count() == modelCount &&
+            g.Select(p => (p.Forecast.SystemOver25Probability, p.Forecast.SystemBttsProbability)).Distinct().Count() == 1)
+            .SelectMany(g => g).ToList();
+        var rows = common.Select(p =>
+        {
+            // Use verified FT results, including subsequent score corrections.
+            p.Forecast.ActualHomeGoals = p.Fixture.HomeGoal;
+            p.Forecast.ActualAwayGoals = p.Fixture.AwayGoal;
+            return p.Forecast;
+        }).ToList();
 
         if (rows.Count == 0)
         {
@@ -41,6 +59,7 @@ public sealed class GetForecastScoreboardHandler(IApplicationDbContext dbContext
                 SettledFixtures = 0,
                 Forecasters = [],
                 Leader = null,
+                PairedComparisons = pairedReport,
             };
         }
 
@@ -64,6 +83,7 @@ public sealed class GetForecastScoreboardHandler(IApplicationDbContext dbContext
             SettledFixtures = rows.Select(r => r.FixtureId).Distinct().Count(),
             Forecasters = forecasters,
             Leader = PickLeader(forecasters),
+            PairedComparisons = pairedReport,
         };
     }
 
@@ -117,7 +137,9 @@ public sealed class GetForecastScoreboardHandler(IApplicationDbContext dbContext
                 ScoreMarket("over_2_5", rows, over25, r => r.ActualOver25 == true),
                 ScoreMarket("btts", rows, btts, r => r.ActualBtts == true),
             ],
-            GoalsMae = rows.Count == 0
+            // The legacy system value is last-three-match average goals, not
+            // the statistical model's expected-goals forecast.
+            GoalsMae = name == "system" || rows.Count == 0 || rows.Any(r => !double.IsFinite(expectedGoals(r)) || expectedGoals(r) < 0)
                 ? null
                 : Math.Round(rows.Average(r => Math.Abs(expectedGoals(r) - (r.ActualTotalGoals ?? 0))), 3),
             SampleTooSmall = rows.Count < MinSampleForVerdict,

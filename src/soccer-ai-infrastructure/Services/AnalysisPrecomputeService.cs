@@ -18,7 +18,6 @@ public sealed class AnalysisPrecomputeService(
     IMatchAnalysisService analysisService,
     ILeagueTierService leagueTiers,
     PredictionLedger predictionLedger,
-    IGoalRateForecaster goalRateForecaster,
     ILogger<AnalysisPrecomputeService> logger) : IAnalysisPrecomputeService
 {
     private static readonly string[] Languages = ["en", "de"];
@@ -57,7 +56,7 @@ public sealed class AnalysisPrecomputeService(
                 await RecomputeAsync(fixture, ct);
                 done++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "[Precompute] Failed for fixture {Id}", fixture.Id);
             }
@@ -93,11 +92,14 @@ public sealed class AnalysisPrecomputeService(
             // so the ledger below records once from whichever ran first.
             scored ??= analysis;
             var mapped = AnalysisResponseMapper.MapToResponse(
-                fixture, analysis, homeTeam, awayTeam, analysis.Ai);
+                fixture, analysis, homeTeam, awayTeam, analysis.Ai, lang);
+            // Internal job reporting needs the actual model version/validity.
+            // Models is JsonIgnore, so this never expands the public snapshot.
+            mapped.Models = analysis.Models;
             results[lang] = mapped;
 
-            // Math cache stores the RAW prediction — it is the isotonic layer's
-            // training data; persisting calibrated values would self-correct.
+            // The mutable response cache and immutable raw calibration evidence
+            // serve different purposes. Only the ledger trains calibration.
             await UpsertSnapshotAsync(fixture.Id, lang, mapped, analysis.RawPrediction ?? analysis.Prediction, ct);
         }
 
@@ -130,7 +132,12 @@ public sealed class AnalysisPrecomputeService(
         {
             var context = System.Text.Json.JsonSerializer.Serialize(new
             {
+                schema = 2,
                 league = fixture.LeagueId,
+                ai = analysis.Ai,
+                audit = analysis.Decisions.Audit,
+                odds_updated_at = fixture.OddsUpdatedAtUtc,
+                live_odds = SoccerAi.Application.Services.LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow),
                 // What the gate could actually see when this call was made. A
                 // pick made with no price is a different animal from one made
                 // against a live market, and the statistics have to be able to
@@ -150,7 +157,7 @@ public sealed class AnalysisPrecomputeService(
                 fixture,
                 prediction,
                 analysis.RawPrediction ?? prediction,
-                goalRateForecaster.ModelVersion ?? "dixon-coles",
+                analysis.Models.ModelVersion,
                 context,
                 ct);
         }

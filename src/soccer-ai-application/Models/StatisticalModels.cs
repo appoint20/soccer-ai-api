@@ -50,5 +50,6 @@ public sealed class PoissonModel
 /// </summary>
 public sealed class StatisticalModels
 {
+    public string ModelVersion { get; init; } = "unknown";
     public PoissonModel Poisson { get; init; } = PoissonModel.Empty;
 }
