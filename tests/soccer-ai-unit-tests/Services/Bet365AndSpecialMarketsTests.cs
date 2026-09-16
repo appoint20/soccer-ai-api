@@ -109,6 +109,38 @@ public class Bet365AndSpecialMarketsTests
         quotes.Should().Contain(q => q.Market == OddsMarkets.Goals23 && q.Price == 1.9);
         quotes.Should().Contain(q => q.Market == OddsMarkets.BttsAndOver25 && q.Price == 1.85);
     }
+    /// <summary>
+    /// The provider sends goal-count selections as integers (captured from a live
+    /// response). Reading them as strings threw and discarded the whole response,
+    /// so a fixture offering "Exact Goals Number" lost its 1X2, over/under and BTTS
+    /// prices too. The sample above uses strings, which is why it never caught this.
+    /// </summary>
+    [Fact]
+    public async Task NumericSelectionsDoNotDiscardTheRestOfTheResponse()
+    {
+        var payload = """
+            {"errors": {}, "paging": {"total": 1}, "response": [{
+              "update": "UPDATED_AT",
+              "bookmakers": [{"name": "Bet365", "bets": [
+                {"name": "Exact Goals Number", "values": [{"value": 0, "odd": "7.50"}, {"value": 2, "odd": "3.40"}]},
+                {"name": "Match Winner", "values": [{"value": "Home", "odd": "2.10"}, {"value": "Draw", "odd": "3.40"}, {"value": "Away", "odd": "3.60"}]},
+                {"name": "Goals Over/Under", "values": [{"value": "Over 2.5", "odd": 1.95}, {"value": "Under 2.5", "odd": "1.85"}]}
+              ]}]
+            }]}
+            """.Replace("UPDATED_AT", Now.ToString("O"));
+        using var client = new HttpClient(new Reply(payload)) { BaseAddress = new Uri("https://football.test") };
+        var api = new ApiFootballService(client, Mock.Of<IApiQuotaTracker>(), Mock.Of<IApiCallTracker>(), NullLogger<ApiFootballService>.Instance);
+
+        var quotes = await api.GetFixtureOddsQuotesAsync(1);
+
+        quotes.Should().Contain(q => q.Market == OddsMarkets.HomeWin && q.Price == 2.1);
+        quotes.Should().Contain(q => q.Market == OddsMarkets.Draw && q.Price == 3.4);
+        quotes.Should().Contain(q => q.Market == OddsMarkets.AwayWin && q.Price == 3.6);
+        quotes.Should().Contain(q => q.Market == OddsMarkets.Over25 && q.Price == 1.95, "an odd sent as a number is still a price");
+        quotes.Should().Contain(q => q.Market == OddsMarkets.Under25 && q.Price == 1.85);
+        quotes.Should().NotContain(q => q.Market == OddsMarkets.Goals23, "single goal counts are not a 2-3 range");
+    }
+
     private sealed class Reply(string json) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>

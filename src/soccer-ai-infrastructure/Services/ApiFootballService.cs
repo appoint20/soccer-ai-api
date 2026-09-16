@@ -431,17 +431,39 @@ public class ApiFootballService(
     {
         foreach (var v in values.EnumerateArray())
         {
-            var val = v.GetProperty("value").GetString();
+            var val = ScalarText(v, "value");
+            if (val is null) continue;
             var match = mapping.FirstOrDefault(m => m.ApiValue == val);
             if (match.Market is null) continue;
 
-            if (double.TryParse(v.GetProperty("odd").GetString(), System.Globalization.NumberStyles.Float,
+            if (double.TryParse(ScalarText(v, "odd"), System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var odd))
             {
                 quotes.Add(new OddsQuote(bookmaker, match.Market, odd, updatedAt));
             }
         }
     }
+
+    /// <summary>
+    /// A selection field as text, whether the provider sent a string or a number.
+    /// </summary>
+    /// <remarks>
+    /// API-Football is not consistent here. Every market sends "value" as a string
+    /// except the goal-count markets, which send an integer —
+    /// <c>{"value": 0, "odd": "7.50"}</c> for "Exact Goals Number". GetString() on
+    /// that threw, which discarded the fixture's whole odds response, valid 1X2,
+    /// over/under and BTTS prices included, and ended the capture run for every
+    /// fixture after it. Anything neither text nor a number is skipped, not guessed.
+    /// </remarks>
+    private static string? ScalarText(JsonElement selection, string field) =>
+        selection.ValueKind == JsonValueKind.Object && selection.TryGetProperty(field, out var element)
+            ? element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.GetRawText(),
+                _ => null
+            }
+            : null;
 
     /// <summary>
     /// Fetch current standings for a league/season

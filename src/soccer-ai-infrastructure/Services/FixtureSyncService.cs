@@ -628,6 +628,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         if (upcoming.Count == 0) return 0;
 
         var captured = 0;
+        var unreadable = 0;
         foreach (var fixture in upcoming)
         {
             ct.ThrowIfCancellationRequested();
@@ -643,11 +644,30 @@ public class FixtureSyncService(IApiFootballService apiService,
             if (!due) continue;
             if (!await HasOddsCoverageCachedAsync(fixture.LeagueId,
                     fixture.Date.Month >= 7 ? fixture.Date.Year : fixture.Date.Year - 1, ct)) continue;
-            await UpdateFixtureOddsAsync(fixture, fixture.ApiId, ct);
-            await dbContext.SaveChangesAsync(ct);
-            captured++;
+            try
+            {
+                await UpdateFixtureOddsAsync(fixture, fixture.ApiId, ct);
+                await dbContext.SaveChangesAsync(ct);
+                captured++;
+            }
+            catch (Application.Exceptions.ExternalApiException ex)
+                when (ex.StatusCode is null && ex.InnerException is not null)
+            {
+                // An odds response this client could not read is one fixture's
+                // problem. It used to end the run, leaving every later fixture on
+                // stale prices, and the same fixture, still due, ended the next run
+                // too. Provider-level failures (rejections, rate limits, timeouts)
+                // carry no inner read error, or a status code, and still stop it.
+                unreadable++;
+                logger.LogWarning(ex.InnerException,
+                    "[OddsCapture] Skipped fixture {FixtureId}: its odds response could not be read", fixture.Id);
+            }
             await Task.Delay(quota.SuggestedDelay, ct); // quota-aware spacing
         }
+
+        if (unreadable > 0)
+            logger.LogWarning("[OddsCapture] {Count} fixture(s) skipped: their odds response could not be read",
+                unreadable);
 
         if (captured > 0)
         {
