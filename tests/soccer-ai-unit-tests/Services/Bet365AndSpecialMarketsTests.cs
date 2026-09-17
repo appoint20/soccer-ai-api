@@ -51,35 +51,59 @@ public class Bet365AndSpecialMarketsTests
     }
 
     [Fact]
-    public void TwoToThreeGoalsCanQualifyOnlyWithAnActualPriceAndEvidence()
+    public void TwoToThreeGoalsQualifiesOnEvidenceWithOrWithoutAPrice()
     {
         var opt = new ConfluenceOptions();
         var priced = ConfluenceRuleEngine.EvaluateGoals23(.6, Evidence(), .5, 1.9, 1.7, .05, opt);
         priced.Qualified.Should().BeTrue();
         var missing = ConfluenceRuleEngine.EvaluateGoals23(.6, Evidence(), .5, null, 1.7, .05, opt);
-        missing.Qualified.Should().BeFalse(); missing.Odds.Should().BeNull(); missing.Ev.Should().BeNull();
+        missing.Qualified.Should().BeTrue("the same evidence supports the same call");
+        missing.Odds.Should().BeNull(); missing.Ev.Should().BeNull();
     }
 
+    /// <summary>
+    /// The combined market is priced by its own quote — never the product of
+    /// the two single prices — and carries the joint probability off the score
+    /// matrix. Its quote no longer decides whether the market is called.
+    /// </summary>
     [Theory]
-    [InlineData(1.8, true)]
-    [InlineData(1.69, false)]
-    [InlineData(null, false)]
-    public void CombinedMarketUsesItsOwnQuoteAndJointWhileIndividualOddsAreBelow170(double? quote, bool expected)
+    [InlineData(1.8)]
+    [InlineData(1.69)]
+    [InlineData(null)]
+    public void TheCombinedMarketCarriesItsOwnQuoteAndTheJointProbability(double? quote)
     {
         var p = new WeightedPrediction { BTTSProb = .8, Over25Prob = .8, HomeProb = .5, AwayProb = .3, DrawProb = .2 };
         var opt = new ConfluenceOptions();
         var audit = ConfluenceRuleEngine.Evaluate(p, Evidence(),
             MarketPrices.FromRaw(null, null, null, 1.4, null, 1.5, null, quote), 0, opt, new StrategyOptions(),
             new AiAnalysisDto { AiOverallConfidence = 70, AiBttsAndOver25Qualified = true }, .7);
+
         var combined = audit.Markets.Single(m => m.Market == "btts_and_over25");
-        combined.Qualified.Should().Be(expected);
-        combined.Probability.Should().Be(.7); combined.Odds.Should().Be(quote);
-        audit.Markets.Single(m => m.Market == "btts").Qualified.Should().BeFalse();
-        audit.Markets.Single(m => m.Market == "over25").Qualified.Should().BeFalse();
+        combined.Probability.Should().Be(.7, "the joint probability, not p_btts × p_over25");
+        combined.Odds.Should().Be(quote);
+        combined.Qualified.Should().BeTrue("evidence and probability decide this, not the quote");
+    }
+
+    /// <summary>
+    /// A ticket still needs a real price: there is nothing to multiply without
+    /// one. An unpriced call is published as analysis, not as a priced ticket.
+    /// </summary>
+    [Theory]
+    [InlineData(1.8)]
+    [InlineData(null)]
+    public void OnlyALegWithAQuoteBuildsAPricedTicket(double? quote)
+    {
+        var p = new WeightedPrediction { BTTSProb = .8, Over25Prob = .8, HomeProb = .5, AwayProb = .3, DrawProb = .2 };
+        var opt = new ConfluenceOptions();
+        var audit = ConfluenceRuleEngine.Evaluate(p, Evidence(),
+            MarketPrices.FromRaw(null, null, null, null, null, null, null, quote), 0, opt, new StrategyOptions(),
+            new AiAnalysisDto { AiOverallConfidence = 70, AiBttsAndOver25Qualified = true }, .7);
+
         var selection = PickSelector.Select(new(1, "League", "A", "B", Now.AddHours(5)), audit, .7, opt);
         var tickets = PickSelector.BuildTickets([selection], new StrategyOptions(), opt);
-        if (expected) tickets.Should().ContainSingle(t => t.TotalOdds == quote && t.Legs.Single().Market == "btts_and_over25");
-        else tickets.Where(t => t.IsPriced).Should().BeEmpty();
+
+        if (quote is null) tickets.Where(t => t.IsPriced).Should().BeEmpty();
+        else tickets.Should().ContainSingle(t => t.TotalOdds == quote && t.Legs.Single().Market == "btts_and_over25");
     }
 
     [Theory]

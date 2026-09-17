@@ -41,7 +41,7 @@ public static class DecisionExplanationPolicy
             if (block?.SummaryLines is not { Count: 4 } || block.Markets is null) return "four summary sentences required";
             if (!block.Markets.Select(m => m.Market).Order().SequenceEqual(input.Markets.Select(m => m.Market).Order()))
                 return "market list differs from final audit";
-            if (block.SummaryLines.Any(s => !ShortSentence(s, 180) ||
+            if (block.SummaryLines.Any(s => !ShortSentence(s, 260) ||
                 Regex.IsMatch(s, @"\b(bet|bets|pick|picks|recommend|selected|wette|wetten|empfehlen|empfehlung)\b", RegexOptions.IgnoreCase)))
                 return "summary must contain four short context sentences without betting advice";
             var supportedNumbers = Numbers(JsonSerializer.Serialize(input)).ToHashSet();
@@ -49,7 +49,7 @@ public static class DecisionExplanationPolicy
                 return "summary introduces an unsupported number";
             foreach (var market in block.Markets)
             {
-                if (market.Checks is not { Count: 5 } || market.Checks.Any(s => !ShortSentence(s, 220)))
+                if (market.Checks is not { Count: 5 } || market.Checks.Any(s => !ShortSentence(s, 260)))
                     return "five short checks required per market";
                 var facts = input.Markets.Single(m => m.Market == market.Market).Facts;
                 for (var i = 0; i < 5; i++)
@@ -77,16 +77,20 @@ public static class DecisionExplanationPolicy
         var markets = (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).ToList();
         // The card visibility filter must not rewrite the system's decision
         // (a configured draw threshold can, for example, be below 50%).
-        var selected = (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified).OrderByDescending(m => m.Ev).ToList();
+        // Ranked by probability, not EV: EV is null wherever no price arrived,
+        // which would sort the best-evidenced call to the bottom of its own list.
+        var selected = (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified)
+            .OrderByDescending(m => m.Probability).ToList();
         var best = selected.FirstOrDefault();
         if (best is not null)
         {
             lines.Add(de ? $"Das System wählt: {string.Join(", ", selected.Select(m => Label(m, true)))}."
                 : $"The system selects: {string.Join(", ", selected.Select(m => Label(m, false)))}.");
-            var required = Math.Ceiling(Math.Max(best.MinOdds, (1 + best.MinEdge) / best.Probability) * 100 - 1e-10) / 100;
             lines.Add(de
-                ? $"{Label(best, true)} besteht die Datenchecks: {Pct(best.Probability)} Chance, Quote {Num(best.Odds)} bei benötigten {Num(required)}."
-                : $"{Label(best, false)} passes the evidence checks: {Pct(best.Probability)} chance; odds {Num(best.Odds)} meet the required {Num(required)}.");
+                ? $"{Label(best, true)} besteht alle Checks: {Pct(best.Probability)} Chance bei benötigten {Pct(best.Threshold)}, "
+                  + $"{Plural(best.ConfirmationsFired, "bestätigender Datencheck", "bestätigende Datenchecks")}, kein Ausschlusskriterium."
+                : $"{Label(best, false)} passes every check: {Pct(best.Probability)} chance against the required {Pct(best.Threshold)}, "
+                  + $"{Plural(best.ConfirmationsFired, "supporting evidence check", "supporting evidence checks")}, nothing ruling it out.");
         }
         else
         {
@@ -104,6 +108,10 @@ public static class DecisionExplanationPolicy
     }
 
     private static string Num(double? n) => n?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—";
+
+    /// <summary>"1 Ausschlusskriterien" read as a typo, because it was one.</summary>
+    private static string Plural(int count, string one, string many) =>
+        $"{count} {(count == 1 ? one : many)}";
     private static string Pct(double n) => (n * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
     public static string Label(MarketRuleAudit m, bool de) => m.Market switch
     {
@@ -118,13 +126,18 @@ public static class DecisionExplanationPolicy
         _ => m.Selection
     };
 
+    /// <summary>
+    /// Why a market was or was not selected, in the reader's language.
+    /// </summary>
+    /// <remarks>
+    /// Only reasons about the match appear here. A quote is not one: prices are
+    /// no longer part of the decision, so "a fresh quote is unavailable" told a
+    /// reader nothing about the fixture while reading as a verdict on it. The
+    /// four retired price outcomes are normalised away before this point.
+    /// </remarks>
     public static string GateReason(MarketRuleAudit m, bool de) => m.GateOutcome switch
     {
-        GateOutcome.Qualified => de ? "Wahrscheinlichkeit, Daten und Preis bestehen alle Checks" : "probability, evidence and price pass all checks",
-        "stale_odds" => de ? "es fehlt eine aktuelle Quote" : "a fresh quote is unavailable",
-        GateOutcome.AnalysisOnlyNoOdds => de ? "der Anbieter liefert keine nutzbare Quote" : "the provider has no usable quote",
-        GateOutcome.BelowMinOdds => de ? $"die Quote liegt unter {Num(m.MinOdds)}" : $"the odds are below {Num(m.MinOdds)}",
-        GateOutcome.BelowMinEdge => de ? "die Quote ist für die geschätzte Chance zu niedrig" : "the price is too low for the estimated chance",
+        GateOutcome.Qualified => de ? "Wahrscheinlichkeit und Daten bestehen alle Checks" : "probability and evidence pass all checks",
         GateOutcome.BelowProbabilityFloor => de ? "die Wahrscheinlichkeit ist zu niedrig" : "the estimated probability is too low",
         GateOutcome.Vetoed => de ? "die Daten enthalten ein Ausschlusskriterium" : "an evidence check rules this out",
         GateOutcome.AiDisagrees => de ? "die KI unterstützt die Auswahl nicht" : "the AI does not support this selection",
@@ -142,12 +155,17 @@ public static class DecisionExplanationPolicy
         // evidence in English and rewrites it into both languages when ready.
         return [
             de ? $"Geschätzte Chance {Pct(m.Probability)}; benötigt werden {Pct(m.Threshold)}." : $"Estimated chance {Pct(m.Probability)}; required {Pct(m.Threshold)}.",
-            de ? $"{m.ConfirmationsFired} Datenchecks unterstützen die Auswahl." : support?.Evidence ?? $"{m.ConfirmationsFired} evidence checks support this selection.",
-            de ? $"{m.VetoesFired} Ausschlusskriterien wurden gefunden." : risk?.Evidence ?? "No rejection check fired; this does not guarantee the outcome.",
+            de ? $"{Plural(m.ConfirmationsFired, "Datencheck unterstützt", "Datenchecks unterstützen")} die Auswahl."
+               : support?.Evidence ?? $"{Plural(m.ConfirmationsFired, "evidence check supports", "evidence checks support")} this selection.",
+            de ? m.VetoesFired == 0 ? "Kein Ausschlusskriterium wurde gefunden."
+                                    : $"{Plural(m.VetoesFired, "Ausschlusskriterium wurde", "Ausschlusskriterien wurden")} gefunden."
+               : risk?.Evidence ?? "No rejection check fired; this does not guarantee the outcome.",
             m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.") : m.AiAgrees is false
                 ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
                 : (de ? "Für diesen Markt liegt keine KI-Einschätzung vor." : "No AI opinion is available for this market."),
-            (m.Odds is { } odds ? (de ? $"Quote {Num(odds)}: " : $"Odds {Num(odds)}: ") : "") + GateReason(m, de) + "."
+            // The verdict, in terms of the match. The bookmaker's price belongs
+            // to the odds row above, not to the reasons a market was chosen.
+            char.ToUpperInvariant(GateReason(m, de)[0]) + GateReason(m, de)[1..] + "."
         ];
     }
 }

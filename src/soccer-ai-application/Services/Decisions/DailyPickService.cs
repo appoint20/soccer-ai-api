@@ -69,7 +69,7 @@ public sealed class DailyPickService(
                 reference,
                 snapshot.DecisionAudit,
                 snapshot.BttsAndOver25Probability,
-                confluenceOptions.Value, requireLivePrice: !isHistorical);
+                confluenceOptions.Value);
 
             if (selection.QualifiedLegs.Count > 0 || selection.ComboEligibleLegs.Count > 0)
                 priced++;

@@ -30,29 +30,59 @@ public static class LiveOddsPolicy
         _ => null
     };
 
+    /// <summary>
+    /// Attaches today's price to an audited market, and nothing more.
+    /// </summary>
+    /// <remarks>
+    /// This used to withdraw a pick whose price had gone stale, missing or
+    /// below the floor. A price is no longer part of the decision — it arrives
+    /// late and is absent for most fixtures more than a day out — so a call
+    /// made from model probability and evidence stands whatever the market
+    /// does. EV and the Kelly stake are still computed when a price exists,
+    /// as sizing information for a decision already taken.
+    /// </remarks>
     public static DecisionAudit Reprice(DecisionAudit audit, Fixture fixture, DateTimeOffset now)
     {
-        var fresh = IsFresh(fixture, now);
         return audit with { Markets = audit.Markets.Select(m =>
         {
-            var price = fresh ? OddsGuard.Sanitize(PriceFor(fixture, m)) : null;
+            var price = OddsGuard.Sanitize(PriceFor(fixture, m));
             var ev = price is { } odds ? ValueMath.Ev(m.Probability, odds) : (double?)null;
-            var floor = Math.Max(MinimumOdds, m.MinOdds);
-            var pricePassed = price >= floor;
-            var edgePassed = ev > 0 && ev >= m.MinEdge;
-            // Repricing may withdraw an old pick, never create a new confluence claim.
-            var qualified = m.Qualified && pricePassed && edgePassed;
+            // Only a verdict the retired price gate handed down is recomputed.
+            // Everything else is left exactly as the engine decided it: a
+            // reprice may never promote a market the confluence rules rejected.
+            var retired = RetiredPriceOutcome(m, audit.MinConfirmationsRequired);
+            var outcome = retired ?? m.GateOutcome;
+            var qualified = retired is null ? m.Qualified : retired == GateOutcome.Qualified;
             return m with
             {
-                Odds = price, MinOdds = floor, Ev = ev, Qualified = qualified,
-                ComboEligible = m.ComboEligible && pricePassed && edgePassed && m.ProbabilityPassed,
+                Odds = price, Ev = ev, GateOutcome = outcome, Qualified = qualified,
+                ComboEligible = retired is null ? m.ComboEligible : qualified,
                 KellyStake = qualified && price is { } currentOdds && m.KellyFraction is { } fraction
-                    ? ValueMath.FractionalKelly(m.Probability, currentOdds, fraction) : null,
-                GateOutcome = !fresh ? "stale_odds" : price is null ? GateOutcome.AnalysisOnlyNoOdds
-                    : !pricePassed ? GateOutcome.BelowMinOdds : !edgePassed ? GateOutcome.BelowMinEdge : m.GateOutcome
+                    ? ValueMath.FractionalKelly(m.Probability, currentOdds, fraction) : null
             };
         }).ToList() };
     }
+
+    /// <summary>
+    /// The verdict a stored market would get today, when the one it carries was
+    /// handed down by the retired price gate; null when it was not.
+    /// </summary>
+    /// <remarks>
+    /// Snapshots persist their audit, so a market rejected weeks ago for its
+    /// price still says so on every read. Re-running the engine costs a model
+    /// call per fixture, so the outcome is recomputed here from the flags the
+    /// snapshot already carries: the probability floor, vetoes and the
+    /// confirmation count are all recorded on the market itself.
+    /// </remarks>
+    private static string? RetiredPriceOutcome(MarketRuleAudit m, int minConfirmations) =>
+        m.GateOutcome is "stale_odds" or GateOutcome.AnalysisOnlyNoOdds
+            or GateOutcome.BelowMinOdds or GateOutcome.BelowMinEdge
+            ? !m.ProbabilityPassed ? GateOutcome.BelowProbabilityFloor
+              : m.VetoesFired > 0 ? GateOutcome.Vetoed
+              : m.ConfirmationsFired < minConfirmations ? GateOutcome.InsufficientConfirms
+              : m.AiAgrees is false && m.AiAgreementMode == "veto" ? GateOutcome.AiDisagrees
+              : GateOutcome.Qualified
+            : null;
 
     public static void RefreshResponse(MatchAnalysis snapshot, Fixture fixture, DateTimeOffset now)
     {

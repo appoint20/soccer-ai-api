@@ -29,51 +29,55 @@ public class ValueGateTests
         }
     };
 
+    /// <summary>
+    /// The decision is model probability and evidence. A bookmaker price is
+    /// late, often missing and stale within hours, so it no longer withdraws a
+    /// call — the four tests below hold that line, market state by market state.
+    /// </summary>
     [Fact]
-    public void NoValidOdds_IsAnalysisOnly_NeverAPick()
+    public void NoOddsStillQualifiesOnProbabilityAndEvidence()
     {
         var audit = ConfluenceRuleEngine.EvaluateBtts(0.65, ConfluentBtts(), 0.50, null, 1.7, 0.05, Opt);
 
-        audit.GateOutcome.Should().Be(GateOutcome.AnalysisOnlyNoOdds);
-        audit.Qualified.Should().BeFalse("no odds = analysis only, despite full confluence");
-        audit.Ev.Should().BeNull();
-        audit.KellyStake.Should().BeNull();
+        audit.GateOutcome.Should().Be(GateOutcome.Qualified);
+        audit.Qualified.Should().BeTrue("full confluence decides, and no price was needed for it");
+        audit.Ev.Should().BeNull("EV cannot be computed without a price");
+        audit.KellyStake.Should().BeNull("nor can a stake be sized");
     }
 
     [Fact]
-    public void SubFloorOddsCannotQualifyOrEnterACombination()
+    public void SubFloorOddsNoLongerWithdrawTheCall()
     {
         var audit = ConfluenceRuleEngine.EvaluateBtts(.65, ConfluentBtts(), .50, 1.65, 1.70, .05, Opt);
-        audit.GateOutcome.Should().Be(GateOutcome.BelowMinOdds);
-        audit.Qualified.Should().BeFalse();
-        audit.ComboEligible.Should().BeFalse();
+
+        audit.GateOutcome.Should().Be(GateOutcome.Qualified);
+        audit.Qualified.Should().BeTrue();
+        audit.ComboEligible.Should().BeTrue();
+        audit.Odds.Should().Be(1.65, "the price is still reported, it just decides nothing");
     }
 
     [Fact]
-    public void ThinEdgeCannotBeRescuedByACombination()
+    public void AThinEdgeIsReportedButDoesNotBlockTheCall()
     {
-        var audit = ConfluenceRuleEngine.EvaluateBtts(.59, ConfluentBtts(), .50, 1.75, 1.70, .05, Opt);
-        audit.GateOutcome.Should().Be(GateOutcome.BelowMinEdge);
-        audit.Qualified.Should().BeFalse();
-        audit.ComboEligible.Should().BeFalse();
-    }
-
-    [Fact]
-    public void ComboEligible_False_WithNegativeEvOrVeto()
-    {
-        var negativeEv = ConfluenceRuleEngine.EvaluateBtts(0.55, ConfluentBtts(), 0.50, 1.60, 1.70, 0.05, Opt);
-        negativeEv.ComboEligible.Should().BeFalse("EV = 0.55×1.60−1 < 0");
-    }
-
-    [Fact]
-    public void PositiveButThinEdge_RejectedByMinEdge()
-    {
-        // p=0.58, odds=1.75 → EV = 0.015 < 0.05
+        // p=0.58, odds=1.75 → EV = 0.015, under the 0.05 the gate used to demand.
         var audit = ConfluenceRuleEngine.EvaluateBtts(0.58, ConfluentBtts(), 0.50, 1.75, 1.70, 0.05, Opt);
 
-        audit.Ev.Should().BeApproximately(0.015, 1e-9);
-        audit.GateOutcome.Should().Be(GateOutcome.BelowMinEdge);
-        audit.Qualified.Should().BeFalse();
+        audit.Ev.Should().BeApproximately(0.015, 1e-9, "EV is still measured for the reader");
+        audit.GateOutcome.Should().Be(GateOutcome.Qualified);
+        audit.Qualified.Should().BeTrue();
+    }
+
+    [Fact]
+    public void NegativeEvDoesNotBlockButTheProbabilityFloorStillDoes()
+    {
+        var negativeEv = ConfluenceRuleEngine.EvaluateBtts(0.55, ConfluentBtts(), 0.50, 1.60, 1.70, 0.05, Opt);
+        negativeEv.Ev.Should().BeLessThan(0, "EV = 0.55×1.60−1");
+        negativeEv.ComboEligible.Should().BeTrue("a price cannot veto what the evidence supports");
+
+        var belowFloor = ConfluenceRuleEngine.EvaluateBtts(0.45, ConfluentBtts(), 0.50, 2.20, 1.70, 0.05, Opt);
+        belowFloor.GateOutcome.Should().Be(GateOutcome.BelowProbabilityFloor);
+        belowFloor.Qualified.Should().BeFalse("the probability floor is still a real gate");
+        belowFloor.ComboEligible.Should().BeFalse();
     }
 
     [Fact]

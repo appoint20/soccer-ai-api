@@ -31,14 +31,19 @@ public sealed class PredictionIntegrityTests
             ComboEligible = qualified, GateOutcome = "qualified" }
     ], Now.AddDays(-2));
 
+    /// <summary>
+    /// A price is not part of the decision, so a drop below the old 1.70 floor
+    /// reprices the call rather than withdrawing it. The stake follows the new
+    /// price, which is the one thing a price legitimately decides.
+    /// </summary>
     [Fact]
-    public void PriceDropWithdrawsOldHighValuePickAndComboLeg()
+    public void APriceDropRepricesTheCallInsteadOfWithdrawingIt()
     {
         var fixture = Match(); fixture.BttsYesOdds = 1.69;
         var repriced = LiveOddsPolicy.Reprice(Audit(), fixture, Now).Markets.Single();
         repriced.Odds.Should().Be(1.69);
-        repriced.Qualified.Should().BeFalse(); repriced.ComboEligible.Should().BeFalse();
-        repriced.KellyStake.Should().BeNull();
+        repriced.Qualified.Should().BeTrue(); repriced.ComboEligible.Should().BeTrue();
+        repriced.KellyStake.Should().Be(ValueMath.FractionalKelly(.7, 1.69, .25));
     }
 
     [Fact]

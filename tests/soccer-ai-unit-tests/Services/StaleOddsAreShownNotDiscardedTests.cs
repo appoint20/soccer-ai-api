@@ -58,11 +58,12 @@ public class StaleOddsAreShownNotDiscardedTests
     }
 
     /// <summary>
-    /// The response carries the price and says it is not live, so the app can
-    /// label it. Nothing about it may qualify as a tip.
+    /// The response carries the price, says whether it is live, and leaves the
+    /// call alone: the decision was made from probability and evidence, so an
+    /// old price neither confirms nor withdraws it.
     /// </summary>
     [Fact]
-    public void TheResponseShowsTheStalePriceAndQualifiesNothingOnIt()
+    public void TheResponseShowsTheStalePriceAndLeavesTheCallStanding()
     {
         var snapshot = new MatchAnalysis
         {
@@ -86,9 +87,9 @@ public class StaleOddsAreShownNotDiscardedTests
         snapshot.OddsAreLive.Should().BeFalse();
         snapshot.OddsUpdatedAtUtc.Should().Be(Now.AddHours(-15));
         var market = snapshot.DecisionAudit!.Markets.Single();
-        market.Qualified.Should().BeFalse("a stale price cannot qualify a bet");
-        market.Odds.Should().BeNull();
-        market.GateOutcome.Should().Be("stale_odds");
+        market.Qualified.Should().BeTrue("the call was never made from the price");
+        market.Odds.Should().Be(1.95, "and the price is reported beside it");
+        market.GateOutcome.Should().Be(GateOutcome.Qualified);
     }
 
     [Fact]

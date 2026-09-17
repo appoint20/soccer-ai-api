@@ -30,8 +30,9 @@ public class AiDecisionSyncTests
         provider.Setup(p => p.ExplainDecisionAsync(It.IsAny<DecisionExplanationInput>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DecisionExplanationInput input, CancellationToken _) =>
             {
-                input.Markets.Single().Qualified.Should().BeFalse("the price gate runs after the AI opinion");
-                input.Markets.Single().Odds.Should().Be(1.60);
+                input.Markets.Single().Qualified.Should().BeTrue(
+                    "the explanation is written against the final gate, and a price no longer moves it");
+                input.Markets.Single().Odds.Should().Be(1.60, "while the live price still reaches the writer");
                 AiDecisionLanguage Block() => new() { SummaryLines = ["Attack is balanced.", "Defence is vulnerable.", "The signals differ.", "The sample is limited."],
                     Markets = input.Markets.Select(m => new AiMarketExplanation { Market = m.Market, Checks = m.Facts.ToList() }).ToList() };
                 return new AiDecisionExplanation { FixtureId = 1, ModelVersion = "test", GeneratedAtUtc = now, En = Block(), De = Block() };
@@ -53,7 +54,8 @@ public class AiDecisionSyncTests
         var snapshot = AnalysisSnapshotSerializer.Deserialize(en.SnapshotJson)!;
         snapshot.Presentation!.AiGenerated.Should().BeTrue();
         snapshot.Presentation.SummaryLines.Should().HaveCount(6);
-        snapshot.Presentation.SummaryLines[4].Should().Contain("no bet");
+        snapshot.Presentation.SummaryLines[4].Should().Contain("selects: Both teams to score",
+            "the 1.60 price no longer turns a confluent market into no bet");
         await sync.SyncSingleFixtureAsync(1);
         provider.Verify(p => p.ExplainDecisionAsync(It.IsAny<DecisionExplanationInput>(), It.IsAny<CancellationToken>()), Times.Once);
         provider.Verify(p => p.AnalyzeBatchAsync(It.IsAny<List<AiBatchItem>>(), It.IsAny<CancellationToken>()), Times.Never);

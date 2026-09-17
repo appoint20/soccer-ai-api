@@ -108,7 +108,7 @@ public static class PickSelector
         FixtureRef fixture,
         DecisionAudit? audit,
         double? bttsAndOver25JointProbability,
-        ConfluenceOptions opt, bool requireLivePrice = false)
+        ConfluenceOptions opt)
     {
         ArgumentNullException.ThrowIfNull(fixture);
         ArgumentNullException.ThrowIfNull(opt);
@@ -125,7 +125,7 @@ public static class PickSelector
             var leg = ToLeg(fixture, market);
             if (leg is null)
             {
-                if (!requireLivePrice && opt.AllowUnpricedCombos &&
+                if (opt.AllowUnpricedCombos &&
                     ToUnpricedLeg(fixture, market, audit.MinConfirmationsRequired, opt) is { } unpricedLeg)
                 {
                     unpriced.Add(unpricedLeg);
@@ -143,7 +143,7 @@ public static class PickSelector
             qualified,
             comboEligible,
             null, // The combined market is now one audited, genuinely priced leg.
-            BuildConfidencePick(fixture, audit, opt, requireLivePrice),
+            BuildConfidencePick(fixture, audit, opt),
             unpriced);
     }
 
@@ -242,11 +242,10 @@ public static class PickSelector
     /// costing the fixture a perfectly publishable pick from another market.
     /// </summary>
     private static ConfidencePick? BuildConfidencePick(
-        FixtureRef fixture, DecisionAudit audit, ConfluenceOptions opt, bool requireLivePrice)
+        FixtureRef fixture, DecisionAudit audit, ConfluenceOptions opt)
     {
         var best = audit.Markets
             .Where(m => ConfidenceMarkets.Contains(m.Market))
-            .Where(m => !requireLivePrice || (OddsGuard.IsValid(m.Odds) && m.Odds >= LiveOddsPolicy.MinimumOdds && m.Probability * m.Odds > 1))
             .Where(m => m.Probability >= ConfidenceFloorFor(m.Market, opt))
             .OrderByDescending(m => m.Probability)
             .FirstOrDefault();

@@ -164,8 +164,8 @@ public static class ConfluenceRuleEngine
         var confirms = rules.Count(r => r is { Kind: RuleResult.Confirm, Fired: true });
         var vetoes = rules.Count(r => r is { Kind: RuleResult.Veto, Fired: true });
 
-        // Re-run only the two gates the new rule can move. Everything upstream
-        // of it — price, edge, probability floor — is unchanged by an opinion.
+        // Re-run only the two gates the new rule can move. The probability
+        // floor upstream of it is unchanged by an opinion.
         var stillQualified = m.Qualified;
         var outcome = m.GateOutcome;
 
@@ -190,7 +190,7 @@ public static class ConfluenceRuleEngine
             Qualified = stillQualified,
             GateOutcome = outcome,
             AiAgrees = backs,
-            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.Odds >= Math.Max(LiveOddsPolicy.MinimumOdds, m.MinOdds) && m.Ev >= m.MinEdge && m.ProbabilityPassed &&
+            ComboEligible = !opt.InformationalOnlyMarkets.Contains(m.Market) && m.ProbabilityPassed &&
                 vetoes == 0 && confirms >= opt.MinConfirmations,
             KellyStake = stillQualified && m.Odds is { } odds && m.KellyFraction is { } fraction
                 ? ValueMath.FractionalKelly(m.Probability, odds, fraction) : null,
@@ -517,13 +517,14 @@ public static class ConfluenceRuleEngine
 
         var ev = odds is not null ? (double?)Math.Round(ValueMath.Ev(probability, odds.Value), 4) : null;
 
-        // Every offered selection must meet its own floor. A same-match
-        // combined market has its own quote and passes this gate independently.
+        // The decision is model probability and evidence only. Bookmaker prices
+        // are not an input: they arrive late, go stale within hours and are
+        // missing outright for most fixtures more than a day out, so gating on
+        // them withdrew sound calls for a reason that said nothing about the
+        // match. The price is still carried below, priced into EV and a Kelly
+        // stake when one exists, and shown — but it decides nothing.
         var outcome =
             opt.InformationalOnlyMarkets.Contains(market) ? GateOutcome.InformationalOnly
-            : odds is null ? GateOutcome.AnalysisOnlyNoOdds
-            : odds < Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) ? GateOutcome.BelowMinOdds
-            : ev < minEdge ? GateOutcome.BelowMinEdge
             : !probabilityPassed ? GateOutcome.BelowProbabilityFloor
             : vetoes > 0 ? GateOutcome.Vetoed
             : confirms < opt.MinConfirmations ? GateOutcome.InsufficientConfirms
@@ -531,12 +532,11 @@ public static class ConfluenceRuleEngine
 
         var qualified = outcome == GateOutcome.Qualified;
 
-        // Combo-leg eligibility: any positive edge + full confluence. Weaker than
-        // 'qualified' (no MinEdge/floor) — sub-floor favorites become combo legs.
+        // Combo-leg eligibility now differs from 'qualified' only in that an
+        // informational market can never be a leg.
         var comboEligible =
             !opt.InformationalOnlyMarkets.Contains(market) &&
-            odds >= Math.Max(LiveOddsPolicy.MinimumOdds, minOdds) && ev >= minEdge && probabilityPassed &&
-            vetoes == 0 && confirms >= opt.MinConfirmations;
+            probabilityPassed && vetoes == 0 && confirms >= opt.MinConfirmations;
 
         return new MarketRuleAudit(
             market,

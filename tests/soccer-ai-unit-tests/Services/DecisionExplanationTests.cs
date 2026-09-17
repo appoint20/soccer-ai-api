@@ -41,23 +41,31 @@ public class DecisionExplanationTests
         m.Presentation!.AiGenerated.Should().BeTrue();
         m.Presentation.SummaryLines.Should().HaveCount(6);
         m.Presentation.SummaryLines[4].Should().Contain("selects: Both teams to score");
-        m.Presentation.SummaryLines[5].Should().Contain("1.90").And.Contain("70%");
+        m.Presentation.SummaryLines[5].Should().Contain("70%").And.Contain("evidence checks")
+            .And.NotContain("1.90", "the closing line states the case, not the price");
         m.Presentation.Markets.Single().Checks.Should().HaveCount(5);
     }
 
+    /// <summary>
+    /// A price move rewrites the numbers the AI quoted, so its wording is
+    /// withdrawn and the generated summary takes over. What it must not do any
+    /// more is withdraw the selection: the call came from probability and
+    /// evidence, neither of which a bookmaker touched.
+    /// </summary>
     [Theory]
-    [InlineData(1.69, "below 1.70")]
-    [InlineData(1.70, "selects:")]
-    public void PriceDropCannotLeaveAnOldAiBetRecommendation(double odds, string expected)
+    [InlineData(1.69)]
+    [InlineData(1.70)]
+    public void APriceMoveRetiresTheAiWordingButNotTheSelection(double odds)
     {
         var m = Match(); m.DecisionExplanation = Explanation(m);
         var f = new Fixture { Id = 1, Date = m.Date, OddsBookmaker = "Bet365", BttsYesOdds = odds,
             OddsCheckedAtUtc = Now, OddsUpdatedAtUtc = Now.AddMinutes(-5) };
+
         LiveOddsPolicy.RefreshResponse(m, f, Now);
+
         m.Presentation!.AiGenerated.Should().BeFalse("the AI wording referred to a different price");
-        string.Join(" ", m.Presentation.SummaryLines).Should().Contain(expected);
-        if (odds < 1.7) string.Join(" ", m.Presentation.SummaryLines).Should().Contain("selects no bet");
-        m.DecisionAudit!.Markets.Single().Qualified.Should().Be(odds >= 1.7);
+        string.Join(" ", m.Presentation.SummaryLines).Should().Contain("selects: Both teams to score");
+        m.DecisionAudit!.Markets.Single().Qualified.Should().BeTrue();
     }
 
     [Fact]
@@ -68,17 +76,24 @@ public class DecisionExplanationTests
         DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeTrue();
     }
 
+    /// <summary>
+    /// A thin edge is reported, not enforced. EV follows the new price so the
+    /// reader can see what the market pays for the same call.
+    /// </summary>
     [Fact]
-    public void APriceDropBelowTheRequiredEdgeWithdrawsTheComboEvenAbove170()
+    public void AThinEdgeIsRepricedRatherThanWithdrawn()
     {
         var m = Match();
         m.DecisionAudit = m.DecisionAudit! with { Markets = [m.DecisionAudit.Markets[0] with { Probability = .6 }] };
         var f = new Fixture { Date = m.Date, OddsBookmaker = "Bet365", BttsYesOdds = 1.71,
             OddsCheckedAtUtc = Now, OddsUpdatedAtUtc = Now };
+
         LiveOddsPolicy.RefreshResponse(m, f, Now);
-        m.DecisionAudit.Markets[0].Qualified.Should().BeFalse();
-        m.DecisionAudit.Markets[0].ComboEligible.Should().BeFalse();
-        m.DecisionAudit.Markets[0].GateOutcome.Should().Be(GateOutcome.BelowMinEdge);
+
+        m.DecisionAudit.Markets[0].Qualified.Should().BeTrue();
+        m.DecisionAudit.Markets[0].ComboEligible.Should().BeTrue();
+        m.DecisionAudit.Markets[0].GateOutcome.Should().Be(GateOutcome.Qualified);
+        m.DecisionAudit.Markets[0].Ev.Should().BeApproximately(.6 * 1.71 - 1, 1e-9);
     }
 
     [Fact]
@@ -111,7 +126,7 @@ public class DecisionExplanationTests
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();
         result = Explanation(m); result.En.Markets[0].Checks[0] = "This has a 99% chance.";
         DecisionExplanationPolicy.Invalid(result, input).Should().Contain("unsupported number");
-        result = Explanation(m); result.De.SummaryLines[0] = new string('x', 181);
+        result = Explanation(m); result.De.SummaryLines[0] = new string('x', 261);
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();
         result = Explanation(m); result.De.Markets[0].Checks[1] = "n/a";
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();
