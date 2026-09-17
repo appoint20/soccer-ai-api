@@ -66,14 +66,19 @@ public static class LiveOddsPolicy
             return; // historical outcomes keep their recorded analysis
         }
         var fresh = IsFresh(fixture, now);
-        snapshot.OddsHomeWin = fresh ? OddsGuard.Sanitize(fixture.HomeWinOdds) : null;
-        snapshot.OddsDraw = fresh ? OddsGuard.Sanitize(fixture.DrawOdds) : null;
-        snapshot.OddsAwayWin = fresh ? OddsGuard.Sanitize(fixture.AwayWinOdds) : null;
-        snapshot.OddsOver25 = fresh ? OddsGuard.Sanitize(fixture.Over25Odds) : null;
-        snapshot.OddsUnder25 = fresh ? OddsGuard.Sanitize(fixture.Under25Odds) : null;
-        snapshot.OddsBttsYes = fresh ? OddsGuard.Sanitize(fixture.BttsYesOdds) : null;
-        snapshot.OddsGoals23 = fresh ? OddsGuard.Sanitize(fixture.Goals23Odds) : null;
-        snapshot.OddsBttsAndOver25 = fresh ? OddsGuard.Sanitize(fixture.BttsAndOver25Odds) : null;
+        // Shown whatever their age, together with OddsUpdatedAtUtc and the flag
+        // below, so a reader can see the last real market price and how old it
+        // is. Acting on one is a separate question, answered by Reprice: a
+        // stale price qualifies nothing, and the gate below is untouched.
+        snapshot.OddsAreLive = fresh;
+        snapshot.OddsHomeWin = OddsGuard.Sanitize(fixture.HomeWinOdds);
+        snapshot.OddsDraw = OddsGuard.Sanitize(fixture.DrawOdds);
+        snapshot.OddsAwayWin = OddsGuard.Sanitize(fixture.AwayWinOdds);
+        snapshot.OddsOver25 = OddsGuard.Sanitize(fixture.Over25Odds);
+        snapshot.OddsUnder25 = OddsGuard.Sanitize(fixture.Under25Odds);
+        snapshot.OddsBttsYes = OddsGuard.Sanitize(fixture.BttsYesOdds);
+        snapshot.OddsGoals23 = OddsGuard.Sanitize(fixture.Goals23Odds);
+        snapshot.OddsBttsAndOver25 = OddsGuard.Sanitize(fixture.BttsAndOver25Odds);
         if (snapshot.DecisionAudit is not { } audit) return;
         snapshot.DecisionAudit = Reprice(audit, fixture, now);
         Analysis.DecisionExplanationPolicy.Refresh(snapshot);

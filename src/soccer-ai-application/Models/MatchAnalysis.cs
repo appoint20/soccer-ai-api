@@ -43,6 +43,18 @@ public sealed class MatchAnalysis
     public string? OddsBookmaker { get; set; }
 
     /// <summary>
+    /// Whether the prices above are current enough to bet on, by
+    /// <see cref="Services.LiveOddsPolicy.IsFresh"/>.
+    /// </summary>
+    /// <remarks>
+    /// False does not mean the prices are wrong — they are the last real market
+    /// prices — only that the provider has not refreshed them recently, which is
+    /// normal for a fixture days away. Show them with their age; no tip is
+    /// qualified from them.
+    /// </remarks>
+    [JsonPropertyName("odds_are_live")] public bool OddsAreLive { get; set; }
+
+    /// <summary>
     /// True joint P(BTTS ∧ Over 2.5) from the Dixon-Coles score matrix, needed
     /// to price same-match doubles. Persisted because <see cref="Models"/> is
     /// excluded from the snapshot, and the product of the two market

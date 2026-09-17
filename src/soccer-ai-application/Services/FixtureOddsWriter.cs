@@ -40,18 +40,27 @@ public static class FixtureOddsWriter
     }
 
     /// <summary>Replace the live market, preserving historical prices in quote rows.</summary>
+    /// <remarks>
+    /// Age is recorded, not filtered. This used to drop every quote the provider
+    /// had not refreshed within <see cref="LiveOddsPolicy.MaximumAge"/>, which
+    /// wrote null into every column for any fixture more than a day out —
+    /// bookmakers reprice those roughly daily, so a Saturday fixture carried no
+    /// price at all until Saturday. The stamp that decides whether a price may be
+    /// acted on is <see cref="Fixture.OddsUpdatedAtUtc"/>, and
+    /// <see cref="LiveOddsPolicy.IsFresh"/> still judges it there: the gate is
+    /// unchanged, while the app can show the last real price with its age.
+    /// </remarks>
     public static void ReplaceLivePrices(Fixture fixture, IReadOnlyCollection<OddsQuote> quotes,
         DateTimeOffset capturedAt)
     {
         fixture.OddsCheckedAtUtc = capturedAt;
         // Historical quote rows retain all bookmakers; live picks use bet365 only.
         fixture.OddsBookmaker = LiveOddsPolicy.Bookmaker;
-        var fresh = quotes.Where(q => q.Bookmaker.Equals(LiveOddsPolicy.Bookmaker, StringComparison.OrdinalIgnoreCase) && OddsGuard.IsValid(q.Price) &&
-            q.ProviderUpdatedAtUtc is { } updated && updated <= capturedAt &&
-            capturedAt - updated <= LiveOddsPolicy.MaximumAge)
+        var latest = quotes.Where(q => q.Bookmaker.Equals(LiveOddsPolicy.Bookmaker, StringComparison.OrdinalIgnoreCase) && OddsGuard.IsValid(q.Price) &&
+            q.ProviderUpdatedAtUtc is { } updated && updated <= capturedAt)
             .GroupBy(q => q.Market)
             .Select(g => g.OrderByDescending(q => q.ProviderUpdatedAtUtc).ThenBy(q => q.Price).First()).ToList();
-        var best = OddsQuoteAggregator.BestPrices(fresh);
+        var best = OddsQuoteAggregator.BestPrices(latest);
         fixture.HomeWinOdds = best.HomeWin;
         fixture.DrawOdds = best.Draw;
         fixture.AwayWinOdds = best.AwayWin;
@@ -60,7 +69,9 @@ public static class FixtureOddsWriter
         fixture.BttsYesOdds = best.BttsYes;
         fixture.Goals23Odds = best.Goals23;
         fixture.BttsAndOver25Odds = best.BttsAndOver25;
-        fixture.OddsUpdatedAtUtc = fresh.Count > 0 ? fresh.Min(q => q.ProviderUpdatedAtUtc) : null;
+        // The oldest of the shown markets, so one stale market cannot borrow a
+        // fresher one's age. A row is only as live as its least recent price.
+        fixture.OddsUpdatedAtUtc = latest.Count > 0 ? latest.Min(q => q.ProviderUpdatedAtUtc) : null;
         fixture.UpdatedAt = capturedAt;
     }
 
