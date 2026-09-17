@@ -95,6 +95,77 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         return null;
     }
 
+    /// <summary>
+    /// What a 429 means for the model that produced it.
+    /// </summary>
+    /// <remarks>
+    /// OpenRouter's free tier — the slugs ending in ":free" — allows 20 requests
+    /// a minute and, until $10 of credits have been bought, 50 a day. The sync
+    /// spends one request per fixture, so a matchday of 137 fixtures cannot fit
+    /// in the lower cap however long it waits. On a paid slug the same status
+    /// code only ever means "too quick", which is why it reads differently here.
+    /// </remarks>
+    public static string RateLimitReason(string model) =>
+        model.EndsWith(":free", StringComparison.OrdinalIgnoreCase)
+            ? $"OpenRouter rate limit exceeded on the free tier ({model}). Free models allow 20 requests per "
+              + "minute, and 50 per day until $10 of credits have been purchased (1,000 per day after that). "
+              + "The sync spends one request per fixture, so a full matchday needs the higher cap or a paid model."
+            : "OpenRouter rate limit exceeded; retry on the next sync.";
+
+    /// <summary>
+    /// The provider's own explanation for a rejected request, or null when the
+    /// response carried none. Never includes an API key.
+    /// </summary>
+    /// <remarks>
+    /// OpenRouter names the limit it enforced in the 429 body, and the two it
+    /// enforces need opposite responses: the per-minute ceiling clears by
+    /// waiting, the daily cap on free models does not clear until the next day.
+    /// Collapsing both into "rate limit exceeded" made a run that had spent its
+    /// day look like one that had merely been too quick.
+    /// </remarks>
+    public static string? DescribeProviderError(ClientResultException exception)
+    {
+        try
+        {
+            return DescribeProviderError(exception.GetRawResponse()?.Content?.ToString());
+        }
+        catch (Exception)
+        {
+            // A response whose content was never buffered cannot be re-read.
+            return null;
+        }
+    }
+
+    /// <inheritdoc cref="DescribeProviderError(ClientResultException)"/>
+    public static string? DescribeProviderError(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return null;
+
+        string? message = null;
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                document.RootElement.TryGetProperty("error", out var error))
+                message = error.ValueKind switch
+                {
+                    JsonValueKind.String => error.GetString(),
+                    JsonValueKind.Object when error.TryGetProperty("message", out var text)
+                        && text.ValueKind == JsonValueKind.String => text.GetString(),
+                    _ => null
+                };
+        }
+        catch (JsonException)
+        {
+            // A proxy in front of the provider can answer with HTML.
+        }
+
+        message = string.IsNullOrWhiteSpace(message) ? body : message;
+        message = System.Text.RegularExpressions.Regex.Replace(
+            message.Trim(), @"sk-[A-Za-z0-9\-_]{6,}", "sk-***");
+        return message.Length > 300 ? message[..300] + "…" : message;
+    }
+
     private ChatClient CreateClient(string model)
     {
         var baseUrl = (_options.BaseUrl ?? "https://openrouter.ai/api/v1").TrimEnd('/') + "/";
@@ -223,8 +294,11 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             {
                 // Another model cannot repair account authentication, credit or quota.
                 var reason = ex.Status == 402 ? "OpenRouter credits are unavailable. Check the account balance."
-                    : ex.Status == 429 ? "OpenRouter rate limit exceeded; retry on the next sync."
+                    : ex.Status == 429 ? RateLimitReason(model)
                     : "OpenRouter rejected the provider credential or access. Check the key on the worker.";
+                if (DescribeProviderError(ex) is { } detail)
+                    reason += $" OpenRouter said: {detail}";
+                _logger.LogError("[OpenRouter] {Model} rejected with {Status}: {Reason}", model, ex.Status, reason);
                 throw new ExternalApiException("OpenRouter", reason, (System.Net.HttpStatusCode)ex.Status);
             }
             catch (Exception ex)
@@ -283,7 +357,11 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 or 429)
             {
-                throw new ExternalApiException("AI explanations", "The provider rejected access, credit or quota.", (System.Net.HttpStatusCode)ex.Status);
+                var reason = "The provider rejected access, credit or quota.";
+                if (ex.Status == 429) reason = RateLimitReason(model);
+                if (DescribeProviderError(ex) is { } detail) reason += $" OpenRouter said: {detail}";
+                _logger.LogError("[AI explanation] {Model} rejected with {Status}: {Reason}", model, ex.Status, reason);
+                throw new ExternalApiException("AI explanations", reason, (System.Net.HttpStatusCode)ex.Status);
             }
             catch (Exception ex)
             {
