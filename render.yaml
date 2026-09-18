@@ -103,25 +103,39 @@ services:
       # honest about what is in effect.
       #
       # Measured cost: a full pipeline run — every step, narratives included —
-      # took 11.6 min in production (21:19:59 → 21:31:37 on 2026-09-09), so an
-      # hourly slot has ~48 min of headroom. Slots are absolute UTC times, so an
-      # over-running sync skips to the next free slot; it cannot overlap itself.
+      # took 11.6 min in production (21:19:59 → 21:31:37 on 2026-09-09), so a
+      # half-hourly slot has ~18 min of headroom. Slots are absolute UTC times,
+      # so an over-running sync skips to the next free slot; it cannot overlap
+      # itself. Half-hourly is what the request budget affords: the per-run
+      # overhead alone is ~40 calls, so a 3-minute loop would spend 19,000 a day
+      # against a 7,500 plan and spend most of it on runs with nothing due.
       - key: SYNC__INTERVALMINUTES
-        value: "60"
+        value: "30"
       # Minutes past the hour. Off the top of the hour on purpose — that is when
       # the upstream provider is busiest.
       - key: SYNC__INTERVALANCHORMINUTE
         value: "20"
-      # Restart catch-up, matched to the cadence: with hourly slots a 3h
-      # threshold means a redeploy can leave the board unrefreshed for three
+      # Restart catch-up, matched to the cadence: with half-hourly slots a 1h
+      # threshold means a redeploy can leave the board unrefreshed for two
       # slots before it decides anything is stale.
       - key: SYNC__STARTUPSYNCTHRESHOLDHOURS
         value: "1"
-      # Odds cadence. The loop ticks every 30 min but only re-prices a fixture
-      # once its newest quote is 3h old — or on every tick inside the last 6h,
-      # where lines actually move.
+      # Odds cadence, sized against the 7,500-request daily plan. A fixture is
+      # re-priced once its newest quote is an hour old, and on every tick inside
+      # the last 6h, where lines actually move. Note the due check subtracts one
+      # ODDSCAPTUREINTERVALMINUTES tick of lookahead, so 60 − 15 = 45 min lands
+      # each fixture on the next half-hourly slot: one capture per hour, not two.
+      #
+      # Measured on 2026-09-17/18: ~144 fixtures inside the 72h horizon and ~40
+      # non-odds calls per run. Per day that is 144 × 24 ≈ 3,460 odds calls,
+      # ~580 for the final-approach captures, and 48 × 40 ≈ 1,920 of fixture,
+      # standings, injury and head-to-head traffic — about 5,950, leaving room
+      # for a catch-up day after an outage rather than running into the 429s
+      # that stop a sync dead.
       - key: SYNC__ODDSREFRESHINTERVALHOURS
-        value: "3"
+        value: "1"
+      - key: SYNC__ODDSCAPTUREINTERVALMINUTES
+        value: "15"
       - key: SYNC__ODDSCAPTUREHORIZONHOURS
         value: "72"
       - key: SYNC__ODDSFINALAPPROACHHOURS
