@@ -11,18 +11,27 @@ public sealed class AiServiceOptions
     /// Primary model, as an OpenRouter slug.
     /// </summary>
     /// <remarks>
-    /// Must be a model OpenRouter still lists. This used to be
-    /// `stealth/ox-alpha`, a cloaked free preview; OpenRouter withdrew it in
-    /// September 2026 and every request to it started failing. Stealth and
-    /// preview slugs can disappear without notice, so neither default is one.
+    /// Must be a model OpenRouter still lists, and must be free.
+    ///
+    /// Two incidents shaped this. The original default was `stealth/ox-alpha`,
+    /// a cloaked free preview; OpenRouter withdrew it and every narrative
+    /// request began failing, so neither default is a stealth or preview slug.
+    /// Replacing it with `anthropic/claude-sonnet-5` then made the paid path
+    /// the default: the worker carries no model environment variable, so it
+    /// took this value and spent €10 of credit in a day on 82 fixtures — about
+    /// €0.12 each, two calls apiece with reasoning tokens billed as output.
+    ///
+    /// A default must therefore cost nothing. A paid model is a deliberate act:
+    /// set AISERVICE__DEFAULTMODEL on the service that should spend, and only
+    /// that service will. <c>ShippedAiDefaultsCostNothingTests</c> holds this.
     /// </remarks>
-    public string DefaultModel { get; set; } = "anthropic/claude-sonnet-5";
+    public string DefaultModel { get; set; } = "z-ai/glm-5.2:free";
 
     /// <summary>
-    /// Used when the primary model is unavailable. A different, cheaper model,
-    /// so a provider-side problem with the primary does not stop narratives.
+    /// Used when the primary model is unavailable. A different provider, so an
+    /// outage on the primary does not stop narratives.
     /// </summary>
-    public string FallbackModel { get; set; } = "anthropic/claude-haiku-4.5";
+    public string FallbackModel { get; set; } = "deepseek/deepseek-v4-flash-0731:free";
 
     /// <summary>
     /// HTTP timeout in seconds for inference calls. Applied to the client

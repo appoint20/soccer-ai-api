@@ -25,15 +25,19 @@ services:
         value: Production
       - key: AISERVICE__BASEURL
         value: "https://openrouter.ai/api/v1"
-      # Must be a model OpenRouter still lists. The previous default,
-      # stealth/ox-alpha, was a time-limited free preview; when OpenRouter
-      # withdrew it every narrative request failed. Provider failures are now
-      # reported as an incomplete sync, with an actionable LastError.
+      # Must be a model OpenRouter still lists, and it must be free unless
+      # someone has decided to spend. Two defaults have gone wrong here: first
+      # stealth/ox-alpha, a time-limited free preview OpenRouter withdrew, after
+      # which every narrative request failed; then anthropic/claude-sonnet-5,
+      # which worked and quietly spent €10 of credit in a day — 82 fixtures at
+      # about €0.12 each, since the worker sets no model variable of its own and
+      # takes whatever ships. Paying is now an explicit act: set this to a paid
+      # slug on the ONE service that should spend, and nothing else will.
       # NOTE: this blueprint value does not update an existing service — change
       # AISERVICE__DEFAULTMODEL in the dashboard too, or delete it there so
       # appsettings.json applies.
       - key: AISERVICE__DEFAULTMODEL
-        value: "anthropic/claude-sonnet-5"
+        value: "z-ai/glm-5.2:free"
       # An OpenRouter key: starts with "sk-or-v1-". This used to be ZAI_API_KEY,
       # which must never be sent to OpenRouter. Credential lookup is now scoped
       # to the configured provider; a Z.ai key cannot act as a fallback here.
