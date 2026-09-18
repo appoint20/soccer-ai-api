@@ -177,14 +177,50 @@ public sealed class MatchDataProvider(
             .ToList();
     }
 
+    /// <summary>
+    /// Past meetings from the synced leagues and from the provider's own
+    /// head-to-head record, newest first.
+    /// </summary>
+    /// <remarks>
+    /// The fixtures table holds fourteen leagues, so a pairing whose history is
+    /// in a cup or a division below reads as no history at all — half the board
+    /// showed no head-to-head for that reason. The fetched meetings live in
+    /// their own table so they cannot reach team form or the training set; they
+    /// are projected onto Fixture here purely so one statistic calculator can
+    /// serve both sources. These projections are never tracked or saved.
+    /// </remarks>
     private async Task<List<Fixture>?> GetH2HMatches(int teamA, int teamB, DateTimeOffset before, int count, CancellationToken ct)
     {
         var matches = await dbContext.Fixtures
+            .AsNoTracking()
             .Where(f => ((f.HomeTeamId == teamA && f.AwayTeamId == teamB) ||
                          (f.HomeTeamId == teamB && f.AwayTeamId == teamA)) && f.Status == "FT" && f.Date < before)
             .ToListAsync(ct);
 
+        var fetched = await dbContext.HeadToHeadMeetings
+            .AsNoTracking()
+            .Where(m => ((m.HomeTeamId == teamA && m.AwayTeamId == teamB) ||
+                         (m.HomeTeamId == teamB && m.AwayTeamId == teamA)) && m.Date < before)
+            .ToListAsync(ct);
+
+        // A meeting inside a synced league is in both sources. The fixture row
+        // is the richer one, so it wins.
+        var knownApiIds = matches.Select(f => f.ApiId).ToHashSet();
+
         return matches
+            .Concat(fetched
+                .Where(m => !knownApiIds.Contains(m.ApiFixtureId))
+                .Select(m => new Fixture
+                {
+                    ApiId = m.ApiFixtureId,
+                    Date = m.Date,
+                    Status = "FT",
+                    HomeTeamId = m.HomeTeamId,
+                    AwayTeamId = m.AwayTeamId,
+                    HomeGoal = m.HomeGoals,
+                    AwayGoal = m.AwayGoals,
+                    LeagueId = m.LeagueId ?? 0
+                }))
             .OrderByDescending(f => f.Date)
             .Take(count)
             .ToList();

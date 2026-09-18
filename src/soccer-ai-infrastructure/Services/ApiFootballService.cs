@@ -31,48 +31,7 @@ public class ApiFootballService(
 
             foreach (var item in data.EnumerateArray())
             {
-                var fixture = item.GetProperty("fixture");
-                var status = fixture.GetProperty("status");
-                var teams = item.GetProperty("teams");
-                var goals = item.GetProperty("goals");
-                var score = item.GetProperty("score");
-                
-                // Venue Details
-                fixture.TryGetProperty("venue", out var venue);
-                var venueSurface = venue.ValueKind != JsonValueKind.Null && venue.TryGetProperty("surface", out var vs) ? vs.GetString() : null;
-                var venueCity = venue.ValueKind != JsonValueKind.Null && venue.TryGetProperty("city", out var vc) ? vc.GetString() : null;
-
-                // Weather Details
-                double? temp = null;
-                int? humidity = null;
-                string? weatherDesc = null;
-                if (item.TryGetProperty("fixture", out var f) && f.TryGetProperty("weather", out var weather))
-                {
-                    temp = weather.TryGetProperty("temp", out var t) && t.ValueKind != JsonValueKind.Null ? t.GetDouble() : null;
-                    humidity = weather.TryGetProperty("humidity", out var h) && h.ValueKind != JsonValueKind.Null ? h.GetInt32() : null;
-                    weatherDesc = weather.TryGetProperty("description", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetString() : null;
-                }
-
-                var apiFixture = new ApiFixture(
-                    ApiId: fixture.GetProperty("id").GetInt32(),
-                    Date: DateTimeOffset.Parse(fixture.GetProperty("date").GetString() ?? DateTimeOffset.UtcNow.ToString("O")),
-                    StatusShort: status.GetProperty("short").GetString() ?? "",
-                    HomeGoals: goals.GetProperty("home").ValueKind == JsonValueKind.Null ? null : goals.GetProperty("home").GetInt32(),
-                    AwayGoals: goals.GetProperty("away").ValueKind == JsonValueKind.Null ? null : goals.GetProperty("away").GetInt32(),
-                    HomeGoalsHalftime: GetHalftimeGoals(score, "home"),
-                    AwayGoalsHalftime: GetHalftimeGoals(score, "away"),
-                    HomeTeamApiId: teams.GetProperty("home").GetProperty("id").GetInt32(),
-                    HomeTeamName: teams.GetProperty("home").GetProperty("name").GetString() ?? "",
-                    AwayTeamApiId: teams.GetProperty("away").GetProperty("id").GetInt32(),
-                    AwayTeamName: teams.GetProperty("away").GetProperty("name").GetString() ?? "",
-                    VenueSurface: venueSurface,
-                    VenueCity: venueCity,
-                    Temp: temp,
-                    Humidity: humidity,
-                    WeatherDesc: weatherDesc
-                );
-                
-                fixtures.Add(apiFixture);
+                fixtures.Add(ParseFixture(item));
             }
             
             logger.LogInformation("Fetched {Count} fixtures for league {LeagueId}", fixtures.Count, leagueId);
@@ -88,6 +47,81 @@ public class ApiFootballService(
         }
 
         return fixtures;
+    }
+
+    public async Task<List<ApiFixture>> GetHeadToHeadAsync(
+        int homeTeamApiId, int awayTeamApiId, int last, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync(
+                $"/fixtures/headtohead?h2h={homeTeamApiId}-{awayTeamApiId}&last={last}", ct);
+            if (response is null || !response.Value.TryGetProperty("response", out var data) ||
+                data.ValueKind != JsonValueKind.Array)
+                return [];
+
+            // Only finished meetings carry a result to learn from. The provider
+            // also returns abandoned and awarded games, which have a status but
+            // no honest score.
+            return data.EnumerateArray().Select(ParseFixture)
+                .Where(f => f.StatusShort == "FT" && f.HomeGoals is not null && f.AwayGoals is not null)
+                .ToList();
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw; // Rate limit or rejected key: abort the run, do not report success.
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new Application.Exceptions.ExternalApiException(
+                "API-Football", "Head-to-head response could not be read.", innerException: ex);
+        }
+    }
+
+    /// <summary>One fixture object from any endpoint that returns the fixture shape.</summary>
+    private static ApiFixture ParseFixture(JsonElement item)
+    {
+            var fixture = item.GetProperty("fixture");
+            var status = fixture.GetProperty("status");
+            var teams = item.GetProperty("teams");
+            var goals = item.GetProperty("goals");
+            var score = item.GetProperty("score");
+            
+            // Venue Details
+            fixture.TryGetProperty("venue", out var venue);
+            var venueSurface = venue.ValueKind != JsonValueKind.Null && venue.TryGetProperty("surface", out var vs) ? vs.GetString() : null;
+            var venueCity = venue.ValueKind != JsonValueKind.Null && venue.TryGetProperty("city", out var vc) ? vc.GetString() : null;
+
+            // Weather Details
+            double? temp = null;
+            int? humidity = null;
+            string? weatherDesc = null;
+            if (item.TryGetProperty("fixture", out var f) && f.TryGetProperty("weather", out var weather))
+            {
+                temp = weather.TryGetProperty("temp", out var t) && t.ValueKind != JsonValueKind.Null ? t.GetDouble() : null;
+                humidity = weather.TryGetProperty("humidity", out var h) && h.ValueKind != JsonValueKind.Null ? h.GetInt32() : null;
+                weatherDesc = weather.TryGetProperty("description", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetString() : null;
+            }
+
+            return new ApiFixture(
+                ApiId: fixture.GetProperty("id").GetInt32(),
+                Date: DateTimeOffset.Parse(fixture.GetProperty("date").GetString() ?? DateTimeOffset.UtcNow.ToString("O")),
+                StatusShort: status.GetProperty("short").GetString() ?? "",
+                HomeGoals: goals.GetProperty("home").ValueKind == JsonValueKind.Null ? null : goals.GetProperty("home").GetInt32(),
+                AwayGoals: goals.GetProperty("away").ValueKind == JsonValueKind.Null ? null : goals.GetProperty("away").GetInt32(),
+                HomeGoalsHalftime: GetHalftimeGoals(score, "home"),
+                AwayGoalsHalftime: GetHalftimeGoals(score, "away"),
+                HomeTeamApiId: teams.GetProperty("home").GetProperty("id").GetInt32(),
+                HomeTeamName: teams.GetProperty("home").GetProperty("name").GetString() ?? "",
+                AwayTeamApiId: teams.GetProperty("away").GetProperty("id").GetInt32(),
+                AwayTeamName: teams.GetProperty("away").GetProperty("name").GetString() ?? "",
+                VenueSurface: venueSurface,
+                VenueCity: venueCity,
+                Temp: temp,
+                Humidity: humidity,
+                WeatherDesc: weatherDesc
+            );
+            
     }
 
     private static int? GetHalftimeGoals(JsonElement score, string team)

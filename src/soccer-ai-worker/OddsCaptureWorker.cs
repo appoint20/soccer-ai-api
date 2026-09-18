@@ -40,6 +40,11 @@ public sealed class OddsCaptureWorker(
                 // exists, so they take what budget is left rather than
                 // competing for it.
                 await syncService.CaptureUpcomingInjuriesAsync(stoppingToken);
+
+                // Last, and cheapest over time: a pairing is asked about once
+                // and the answer never expires, so this settles to zero calls
+                // once the board is covered.
+                await syncService.CaptureHeadToHeadAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {

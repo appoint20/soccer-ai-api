@@ -158,6 +158,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<double?>("Goals23Odds")
                         .HasColumnType("double precision");
 
+                    b.Property<DateTimeOffset?>("HeadToHeadCheckedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("HomeBallPossession")
                         .HasColumnType("integer");
 
@@ -510,6 +513,50 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.HasIndex("CreatedAtUtc");
 
                     b.ToTable("GoalRateModelGenerations");
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.HeadToHeadMeeting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApiFixtureId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AwayGoals")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AwayTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CapturedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HomeGoals")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HomeTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LeagueId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiFixtureId")
+                        .IsUnique();
+
+                    b.HasIndex("AwayTeamId", "HomeTeamId", "Date");
+
+                    b.HasIndex("HomeTeamId", "AwayTeamId", "Date");
+
+                    b.ToTable("HeadToHeadMeetings", (string)null);
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.ModelForecast", b =>

@@ -13,6 +13,7 @@ public interface IApplicationDbContext
     DbSet<BacktestReport> BacktestReports { get; }
     DbSet<SyncState> SyncStates { get; }
     DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; }
+    DbSet<HeadToHeadMeeting> HeadToHeadMeetings { get; }
     DbSet<PublishedTicket> PublishedTickets { get; }
     DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
     DbSet<ModelForecast> ModelForecasts { get; }

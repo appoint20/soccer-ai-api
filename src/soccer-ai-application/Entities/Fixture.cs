@@ -66,6 +66,16 @@ public class Fixture
     /// prediction input.
     /// </summary>
     public DateTimeOffset? InjuriesCheckedAtUtc { get; set; }
+
+    /// <summary>
+    /// When this pairing's past meetings were last fetched from the provider.
+    /// </summary>
+    /// <remarks>
+    /// Marked whether or not meetings came back, so a pair that has genuinely
+    /// never played is asked about once rather than on every sync. Finished
+    /// matches do not change, so this is never re-checked for the same fixture.
+    /// </remarks>
+    public DateTimeOffset? HeadToHeadCheckedAtUtc { get; set; }
     /// <summary>Oldest provider update among the currently usable prices.</summary>
     public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
 

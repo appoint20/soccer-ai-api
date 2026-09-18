@@ -130,4 +130,17 @@ public sealed class SyncOptions
 
     /// <summary>Minimum age of a fixture's newest injury capture before refetching.</summary>
     public double InjuryRefreshIntervalHours { get; set; } = 6;
+
+    /// <summary>
+    /// How far ahead past meetings are fetched for. 0 disables the step.
+    /// </summary>
+    /// <remarks>
+    /// Generous, because the answer never expires: finished matches do not
+    /// change, so each fixture costs exactly one request, once. A week covers
+    /// the whole board the app shows.
+    /// </remarks>
+    public double HeadToHeadHorizonHours { get; set; } = 168;
+
+    /// <summary>How many past meetings to request per pairing.</summary>
+    public int HeadToHeadMeetings { get; set; } = 10;
 }

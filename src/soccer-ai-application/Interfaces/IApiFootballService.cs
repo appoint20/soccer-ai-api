@@ -81,6 +81,19 @@ public record FixtureDetail(
 public interface IApiFootballService
 {
     Task<List<ApiFixture>> GetFixturesAsync(int leagueId, int season);
+
+    /// <summary>
+    /// Finished meetings between two teams, across every competition the
+    /// provider covers.
+    /// </summary>
+    /// <remarks>
+    /// Our own fixtures table holds the fourteen synced leagues and nothing
+    /// else, so two teams who last met in a cup, a play-off or a division we
+    /// do not sync read as having never played. On production that hid the
+    /// head-to-head section for 103 of 203 upcoming matches.
+    /// </remarks>
+    Task<List<ApiFixture>> GetHeadToHeadAsync(
+        int homeTeamApiId, int awayTeamApiId, int last, CancellationToken ct = default);
     Task<(FixtureStats? Home, FixtureStats? Away)> GetBothTeamStatsAsync(int fixtureId);
 
     /// <summary>

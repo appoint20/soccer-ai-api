@@ -53,7 +53,8 @@ public class MigrationCompletenessTests
             [nameof(db.ModelForecasts)] = () => db.ModelForecasts.CountAsync(),
             [nameof(db.GoalRateModelGenerations)] = () => db.GoalRateModelGenerations.CountAsync(),
             [nameof(db.PredictionSnapshots)] = () => db.PredictionSnapshots.CountAsync(),
-            [nameof(db.FixtureInjuries)] = () => db.FixtureInjuries.CountAsync()
+            [nameof(db.FixtureInjuries)] = () => db.FixtureInjuries.CountAsync(),
+            [nameof(db.HeadToHeadMeetings)] = () => db.HeadToHeadMeetings.CountAsync()
         };
 
         foreach (var (name, count) in counts)
@@ -95,7 +96,7 @@ public class MigrationCompletenessTests
 
         await using var db = new ApplicationDbContext(options);
 
-        db.Model.GetEntityTypes().Should().HaveCount(14,
+        db.Model.GetEntityTypes().Should().HaveCount(15,
             "every entity must also be asserted in EveryEntityHasATableAfterMigrating");
     }
 

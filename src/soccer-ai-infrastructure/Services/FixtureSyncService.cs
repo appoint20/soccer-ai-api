@@ -576,6 +576,84 @@ public class FixtureSyncService(IApiFootballService apiService,
         return captured;
     }
 
+    public async Task<int> CaptureHeadToHeadAsync(CancellationToken ct)
+    {
+        const int maxFixturesPerRun = 120;
+        var opt = syncOptions.Value;
+        if (opt.HeadToHeadHorizonHours <= 0) return 0;
+
+        var now = DateTimeOffset.UtcNow;
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+        var horizon = now.AddHours(opt.HeadToHeadHorizonHours);
+
+        var upcoming = await dbContext.Fixtures
+            .Where(f => scopedLeagueIds.Contains(f.LeagueId) && f.Status == "NS" &&
+                        f.Date > now && f.Date <= horizon && f.HeadToHeadCheckedAtUtc == null)
+            .OrderBy(f => f.Date)
+            .Take(maxFixturesPerRun)
+            .ToListAsync(ct);
+
+        if (upcoming.Count == 0) return 0;
+
+        var captured = 0;
+        var stored = 0;
+        foreach (var fixture in upcoming)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // Enrichment yields to the budget, exactly as absences do: a price
+            // decides whether a pick can be published, a past meeting does not.
+            if (quota.IsDailyQuotaCritical)
+            {
+                logger.LogWarning("[H2H] Daily budget critical — stopping head-to-head capture");
+                break;
+            }
+
+            var meetings = await apiService.GetHeadToHeadAsync(
+                fixture.HomeTeamId, fixture.AwayTeamId, opt.HeadToHeadMeetings, ct);
+
+            // Marked either way. A pair that has genuinely never met is asked
+            // about once, not once per sync for the life of the fixture.
+            fixture.HeadToHeadCheckedAtUtc = now;
+            captured++;
+
+            if (meetings.Count > 0)
+            {
+                var known = await dbContext.HeadToHeadMeetings
+                    .Where(m => (m.HomeTeamId == fixture.HomeTeamId && m.AwayTeamId == fixture.AwayTeamId) ||
+                                (m.HomeTeamId == fixture.AwayTeamId && m.AwayTeamId == fixture.HomeTeamId))
+                    .Select(m => m.ApiFixtureId)
+                    .ToListAsync(ct);
+
+                foreach (var meeting in meetings.Where(m => !known.Contains(m.ApiId))
+                             .DistinctBy(m => m.ApiId))
+                {
+                    dbContext.HeadToHeadMeetings.Add(new HeadToHeadMeeting
+                    {
+                        ApiFixtureId = meeting.ApiId,
+                        HomeTeamId = meeting.HomeTeamApiId,
+                        AwayTeamId = meeting.AwayTeamApiId,
+                        Date = meeting.Date,
+                        HomeGoals = meeting.HomeGoals!.Value,
+                        AwayGoals = meeting.AwayGoals!.Value,
+                        CapturedAtUtc = now
+                    });
+                    stored++;
+                }
+            }
+
+            await dbContext.SaveChangesAsync(ct);
+            await Task.Delay(quota.SuggestedDelay, ct);
+        }
+
+        if (captured > 0)
+            logger.LogInformation(
+                "[H2H] Checked {Count} fixture(s) for past meetings; stored {Stored} new meeting(s)",
+                captured, stored);
+
+        return captured;
+    }
+
     public async Task<DateOddsReport> CaptureDateOddsAsync(DateOnly date, CancellationToken ct)
     {
         var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);

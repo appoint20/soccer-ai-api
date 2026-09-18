@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<BacktestReport> BacktestReports { get; init; }
     public DbSet<SyncState> SyncStates { get; init; }
     public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
+    public DbSet<HeadToHeadMeeting> HeadToHeadMeetings { get; init; }
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
     public DbSet<ModelForecast> ModelForecasts { get; init; }
@@ -186,6 +187,20 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.ToTable("FixtureOddsQuotes");
+        });
+
+        // ── HeadToHeadMeeting (past meetings from any competition) ───────────
+        modelBuilder.Entity<HeadToHeadMeeting>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.HasIndex(m => m.ApiFixtureId).IsUnique();
+
+            // The panel asks for one pair's recent meetings, and a pair arrives
+            // in either role, so both orders are read through this index.
+            entity.HasIndex(m => new { m.HomeTeamId, m.AwayTeamId, m.Date });
+            entity.HasIndex(m => new { m.AwayTeamId, m.HomeTeamId, m.Date });
+
+            entity.ToTable("HeadToHeadMeetings");
         });
 
         // ── PublishedTicket (the live results ledger) ────────────────────────

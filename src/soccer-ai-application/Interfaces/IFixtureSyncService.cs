@@ -33,4 +33,10 @@ public interface IFixtureSyncService
     /// many fixtures were fetched.
     /// </summary>
     Task<int> CaptureUpcomingInjuriesAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Fetches past meetings for upcoming fixtures whose pairing has not been
+    /// asked about yet. Returns how many fixtures were checked.
+    /// </summary>
+    Task<int> CaptureHeadToHeadAsync(CancellationToken ct);
 }
