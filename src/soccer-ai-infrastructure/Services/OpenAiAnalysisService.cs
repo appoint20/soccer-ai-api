@@ -269,7 +269,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                         results.Any(r => !expected.Contains(r.FixtureId)))
                         throw new InvalidDataException("Model returned missing, duplicate or unexpected fixture IDs.");
                     foreach (var result in results)
-                        if (AiNarrativeIntegrity.InvalidResult(result) is { } invalid)
+                        if ((AiNarrativeIntegrity.InvalidResult(result) ?? AiNarrativeIntegrity.InvalidAnalysisLength(result)) is { } invalid)
                             throw new InvalidDataException($"Invalid AI response: {invalid}.");
                     var captured = DateTimeOffset.UtcNow;
                     string Hash(string text) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
@@ -380,15 +380,20 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         form strings, statistical laundry lists, promises of safety, certainty, profit, or invented context.
         Never infer injuries, tactics, lineups, weather or motivation from results.
 
-        Each language must contain EXACTLY four summary sentences (one string per sentence, maximum 260
-        characters each). Use the room: a reader decides from these four sentences whether the match is
-        worth their money, so each one must carry real content about THIS match. Sentence 1: what kind of
-        match the data describes. Sentence 2: the likely scoring pattern and which side drives it.
-        Sentence 3: the clearest contrast or conflict in the evidence. Sentence 4: the main uncertainty,
-        including what the sample size does and does not support. Synthesize the data instead of listing
-        each team's averages, and never pad with filler. These four sentences must contain NO betting
-        recommendation. Bookmaker prices decide nothing here: never mention odds, prices or value.
-        The application appends two sentences naming the actual final selections.
+        SUMMARY: Write four to six complete match-context sentences in EACH language, one sentence per
+        summaryLines entry, maximum 260 characters per entry. Aim for 70–120 words of context, with at least
+        50 words in each language. The application appends two authoritative decision sentences, giving the
+        reader SIX TO EIGHT sentences in total. Do not write those closing decision sentences yourself.
+        Start with the overall match picture; explain how the home side's attack compares with the away
+        defence and how the away attack compares with the home defence. Connect those observations to the
+        likely scoring pattern. Then explain the strongest counterargument or uncertainty and what the
+        available sample can support. Combine related points when four sentences are enough; use five or
+        six when there is more evidence to explain. Each sentence must help the reader understand THIS match.
+        Explain why the evidence matters instead of reciting averages. Use at most two decisive numerical
+        facts; translate form strings into ordinary language. When evidence is missing, explain the limit
+        without inventing an advantage. No filler, clipped labels or repeated ideas. End each sentence with
+        punctuation and avoid abbreviations. German must be equally detailed, not a shortened translation.
+        These context sentences must contain NO betting recommendation. Never mention odds, prices or value.
 
         For EVERY supplied market, return EXACTLY five checks, maximum 260 characters each.
         Check 1 rewrites Facts[0], check 2 Facts[1], and so on, in exactly the same order.
@@ -565,10 +570,13 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             WRITING — a reader decides from this text whether the match is worth their money, and which market
             to take. Write plain English and German; the German is a full translation of the same content, never
             a shorter note. Write for someone who knows football but not statistics.
-            - analysis: five to seven sentences, between 600 and 1100 characters. In this order: what kind of
-              match the data describes; the clearest scoring signal on each side; the one contrast or conflict in
-              the evidence; what would have to happen for the call to fail; and how much the sample size allows
-              you to say. Synthesize the picture — never list the supplied statistics back.
+            - analysis: FOUR TO EIGHT complete sentences in each language; aim for six sentences and 90–150
+              words, with at least 60 words. Start with the overall match picture, then explain how each
+              attack compares with the opposing defence and what that implies for the scoring pattern.
+              Explain the strongest counterargument and the uncertainty from the available sample.
+              Connect these points into a readable summary, not a list of averages or clipped labels.
+              Use at most two decisive numerical facts. Do not invent detail to reach the length target.
+              End sentences with punctuation and avoid abbreviations. Keep both languages equally detailed.
             - predictionReason: two sentences. The first names the decisive evidence for the recommendation; the
               second names the main risk to it.
             - consensusEvaluation: one or two sentences on how far the evidence agrees with itself.
@@ -577,17 +585,17 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             No promises of safe bets, certainty or profit, and no filler such as "this is an interesting match".
             recommendation/bestBet name the most supported MARKET OPINION, or "Avoid" if none.
             Before returning, check every object: the fixtureId is unchanged, the flags do not contradict each
-            other, no odds or invented numbers appear, and each analysis runs to at least five sentences in both
-            languages.
+            other, no odds or invented numbers appear, and each analysis contains four to eight complete
+            sentences and at least 60 words in both languages.
             Return exactly one object per input fixture, preserving fixtureId, in a JSON ARRAY with this structure:
             [{"fixtureId":123,"recommendation":"BTTS","confidence":60,
               "over25Qualified":false,"bttsQualified":true,"under25Qualified":false,"goals23Qualified":false,
               "homeWinQualified":false,"awayWinQualified":false,"bttsAndOver25Qualified":null,
               "bestBet":"BTTS","overallConfidence":60,
-              "en":{"predictionReason":"One evidence sentence.","analysis":"Four short context sentences.",
+              "en":{"predictionReason":"Two sentences: decisive evidence, then the main risk.","analysis":"Four to eight complete match-summary sentences, at least 60 words; explain the evidence instead of listing it.",
                 "consensusEvaluation":"Short evidence assessment, not a final betting recommendation.",
                 "summaries":{"btts":"...","over25":"...","under25":"...","goals23":"...","homeWin":"...","awayWin":"..."}},
-              "de":{"predictionReason":"Ein Satz zur Datenlage.","analysis":"Vier kurze Sätze zum Spiel.",
+              "de":{"predictionReason":"Zwei Sätze: stärkster Hinweis, dann das Hauptrisiko.","analysis":"Vier bis acht vollständige Sätze zum Spiel, mindestens 60 Wörter; die Daten erklären statt aufzählen.",
                 "consensusEvaluation":"Kurze Dateneinschätzung, keine endgültige Wettempfehlung.",
                 "summaries":{"btts":"...","over25":"...","under25":"...","goals23":"...","homeWin":"...","awayWin":"..."}}}]
             Output only JSON; no markdown or surrounding explanation.

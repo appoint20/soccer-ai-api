@@ -8,10 +8,10 @@ using SoccerAi.Application.Services.Decisions;
 
 namespace SoccerAi.Application.Services.Analysis;
 
-/// <summary>Grounds presentation in the final audit and invalidates text after any decision/price change.</summary>
+/// <summary>Grounds presentation in the final audit and invalidates text after evidence or decision changes.</summary>
 public static class DecisionExplanationPolicy
 {
-    public const int Version = 1;
+    public const int Version = 2;
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
     public static AiDecisionExplanation? Read(string? json)
     {
@@ -23,7 +23,10 @@ public static class DecisionExplanationPolicy
         Version, match.Id, match.Date, match.HomeTeam, match.AwayTeam, match.HomeStats, match.AwayStats, match.H2H,
         (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).OrderBy(m => m.Market)
         .Select(m => new DecisionExplanationMarket(m.Market, m.Selection, m.Qualified, m.GateOutcome,
-            m.Probability, m.Odds, match.OddsBookmaker, Facts(m, "en"))).ToList(),
+            // Prices are informational and the writer may not discuss them.
+            // Exclude them from both the prompt and its cache identity so a quote
+            // refresh cannot reduce an otherwise current summary to two lines.
+            m.Probability, null, null, Facts(m, "en"))).ToList(),
         (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified).Select(m => m.Market).Order().ToList());
 
     public static string Hash(DecisionExplanationInput input) =>
@@ -33,17 +36,24 @@ public static class DecisionExplanationPolicy
         explanation is not null && explanation.FixtureId == match.Id &&
         explanation.InputHash == Hash(Input(match)) && Invalid(explanation, Input(match)) is null;
 
-    public static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input)
+    public static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input) => Invalid(result, input, false);
+
+    private static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input, bool legacy)
     {
         if (result is null || result.FixtureId != input.FixtureId) return "wrong or missing fixture";
         foreach (var block in new[] { result.En, result.De })
         {
-            if (block?.SummaryLines is not { Count: 4 } || block.Markets is null) return "four summary sentences required";
+            if (block?.SummaryLines is not { Count: >= 4 and <= 6 } || block.Markets is null)
+                return "four to six context sentences required before the two final decision sentences";
+            if (legacy && block.SummaryLines.Count != 4) return "legacy summary must have four context sentences";
             if (!block.Markets.Select(m => m.Market).Order().SequenceEqual(input.Markets.Select(m => m.Market).Order()))
                 return "market list differs from final audit";
             if (block.SummaryLines.Any(s => !ShortSentence(s, 260) ||
+                (!legacy && (!AiNarrativeIntegrity.IsCompleteSentence(s) || AiNarrativeIntegrity.SentenceCount(s) != 1)) ||
                 Regex.IsMatch(s, @"\b(bet|bets|pick|picks|recommend|selected|wette|wetten|empfehlen|empfehlung)\b", RegexOptions.IgnoreCase)))
-                return "summary must contain four short context sentences without betting advice";
+                return "summary must contain complete context sentences without betting advice";
+            if (!legacy && AiNarrativeIntegrity.WordCount(string.Join(" ", block.SummaryLines)) < 50)
+                return "summary needs at least 50 words of match context, not terse labels";
             var supportedNumbers = Numbers(JsonSerializer.Serialize(input)).ToHashSet();
             if (block.SummaryLines.SelectMany(Numbers).Except(supportedNumbers).Any())
                 return "summary introduces an unsupported number";
@@ -71,7 +81,7 @@ public static class DecisionExplanationPolicy
     {
         match.PresentationLanguage = lang ?? match.PresentationLanguage;
         var de = match.PresentationLanguage == "de";
-        var current = IsCurrent(match, match.DecisionExplanation);
+        var current = IsCurrent(match, match.DecisionExplanation) || IsHistoricalLegacyCurrent(match);
         var block = de ? match.DecisionExplanation?.De : match.DecisionExplanation?.En;
         var lines = current ? block!.SummaryLines.ToList() : new List<string>();
         var markets = (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).ToList();
@@ -105,6 +115,26 @@ public static class DecisionExplanationPolicy
             Market = m.Market,
             Checks = current ? block!.Markets.Single(x => x.Market == m.Market).Checks : Facts(m, match.PresentationLanguage).ToList()
         }).ToList());
+    }
+
+    // A completed fixture cannot get a new pre-match explanation. Preserve its
+    // existing text only when the original v1 input hash still matches exactly.
+    // Upcoming fixtures use v2 and are regenerated by the normal AI sync.
+    private static bool IsHistoricalLegacyCurrent(MatchAnalysis match)
+    {
+        if (match.Date > DateTimeOffset.UtcNow || match.DecisionExplanation is not { } explanation)
+            return false;
+        var input = Input(match);
+        var legacyInput = input with
+        {
+            Version = 1,
+            Markets = input.Markets.Select(m => m with
+            {
+                Odds = match.DecisionAudit!.Markets.Single(a => a.Market == m.Market).Odds,
+                Bookmaker = match.OddsBookmaker
+            }).ToList()
+        };
+        return explanation.InputHash == Hash(legacyInput) && Invalid(explanation, legacyInput, true) is null;
     }
 
     private static string Num(double? n) => n?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—";

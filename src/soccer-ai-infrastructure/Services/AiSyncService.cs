@@ -19,6 +19,16 @@ public class AiSyncService(
     : IAiSyncService
 {
     /// <summary>
+    /// Minimum gap between narrative requests.
+    /// </summary>
+    /// <remarks>
+    /// OpenRouter allows a free model 20 requests a minute, and the sync spends
+    /// one request per fixture, so three seconds is the floor that fits. It is
+    /// applied to every attempt — see the loop's finally block.
+    /// </remarks>
+    private static readonly TimeSpan RequestSpacing = TimeSpan.FromSeconds(3);
+
+    /// <summary>
     /// Days of upcoming fixtures a run covers. The product sells analysis of the
     /// coming board, so the default is a horizon rather than a batch size.
     /// </summary>
@@ -295,9 +305,6 @@ public class AiSyncService(
                 totalProcessed += results.Count;
 
                 logger.LogInformation("[AiSync] Batch {Num} fully persisted and snapshots updated.", i + 1);
-                
-                // Rate limiting to respect quota
-                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch (ExternalApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized
@@ -310,6 +317,16 @@ public class AiSyncService(
             {
                 failedIds.Add(chunkList[0].FixtureId);
                 logger.LogError(ex, "[AiSync] Error processing batch starting at index {Idx}", i);
+            }
+            finally
+            {
+                // Paces every attempt, not just the ones that worked. The wait
+                // used to sit after a successful save, so a run of rejected
+                // responses — which is what a free model does when it returns
+                // malformed JSON — fired requests back to back and tripped
+                // OpenRouter's 20-per-minute free-tier ceiling within seconds.
+                if (!cancellationToken.IsCancellationRequested)
+                    await Task.Delay(RequestSpacing, cancellationToken);
             }
         }
 
