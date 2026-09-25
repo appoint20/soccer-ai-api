@@ -82,6 +82,13 @@ public sealed class MatchAnalysis
     /// </remarks>
     [JsonPropertyName("h2h")]
     public HeadToHeadModel? H2H { get; init; }
+
+    /// <summary>
+    /// The provider's own read of this fixture — outcome percentages and a
+    /// side-by-side comparison. Null when it publishes none for the division.
+    /// </summary>
+    [JsonPropertyName("provider_prediction")]
+    public ProviderPrediction? Provider { get; init; }
     public AiAnalysisDto? Ai { get; set; }
     public AiDecisionExplanation? DecisionExplanation { get; set; }
     public string PresentationLanguage { get; set; } = "en";

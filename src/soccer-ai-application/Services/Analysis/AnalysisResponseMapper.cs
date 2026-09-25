@@ -69,6 +69,7 @@ public class AnalysisResponseMapper
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
             H2H = analysis.H2H,
+            Provider = analysis.Provider,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
                 ? new AiAnalysisDto()
                 : aiAnalysis,

@@ -28,6 +28,9 @@ public sealed class FixtureAnalysisResult
     public required TeamStatsResponse TeamStats { get; init; }
     public required StatisticalModels Models { get; init; }
     public required HeadToHeadModel H2H { get; init; }
+
+    /// <summary>The provider's own read of the fixture, when it publishes one.</summary>
+    public ProviderPrediction? Provider { get; init; }
     public WeightedPrediction? Prediction { get; init; }
 
     /// <summary>Pre-isotonic probabilities (what the math cache stores — training data).</summary>

@@ -38,6 +38,31 @@ public sealed class MatchAnalysisService(
         var data = await dataProvider.LoadAsync(fixture, ct);
         stats = data.TeamStats;
         h2h = data.H2H;
+        var providerRow = await dbContext.FixturePredictions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.FixtureId == fixture.Id, ct);
+        var provider = providerRow is null ? null : new ProviderPrediction
+        {
+            PercentHome = providerRow.PercentHome, PercentDraw = providerRow.PercentDraw,
+            PercentAway = providerRow.PercentAway, Form = providerRow.Form,
+            Attack = providerRow.Attack, Defence = providerRow.Defence,
+            Poisson = providerRow.Poisson, HeadToHead = providerRow.HeadToHead,
+            Goals = providerRow.Goals, Total = providerRow.Total,
+            Advice = providerRow.Advice, WinnerName = providerRow.WinnerName,
+            UnderOver = providerRow.UnderOver,
+            Home = new TeamRecentForm
+            {
+                Played = providerRow.HomePlayed, Form = providerRow.HomeForm,
+                Attack = providerRow.HomeAttack, Defence = providerRow.HomeDefence,
+                GoalsForAverage = providerRow.HomeGoalsFor, GoalsAgainstAverage = providerRow.HomeGoalsAgainst
+            },
+            Away = new TeamRecentForm
+            {
+                Played = providerRow.AwayPlayed, Form = providerRow.AwayForm,
+                Attack = providerRow.AwayAttack, Defence = providerRow.AwayDefence,
+                GoalsForAverage = providerRow.AwayGoalsFor, GoalsAgainstAverage = providerRow.AwayGoalsAgainst
+            }
+        };
         homeRest = data.HomeRestDays;
         awayRest = data.AwayRestDays;
 
@@ -125,6 +150,7 @@ public sealed class MatchAnalysisService(
             TeamStats = stats,
             Models = models,
             H2H = h2h,
+            Provider = provider,
             Prediction = prediction,
             Decisions = decisions,
             LeagueName = LeagueCatalog.Name(fixture.LeagueId),

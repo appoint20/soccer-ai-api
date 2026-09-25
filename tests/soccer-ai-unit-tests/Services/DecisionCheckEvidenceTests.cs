@@ -109,4 +109,96 @@ public class DecisionCheckEvidenceTests
 
         m.Presentation!.Markets.Single().Checks.Should().NotContain(c => c.Contains("Not fired"));
     }
+
+    /// <summary>
+    /// The two questions a reader asks first — who has the history, and who is
+    /// expected to score — answered with numbers and both team names. These
+    /// come from the provider, so they exist where no bookmaker price does.
+    /// </summary>
+    [Fact]
+    public void HeadToHeadAndExpectedGoalsAppearWithBothTeamsNamed()
+    {
+        var m = Match(Confirm("btts_confirm_h2h_rate", "Both teams scored in 80% of last 5 meetings"));
+        m = new MatchAnalysis
+        {
+            Id = m.Id, Date = m.Date, HomeTeam = m.HomeTeam, AwayTeam = m.AwayTeam,
+            Prediction = m.Prediction, DecisionAudit = m.DecisionAudit,
+            Provider = new ProviderPrediction
+            {
+                HeadToHead = .68, Goals = .55, Attack = .53,
+                Home = new TeamRecentForm { Played = 4, GoalsForAverage = 2.3, GoalsAgainstAverage = 0.5 },
+                Away = new TeamRecentForm { Played = 4, GoalsForAverage = 1.0, GoalsAgainstAverage = 2.0 }
+            }
+        };
+
+        DecisionExplanationPolicy.Refresh(m, "en");
+        var checks = string.Join(" | ", m.Presentation!.Markets.Single().Checks);
+
+        checks.Should().Contain("Head to head favours Barnsley 68% to 32%");
+        checks.Should().Contain("Expected goals favour Barnsley 55% to 45%");
+        checks.Should().Contain("Barnsley scored 2.3 and conceded 0.5 a game in their last 4");
+        checks.Should().Contain("Preston scored 1.0 and conceded 2.0 a game in their last 4");
+    }
+
+    /// <summary>
+    /// Numbers need no rewriting, so these lines are written in both languages
+    /// here and never wait on the writer — unlike the measured evidence.
+    /// </summary>
+    [Fact]
+    public void TheComparisonsAreGermanForGermanReaders()
+    {
+        var m = new MatchAnalysis
+        {
+            Id = 1, Date = Now.AddHours(8), HomeTeam = "Barnsley", AwayTeam = "Preston",
+            Prediction = new PredictionResponse(),
+            DecisionAudit = new(2, [new("btts", .68, .6, true, 1, 0, true, [])
+                { Selection = "BTTS", GateOutcome = GateOutcome.Qualified }], Now),
+            Provider = new ProviderPrediction { HeadToHead = .68, Goals = .55 }
+        };
+
+        DecisionExplanationPolicy.Refresh(m, "de");
+        var checks = string.Join(" | ", m.Presentation!.Markets.Single().Checks);
+
+        checks.Should().Contain("Direkter Vergleich: Barnsley 68%, Preston 32%");
+        checks.Should().Contain("Erwartete Tore: Barnsley 55%, Preston 45%");
+    }
+
+    /// <summary>
+    /// A German build server rendered "2,3" into the English sentence, which
+    /// reads as a different number. The notation follows the text, not the host.
+    /// </summary>
+    [Fact]
+    public void GoalAveragesUseTheNotationOfTheLanguageTheyAreWrittenIn()
+    {
+        MatchAnalysis WithProvider() => new()
+        {
+            Id = 1, Date = Now.AddHours(8), HomeTeam = "Barnsley", AwayTeam = "Preston",
+            Prediction = new PredictionResponse(),
+            DecisionAudit = new(2, [new("btts", .68, .6, true, 0, 0, true, [])
+                { Selection = "BTTS", GateOutcome = GateOutcome.Qualified }], Now),
+            Provider = new ProviderPrediction
+            {
+                Home = new TeamRecentForm { Played = 4, GoalsForAverage = 2.3, GoalsAgainstAverage = 0.5 }
+            }
+        };
+
+        var english = WithProvider(); DecisionExplanationPolicy.Refresh(english, "en");
+        var german = WithProvider(); DecisionExplanationPolicy.Refresh(german, "de");
+
+        string.Join(" ", english.Presentation!.Markets.Single().Checks)
+            .Should().Contain("scored 2.3 and conceded 0.5");
+        string.Join(" ", german.Presentation!.Markets.Single().Checks)
+            .Should().Contain("erzielte 2,3 und kassierte 0,5");
+    }
+
+    /// <summary>A fixture the provider does not cover simply has fewer lines.</summary>
+    [Fact]
+    public void NoProviderReadMeansNoComparisonLines()
+    {
+        var m = Match(Confirm("btts_confirm_h2h_rate", "Both teams scored in 80% of last 5 meetings"));
+
+        DecisionExplanationPolicy.Refresh(m, "en");
+
+        m.Presentation!.Markets.Single().Checks.Should().NotContain(c => c.Contains("Head to head favours"));
+    }
 }

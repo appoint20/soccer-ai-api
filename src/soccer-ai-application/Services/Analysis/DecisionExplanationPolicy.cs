@@ -26,7 +26,7 @@ public static class DecisionExplanationPolicy
             // Prices are informational and the writer may not discuss them.
             // Exclude them from both the prompt and its cache identity so a quote
             // refresh cannot reduce an otherwise current summary to two lines.
-            m.Probability, null, null, Facts(m, "en"))).ToList(),
+            m.Probability, null, null, Facts(m, "en", match))).ToList(),
         (match.DecisionAudit?.Markets ?? []).Where(m => m.Qualified).Select(m => m.Market).Order().ToList());
 
     public static string Hash(DecisionExplanationInput input) =>
@@ -115,7 +115,7 @@ public static class DecisionExplanationPolicy
         }
         match.Presentation = new(current, lines, markets.Select(m =>
         {
-            var (text, outcomes) = Checks(m, match.PresentationLanguage);
+            var (text, outcomes) = Checks(m, match.PresentationLanguage, match);
             return new AiMarketExplanation
             {
                 Market = m.Market,
@@ -146,6 +146,16 @@ public static class DecisionExplanationPolicy
         };
         return explanation.InputHash == Hash(legacyInput) && Invalid(explanation, legacyInput, true) is null;
     }
+
+    /// <summary>
+    /// A goals-per-game figure in the reader's own notation.
+    /// </summary>
+    /// <remarks>
+    /// Never the machine's culture: a German build server rendered "2,3" into
+    /// the English sentence, which reads as a different number entirely.
+    /// </remarks>
+    private static string Goals(double value, bool de) =>
+        value.ToString("0.0", de ? new CultureInfo("de-DE") : CultureInfo.InvariantCulture);
 
     private static string Num(double? n) => n?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—";
 
@@ -201,7 +211,7 @@ public static class DecisionExplanationPolicy
     /// may assume five.
     /// </remarks>
     private static (IReadOnlyList<string> Text, IReadOnlyList<bool?> Outcomes) Checks(
-        MarketRuleAudit m, string lang)
+        MarketRuleAudit m, string lang, MatchAnalysis? match = null)
     {
         var de = lang == "de";
         var text = new List<string>();
@@ -237,6 +247,9 @@ public static class DecisionExplanationPolicy
                 m.VetoesFired == 0);
         }
 
+        foreach (var (line, _) in ComparisonLines(match, de))
+            Add(line, null);
+
         Add(m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.")
             : m.AiAgrees is false ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
             : (de ? "Für diesen Markt liegt keine KI-Einschätzung vor." : "No AI opinion is available for this market."),
@@ -258,6 +271,48 @@ public static class DecisionExplanationPolicy
         return ".!?".Contains(capitalised[^1]) ? capitalised : capitalised + ".";
     }
 
-    private static IReadOnlyList<string> Facts(MarketRuleAudit m, string lang) =>
-        Checks(m, lang).Text;
+    private static IReadOnlyList<string> Facts(MarketRuleAudit m, string lang, MatchAnalysis? match = null) =>
+        Checks(m, lang, match).Text;
+
+    /// <summary>
+    /// The head-to-head and expected-goals comparisons, in both languages.
+    /// </summary>
+    /// <remarks>
+    /// These come from the provider's own read of the fixture, so they are
+    /// available where a bookmaker price is not, and they answer the two
+    /// questions a reader asks first: who has the history, and who is expected
+    /// to score. Unlike the measured evidence they are numbers rather than
+    /// English sentences, so both languages are written here and neither waits
+    /// on the writer.
+    /// </remarks>
+    private static IEnumerable<(string Line, bool? Outcome)> ComparisonLines(MatchAnalysis? match, bool de)
+    {
+        if (match?.Provider is not { } p) yield break;
+        var home = string.IsNullOrWhiteSpace(match.HomeTeam) ? (de ? "Heim" : "Home") : match.HomeTeam;
+        var away = string.IsNullOrWhiteSpace(match.AwayTeam) ? (de ? "Auswärts" : "Away") : match.AwayTeam;
+
+        if (p.HeadToHead is { } h2h)
+            yield return (de
+                ? $"Direkter Vergleich: {home} {Pct(h2h)}, {away} {Pct(1 - h2h)}."
+                : $"Head to head favours {home} {Pct(h2h)} to {Pct(1 - h2h)}.", null);
+
+        if (p.Goals is { } goals)
+            yield return (de
+                ? $"Erwartete Tore: {home} {Pct(goals)}, {away} {Pct(1 - goals)}."
+                : $"Expected goals favour {home} {Pct(goals)} to {Pct(1 - goals)}.", null);
+
+        if (p.Attack is { } att)
+            yield return (de
+                ? $"Angriff: {home} {Pct(att)}, {away} {Pct(1 - att)}."
+                : $"Attacking strength: {home} {Pct(att)}, {away} {Pct(1 - att)}.", null);
+
+        foreach (var (side, name) in new[] { (p.Home, home), (p.Away, away) })
+        {
+            if (side is not { Played: > 0 } recent) continue;
+            if (recent.GoalsForAverage is not { } scored || recent.GoalsAgainstAverage is not { } conceded) continue;
+            yield return (de
+                ? $"{name} erzielte {Goals(scored, true)} und kassierte {Goals(conceded, true)} Tore pro Spiel in den letzten {recent.Played}."
+                : $"{name} scored {Goals(scored, false)} and conceded {Goals(conceded, false)} a game in their last {recent.Played}.", null);
+        }
+    }
 }
