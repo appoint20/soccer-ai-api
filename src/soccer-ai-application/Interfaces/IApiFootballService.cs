@@ -94,6 +94,17 @@ public interface IApiFootballService
     /// </remarks>
     Task<List<ApiFixture>> GetHeadToHeadAsync(
         int homeTeamApiId, int awayTeamApiId, int last, CancellationToken ct = default);
+
+    /// <summary>
+    /// The provider's own prediction for a fixture: outcome percentages, a
+    /// side-by-side comparison and each side's recent scoring.
+    /// </summary>
+    /// <remarks>
+    /// None of it involves a price, which is why it can carry a match panel on
+    /// its own. Null when the provider has nothing for this fixture — common
+    /// for a lower division, and not an error.
+    /// </remarks>
+    Task<ProviderPrediction?> GetPredictionAsync(int fixtureApiId, CancellationToken ct = default);
     Task<(FixtureStats? Home, FixtureStats? Away)> GetBothTeamStatsAsync(int fixtureId);
 
     /// <summary>

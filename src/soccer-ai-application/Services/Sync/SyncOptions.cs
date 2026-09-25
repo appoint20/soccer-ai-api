@@ -143,4 +143,13 @@ public sealed class SyncOptions
 
     /// <summary>How many past meetings to request per pairing.</summary>
     public int HeadToHeadMeetings { get; set; } = 10;
+
+    /// <summary>How far ahead the provider's prediction is fetched. 0 disables it.</summary>
+    public double PredictionHorizonHours { get; set; } = 120;
+
+    /// <summary>
+    /// How close to kickoff the one refresh happens. The prediction is built on
+    /// form and availability, which stop moving about a day out.
+    /// </summary>
+    public double PredictionFinalWindowHours { get; set; } = 24;
 }

@@ -233,6 +233,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.Property<double?>("Over25Odds")
                         .HasColumnType("double precision");
 
+                    b.Property<DateTimeOffset?>("PredictionCheckedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("StatisticsUpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -477,6 +480,106 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                     b.HasIndex("FixtureId", "Market");
 
                     b.ToTable("FixtureOddsQuotes", (string)null);
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.FixturePrediction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Advice")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<double?>("Attack")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AwayAttack")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AwayDefence")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AwayForm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AwayGoalsAgainst")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AwayGoalsFor")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("AwayPlayed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CapturedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Defence")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("FixtureId")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("Form")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Goals")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HeadToHead")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HomeAttack")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HomeDefence")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HomeForm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HomeGoalsAgainst")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("HomeGoalsFor")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("HomePlayed")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("PercentAway")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("PercentDraw")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("PercentHome")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Poisson")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Total")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("UnderOver")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("WinnerName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixtureId")
+                        .IsUnique();
+
+                    b.ToTable("FixturePredictions", (string)null);
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.GoalRateModelGeneration", b =>
@@ -983,6 +1086,15 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
                 });
 
             modelBuilder.Entity("SoccerAi.Application.Entities.FixtureOddsQuote", b =>
+                {
+                    b.HasOne("SoccerAi.Application.Entities.Fixture", null)
+                        .WithMany()
+                        .HasForeignKey("FixtureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.FixturePrediction", b =>
                 {
                     b.HasOne("SoccerAi.Application.Entities.Fixture", null)
                         .WithMany()

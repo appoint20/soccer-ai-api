@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<SyncState> SyncStates { get; init; }
     public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
     public DbSet<HeadToHeadMeeting> HeadToHeadMeetings { get; init; }
+    public DbSet<FixturePrediction> FixturePredictions { get; init; }
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
     public DbSet<ModelForecast> ModelForecasts { get; init; }
@@ -201,6 +202,24 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasIndex(m => new { m.AwayTeamId, m.HomeTeamId, m.Date });
 
             entity.ToTable("HeadToHeadMeetings");
+        });
+
+        // ── FixturePrediction (the provider's own read of a fixture) ─────────
+        modelBuilder.Entity<FixturePrediction>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            // One current opinion per fixture; a refresh overwrites it.
+            entity.HasIndex(p => p.FixtureId).IsUnique();
+            entity.Property(p => p.Advice).HasMaxLength(200);
+            entity.Property(p => p.WinnerName).HasMaxLength(120);
+            entity.Property(p => p.UnderOver).HasMaxLength(20);
+
+            entity.HasOne<Fixture>()
+                .WithMany()
+                .HasForeignKey(p => p.FixtureId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.ToTable("FixturePredictions");
         });
 
         // ── PublishedTicket (the live results ledger) ────────────────────────

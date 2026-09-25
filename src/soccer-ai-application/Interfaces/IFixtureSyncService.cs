@@ -39,4 +39,10 @@ public interface IFixtureSyncService
     /// asked about yet. Returns how many fixtures were checked.
     /// </summary>
     Task<int> CaptureHeadToHeadAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Fetches the provider's own prediction for upcoming fixtures. Returns how
+    /// many fixtures were fetched.
+    /// </summary>
+    Task<int> CapturePredictionsAsync(CancellationToken ct);
 }

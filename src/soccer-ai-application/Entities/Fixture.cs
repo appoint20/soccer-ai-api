@@ -76,6 +76,16 @@ public class Fixture
     /// matches do not change, so this is never re-checked for the same fixture.
     /// </remarks>
     public DateTimeOffset? HeadToHeadCheckedAtUtc { get; set; }
+
+    /// <summary>
+    /// When the provider's prediction for this fixture was last fetched.
+    /// </summary>
+    /// <remarks>
+    /// Fetched once when the fixture appears and refreshed once inside the last
+    /// day, when the form it is built on has stopped moving. Two requests over
+    /// a fixture's life, against a budget already running near its ceiling.
+    /// </remarks>
+    public DateTimeOffset? PredictionCheckedAtUtc { get; set; }
     /// <summary>Oldest provider update among the currently usable prices.</summary>
     public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
 

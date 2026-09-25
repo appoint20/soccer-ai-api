@@ -45,6 +45,10 @@ public sealed class OddsCaptureWorker(
                 // and the answer never expires, so this settles to zero calls
                 // once the board is covered.
                 await syncService.CaptureHeadToHeadAsync(stoppingToken);
+
+                // The provider's own read of the fixture: two requests over its
+                // whole life, and the only match evidence that needs no price.
+                await syncService.CapturePredictionsAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {

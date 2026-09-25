@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -76,6 +77,94 @@ public class ApiFootballService(
             throw new Application.Exceptions.ExternalApiException(
                 "API-Football", "Head-to-head response could not be read.", innerException: ex);
         }
+    }
+
+    public async Task<ProviderPrediction?> GetPredictionAsync(int fixtureApiId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync($"/predictions?fixture={fixtureApiId}", ct);
+            if (response is null || !response.Value.TryGetProperty("response", out var data) ||
+                data.ValueKind != JsonValueKind.Array || data.GetArrayLength() == 0)
+                return null;
+
+            var item = data[0];
+            var predictions = Child(item, "predictions");
+            var comparison = Child(item, "comparison");
+            var percent = Child(predictions, "percent");
+            var teams = Child(item, "teams");
+
+            return new ProviderPrediction
+            {
+                PercentHome = Share(percent, "home"),
+                PercentDraw = Share(percent, "draw"),
+                PercentAway = Share(percent, "away"),
+                Form = HomeShare(comparison, "form"),
+                Attack = HomeShare(comparison, "att"),
+                Defence = HomeShare(comparison, "def"),
+                Poisson = HomeShare(comparison, "poisson_distribution"),
+                HeadToHead = HomeShare(comparison, "h2h"),
+                Goals = HomeShare(comparison, "goals"),
+                Total = HomeShare(comparison, "total"),
+                Advice = Text(predictions, "advice"),
+                WinnerName = Text(Child(predictions, "winner"), "name"),
+                UnderOver = Text(predictions, "under_over"),
+                Home = RecentForm(Child(teams, "home")),
+                Away = RecentForm(Child(teams, "away"))
+            };
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw; // Rate limit or rejected key: abort the run, do not report success.
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new Application.Exceptions.ExternalApiException(
+                "API-Football", "Prediction response could not be read.", innerException: ex);
+        }
+    }
+
+    private static JsonElement Child(JsonElement parent, string name) =>
+        parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var child)
+            ? child : default;
+
+    private static string? Text(JsonElement parent, string name) =>
+        parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var value) &&
+        value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    /// <summary>A provider percentage ("45%", "71.2%") as a 0–1 share.</summary>
+    private static double? Share(JsonElement parent, string name)
+    {
+        var raw = Text(parent, name)?.Trim().TrimEnd('%');
+        return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? Math.Clamp(value / 100d, 0, 1) : null;
+    }
+
+    private static double? HomeShare(JsonElement comparison, string name) =>
+        Share(Child(comparison, name), "home");
+
+    private static double? Average(JsonElement parent, string name)
+    {
+        var raw = Text(parent, name);
+        return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? value : null;
+    }
+
+    private static TeamRecentForm? RecentForm(JsonElement team)
+    {
+        var last5 = Child(team, "last_5");
+        if (last5.ValueKind != JsonValueKind.Object) return null;
+        var goals = Child(last5, "goals");
+        return new TeamRecentForm
+        {
+            Played = last5.TryGetProperty("played", out var played) && played.ValueKind == JsonValueKind.Number
+                ? played.GetInt32() : 0,
+            Form = Share(last5, "form"),
+            Attack = Share(last5, "att"),
+            Defence = Share(last5, "def"),
+            GoalsForAverage = Average(Child(goals, "for"), "average"),
+            GoalsAgainstAverage = Average(Child(goals, "against"), "average")
+        };
     }
 
     /// <summary>One fixture object from any endpoint that returns the fixture shape.</summary>

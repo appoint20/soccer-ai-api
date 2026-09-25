@@ -654,6 +654,100 @@ public class FixtureSyncService(IApiFootballService apiService,
         return captured;
     }
 
+    public async Task<int> CapturePredictionsAsync(CancellationToken ct)
+    {
+        const int maxFixturesPerRun = 60;
+        var opt = syncOptions.Value;
+        if (opt.PredictionHorizonHours <= 0) return 0;
+
+        var now = DateTimeOffset.UtcNow;
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+        var horizon = now.AddHours(opt.PredictionHorizonHours);
+        var finalWindow = now.AddHours(opt.PredictionFinalWindowHours);
+
+        // Two fetches over a fixture's life: once when it appears, and once
+        // inside the final window, by which time the form it is built on has
+        // stopped moving. The budget does not stretch to polling it.
+        var due = await dbContext.Fixtures
+            .Where(f => scopedLeagueIds.Contains(f.LeagueId) && f.Status == "NS" &&
+                        f.Date > now && f.Date <= horizon &&
+                        (f.PredictionCheckedAtUtc == null ||
+                         (f.Date <= finalWindow && f.PredictionCheckedAtUtc < finalWindow)))
+            .OrderBy(f => f.Date)
+            .Take(maxFixturesPerRun)
+            .ToListAsync(ct);
+
+        if (due.Count == 0) return 0;
+
+        var captured = 0;
+        foreach (var fixture in due)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (quota.IsDailyQuotaCritical)
+            {
+                logger.LogWarning("[Predictions] Daily budget critical — stopping prediction capture");
+                break;
+            }
+
+            var prediction = await apiService.GetPredictionAsync(fixture.ApiId, ct);
+
+            // Marked either way: a division the provider does not predict must
+            // not be asked about again on every run.
+            fixture.PredictionCheckedAtUtc = now;
+            captured++;
+
+            if (prediction is not null)
+            {
+                var row = await dbContext.FixturePredictions
+                    .FirstOrDefaultAsync(p => p.FixtureId == fixture.Id, ct);
+                if (row is null)
+                {
+                    row = new FixturePrediction { FixtureId = fixture.Id };
+                    dbContext.FixturePredictions.Add(row);
+                }
+                Apply(row, prediction, now);
+            }
+
+            await dbContext.SaveChangesAsync(ct);
+            await Task.Delay(quota.SuggestedDelay, ct);
+        }
+
+        if (captured > 0)
+            logger.LogInformation("[Predictions] Fetched the provider's read of {Count} fixture(s)", captured);
+
+        return captured;
+    }
+
+    private static void Apply(FixturePrediction row, ProviderPrediction source, DateTimeOffset at)
+    {
+        row.PercentHome = source.PercentHome;
+        row.PercentDraw = source.PercentDraw;
+        row.PercentAway = source.PercentAway;
+        row.Form = source.Form;
+        row.Attack = source.Attack;
+        row.Defence = source.Defence;
+        row.Poisson = source.Poisson;
+        row.HeadToHead = source.HeadToHead;
+        row.Goals = source.Goals;
+        row.Total = source.Total;
+        row.Advice = source.Advice;
+        row.WinnerName = source.WinnerName;
+        row.UnderOver = source.UnderOver;
+        row.HomePlayed = source.Home?.Played ?? 0;
+        row.HomeForm = source.Home?.Form;
+        row.HomeAttack = source.Home?.Attack;
+        row.HomeDefence = source.Home?.Defence;
+        row.HomeGoalsFor = source.Home?.GoalsForAverage;
+        row.HomeGoalsAgainst = source.Home?.GoalsAgainstAverage;
+        row.AwayPlayed = source.Away?.Played ?? 0;
+        row.AwayForm = source.Away?.Form;
+        row.AwayAttack = source.Away?.Attack;
+        row.AwayDefence = source.Away?.Defence;
+        row.AwayGoalsFor = source.Away?.GoalsForAverage;
+        row.AwayGoalsAgainst = source.Away?.GoalsAgainstAverage;
+        row.CapturedAtUtc = at;
+    }
+
     public async Task<DateOddsReport> CaptureDateOddsAsync(DateOnly date, CancellationToken ct)
     {
         var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
