@@ -42,7 +42,10 @@ public class DecisionExplanationTests
         m.Presentation.SummaryLines[4].Should().Contain("selects: Both teams to score");
         m.Presentation.SummaryLines[5].Should().Contain("70%").And.Contain("evidence checks")
             .And.NotContain("1.90", "the closing line states the case, not the price");
-        m.Presentation.Markets.Single().Checks.Should().HaveCount(5);
+        // Three, because this fixture's audit carries no fired evidence rules:
+        // the probability, the AI's view and the verdict. The count follows the
+        // evidence rather than being padded to a fixed five.
+        m.Presentation.Markets.Single().Checks.Should().HaveCount(3);
     }
 
     /// <summary>

@@ -59,10 +59,13 @@ public static class DecisionExplanationPolicy
                 return "summary introduces an unsupported number";
             foreach (var market in block.Markets)
             {
-                if (market.Checks is not { Count: 5 } || market.Checks.Any(s => !ShortSentence(s, 260)))
-                    return "five short checks required per market";
                 var facts = input.Markets.Single(m => m.Market == market.Market).Facts;
-                for (var i = 0; i < 5; i++)
+                // One rewrite per supplied fact. The count follows the evidence
+                // that actually fired, so it varies by market and by fixture.
+                if (market.Checks is null || market.Checks.Count != facts.Count ||
+                    market.Checks.Any(s => !ShortSentence(s, 260)))
+                    return $"one short check required per supplied fact ({facts.Count} for {market.Market})";
+                for (var i = 0; i < facts.Count; i++)
                     if (Numbers(market.Checks[i]).Except(Numbers(facts[i])).Any()) return "check introduces an unsupported number";
             }
         }
@@ -110,10 +113,17 @@ public static class DecisionExplanationPolicy
                 ? (de ? "Kein Markt erreicht die benötigte Wahrscheinlichkeit." : "No market reaches the required probability.")
                 : $"{Label(top, de)}: {GateReason(top, de)}.");
         }
-        match.Presentation = new(current, lines, markets.Select(m => new AiMarketExplanation
+        match.Presentation = new(current, lines, markets.Select(m =>
         {
-            Market = m.Market,
-            Checks = current ? block!.Markets.Single(x => x.Market == m.Market).Checks : Facts(m, match.PresentationLanguage).ToList()
+            var (text, outcomes) = Checks(m, match.PresentationLanguage);
+            return new AiMarketExplanation
+            {
+                Market = m.Market,
+                // The writer supplies the words; the marks are ours either way,
+                // so a rewritten check cannot quietly flip its own verdict.
+                Checks = current ? block!.Markets.Single(x => x.Market == m.Market).Checks : text.ToList(),
+                CheckOutcomes = outcomes.ToList()
+            };
         }).ToList());
     }
 
@@ -175,27 +185,79 @@ public static class DecisionExplanationPolicy
         _ => de ? "es gibt zu wenige bestätigende Hinweise" : "there is not enough supporting evidence"
     };
 
-    private static IReadOnlyList<string> Facts(MarketRuleAudit m, string lang)
+    /// <summary>
+    /// The checks behind one market: what the data actually says, in the order
+    /// a reader works through it.
+    /// </summary>
+    /// <remarks>
+    /// This used to report counts — "4 evidence checks support this selection"
+    /// — which tells the reader a number and nothing about the match. Every
+    /// rule that fired now speaks for itself, naming its team: "Barnsley scored
+    /// in 3 of their last 3 home matches". The measured evidence is written in
+    /// English; the writer rewrites each line into both languages, and the
+    /// localised counts below survive only as the offline fallback.
+    ///
+    /// The list length varies with how many rules fired, so nothing downstream
+    /// may assume five.
+    /// </remarks>
+    private static (IReadOnlyList<string> Text, IReadOnlyList<bool?> Outcomes) Checks(
+        MarketRuleAudit m, string lang)
     {
         var de = lang == "de";
-        var support = m.Rules.FirstOrDefault(r => r.Fired && r.Kind == RuleResult.Confirm &&
-            !r.RuleId.Contains("ai_agrees") && !string.IsNullOrWhiteSpace(r.Evidence));
-        var risk = m.Rules.FirstOrDefault(r => r.Fired && r.Kind == RuleResult.Veto && !string.IsNullOrWhiteSpace(r.Evidence));
-        // The fallback stays fully localised. The AI receives original measured
-        // evidence in English and rewrites it into both languages when ready.
-        return [
-            de ? $"Geschätzte Chance {Pct(m.Probability)}; benötigt werden {Pct(m.Threshold)}." : $"Estimated chance {Pct(m.Probability)}; required {Pct(m.Threshold)}.",
-            de ? $"{Plural(m.ConfirmationsFired, "Datencheck unterstützt", "Datenchecks unterstützen")} die Auswahl."
-               : support?.Evidence ?? $"{Plural(m.ConfirmationsFired, "evidence check supports", "evidence checks support")} this selection.",
-            de ? m.VetoesFired == 0 ? "Kein Ausschlusskriterium wurde gefunden."
-                                    : $"{Plural(m.VetoesFired, "Ausschlusskriterium wurde", "Ausschlusskriterien wurden")} gefunden."
-               : risk?.Evidence ?? "No rejection check fired; this does not guarantee the outcome.",
-            m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.") : m.AiAgrees is false
-                ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
-                : (de ? "Für diesen Markt liegt keine KI-Einschätzung vor." : "No AI opinion is available for this market."),
-            // The verdict, in terms of the match. The bookmaker's price belongs
-            // to the odds row above, not to the reasons a market was chosen.
-            char.ToUpperInvariant(GateReason(m, de)[0]) + GateReason(m, de)[1..] + "."
-        ];
+        var text = new List<string>();
+        var outcomes = new List<bool?>();
+
+        void Add(string line, bool? outcome)
+        {
+            text.Add(line);
+            outcomes.Add(outcome);
+        }
+
+        Add(de ? $"Geschätzte Chance {Pct(m.Probability)}; benötigt werden {Pct(m.Threshold)}."
+               : $"Estimated chance {Pct(m.Probability)}; required {Pct(m.Threshold)}.",
+            m.ProbabilityPassed);
+
+        // Measured evidence, one line each. English only — the writer produces
+        // the German. Without it the fallback below keeps the reader informed.
+        var fired = m.Rules
+            .Where(r => r.Fired && !r.RuleId.Contains("ai_agrees") && !string.IsNullOrWhiteSpace(r.Evidence))
+            .ToList();
+
+        if (!de)
+            foreach (var rule in fired)
+                Add(Sentence(rule.Evidence!), rule.Kind == RuleResult.Confirm);
+        else
+        {
+            Add(m.ConfirmationsFired == 1 ? "1 Datencheck unterstützt die Auswahl."
+                    : $"{m.ConfirmationsFired} Datenchecks unterstützen die Auswahl.",
+                m.ConfirmationsFired > 0);
+            Add(m.VetoesFired == 0 ? "Kein Ausschlusskriterium wurde gefunden."
+                    : m.VetoesFired == 1 ? "1 Ausschlusskriterium wurde gefunden."
+                    : $"{m.VetoesFired} Ausschlusskriterien wurden gefunden.",
+                m.VetoesFired == 0);
+        }
+
+        Add(m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.")
+            : m.AiAgrees is false ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
+            : (de ? "Für diesen Markt liegt keine KI-Einschätzung vor." : "No AI opinion is available for this market."),
+            m.AiAgrees);
+
+        // The verdict, in terms of the match. The bookmaker's price belongs to
+        // the odds row above, not to the reasons a market was chosen.
+        Add(Sentence(GateReason(m, de)), m.Qualified);
+
+        return (text, outcomes);
     }
+
+    /// <summary>A measured label as a sentence: capitalised, full-stopped.</summary>
+    private static string Sentence(string text)
+    {
+        var trimmed = text.Trim();
+        if (trimmed.Length == 0) return trimmed;
+        var capitalised = char.ToUpperInvariant(trimmed[0]) + trimmed[1..];
+        return ".!?".Contains(capitalised[^1]) ? capitalised : capitalised + ".";
+    }
+
+    private static IReadOnlyList<string> Facts(MarketRuleAudit m, string lang) =>
+        Checks(m, lang).Text;
 }

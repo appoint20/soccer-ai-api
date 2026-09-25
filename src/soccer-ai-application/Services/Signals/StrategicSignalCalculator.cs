@@ -55,13 +55,18 @@ public static class StrategicSignalCalculator
     {
         var venue = history.Where(m => isHomeSide ? m.HomeTeamId == teamId : m.AwayTeamId == teamId).ToList();
         var side = isHomeSide ? "home" : "away";
+        // Every label names its team. Two sides' evidence is concatenated into
+        // one line further up, and "Scored in 3/3 of last 3 home matches;
+        // Failed to score in 2 of last 5 away matches" left the reader to work
+        // out who was who from the venue words.
+        var who = Who(team, isHomeSide);
 
         SignalValue ScoredIn(IReadOnlyList<Fixture> src, int n, string where)
         {
             var window = src.Take(n).ToList();
             var count = window.Count(m => GoalsFor(m, teamId) > 0);
             return SignalValue.Of(count, window.Count == n && count == n,
-                $"Scored in {count}/{window.Count} of last {n} {where} matches");
+                $"{who} scored in {count} of their last {window.Count} {where} matches");
         }
 
         SignalValue ConcededIn(IReadOnlyList<Fixture> src, int n, string where)
@@ -69,16 +74,16 @@ public static class StrategicSignalCalculator
             var window = src.Take(n).ToList();
             var count = window.Count(m => GoalsAgainst(m, teamId) > 0);
             return SignalValue.Of(count, window.Count == n && count == n,
-                $"Conceded in {count}/{window.Count} of last {n} {where} matches");
+                $"{who} conceded in {count} of their last {window.Count} {where} matches");
         }
 
         SignalValue Rate(IReadOnlyList<Fixture> src, int n, Func<Fixture, bool> pred, string what)
         {
             var window = src.Take(n).ToList();
-            if (window.Count == 0) return SignalValue.Unavailable($"No {side} matches for {what}");
+            if (window.Count == 0) return SignalValue.Unavailable($"No {side} matches on record for {who}");
             var rate = (double)window.Count(pred) / window.Count;
             return SignalValue.Of(rate, rate >= opt.HighRateFlag,
-                $"{what} in {rate:P0} of last {window.Count} {side} matches");
+                $"{who}: {what} in {rate:P0} of their last {window.Count} {side} matches");
         }
 
         var last5Venue = venue.Take(opt.MidWindow).ToList();
@@ -114,12 +119,12 @@ public static class StrategicSignalCalculator
             ConcededInLast3Overall = ConcededIn(history, opt.ShortWindow, "overall"),
             ConcededInLast5Overall = ConcededIn(history, opt.MidWindow, "overall"),
             FailedToScoreLast5Venue = SignalValue.Of(fts, fts >= opt.FailedToScoreFlagCount,
-                $"Failed to score in {fts} of last {last5Venue.Count} {side} matches"),
+                $"{who} failed to score in {fts} of their last {last5Venue.Count} {side} matches"),
             CleanSheetsLast5Venue = SignalValue.Of(cleanSheets, cleanSheets >= opt.CleanSheetFlagCount,
-                $"{cleanSheets} clean sheets in last {last5Venue.Count} {side} matches"),
+                $"{who} kept {cleanSheets} clean sheets in their last {last5Venue.Count} {side} matches"),
             AttackTrend = SignalValue.Of(last5For - seasonFor,
                 Math.Abs(last5For - seasonFor) >= opt.GoalTrendFlagDelta,
-                $"Scoring {last5For:F2}/game last 5 {side} vs {seasonFor:F2} season"),
+                $"{who} is scoring {last5For:F2} a game in their last 5 {side} matches, against {seasonFor:F2} for the season"),
             DefenseTrend = SignalValue.Of(last5Against - seasonAgainst,
                 Math.Abs(last5Against - seasonAgainst) >= opt.GoalTrendFlagDelta,
                 $"Conceding {last5Against:F2}/game last 5 {side} vs {seasonAgainst:F2} season"),
@@ -145,6 +150,7 @@ public static class StrategicSignalCalculator
     private static FormSignals ComputeForm(
         int teamId, IReadOnlyList<Fixture> history, bool isHomeSide, Team? team, StrategyOptions opt)
     {
+        var who = Who(team, isHomeSide);
         var side = isHomeSide ? "home" : "away";
         var last5 = history.Take(opt.MidWindow).ToList();
         var formString = string.Concat(last5.Select(m => ResultChar(m, teamId)));
@@ -181,14 +187,14 @@ public static class StrategicSignalCalculator
         return new FormSignals
         {
             FormLast5 = SignalValue.Of(pointsLast5, pointsLast5 >= 12,
-                $"Form {formString} ({pointsLast5} pts from last {last5.Count})"),
+                $"{who} form {formString} — {pointsLast5} points from their last {last5.Count}"),
             FormDelta = SignalValue.Of(formDelta, Math.Abs(formDelta) >= opt.FormDeltaFlag,
-                $"PPG last 5 {ppgLast5:F2} vs season {seasonPpg:F2} ({(formDelta >= 0 ? "trending up" : "trending down")})"),
+                $"{who} averaging {ppgLast5:F2} points over 5, against {seasonPpg:F2} for the season ({(formDelta >= 0 ? "trending up" : "trending down")})"),
             PpgLast5Venue = SignalValue.Of(ppgVenue, ppgVenue >= 2.0,
-                $"{ppgVenue:F2} PPG in last {venue.Count} {side} matches"),
-            SeasonPpg = SignalValue.Of(seasonPpg, seasonPpg >= 2.0, $"Season PPG {seasonPpg:F2}"),
+                $"{who} averaging {ppgVenue:F2} points in their last {venue.Count} {side} matches"),
+            SeasonPpg = SignalValue.Of(seasonPpg, seasonPpg >= 2.0, $"{who} averaging {seasonPpg:F2} points across the season"),
             WinlessStreak = SignalValue.Of(winless, winless >= opt.StreakFlagLength,
-                $"{winless} matches without a win"),
+                $"{who} without a win in {winless} matches"),
             UnbeatenStreak = SignalValue.Of(unbeaten, unbeaten >= opt.StreakFlagLength,
                 $"{unbeaten} matches unbeaten"),
             LosingStreak = SignalValue.Of(losing, losing >= opt.StreakFlagLength,
@@ -494,6 +500,18 @@ public static class StrategicSignalCalculator
     }
 
     // ── Shared helpers ───────────────────────────────────────────────────────
+
+
+    /// <summary>
+    /// The team's name for a sentence, falling back to its role when the squad
+    /// row is missing — never an empty string, which would read as a typo.
+    /// </summary>
+    private static string Who(Team? team, bool isHomeSide)
+    {
+        var name = team?.ShortName is { Length: > 0 } shortName ? shortName
+            : team?.Name is { Length: > 0 } fullName ? fullName : null;
+        return name ?? (isHomeSide ? "The home side" : "The away side");
+    }
 
     private static int GoalsFor(Fixture m, int teamId) => m.HomeTeamId == teamId ? m.HomeGoal : m.AwayGoal;
     private static int GoalsAgainst(Fixture m, int teamId) => m.HomeTeamId == teamId ? m.AwayGoal : m.HomeGoal;

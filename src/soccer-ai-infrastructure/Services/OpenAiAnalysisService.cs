@@ -432,8 +432,12 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         punctuation and avoid abbreviations. German must be equally detailed, not a shortened translation.
         These context sentences must contain NO betting recommendation. Never mention odds, prices or value.
 
-        For EVERY supplied market, return EXACTLY five checks, maximum 260 characters each.
+        For EVERY supplied market, return EXACTLY one check per supplied fact — the same number of
+        checks as that market has facts, never five unless it has five — maximum 260 characters each.
         Check 1 rewrites Facts[0], check 2 Facts[1], and so on, in exactly the same order.
+        A fact naming a team keeps that team's name: "Barnsley scored in 3 of their last 3 home
+        matches" may be reworded but may not become "the home side" or lose the 3. Write each one as
+        a statement a supporter would recognise, not a label.
         Preserve each fact's meaning, numbers, negation and missing-data status. Do not add evidence.
         Explain a failed check just as clearly as a passed one. AI agreement is an opinion, not a measured
         success rate. The joint GG + Over 2.5 probability is supplied by the score model; never multiply
