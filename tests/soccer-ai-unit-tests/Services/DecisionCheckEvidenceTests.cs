@@ -40,7 +40,9 @@ public class DecisionCheckEvidenceTests
         DecisionExplanationPolicy.Refresh(m, "en");
         var checks = m.Presentation!.Markets.Single().Checks;
 
-        checks.Should().HaveCount(6, "probability, three fired rules, the AI's view and the verdict");
+        checks.Should().HaveCount(5, "three fired rules, the AI's view and the verdict");
+        checks.Should().NotContain(c => c.Contains("required"),
+            "the gate's own threshold is internal and explains nothing to a reader");
         checks.Should().Contain(c => c.Contains("Barnsley scored in 3 of their last 3 home matches"));
         checks.Should().Contain(c => c.Contains("Preston failed to score"));
         checks.Should().NotContain(c => c.Contains("evidence checks support"),
@@ -67,16 +69,58 @@ public class DecisionCheckEvidenceTests
         byText.Single(p => p.Key.Contains("Preston failed")).Value.Should().BeFalse();
     }
 
+    /// <summary>
+    /// "Estimated chance 68%; required 60%" told the reader the gate's own
+    /// threshold and nothing about the match. It is gone from every language.
+    /// </summary>
     [Fact]
-    public void TheProbabilityCheckIsMarkedByWhetherItClearedItsFloor()
+    public void TheGatesThresholdIsNeverShown()
     {
         var m = Match(Confirm("btts_confirm_h2h_rate", "Both teams scored in 80% of last 5 meetings"));
 
-        DecisionExplanationPolicy.Refresh(m, "en");
-        var market = m.Presentation!.Markets.Single();
+        foreach (var lang in new[] { "en", "de" })
+        {
+            DecisionExplanationPolicy.Refresh(m, lang);
+            var checks = string.Join(" ", m.Presentation!.Markets.Single().Checks);
+            checks.Should().NotContain("required").And.NotContain("benötigt");
+        }
+    }
 
-        market.Checks[0].Should().Contain("68%").And.Contain("60%");
-        market.CheckOutcomes[0].Should().BeTrue();
+    /// <summary>
+    /// The attacking comparison the reader asked for, preferring the provider's
+    /// rating and falling back to our own goals a game — a different quantity,
+    /// so a different sentence rather than our number in a percent sign.
+    /// </summary>
+    [Fact]
+    public void AttackingOutputPrefersTheProviderAndFallsBackToOurOwn()
+    {
+        var withProvider = Match(Confirm("x", "Both teams scored in 80% of last 5 meetings"));
+        withProvider = new MatchAnalysis
+        {
+            Id = 1, Date = Now.AddHours(8), HomeTeam = "Barnsley", AwayTeam = "Preston",
+            Prediction = withProvider.Prediction, DecisionAudit = withProvider.DecisionAudit,
+            HomeStats = new TeamStats { AttackStrength = 1.8 },
+            AwayStats = new TeamStats { AttackStrength = 1.2 },
+            Provider = new ProviderPrediction
+            {
+                Home = new TeamRecentForm { Played = 4, Attack = .68 },
+                Away = new TeamRecentForm { Played = 4, Attack = .55 }
+            }
+        };
+        DecisionExplanationPolicy.Refresh(withProvider, "en");
+        string.Join(" ", withProvider.Presentation!.Markets.Single().Checks)
+            .Should().Contain("Barnsley at home rates 68% in attack, Preston away 55%");
+
+        var ourOwn = new MatchAnalysis
+        {
+            Id = 1, Date = Now.AddHours(8), HomeTeam = "Barnsley", AwayTeam = "Preston",
+            Prediction = new PredictionResponse(), DecisionAudit = withProvider.DecisionAudit,
+            HomeStats = new TeamStats { AttackStrength = 1.8 },
+            AwayStats = new TeamStats { AttackStrength = 1.2 }
+        };
+        DecisionExplanationPolicy.Refresh(ourOwn, "en");
+        string.Join(" ", ourOwn.Presentation!.Markets.Single().Checks)
+            .Should().Contain("Barnsley score 1.8 goals a game at home, Preston 1.2 away");
     }
 
     /// <summary>

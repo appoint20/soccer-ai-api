@@ -42,10 +42,10 @@ public class DecisionExplanationTests
         m.Presentation.SummaryLines[4].Should().Contain("selects: Both teams to score");
         m.Presentation.SummaryLines[5].Should().Contain("70%").And.Contain("evidence checks")
             .And.NotContain("1.90", "the closing line states the case, not the price");
-        // Three, because this fixture's audit carries no fired evidence rules:
-        // the probability, the AI's view and the verdict. The count follows the
+        // Two, because this fixture's audit carries no fired evidence rules and
+        // no provider read: the AI's view and the verdict. The count follows the
         // evidence rather than being padded to a fixed five.
-        m.Presentation.Markets.Single().Checks.Should().HaveCount(3);
+        m.Presentation.Markets.Single().Checks.Should().HaveCount(2);
     }
 
     /// <summary>
@@ -173,11 +173,13 @@ public class DecisionExplanationTests
     }
 
     [Fact]
-    public void GermanFallbackHasFiveReadableChecksAndNoRawEnglishOrPlaceholder()
+    public void GermanFallbackIsReadableWithNoRawEnglishOrPlaceholder()
     {
         var m = Match(); DecisionExplanationPolicy.Refresh(m, "de");
         var checks = m.Presentation!.Markets.Single().Checks;
-        checks.Should().HaveCount(5);
+        // Counts, the AI's view and the verdict — the measured evidence is
+        // English until the writer has rewritten it.
+        checks.Should().HaveCount(4);
         string.Join(" ", checks).Should().NotContain("n/a").And.NotContain("Scored");
         m.Presentation.SummaryLines[0].Should().Contain("Das System wählt");
     }

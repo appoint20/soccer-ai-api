@@ -223,9 +223,8 @@ public static class DecisionExplanationPolicy
             outcomes.Add(outcome);
         }
 
-        Add(de ? $"Geschätzte Chance {Pct(m.Probability)}; benötigt werden {Pct(m.Threshold)}."
-               : $"Estimated chance {Pct(m.Probability)}; required {Pct(m.Threshold)}.",
-            m.ProbabilityPassed);
+        foreach (var (line, _) in ComparisonLines(match, de))
+            Add(line, null);
 
         // Measured evidence, one line each. English only — the writer produces
         // the German. Without it the fallback below keeps the reader informed.
@@ -246,9 +245,6 @@ public static class DecisionExplanationPolicy
                     : $"{m.VetoesFired} Ausschlusskriterien wurden gefunden.",
                 m.VetoesFired == 0);
         }
-
-        foreach (var (line, _) in ComparisonLines(match, de))
-            Add(line, null);
 
         Add(m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.")
             : m.AiAgrees is false ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
@@ -287,7 +283,8 @@ public static class DecisionExplanationPolicy
     /// </remarks>
     private static IEnumerable<(string Line, bool? Outcome)> ComparisonLines(MatchAnalysis? match, bool de)
     {
-        if (match?.Provider is not { } p) yield break;
+        if (match is null) yield break;
+        var p = match.Provider ?? new ProviderPrediction();
         var home = string.IsNullOrWhiteSpace(match.HomeTeam) ? (de ? "Heim" : "Home") : match.HomeTeam;
         var away = string.IsNullOrWhiteSpace(match.AwayTeam) ? (de ? "Auswärts" : "Away") : match.AwayTeam;
 
@@ -295,6 +292,18 @@ public static class DecisionExplanationPolicy
             yield return (de
                 ? $"Direkter Vergleich: {home} {Pct(h2h)}, {away} {Pct(1 - h2h)}."
                 : $"Head to head favours {home} {Pct(h2h)} to {Pct(1 - h2h)}.", null);
+
+        if (p.Home?.Attack is { } homeAttack && p.Away?.Attack is { } awayAttack)
+            yield return (de
+                ? $"{home} zu Hause mit {Pct(homeAttack)} Angriffswert, {away} auswärts mit {Pct(awayAttack)}."
+                : $"{home} at home rates {Pct(homeAttack)} in attack, {away} away {Pct(awayAttack)}.", null);
+        else if (match.HomeStats.AttackStrength > 0 || match.AwayStats.AttackStrength > 0)
+            // Our own figure, and a different quantity: goals a game, not a
+            // rating out of 100. Labelled as what it is rather than dressed up
+            // as the provider's percentage.
+            yield return (de
+                ? $"{home} erzielt zu Hause {Goals(match.HomeStats.AttackStrength, true)} Tore pro Spiel, {away} auswärts {Goals(match.AwayStats.AttackStrength, true)}."
+                : $"{home} score {Goals(match.HomeStats.AttackStrength, false)} goals a game at home, {away} {Goals(match.AwayStats.AttackStrength, false)} away.", null);
 
         if (p.Goals is { } goals)
             yield return (de
