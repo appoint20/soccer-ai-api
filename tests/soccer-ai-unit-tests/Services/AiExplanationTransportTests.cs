@@ -15,8 +15,11 @@ namespace soccer_ai_unit_tests.Services;
 
 public class AiExplanationTransportTests
 {
-    [Fact]
-    public async Task JsonObjectWithNestedSummaryAndMarketArraysSurvivesTheActualProviderAdapter()
+    [Theory]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    public async Task JsonObjectWithNestedSummaryAndMarketArraysSurvivesTheActualProviderAdapter(int contextSentences)
     {
         // No external AI calls or credentials: exercise the real SDK/adapter
         // against a loopback completion endpoint, including its JSON extraction.
@@ -30,9 +33,14 @@ public class AiExplanationTransportTests
         var result = new AiDecisionExplanation
         {
             FixtureId = 123, InputHash = "forged", ModelVersion = "forged", GeneratedAtUtc = DateTimeOffset.MinValue,
-            En = new() { SummaryLines = ["The sides are balanced.", "Scoring evidence is mixed.", "Neither has a clear edge.", "Limited data adds uncertainty."] },
-            De = new() { SummaryLines = ["Die Teams sind ausgeglichen.", "Die Tor-Daten sind gemischt.", "Kein Team hat klare Vorteile.", "Wenige Daten erhöhen die Unsicherheit."] }
+            En = new() { SummaryLines = AiSummarySamples.English },
+            De = new() { SummaryLines = AiSummarySamples.German }
         };
+        while (result.En.SummaryLines.Count < contextSentences)
+        {
+            result.En.SummaryLines.Add("The weaker attacking evidence leaves room for a quieter match than the defensive records suggest.");
+            result.De.SummaryLines.Add("Die schwächeren Hinweise im Angriff lassen auch einen ruhigeren Verlauf zu, als die Abwehrdaten zunächst erwarten lassen.");
+        }
         var server = Task.Run(async () =>
         {
             var context = await listener.GetContextAsync().WaitAsync(timeout.Token);
@@ -54,7 +62,8 @@ public class AiExplanationTransportTests
             NullLogger<OpenAiAnalysisService>.Instance);
         var actual = await provider.ExplainDecisionAsync(input, timeout.Token);
         await server;
-        actual!.En.SummaryLines.Should().HaveCount(4);
+        actual!.En.SummaryLines.Should().HaveCount(contextSentences);
+        actual.De.SummaryLines.Should().HaveCount(contextSentences);
         actual.InputHash.Should().Be(DecisionExplanationPolicy.Hash(input));
         actual.ModelVersion.Should().Be("test-model");
         actual.GeneratedAtUtc.Should().BeAfter(DateTimeOffset.UtcNow.AddMinutes(-1));

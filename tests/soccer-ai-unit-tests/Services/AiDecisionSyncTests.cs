@@ -32,8 +32,8 @@ public class AiDecisionSyncTests
             {
                 input.Markets.Single().Qualified.Should().BeTrue(
                     "the explanation is written against the final gate, and a price no longer moves it");
-                input.Markets.Single().Odds.Should().Be(1.60, "while the live price still reaches the writer");
-                AiDecisionLanguage Block() => new() { SummaryLines = ["Attack is balanced.", "Defence is vulnerable.", "The signals differ.", "The sample is limited."],
+                input.Markets.Single().Odds.Should().BeNull("prices must not invalidate match context");
+                AiDecisionLanguage Block() => new() { SummaryLines = AiSummarySamples.English,
                     Markets = input.Markets.Select(m => new AiMarketExplanation { Market = m.Market, Checks = m.Facts.ToList() }).ToList() };
                 return new AiDecisionExplanation { FixtureId = 1, ModelVersion = "test", GeneratedAtUtc = now, En = Block(), De = Block() };
             });

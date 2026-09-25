@@ -40,6 +40,19 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     /// </remarks>
     private static int _primaryFailures;
 
+    /// <summary>
+    /// Corrective round-trips allowed per model when a response is well-formed
+    /// but breaks a content rule.
+    /// </summary>
+    /// <remarks>
+    /// A weaker model usually returns valid JSON and then misses one rule — a
+    /// German block a sentence short, a missing full stop. Discarding the whole
+    /// fixture for that is what left production with narratives on 2 of 50
+    /// upcoming matches; showing the model its own answer and the single
+    /// complaint fixes most of them for one extra request.
+    /// </remarks>
+    private const int MaxRepairAttempts = 1;
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -217,7 +230,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             modelsToTry.Add("anthropic/claude-haiku-4.5");
         }
 
-        var messages = new List<ChatMessage>
+        var baseMessages = new List<ChatMessage>
         {
             new SystemChatMessage(Prompts.MatchAnalysisSystemPrompt),
             new UserChatMessage($"Analyze these matches:\n{JsonSerializer.Serialize(items, JsonOpts)}")
@@ -242,6 +255,10 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         foreach (var model in modelsToTry)
         {
             var isPrimary = model.Equals(_options.DefaultModel, StringComparison.OrdinalIgnoreCase);
+            (string Answer, string Reason)? repair = null;
+            for (var attempt = 0; attempt <= MaxRepairAttempts; attempt++)
+            {
+            var rawText = string.Empty;
             try
             {
                 _logger.LogInformation(
@@ -249,10 +266,21 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                     model, items.Count, _options.TimeoutSeconds, DescribeReasoning(_options.Reasoning));
                 var started = System.Diagnostics.Stopwatch.StartNew();
                 var client = CreateClient(model);
+                var messages = new List<ChatMessage>(baseMessages);
+                if (repair is { } complaint)
+                {
+                    // The model sees its own answer and the one thing wrong with
+                    // it. A weaker model usually writes valid JSON but misses a
+                    // length or completeness rule, and discarding the fixture
+                    // over that cost every narrative on the board.
+                    messages.Add(new AssistantChatMessage(complaint.Answer));
+                    messages.Add(new UserChatMessage(
+                        $"That response was rejected: {complaint.Reason} Return the corrected JSON array only."));
+                }
                 var completion = await client.CompleteChatAsync(messages, completionOptions, cancellationToken);
                 _logger.LogInformation(
                     "[OpenRouter] {Model} answered in {Elapsed:F1}s", model, started.Elapsed.TotalSeconds);
-                var rawText = string.Concat(completion.Value.Content.Select(c => c.Text));
+                rawText = string.Concat(completion.Value.Content.Select(c => c.Text));
                 var json = ExtractJson(rawText);
 
                 if (string.IsNullOrWhiteSpace(json))
@@ -301,6 +329,13 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 _logger.LogError("[OpenRouter] {Model} rejected with {Status}: {Reason}", model, ex.Status, reason);
                 throw new ExternalApiException("OpenRouter", reason, (System.Net.HttpStatusCode)ex.Status);
             }
+            catch (InvalidDataException ex) when (attempt < MaxRepairAttempts && rawText.Length > 0)
+            {
+                _logger.LogWarning(
+                    "[OpenRouter] {Model} returned a response that failed validation ({Reason}) — asking it to correct that.",
+                    model, ex.Message);
+                repair = (rawText, ex.Message);
+            }
             catch (Exception ex)
             {
                 // Log the reason, not the stack: a timeout here is an
@@ -311,6 +346,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 _logger.LogWarning(
                     "[OpenRouter] {Model} failed after {Timeout}s ({Reason}). Trying the next configured model...",
                     model, _options.TimeoutSeconds, ex.GetBaseException().Message);
+                break;
+            }
             }
         }
 

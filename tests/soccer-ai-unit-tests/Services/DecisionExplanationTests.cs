@@ -10,9 +10,9 @@ namespace soccer_ai_unit_tests.Services;
 public class DecisionExplanationTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 14, 10, 0, 0, TimeSpan.Zero);
-    private static MatchAnalysis Match() => new()
+    private static MatchAnalysis Match(DateTimeOffset? kickoff = null) => new()
     {
-        Id = 1, Date = Now.AddHours(8), HomeTeam = "Home", AwayTeam = "Away", OddsBookmaker = "Bet365",
+        Id = 1, Date = kickoff ?? Now.AddHours(8), HomeTeam = "Home", AwayTeam = "Away", OddsBookmaker = "Bet365",
         Prediction = new PredictionResponse(),
         DecisionAudit = new(2, [new("btts", .7, .5, true, 3, 0, true, [])
         {
@@ -24,13 +24,12 @@ public class DecisionExplanationTests
     private static AiDecisionExplanation Explanation(MatchAnalysis m)
     {
         var input = DecisionExplanationPolicy.Input(m);
-        AiDecisionLanguage Block() => new()
+        AiDecisionLanguage Block(bool de) => new()
         {
-            SummaryLines = ["The attacks are closely matched.", "Both defences have weaknesses.",
-                "The recent evidence is mixed.", "The limited sample leaves uncertainty."],
+            SummaryLines = de ? AiSummarySamples.German : AiSummarySamples.English,
             Markets = input.Markets.Select(x => new AiMarketExplanation { Market = x.Market, Checks = x.Facts.ToList() }).ToList()
         };
-        return new() { FixtureId = m.Id, InputHash = DecisionExplanationPolicy.Hash(input), En = Block(), De = Block() };
+        return new() { FixtureId = m.Id, InputHash = DecisionExplanationPolicy.Hash(input), En = Block(false), De = Block(true) };
     }
 
     [Fact]
@@ -47,15 +46,13 @@ public class DecisionExplanationTests
     }
 
     /// <summary>
-    /// A price move rewrites the numbers the AI quoted, so its wording is
-    /// withdrawn and the generated summary takes over. What it must not do any
-    /// more is withdraw the selection: the call came from probability and
-    /// evidence, neither of which a bookmaker touched.
+    /// The summary explains match evidence and never quotes prices. Updating
+    /// informational odds must preserve it instead of showing two closing lines.
     /// </summary>
     [Theory]
     [InlineData(1.69)]
     [InlineData(1.70)]
-    public void APriceMoveRetiresTheAiWordingButNotTheSelection(double odds)
+    public void APriceMovePreservesTheFullSummaryAndSelection(double odds)
     {
         var m = Match(); m.DecisionExplanation = Explanation(m);
         var f = new Fixture { Id = 1, Date = m.Date, OddsBookmaker = "Bet365", BttsYesOdds = odds,
@@ -63,7 +60,9 @@ public class DecisionExplanationTests
 
         LiveOddsPolicy.RefreshResponse(m, f, Now);
 
-        m.Presentation!.AiGenerated.Should().BeFalse("the AI wording referred to a different price");
+        m.Presentation!.AiGenerated.Should().BeTrue("price is not evidence in the match summary");
+        m.Presentation.SummaryLines.Should().HaveCount(6);
+        m.Presentation.SummaryLines.Take(4).Should().Equal(AiSummarySamples.English);
         string.Join(" ", m.Presentation.SummaryLines).Should().Contain("selects: Both teams to score");
         m.DecisionAudit!.Markets.Single().Qualified.Should().BeTrue();
     }
@@ -74,6 +73,80 @@ public class DecisionExplanationTests
         var m = Match(); m.DecisionExplanation = Explanation(m);
         m.OddsUpdatedAtUtc = Now; m.OddsCheckedAtUtc = Now;
         DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeTrue();
+    }
+
+    [Fact]
+    public void EvidenceChangesAndOldSummaryContractsStillRequireRegeneration()
+    {
+        var m = Match(); m.DecisionExplanation = Explanation(m);
+        var oldInput = DecisionExplanationPolicy.Input(m) with { Version = 1 };
+        m.DecisionExplanation.InputHash = DecisionExplanationPolicy.Hash(oldInput);
+        DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeFalse();
+
+        m.DecisionExplanation = Explanation(m);
+        m.DecisionAudit = m.DecisionAudit! with
+        {
+            Markets = [m.DecisionAudit.Markets[0] with { Probability = .65 }]
+        };
+        DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExistingHistoricalSummariesStayReadableButUpcomingOnesRequireTheNewContract(bool upcoming)
+    {
+        var m = Match(DateTimeOffset.UtcNow.AddDays(upcoming ? 1 : -1));
+        m.DecisionExplanation = Explanation(m);
+        m.DecisionExplanation.En.SummaryLines = ["Attack is balanced.", "Defence is vulnerable.", "The signals differ.", "The sample is limited."];
+        var input = DecisionExplanationPolicy.Input(m);
+        var oldInput = input with { Version = 1, Markets = input.Markets.Select(x => x with
+        {
+            Odds = m.DecisionAudit!.Markets.Single(a => a.Market == x.Market).Odds, Bookmaker = m.OddsBookmaker
+        }).ToList() };
+        m.DecisionExplanation.InputHash = DecisionExplanationPolicy.Hash(oldInput);
+        DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeFalse();
+        DecisionExplanationPolicy.Refresh(m);
+        m.Presentation!.AiGenerated.Should().Be(!upcoming);
+        m.Presentation.SummaryLines.Should().HaveCount(upcoming ? 2 : 6);
+
+        m.DecisionAudit = m.DecisionAudit! with { Markets = [m.DecisionAudit.Markets[0] with { Probability = .65 }] };
+        DecisionExplanationPolicy.Refresh(m);
+        m.Presentation!.AiGenerated.Should().BeFalse("legacy wording must still match the original evidence");
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    public void ContextLengthLeavesRoomForExactlyTwoAuthoritativeClosingSentences(int count)
+    {
+        var m = Match(); m.DecisionExplanation = Explanation(m);
+        foreach (var block in new[] { m.DecisionExplanation.En, m.DecisionExplanation.De })
+            while (block.SummaryLines.Count < count)
+                block.SummaryLines.Add("The weaker attacking evidence leaves room for a quieter match than the defensive records suggest.");
+        DecisionExplanationPolicy.Refresh(m);
+        m.Presentation!.AiGenerated.Should().BeTrue();
+        m.Presentation.SummaryLines.Should().HaveCount(count + 2);
+        m.Presentation.SummaryLines[^2].Should().Contain("selects: Both teams to score");
+    }
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(7)]
+    public void OutOfRangeContextIsRejected(int count)
+    {
+        var m = Match(); var result = Explanation(m);
+        result.De.SummaryLines = Enumerable.Repeat(AiSummarySamples.German[0], count).ToList();
+        DecisionExplanationPolicy.Invalid(result, DecisionExplanationPolicy.Input(m)).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void FourTerseLabelsAreNotAValidMatchSummary()
+    {
+        var m = Match(); var result = Explanation(m);
+        result.En.SummaryLines = ["Attack is balanced.", "Defence is vulnerable.", "The signals differ.", "The sample is limited."];
+        DecisionExplanationPolicy.Invalid(result, DecisionExplanationPolicy.Input(m)).Should().Contain("at least 50 words");
     }
 
     /// <summary>
