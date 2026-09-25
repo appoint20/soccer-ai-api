@@ -38,6 +38,17 @@ public record FixtureOdds(
     double? Goals23 = null,
     double? BttsAndOver25 = null);
 
+/// <summary>
+/// A fixture as it stands right now: its period, the minute, and the score.
+/// </summary>
+/// <remarks>
+/// One request returns every in-play match in the world, so this costs the
+/// same whether one of our fixtures is live or forty are. Matches outside the
+/// synced leagues are discarded on arrival.
+/// </remarks>
+public sealed record LiveFixtureState(
+    int ApiId, string StatusShort, int? ElapsedMinutes, int? ExtraMinutes, int HomeGoals, int AwayGoals);
+
 /// <summary>One bookmaker's price for one market outcome.</summary>
 public record OddsQuote(string Bookmaker, string Market, double Price, DateTimeOffset? ProviderUpdatedAtUtc = null);
 
@@ -105,6 +116,16 @@ public interface IApiFootballService
     /// for a lower division, and not an error.
     /// </remarks>
     Task<ProviderPrediction?> GetPredictionAsync(int fixtureApiId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Every match in play right now, from one request.
+    /// </summary>
+    /// <remarks>
+    /// The provider has no way to ask for "my leagues only" here, so the
+    /// response spans every competition it covers and the caller keeps what it
+    /// recognises. That is still one request rather than one per fixture.
+    /// </remarks>
+    Task<List<LiveFixtureState>> GetLiveFixturesAsync(CancellationToken ct = default);
     Task<(FixtureStats? Home, FixtureStats? Away)> GetBothTeamStatsAsync(int fixtureId);
 
     /// <summary>

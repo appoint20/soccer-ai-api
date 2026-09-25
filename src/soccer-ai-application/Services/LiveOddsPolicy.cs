@@ -89,6 +89,12 @@ public static class LiveOddsPolicy
         snapshot.OddsCheckedAtUtc = fixture.OddsCheckedAtUtc;
         snapshot.OddsUpdatedAtUtc = fixture.OddsUpdatedAtUtc;
         snapshot.Status = fixture.Status;
+        // The live state is read from the fixture on every response, not baked
+        // into the stored snapshot: a score a minute old is worse than none.
+        snapshot.ElapsedMinutes = fixture.ElapsedMinutes;
+        snapshot.ExtraMinutes = fixture.ExtraMinutes;
+        snapshot.LiveHomeGoals = fixture.HomeGoal;
+        snapshot.LiveAwayGoals = fixture.AwayGoal;
         snapshot.OddsBookmaker = fixture.OddsBookmaker;
         if (snapshot.Result is not null)
         {

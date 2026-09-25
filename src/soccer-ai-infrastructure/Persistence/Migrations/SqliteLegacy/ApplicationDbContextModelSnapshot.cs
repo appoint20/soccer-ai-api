@@ -143,6 +143,12 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                     b.Property<double?>("DrawOdds")
                         .HasColumnType("REAL");
 
+                    b.Property<int?>("ElapsedMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ExtraMinutes")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double?>("Goals23Odds")
                         .HasColumnType("REAL");
 
@@ -207,6 +213,9 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("LeagueId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("LiveCheckedAtUtc")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("OddsBookmaker")

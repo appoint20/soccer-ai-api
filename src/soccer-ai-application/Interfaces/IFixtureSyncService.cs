@@ -45,4 +45,10 @@ public interface IFixtureSyncService
     /// many fixtures were fetched.
     /// </summary>
     Task<int> CapturePredictionsAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Refreshes the score and minute of every fixture of ours in play, from a
+    /// single request. Returns how many were updated.
+    /// </summary>
+    Task<int> CaptureLiveScoresAsync(CancellationToken ct);
 }

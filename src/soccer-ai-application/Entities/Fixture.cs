@@ -86,6 +86,19 @@ public class Fixture
     /// a fixture's life, against a budget already running near its ceiling.
     /// </remarks>
     public DateTimeOffset? PredictionCheckedAtUtc { get; set; }
+
+    /// <summary>
+    /// Minutes played, while the match is in play. Null before kickoff and
+    /// after the final whistle — a finished match is described by its score,
+    /// not by the minute it ended on.
+    /// </summary>
+    public int? ElapsedMinutes { get; set; }
+
+    /// <summary>Added time in the current period, when the provider reports it.</summary>
+    public int? ExtraMinutes { get; set; }
+
+    /// <summary>When the live score was last refreshed.</summary>
+    public DateTimeOffset? LiveCheckedAtUtc { get; set; }
     /// <summary>Oldest provider update among the currently usable prices.</summary>
     public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
 

@@ -16,6 +16,23 @@ public sealed class MatchAnalysis
     public int Id { get; init; }
     public DateTimeOffset Date { get; init; }
     public string Status { get; set; } = "NS";
+
+    /// <summary>
+    /// Minutes played, while the match is in play; null otherwise.
+    /// </summary>
+    /// <remarks>
+    /// Paired with <see cref="Status"/>, which names the period: 45 in "HT"
+    /// means the half ended, 45 in "1H" means it is still running.
+    /// </remarks>
+    [JsonPropertyName("elapsed_minutes")] public int? ElapsedMinutes { get; set; }
+
+    /// <summary>Added time in the current period, when the provider reports it.</summary>
+    [JsonPropertyName("extra_minutes")] public int? ExtraMinutes { get; set; }
+
+    /// <summary>The score as it stands. Zero-zero before kickoff.</summary>
+    [JsonPropertyName("live_home_goals")] public int? LiveHomeGoals { get; set; }
+
+    [JsonPropertyName("live_away_goals")] public int? LiveAwayGoals { get; set; }
     [JsonPropertyName("odds_checked_at_utc")] public DateTimeOffset? OddsCheckedAtUtc { get; set; }
     [JsonPropertyName("odds_updated_at_utc")] public DateTimeOffset? OddsUpdatedAtUtc { get; set; }
     public TimeSpan Time { get; init; }

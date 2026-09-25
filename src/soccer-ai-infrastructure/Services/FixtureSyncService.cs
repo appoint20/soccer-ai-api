@@ -748,6 +748,53 @@ public class FixtureSyncService(IApiFootballService apiService,
         row.CapturedAtUtc = at;
     }
 
+    public async Task<int> CaptureLiveScoresAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+
+        // Ask the database before the provider. A fixture can only be in play
+        // between its kickoff and a few hours after it, so outside those windows
+        // this step costs nothing at all — which is most of the day.
+        var candidates = await dbContext.Fixtures
+            .Where(f => scopedLeagueIds.Contains(f.LeagueId) &&
+                        f.Date <= now && f.Date > now.AddHours(-Application.Services.Sync.SyncOptions.LiveWindowHours) &&
+                        f.Status != "FT" && f.Status != "AET" && f.Status != "PEN" &&
+                        f.Status != "PST" && f.Status != "CANC" && f.Status != "ABD" && f.Status != "AWD" && f.Status != "WO")
+            .ToListAsync(ct);
+
+        if (candidates.Count == 0) return 0;
+
+        var live = await apiService.GetLiveFixturesAsync(ct);
+        if (live.Count == 0) return 0;
+
+        // One response covers every competition the provider follows, so only
+        // the fixtures we recognise are kept.
+        var byApiId = live.ToDictionary(l => l.ApiId);
+        var updated = 0;
+        foreach (var fixture in candidates)
+        {
+            if (!byApiId.TryGetValue(fixture.ApiId, out var state)) continue;
+
+            fixture.Status = state.StatusShort;
+            fixture.HomeGoal = state.HomeGoals;
+            fixture.AwayGoal = state.AwayGoals;
+            fixture.ElapsedMinutes = state.ElapsedMinutes;
+            fixture.ExtraMinutes = state.ExtraMinutes;
+            fixture.LiveCheckedAtUtc = now;
+            fixture.UpdatedAt = now;
+            updated++;
+        }
+
+        if (updated > 0)
+        {
+            await dbContext.SaveChangesAsync(ct);
+            logger.LogInformation("[Live] Updated {Count} in-play fixture(s) from one request", updated);
+        }
+
+        return updated;
+    }
+
     public async Task<DateOddsReport> CaptureDateOddsAsync(DateOnly date, CancellationToken ct)
     {
         var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);

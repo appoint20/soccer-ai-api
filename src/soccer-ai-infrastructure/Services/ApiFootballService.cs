@@ -124,6 +124,49 @@ public class ApiFootballService(
         }
     }
 
+    public async Task<List<LiveFixtureState>> GetLiveFixturesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await GetApiResponseAsync("/fixtures?live=all", ct);
+            if (response is null || !response.Value.TryGetProperty("response", out var data) ||
+                data.ValueKind != JsonValueKind.Array)
+                return [];
+
+            var live = new List<LiveFixtureState>();
+            foreach (var item in data.EnumerateArray())
+            {
+                var fixture = Child(item, "fixture");
+                var status = Child(fixture, "status");
+                var goals = Child(item, "goals");
+                if (!fixture.TryGetProperty("id", out var id) || id.ValueKind != JsonValueKind.Number) continue;
+
+                live.Add(new LiveFixtureState(
+                    id.GetInt32(),
+                    Text(status, "short") ?? "",
+                    Int(status, "elapsed"),
+                    Int(status, "extra"),
+                    Int(goals, "home") ?? 0,
+                    Int(goals, "away") ?? 0));
+            }
+
+            return live;
+        }
+        catch (Application.Exceptions.ExternalApiException)
+        {
+            throw; // Rate limit or rejected key: abort the run, do not report success.
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new Application.Exceptions.ExternalApiException(
+                "API-Football", "Live fixture response could not be read.", innerException: ex);
+        }
+    }
+
+    private static int? Int(JsonElement parent, string name) =>
+        parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var value) &&
+        value.ValueKind == JsonValueKind.Number ? value.GetInt32() : null;
+
     private static JsonElement Child(JsonElement parent, string name) =>
         parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var child)
             ? child : default;

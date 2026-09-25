@@ -49,6 +49,7 @@ builder.Services.RegisterMediator(mediatorBuilder);
 builder.Services.Configure<SyncOptions>(builder.Configuration.GetSection(SyncOptions.SectionName));
 builder.Services.AddHostedService<SyncWorker>();
 builder.Services.AddHostedService<OddsCaptureWorker>();
+builder.Services.AddHostedService<LiveScoreWorker>();
 
 var host = builder.Build();
 

@@ -144,6 +144,24 @@ public sealed class SyncOptions
     /// <summary>How many past meetings to request per pairing.</summary>
     public int HeadToHeadMeetings { get; set; } = 10;
 
+    /// <summary>
+    /// How long after kickoff a fixture can still be in play, and so how long
+    /// the live loop keeps looking at it. Covers 90 minutes, extra time,
+    /// penalties and a generous delay.
+    /// </summary>
+    public const double LiveWindowHours = 4;
+
+    /// <summary>
+    /// How often the live loop wakes. 0 disables it.
+    /// </summary>
+    /// <remarks>
+    /// One request covers every match in play, so the cost is the tick rate and
+    /// nothing else: a minute apart is about 60 requests an hour, and only in
+    /// the hours our own fixtures are actually being played. Overnight the loop
+    /// asks the database, finds nothing running and spends no request at all.
+    /// </remarks>
+    public int LiveScoreIntervalSeconds { get; set; } = 60;
+
     /// <summary>How far ahead the provider's prediction is fetched. 0 disables it.</summary>
     public double PredictionHorizonHours { get; set; } = 120;
 
