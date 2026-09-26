@@ -795,6 +795,79 @@ public class FixtureSyncService(IApiFootballService apiService,
         return updated;
     }
 
+    /// <summary>
+    /// Writes one fixture's match statistics. Shared by the post-match sync and
+    /// the live refresh, which differ only in when they run.
+    /// </summary>
+    private static void ApplyStatistics(Fixture fixture, FixtureDetail? detail)
+    {
+        if (detail?.HomeStats is null || detail.AwayStats is null) return;
+
+        fixture.StatisticsUpdatedAtUtc = DateTimeOffset.UtcNow;
+        fixture.HomeObservedXg = detail.HomeStats.ExpectedGoals;
+        fixture.AwayObservedXg = detail.AwayStats.ExpectedGoals;
+        fixture.HomeShots = detail.HomeStats.TotalShots;
+        fixture.AwayShots = detail.AwayStats.TotalShots;
+        fixture.HomeShotsOnTarget = detail.HomeStats.ShotsOnGoal;
+        fixture.AwayShotsOnTarget = detail.AwayStats.ShotsOnGoal;
+        fixture.HomeBallPossession = detail.HomeStats.BallPossession;
+        fixture.AwayBallPossession = detail.AwayStats.BallPossession;
+        fixture.HomePassesAccurate = detail.HomeStats.PassesAccurate;
+        fixture.AwayPassesAccurate = detail.AwayStats.PassesAccurate;
+        fixture.HomeXg = detail.HomeStats.ExpectedGoals ?? 0;
+        fixture.AwayXg = detail.AwayStats.ExpectedGoals ?? 0;
+        fixture.HomeRedCards = detail.HomeRedCards;
+        fixture.AwayRedCards = detail.AwayRedCards;
+    }
+
+    public async Task<int> CaptureLiveStatsAsync(CancellationToken ct)
+    {
+        var opt = syncOptions.Value;
+        if (opt.LiveStatsRefreshMinutes <= 0) return 0;
+
+        var now = DateTimeOffset.UtcNow;
+        var stale = now.AddMinutes(-opt.LiveStatsRefreshMinutes);
+        var scopedLeagueIds = leagueTiers.GetSyncLeagueIds().ToList();
+
+        // Only fixtures we put our name to. Live statistics are one request per
+        // twenty fixtures per refresh, so following the whole board would cost
+        // more than the rest of the day put together; following the handful we
+        // published a pick on costs a call or two.
+        var picked = dbContext.PublishedTicketLegs.Select(l => l.FixtureId).Distinct();
+
+        var due = await dbContext.Fixtures
+            .Where(f => scopedLeagueIds.Contains(f.LeagueId) && picked.Contains(f.Id) &&
+                        f.ElapsedMinutes != null &&
+                        f.Date <= now && f.Date > now.AddHours(-Application.Services.Sync.SyncOptions.LiveWindowHours) &&
+                        (f.StatisticsUpdatedAtUtc == null || f.StatisticsUpdatedAtUtc < stale))
+            .ToListAsync(ct);
+
+        if (due.Count == 0) return 0;
+        if (quota.IsDailyQuotaCritical)
+        {
+            logger.LogWarning("[LiveStats] Daily budget critical — skipping live statistics");
+            return 0;
+        }
+
+        var details = await apiService.GetFixtureDetailsBatchAsync(due.Select(f => f.ApiId).ToList(), ct);
+        var updated = 0;
+        foreach (var fixture in due)
+        {
+            if (!details.TryGetValue(fixture.ApiId, out var detail)) continue;
+            ApplyStatistics(fixture, detail);
+            updated++;
+        }
+
+        if (updated > 0)
+        {
+            await dbContext.SaveChangesAsync(ct);
+            logger.LogInformation(
+                "[LiveStats] Refreshed statistics for {Count} in-play fixture(s) carrying a published pick", updated);
+        }
+
+        return updated;
+    }
+
     public async Task<DateOddsReport> CaptureDateOddsAsync(DateOnly date, CancellationToken ct)
     {
         var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
@@ -1043,24 +1116,7 @@ public class FixtureSyncService(IApiFootballService apiService,
                     redCards.GetValueOrDefault(apiFixture.AwayTeamApiId, 0));
             }
 
-            if (detail?.HomeStats is not null && detail.AwayStats is not null)
-            {
-                fixture.StatisticsUpdatedAtUtc = DateTimeOffset.UtcNow;
-                fixture.HomeObservedXg = detail.HomeStats.ExpectedGoals;
-                fixture.AwayObservedXg = detail.AwayStats.ExpectedGoals;
-                fixture.HomeShots = detail.HomeStats?.TotalShots ?? 0;
-                fixture.AwayShots = detail.AwayStats?.TotalShots ?? 0;
-                fixture.HomeShotsOnTarget = detail.HomeStats?.ShotsOnGoal ?? 0;
-                fixture.AwayShotsOnTarget = detail.AwayStats?.ShotsOnGoal ?? 0;
-                fixture.HomeBallPossession = detail.HomeStats?.BallPossession;
-                fixture.AwayBallPossession = detail.AwayStats?.BallPossession;
-                fixture.HomePassesAccurate = detail.HomeStats?.PassesAccurate;
-                fixture.AwayPassesAccurate = detail.AwayStats?.PassesAccurate;
-                fixture.HomeXg = detail.HomeStats?.ExpectedGoals ?? 0;
-                fixture.AwayXg = detail.AwayStats?.ExpectedGoals ?? 0;
-                fixture.HomeRedCards = detail.HomeRedCards;
-                fixture.AwayRedCards = detail.AwayRedCards;
-            }
+            ApplyStatistics(fixture, detail);
         }
         catch (Exception ex) when (ex is not OperationCanceledException && ex is not Application.Exceptions.ExternalApiException)
         {

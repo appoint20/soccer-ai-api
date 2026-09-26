@@ -162,6 +162,19 @@ public sealed class SyncOptions
     /// </remarks>
     public int LiveScoreIntervalSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// How stale a picked fixture's statistics may get while it is being
+    /// played. 0 disables live statistics entirely.
+    /// </summary>
+    /// <remarks>
+    /// Statistics are one request per twenty fixtures per refresh, unlike the
+    /// score, which is one request for the whole world. Following every live
+    /// match would cost more than the rest of the day combined; following only
+    /// the fixtures we published a pick on — two to ten on a normal day — costs
+    /// a single call each time this comes due.
+    /// </remarks>
+    public int LiveStatsRefreshMinutes { get; set; } = 5;
+
     /// <summary>How far ahead the provider's prediction is fetched. 0 disables it.</summary>
     public double PredictionHorizonHours { get; set; } = 120;
 

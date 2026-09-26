@@ -51,4 +51,10 @@ public interface IFixtureSyncService
     /// single request. Returns how many were updated.
     /// </summary>
     Task<int> CaptureLiveScoresAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Refreshes match statistics for in-play fixtures carrying a published
+    /// pick. Returns how many were updated.
+    /// </summary>
+    Task<int> CaptureLiveStatsAsync(CancellationToken ct);
 }

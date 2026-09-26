@@ -40,6 +40,11 @@ public sealed class LiveScoreWorker(
                 using var scope = scopeFactory.CreateScope();
                 var syncService = scope.ServiceProvider.GetRequiredService<IFixtureSyncService>();
                 await syncService.CaptureLiveScoresAsync(stoppingToken);
+
+                // Statistics cost a request per twenty fixtures, so they follow
+                // only the matches we published a pick on, and only when their
+                // last reading has gone stale.
+                await syncService.CaptureLiveStatsAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {
