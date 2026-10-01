@@ -106,9 +106,9 @@ services:
       - key: SYNC__ODDSCAPTUREINTERVALMINUTES
         value: "120"
       - key: SYNC__LIVESCOREINTERVALSECONDS
-        value: "7200"
+        value: "60"
       - key: SYNC__LIVESTATSREFRESHMINUTES
-        value: "120"
+        value: "5"
       - key: SYNC__ODDSCAPTUREHORIZONHOURS
         value: "72"
       - key: SYNC__ODDSFINALAPPROACHHOURS

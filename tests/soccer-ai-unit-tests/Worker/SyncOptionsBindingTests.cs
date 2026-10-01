@@ -76,8 +76,8 @@ public class SyncOptionsBindingTests
         options.StartupSyncThresholdHours.Should().Be(2);
         options.OddsCaptureIntervalMinutes.Should().Be(120);
         options.OddsRefreshIntervalHours.Should().Be(2);
-        options.LiveScoreIntervalSeconds.Should().Be(7200);
-        options.LiveStatsRefreshMinutes.Should().Be(120);
+        options.LiveScoreIntervalSeconds.Should().Be(60);
+        options.LiveStatsRefreshMinutes.Should().Be(5);
         SyncWorker.BuildSchedule(options).Should().HaveCount(12);
     }
 

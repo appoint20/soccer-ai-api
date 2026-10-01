@@ -13,17 +13,17 @@ Repository defaults and the checked-in worker, API, Render and Compose configura
 | Main fixture/standings/results pipeline | Every 30 minutes | Every 120 minutes; UTC 00:20, 02:20, …, 22:20 |
 | Odds capture loop | Every 15 minutes | Every 120 minutes |
 | Minimum age before re-fetching odds | 1 hour, shortened by lookahead | Full 2 hours, including the final approach to kickoff |
-| Live scores, when tracked matches are in play | Every 60 seconds | Every 7,200 seconds |
-| Picked-match live statistics | Every 5 minutes when due | Every 120 minutes when due |
+| Live scores, when tracked matches are in play | Every 60 seconds | Unchanged: every 60 seconds |
+| Picked-match live statistics | Every 5 minutes when due | Unchanged: every 5 minutes when due |
 | Optional combined-prediction scheduler | Every 15 minutes, disabled | Every 120 minutes, still disabled |
 
 Injuries retain their slower six-hour freshness rule. Provider predictions and head-to-head captures retain their existing eligibility/deduplication rules. No scheduler has been newly enabled.
 
-The old five-minute statistics setting really could cause API-Football requests, but only for eligible picked matches. The five-minute delay remaining in `SyncWorker` is a failure cooldown followed by a wait for the next scheduled slot, **not** a five-minute provider sync.
+Live scores and picked-match statistics keep their in-play cadence so the app's live screens stay current. One live-score request covers every match in play and is only spent while our own fixtures are being played; statistics are requested only for matches we published a pick on. The five-minute delay in `SyncWorker` is a failure cooldown followed by a wait for the next scheduled slot, **not** a five-minute provider sync.
 
 Normal iOS `/api/analyze` reads do not request a provider refresh. Its three-minute foreground cache reads and 30-second local odds-age checks are not API-Football polling. Explicit administrator refresh endpoints and startup catch-up are separate actions.
 
-**Trade-offs:** live scores/statistics can now lag by up to roughly two hours or longer after failures. A pipeline pass makes multiple provider requests; twelve scheduled passes per day does not mean twelve API calls per day. Manual requests, startup catch-up, retries, multiple replicas and other services sharing a key add usage. This change reduces frequency; it is not a global daily quota guarantee.
+**Trade-offs:** fixtures, results and odds can now lag by up to roughly two hours, or longer after failures. A pipeline pass makes multiple provider requests; twelve scheduled passes per day does not mean twelve API calls per day. Manual requests, startup catch-up, retries, multiple replicas and other services sharing a key add usage. This change reduces frequency; it is not a global daily quota guarantee.
 
 The optional combined scheduler keeps its five-attempt daily cap. Its final-refresh window is widened to T−4h through T−30m so a two-hour polling interval has room to observe it. Slow passes, missing prerequisites and daily caps can still leave fixtures unserved.
 
