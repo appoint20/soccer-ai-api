@@ -28,7 +28,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     private readonly ILogger<OpenAiAnalysisService> _logger;
 
     /// <summary>
-    /// Consecutive failures of the primary model, across the whole process.
+    /// Consecutive failures of the primary model within this service scope.
     /// </summary>
     /// <remarks>
     /// The sync analyses one fixture per request. When the primary model is
@@ -37,8 +37,12 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
     /// back turns a ten-minute sync into an overnight one. After a few failures
     /// in a row the primary is skipped for the rest of the run and the fallback
     /// is used directly; a single success resets it.
+    ///
+    /// Per scope, not per process: a skipped primary can never succeed, so a
+    /// process-wide count never reset, and a free model that was busy for three
+    /// fixtures was never asked again until the next restart.
     /// </remarks>
-    private static int _primaryFailures;
+    private int _primaryFailures;
 
     /// <summary>
     /// Corrective round-trips allowed per model when a response is well-formed
@@ -160,6 +164,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             using var document = JsonDocument.Parse(body);
             if (document.RootElement.ValueKind == JsonValueKind.Object &&
                 document.RootElement.TryGetProperty("error", out var error))
+            {
                 message = error.ValueKind switch
                 {
                     JsonValueKind.String => error.GetString(),
@@ -167,6 +172,12 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                         && text.ValueKind == JsonValueKind.String => text.GetString(),
                     _ => null
                 };
+
+                // For an upstream refusal OpenRouter's own message is only
+                // "Provider returned error"; the provider's reason is in metadata.
+                if (!string.IsNullOrWhiteSpace(message) && UpstreamReason(error) is { } upstream)
+                    message += $" ({upstream})";
+            }
         }
         catch (JsonException)
         {
@@ -177,6 +188,57 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         message = System.Text.RegularExpressions.Regex.Replace(
             message.Trim(), @"sk-[A-Za-z0-9\-_]{6,}", "sk-***");
         return message.Length > 300 ? message[..300] + "…" : message;
+    }
+
+    private static string? UpstreamReason(JsonElement error)
+    {
+        if (error.ValueKind != JsonValueKind.Object ||
+            !error.TryGetProperty("metadata", out var metadata) || metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        string? Text(string name) =>
+            metadata.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String &&
+            !string.IsNullOrWhiteSpace(value.GetString()) ? value.GetString()!.Trim() : null;
+
+        var provider = Text("provider_name");
+        var raw = Text("raw");
+        return raw is null ? provider : provider is null ? raw : $"{provider}: {raw}";
+    }
+
+    /// <summary>
+    /// The reply's text, or a failure carrying the provider's reason when there
+    /// is no reply.
+    /// </summary>
+    /// <remarks>
+    /// OpenRouter can answer 200 with an error object and no choices when the
+    /// upstream provider refuses; a free NVIDIA endpoint did so in half a second.
+    /// The SDK then throws "Specified argument was out of the range of valid
+    /// values. (Parameter 'index')" from Content, and that was all the logs
+    /// showed of the provider's own explanation.
+    /// </remarks>
+    private static string ReplyText(ClientResult<ChatCompletion> completion)
+    {
+        try
+        {
+            return string.Concat(completion.Value.Content.Select(c => c.Text));
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            string? detail;
+            try
+            {
+                detail = DescribeProviderError(completion.GetRawResponse()?.Content?.ToString());
+            }
+            catch (Exception)
+            {
+                // A response whose content was never buffered cannot be re-read.
+                detail = null;
+            }
+
+            throw new InvalidDataException(detail is null
+                ? "The provider returned no answer."
+                : $"The provider returned no answer: {detail}");
+        }
     }
 
     private ChatClient CreateClient(string model)
@@ -280,7 +342,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 var completion = await client.CompleteChatAsync(messages, completionOptions, cancellationToken);
                 _logger.LogInformation(
                     "[OpenRouter] {Model} answered in {Elapsed:F1}s", model, started.Elapsed.TotalSeconds);
-                rawText = string.Concat(completion.Value.Content.Select(c => c.Text));
+                rawText = ReplyText(completion);
                 var json = ExtractJson(rawText);
 
                 if (string.IsNullOrWhiteSpace(json))
@@ -318,7 +380,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 throw new InvalidDataException("Model returned an empty result array.");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-            catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 or 429)
+            catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 ||
+                ex.Status == 429 && !OpenRouterErrors.IsProviderRateLimit(ex))
             {
                 // Another model cannot repair account authentication, credit or quota.
                 var reason = ex.Status == 402 ? "OpenRouter credits are unavailable. Check the account balance."
@@ -382,7 +445,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 var response = await CreateClient(model).CompleteChatAsync(messages,
                     new ChatCompletionOptions { MaxOutputTokenCount = _options.MaxOutputTokens }, ct);
                 var result = JsonSerializer.Deserialize<AiDecisionExplanation>(
-                    ExtractJson(string.Concat(response.Value.Content.Select(c => c.Text))), JsonOpts);
+                    ExtractJson(ReplyText(response)), JsonOpts);
                 if (DecisionExplanationPolicy.Invalid(result, input) is { } error)
                     throw new InvalidDataException(error);
                 // Provenance is assigned here; model-supplied metadata has no authority.
@@ -392,7 +455,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
                 return result;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-            catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 or 429)
+            catch (ClientResultException ex) when (ex.Status is 401 or 402 or 403 ||
+                ex.Status == 429 && !OpenRouterErrors.IsProviderRateLimit(ex))
             {
                 var reason = "The provider rejected access, credit or quota.";
                 if (ex.Status == 429) reason = RateLimitReason(model);
@@ -502,7 +566,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
             var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-sonnet-5");
             var completion = await client.CompleteChatAsync(messages, completionOptions);
-            var json = ExtractJson(completion.Value.Content[0].Text);
+            var json = ExtractJson(ReplyText(completion));
 
             var results = JsonSerializer.Deserialize<List<CombinationDto>>(json, JsonOpts);
             if (results == null) return new();
@@ -537,7 +601,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
             var client = CreateClient(_options.DefaultModel ?? "anthropic/claude-sonnet-5");
             var completion = await client.CompleteChatAsync(messages);
-            var json = ExtractJson(completion.Value.Content[0].Text);
+            var json = ExtractJson(ReplyText(completion));
 
             return JsonSerializer.Deserialize<ChatCombinationIntent>(json, JsonOpts);
         }
