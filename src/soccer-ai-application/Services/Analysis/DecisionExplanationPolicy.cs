@@ -117,15 +117,23 @@ public static class DecisionExplanationPolicy
                 ? (de ? "Kein Markt erreicht die benötigte Wahrscheinlichkeit." : "No market reaches the required probability.")
                 : Sentence($"{Label(top, de)}: {GateReason(top, de)}"));
         }
-        match.Presentation = new(current, lines, markets.Select(m =>
+        // Every audited market gets its checks, not only those at 50% or more:
+        // the app shows a card for each market, and one below 50% is still
+        // analysis the reader asked to see. The writer only covers the markets
+        // in its input, so the others keep the system's own wording.
+        match.Presentation = new(current, lines, (match.DecisionAudit?.Markets ?? []).Select(m =>
         {
-            var (text, outcomes) = Checks(m, current ? "en" : match.PresentationLanguage, match);
+            var written = current ? block!.Markets.FirstOrDefault(x => x.Market == m.Market) : null;
+            // The writer rewrote the English facts one for one, so its checks
+            // take their marks from that same list; a market it did not cover
+            // is worded in the reader's language.
+            var (text, outcomes) = Checks(m, written is null ? match.PresentationLanguage : "en", match);
             return new AiMarketExplanation
             {
                 Market = m.Market,
                 // The writer supplies the words; the marks are ours either way,
                 // so a rewritten check cannot quietly flip its own verdict.
-                Checks = current ? block!.Markets.Single(x => x.Market == m.Market).Checks : text.ToList(),
+                Checks = written?.Checks ?? text.ToList(),
                 CheckOutcomes = outcomes.ToList()
             };
         }).ToList());

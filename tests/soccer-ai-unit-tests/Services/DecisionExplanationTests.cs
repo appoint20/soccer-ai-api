@@ -187,7 +187,8 @@ public class DecisionExplanationTests
             Market = "draw", Selection = "Draw", Probability = .35, Threshold = .30, Odds = 3.5 }], Now);
         DecisionExplanationPolicy.Input(m).SelectedMarkets.Should().ContainSingle("draw");
         DecisionExplanationPolicy.Refresh(m);
-        m.Presentation!.Markets.Should().BeEmpty();
+        // A card below 50% is still shown, with the system's own checks.
+        m.Presentation!.Markets.Should().ContainSingle(x => x.Market == "draw" && x.Checks.Count > 0);
         m.Presentation.SummaryLines[0].Should().Contain("selects: Draw");
     }
 
