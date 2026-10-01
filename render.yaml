@@ -37,7 +37,7 @@ services:
       # AISERVICE__DEFAULTMODEL in the dashboard too, or delete it there so
       # appsettings.json applies.
       - key: AISERVICE__DEFAULTMODEL
-        value: "z-ai/glm-5.2:free"
+        value: "nvidia/nemotron-3-super-120b-a12b:free"
       # An OpenRouter key: starts with "sk-or-v1-". This used to be ZAI_API_KEY,
       # which must never be sent to OpenRouter. Credential lookup is now scoped
       # to the configured provider; a Z.ai key cannot act as a fallback here.
