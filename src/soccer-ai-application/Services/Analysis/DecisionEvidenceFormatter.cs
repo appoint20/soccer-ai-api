@@ -6,9 +6,11 @@ namespace SoccerAi.Application.Services.Analysis;
 
 public static class DecisionEvidenceFormatter
 {
-    public static string? Format(RuleResult rule, MatchAnalysis? match, bool de)
+    public static string? FormatAnalysis(RuleResult rule, MatchAnalysis? match, bool de) => Format(rule, match, de, true);
+
+    public static string? Format(RuleResult rule, MatchAnalysis? match, bool de, bool analysisOnly = false)
     {
-        var meaning = Meaning(rule.RuleId, de);
+        var meaning = analysisOnly ? AnalysisMeaning(rule.RuleId, de) : Meaning(rule.RuleId, de);
         if (meaning is null) return null;
         var measurements = rule.Evidence.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Select((part, index) => Measurement(part, match, index, de))
@@ -24,8 +26,24 @@ public static class DecisionEvidenceFormatter
             var candidate = string.Join("; ", selected.Append(measurement!)) + ". " + meaning;
             if (candidate.Length <= 260) selected.Add(measurement!);
         }
-        return selected.Count == 0 ? meaning : string.Join("; ", selected) + ". " + meaning;
+        return selected.Count == 0 ? analysisOnly ? null : meaning : string.Join("; ", selected) + ". " + meaning;
     }
+
+    private static string? AnalysisMeaning(string rule, bool de) => rule switch
+    {
+        "btts_veto_clean_sheets" => de ? "Mindestens eine Abwehr blieb zuletzt häufig ohne Gegentor. Das spricht gegen Tore auf beiden Seiten."
+            : "At least one defence has often kept a clean sheet recently. That argues against goals at both ends.",
+        "btts_veto_failed_to_score" => de ? "Mindestens eine Offensive blieb zuletzt wiederholt torlos. Tore beider Teams sind deshalb keineswegs selbstverständlich."
+            : "At least one attack has repeatedly failed to score recently. Goals from both teams are therefore far from assured.",
+        "over25_veto_quiet_h2h" => de ? "Die direkten Duelle waren trotz sonst anfälliger Abwehrreihen torarm. Die Hinweise zur Torzahl widersprechen sich."
+            : "Past meetings were low-scoring despite otherwise leaky defences. The evidence about the total is conflicting.",
+        "over25_veto_dead_rubber_flat" => de ? "Die Ergebnisform beider Teams fällt ab und die Tabellenlage deutet auf wenig sportlichen Druck hin. Die tatsächliche Motivation lässt sich daraus nicht sicher ableiten."
+            : "Both teams' results have declined and the table suggests limited competitive pressure. Their actual motivation cannot be established from that alone.",
+        "goals23_veto_h2h_extremes" => de ? "Der Torschnitt der direkten Duelle liegt deutlich außerhalb von zwei bis drei Toren. Das ist ein Gegenargument zu diesem Torbild."
+            : "Past meetings' average total lies well outside two to three goals. That is evidence against this scoring pattern.",
+        _ => Meaning(rule, de)?.Replace("diese Auswahl", "dieses Torbild").Replace("dieser Auswahl", "diesem Torbild")
+            .Replace("this selection", "this scoring pattern")
+    };
 
     private static int Count(string evidence)
     {

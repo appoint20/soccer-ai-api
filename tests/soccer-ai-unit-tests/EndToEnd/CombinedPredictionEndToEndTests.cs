@@ -33,6 +33,96 @@ public class CombinedPredictionEndToEndTests
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
 
+    [Fact]
+    public async Task BriefingsAreAuthenticatedDatabaseOnlyReadsIncludingMissingAndRescheduledAnalyses()
+    {
+        using var storage = new TestStorage();
+        await using var app = new TestApp(storage.Database);
+        using var client = await app.StartAsync();
+        using var anonymous = app.CreateClient();
+        (await anonymous.GetAsync("/api/briefings")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await anonymous.GetAsync("/api/briefings/1/history")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await client.GetAsync("/api/briefings/999")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.GetAsync("/api/briefings?language=fr")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await client.GetAsync("/api/briefings?offset=-1")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var scope = app.Services.CreateScope();
+        var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var fixture = await database.Fixtures.SingleAsync(row => row.Id == 1);
+        using (var cold = JsonDocument.Parse(await client.GetStringAsync("/api/briefings/1?refresh=true")))
+            cold.RootElement.GetProperty("data").GetProperty("match").GetProperty("data_status").GetString().Should().Be("unavailable");
+        using (var list = JsonDocument.Parse(await client.GetStringAsync($"/api/briefings?date={fixture.Date:yyyy-MM-dd}&limit=1")))
+        {
+            var data = list.RootElement.GetProperty("data");
+            data.GetProperty("matches").GetArrayLength().Should().Be(1);
+            data.GetProperty("provider_refresh_requested").GetBoolean().Should().BeFalse();
+        }
+        app.Provider.Invocations.Should().BeEmpty();
+        app.AiHttp.Calls.Should().Be(0);
+        (await database.FixtureAnalyses.CountAsync()).Should().Be(0);
+
+        await RefreshAsync(client, 1, false);
+        var providerCalls = app.Provider.Invocations.Count;
+        var aiCalls = app.AiHttp.Calls;
+        foreach (var language in new[] { "en", "de" })
+        {
+            using var response = JsonDocument.Parse(await client.GetStringAsync($"/api/briefings/1?language={language}"));
+            var match = response.RootElement.GetProperty("data").GetProperty("match");
+            match.GetProperty("version").GetString().Should().Be("match-analysis-v1");
+            match.GetProperty("outcomes").GetArrayLength().Should().Be(3);
+            match.GetProperty("goal_profiles").GetArrayLength().Should().Be(3);
+            match.GetProperty("sources").GetArrayLength().Should().Be(4);
+            foreach (var profile in match.GetProperty("goal_profiles").EnumerateArray())
+                profile.GetProperty("evidence").GetArrayLength().Should().BeInRange(1, 5);
+            foreach (var forbidden in new[] { "prediction", "headline_prediction", "decision_audit", "odds_home_win" })
+                match.TryGetProperty(forbidden, out _).Should().BeFalse();
+        }
+        app.Provider.Invocations.Should().HaveCount(providerCalls);
+        app.AiHttp.Calls.Should().Be(aiCalls);
+        fixture.Date = fixture.Date.AddHours(1);
+        await database.SaveChangesAsync();
+        using var rescheduled = JsonDocument.Parse(await client.GetStringAsync("/api/briefings/1"));
+        rescheduled.RootElement.GetProperty("data").GetProperty("match").GetProperty("data_status").GetString().Should().Be("unavailable");
+        app.Provider.Invocations.Should().HaveCount(providerCalls);
+    }
+
+    [Fact]
+    public async Task BriefingHistoryNeverReconstructsRecordsOrIncludesFuturePostKickoffOrOldKickoffEstimates()
+    {
+        using var storage = new TestStorage();
+        await using var app = new TestApp(storage.Database);
+        using var client = await app.StartAsync();
+        using var scope = app.Services.CreateScope();
+        var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var fixture = await database.Fixtures.SingleAsync(row => row.Id == 4);
+        PredictionSnapshot Record(int window, DateTimeOffset captured, DateTimeOffset kickoff, double home = .4) => new()
+        {
+            FixtureId = fixture.Id, CaptureWindow = window, CapturedAtUtc = captured, KickoffUtc = kickoff,
+            ModelVersion = "recorded-test-v1", Home = home, Draw = .3, Away = .3, Btts = .4, Over25 = .3, Goals23 = .2
+        };
+        database.PredictionSnapshots.AddRange(
+            Record(1, fixture.Date.AddHours(-2), fixture.Date),
+            Record(2, fixture.Date.AddHours(-1), fixture.Date),
+            Record(3, fixture.Date.AddMinutes(1), fixture.Date),
+            Record(4, fixture.Date.AddHours(-1), fixture.Date.AddHours(1)),
+            Record(5, fixture.Date.AddMinutes(-30), fixture.Date, 1.2));
+        var future = await database.Fixtures.SingleAsync(row => row.Id == 1);
+        var futureRecord = Record(6, DateTimeOffset.UtcNow.AddHours(1), future.Date);
+        futureRecord.FixtureId = future.Id;
+        database.PredictionSnapshots.Add(futureRecord);
+        await database.SaveChangesAsync();
+        using var history = JsonDocument.Parse(await client.GetStringAsync("/api/briefings/4/history"));
+        var data = history.RootElement.GetProperty("data");
+        data.GetProperty("includes_reconstructed_history").GetBoolean().Should().BeFalse();
+        var entries = data.GetProperty("entries").EnumerateArray().ToList();
+        entries.Should().HaveCount(2);
+        entries[0].GetProperty("captured_at_utc").GetDateTimeOffset().Should().Be(fixture.Date.AddHours(-1));
+        entries[0].TryGetProperty("context_json", out _).Should().BeFalse();
+        using var futureHistory = JsonDocument.Parse(await client.GetStringAsync("/api/briefings/1/history"));
+        futureHistory.RootElement.GetProperty("data").GetProperty("entries").GetArrayLength().Should().Be(0);
+        app.Provider.Invocations.Should().BeEmpty();
+        app.AiHttp.Calls.Should().Be(0);
+    }
+
     [LocalPostgresFact]
     public async Task PostgresStartupMigratesAndPersistsTheHttpRefresh()
     {
