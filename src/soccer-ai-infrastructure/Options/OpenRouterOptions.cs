@@ -35,6 +35,8 @@ public sealed class OpenRouterOptions
 
     public int MaxTokens { get; set; } = 2048;
 
+    public bool ReasoningEnabled { get; set; } = false;
+
     /// <summary>Only forecast fixtures kicking off within this window.</summary>
     public int MaxDaysAhead { get; set; } = 7;
 

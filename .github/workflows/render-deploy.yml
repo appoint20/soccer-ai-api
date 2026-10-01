@@ -12,6 +12,22 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: soccer_worker_regression
+          POSTGRES_USER: soccer_e2e
+          POSTGRES_PASSWORD: local-isolated-e2e-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U soccer_e2e -d soccer_worker_regression"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SOCCER_TEST_POSTGRES: Host=127.0.0.1;Port=5432;Database=soccer_worker_regression;Username=soccer_e2e;Password=local-isolated-e2e-only;Pooling=false
     
     steps:
       - name: Checkout Code
@@ -23,13 +39,20 @@ jobs:
           dotnet-version: '10.0.x' # Update to latest desired version
           
       - name: Restore dependencies
-        run: dotnet restore src/soccer-ai-api/soccer-ai-api.csproj
+        run: dotnet restore tests/soccer-ai-unit-tests/soccer-ai-unit-tests.csproj
 
       - name: Build
-        run: dotnet build src/soccer-ai-api/soccer-ai-api.csproj --configuration Release --no-restore
+        run: dotnet build tests/soccer-ai-unit-tests/soccer-ai-unit-tests.csproj --configuration Release --no-restore
 
       - name: Test
         run: dotnet test tests/soccer-ai-unit-tests/soccer-ai-unit-tests.csproj --configuration Release --no-build
+
+      - name: Verify audit and staging-check tooling
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests/ml -v
+          python3 -m unittest discover -s tests/e2e -v
 
   # render automatically triggers deployment on push to main branch       
   # deploy:

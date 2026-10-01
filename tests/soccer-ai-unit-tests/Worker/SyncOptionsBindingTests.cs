@@ -65,7 +65,7 @@ public class SyncOptionsBindingTests
 
         options.ScheduleUtc.Should().BeEmpty();
         SyncWorker.ParseSchedule(options.ScheduleUtc)
-            .Should().Equal(Enumerable.Range(0, 8).Select(i => new TimeOnly(i * 3, 20)));
+            .Should().Equal(Enumerable.Range(0, 12).Select(i => new TimeOnly(i * 2, 20)));
     }
 
     [Fact]
@@ -73,8 +73,12 @@ public class SyncOptionsBindingTests
     {
         var options = Bind([]);
 
-        options.StartupSyncThresholdHours.Should().Be(3);
-        options.OddsCaptureIntervalMinutes.Should().Be(30);
+        options.StartupSyncThresholdHours.Should().Be(2);
+        options.OddsCaptureIntervalMinutes.Should().Be(120);
+        options.OddsRefreshIntervalHours.Should().Be(2);
+        options.LiveScoreIntervalSeconds.Should().Be(7200);
+        options.LiveStatsRefreshMinutes.Should().Be(120);
+        SyncWorker.BuildSchedule(options).Should().HaveCount(12);
     }
 
     /// <summary>

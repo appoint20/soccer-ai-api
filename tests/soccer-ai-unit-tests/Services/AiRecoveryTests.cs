@@ -89,9 +89,11 @@ public class AiRecoveryTests
             new FixtureAnalysis { FixtureId = 1, Lang = "de", Confidence = 80 });
         await db.SaveChangesAsync();
         var analysis = new Mock<IMatchAnalysisService>();
+        var providerPrediction = new ProviderPrediction { PercentHome = .45, UnderOver = "-3.5" };
         analysis.Setup(x => x.AnalyzeFixtureAsync(fixture, "en", true, It.IsAny<CancellationToken>())).ReturnsAsync(new FixtureAnalysisResult {
             FixtureId = 1, TeamStats = new TeamStatsResponse(), Models = new StatisticalModels(), H2H = new HeadToHeadModel(),
-            Decisions = new DecisionServiceResult(), LeagueName = "League", Prediction = new WeightedPrediction { HomeProb = .5, Over25Prob = .6 }
+            Decisions = new DecisionServiceResult(), LeagueName = "League", Prediction = new WeightedPrediction { HomeProb = .5, Over25Prob = .6 },
+            Provider = providerPrediction
         });
         var provider = new Mock<IAiAnalysisService>(); var result = ValidResult();
         result.GeneratedAtUtc = DateTimeOffset.UtcNow; result.ModelVersion = "actual-model";
@@ -111,6 +113,8 @@ public class AiRecoveryTests
             return;
         }
         await sut.SyncSingleFixtureAsync(1);
+        provider.Verify(x => x.AnalyzeBatchAsync(It.Is<List<AiBatchItem>>(items =>
+            items.Count == 1 && items[0].ProviderPrediction == providerPrediction), It.IsAny<CancellationToken>()), Times.Once);
         var stored = await db.FixtureAnalyses.ToListAsync();
         stored.Should().HaveCount(2).And.OnlyContain(r => r.Analysis.Length > 0 && r.AiModelVersion == "actual-model");
         precompute.Verify(x => x.RecomputeFixtureAsync(1, It.IsAny<CancellationToken>()), Times.Once);

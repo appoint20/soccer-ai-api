@@ -5,10 +5,9 @@ namespace SoccerAi.Application.Models;
 /// comparison and each team's recent scoring, none of which involve a price.
 /// </summary>
 /// <remarks>
-/// A second opinion, never an authority. Our model owns the probabilities the
-/// gate reads; this is evidence to agree or disagree with, and the material the
-/// match panel explains in words — "Dortmund 63% form against Bremen's 37%"
-/// says something a reader can act on, where a bare probability does not.
+/// Raw provider evidence. The combined workflow uses outcome percentages for
+/// 1X2 and an explicit recent-goals adapter for goal markets; comparison
+/// ratings are never interpreted as BTTS or Over 2.5 probabilities.
 /// </remarks>
 public sealed record ProviderPrediction
 {

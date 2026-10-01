@@ -36,6 +36,16 @@ public static class ExportMlAuditCommand
             var files = new Dictionary<string, object>();
             var queries = new Dictionary<string, string>
             {
+                ["forecast-inputs"] = """
+                    SELECT row_to_json(a)::text FROM (
+                      SELECT "FixtureId", "Lang", "SnapshotJson", "UpdatedAt"
+                      FROM "FixtureAnalyses" a
+                      WHERE "Lang" = 'en' AND "SnapshotJson" IS NOT NULL
+                        AND EXISTS (SELECT 1 FROM "Fixtures" f WHERE f."Id" = a."FixtureId"
+                          AND f."Status" = 'NS' AND f."Date" > now() AND f."Date" < now() + interval '10 days')
+                      ORDER BY "FixtureId"
+                    ) a
+                    """,
                 ["fixtures"] = "SELECT row_to_json(f)::text FROM \"Fixtures\" f ORDER BY f.\"Date\", f.\"Id\"",
                 ["ai-analyses"] = """
                     SELECT row_to_json(a)::text FROM (
@@ -54,15 +64,26 @@ public static class ExportMlAuditCommand
             await using (var exists = new NpgsqlCommand("SELECT to_regclass('\"PredictionSnapshots\"') IS NOT NULL", connection, transaction))
                 if ((bool)(await exists.ExecuteScalarAsync())!)
                     queries["prediction-snapshots"] = "SELECT row_to_json(p)::text FROM \"PredictionSnapshots\" p ORDER BY p.\"Id\"";
-            foreach (var (table, name) in new[] { ("ModelForecasts", "model-forecasts"), ("SyncStates", "sync-state") })
+            foreach (var (table, name) in new[] { ("ModelForecasts", "model-forecasts"), ("SyncStates", "sync-state"),
+                         ("FixturePredictions", "provider-predictions"), ("Teams", "teams") })
             {
                 await using var exists = new NpgsqlCommand("SELECT to_regclass(@table) IS NOT NULL", connection, transaction);
                 exists.Parameters.AddWithValue("table", $"\"{table}\"");
                 if ((bool)(await exists.ExecuteScalarAsync())!)
                     queries[name] = $"SELECT row_to_json(p)::text FROM \"{table}\" p ORDER BY p.\"Id\"";
             }
+            await using (var exists = new NpgsqlCommand("SELECT to_regclass('\"GoalRateModelGenerations\"') IS NOT NULL", connection, transaction))
+                if ((bool)(await exists.ExecuteScalarAsync())!)
+                    queries["goal-rate-generations"] = """
+                        SELECT row_to_json(p)::text FROM (
+                          SELECT "Generation", "CreatedAtUtc", "ManifestJson", "CalibrationJson", "EvaluationJson"
+                          FROM "GoalRateModelGenerations" ORDER BY "CreatedAtUtc", "Generation"
+                        ) p
+                        """;
             foreach (var (name, sql) in queries)
             {
+                if (CommandArgs.Flag(args, "--context-only") && name != "forecast-inputs" && name != "provider-predictions")
+                    continue;
                 var path = Path.Combine(output, name + ".json"); var count = 0;
                 await using var command = new NpgsqlCommand(sql, connection, transaction);
                 await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);

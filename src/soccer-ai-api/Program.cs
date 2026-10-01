@@ -69,7 +69,8 @@ builder.Services.Configure<SoccerAi.Application.Services.Sync.SyncOptions>(
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Background hosted service that runs AI analysis sync on application startup
-builder.Services.AddHostedService<SoccerAi.Api.Startup.AiStartupSyncHostedService>();
+if (builder.Configuration.GetValue("AiStartupSync:Enabled", true))
+    builder.Services.AddHostedService<SoccerAi.Api.Startup.AiStartupSyncHostedService>();
 
 builder.Services.AddOptions<AdminApiKeyOptions>()
     .Bind(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
@@ -83,6 +84,7 @@ builder.Services.AddSingleton<AdminApiKeyRegistry>();
 builder.Services.AddSingleton<SoccerAi.Api.Automation.AiAnalysisJobs>();
 builder.Services.AddSingleton<SoccerAi.Api.Automation.ManualAutomationGate>();
 builder.Services.AddSingleton<SoccerAi.Api.Automation.DateSyncJobs>();
+builder.Services.AddSingleton<SoccerAi.Api.Automation.CombinedPredictionJobs>();
 
 // Supabase owns identity once a project URL is configured. Its tokens are
 // validated here rather than by calling Supabase on every request: an access

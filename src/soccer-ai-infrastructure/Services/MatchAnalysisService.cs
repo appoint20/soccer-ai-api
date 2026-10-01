@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using SoccerAi.Application.Entities;
 using SoccerAi.Application.Interfaces;
 using SoccerAi.Application.Models;
@@ -10,7 +11,7 @@ namespace SoccerAi.Infrastructure.Services;
 /// Orchestrator-only analysis pipeline for a single fixture.
 /// Used by both the analysis and combination endpoints — single source of truth.
 ///
-/// Pipeline: MatchDataProvider → ProbabilityPipeline (DC → calibration) → DecisionService
+/// Pipeline: match context → stored combined prediction or statistical calibration → decisions.
 /// </summary>
 public sealed class MatchAnalysisService(
     IMatchDataProvider dataProvider,
@@ -69,7 +70,8 @@ public sealed class MatchAnalysisService(
         // Math cache is only trusted when COMPLETE. Legacy rows have
         // DrawProb hard-zeroed and no Goals23Prob — using them saturates
         // 1X2 and goals_2_3 log loss with fake 0-probabilities.
-        var cacheComplete = aiEntity is { HomeProb: > 0, DrawProb: > 0, Goals23Prob: > 0 };
+        var cacheComplete = aiEntity is { HomeProb: > 0, DrawProb: > 0, Goals23Prob: > 0 }
+            && SoccerAi.Application.Services.Analysis.AnalysisSnapshotSerializer.Deserialize(aiEntity.SnapshotJson)?.CombinedPrediction is null;
 
         if (!refresh && cacheComplete)
         {
@@ -127,7 +129,38 @@ public sealed class MatchAnalysisService(
         // cache; the immutable ledger supplies training evidence. Product output uses calibrated.
         var rawPrediction = prediction;
         IReadOnlyList<CalibrationTraceEntry>? calibrationTrace = null;
-        if (prediction != null)
+        var combinedRow = await dbContext.CombinedPredictionSnapshots.AsNoTracking()
+            .Where(snapshot => snapshot.FixtureId == fixture.Id && snapshot.KickoffUtc == fixture.Date
+                && snapshot.CapturedAtUtc < fixture.Date)
+            .OrderByDescending(snapshot => snapshot.CapturedAtUtc).ThenByDescending(snapshot => snapshot.Id)
+            .FirstOrDefaultAsync(ct);
+        CombinedPrediction? combined = null;
+        if (combinedRow is not null)
+        {
+            try { combined = JsonSerializer.Deserialize<CombinedPrediction>(combinedRow.PredictionJson); }
+            catch (JsonException) { }
+            if (combined?.FixtureId != fixture.Id || combined.KickoffUtc != fixture.Date
+                || (combined.HomeTeamId.HasValue && combined.HomeTeamId != fixture.HomeTeamId)
+                || (combined.AwayTeamId.HasValue && combined.AwayTeamId != fixture.AwayTeamId)
+                || combined.Markets.HasOutcomes != true || combined.Markets.HasGoals != true)
+                combined = null;
+        }
+        if (combined is not null)
+        {
+            try
+            {
+                using var evidence = JsonDocument.Parse(combinedRow!.EvidenceJson);
+                provider = evidence.RootElement.TryGetProperty("provider", out var savedProvider)
+                    ? savedProvider.Deserialize<ProviderPrediction>() : null;
+            }
+            catch (JsonException) { provider = null; }
+            prediction = combined.Markets.ToPrediction();
+            rawPrediction = prediction;
+            models = new StatisticalModels { Poisson = models.Poisson, ModelVersion = combined.Version, CombinedMarkets = combined.Markets };
+            if (ai.GeneratedAtUtc is null || ai.GeneratedAtUtc < combined.CapturedAtUtc)
+                ai = new AiAnalysisDto();
+        }
+        else if (prediction != null)
         {
             var calibration = await calibrationService.ApplyAsync(prediction, fixture.Date, ct, models.ModelVersion);
             prediction = calibration.Calibrated;
@@ -152,6 +185,7 @@ public sealed class MatchAnalysisService(
             H2H = h2h,
             Provider = provider,
             Prediction = prediction,
+            CombinedPrediction = combined,
             Decisions = decisions,
             LeagueName = LeagueCatalog.Name(fixture.LeagueId),
             OddsOver25 = odds.OddsOver25,

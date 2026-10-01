@@ -18,11 +18,16 @@ public sealed class MatchAnalysis
     public string Status { get; set; } = "NS";
 
     /// <summary>
-    /// Minutes played, while the match is in play; null otherwise.
+    /// Minutes played, from kickoff onwards. Null only before a match has ever
+    /// been seen in play.
     /// </summary>
     /// <remarks>
     /// Paired with <see cref="Status"/>, which names the period: 45 in "HT"
-    /// means the half ended, 45 in "1H" means it is still running.
+    /// means the half ended, 45 in "1H" means it is still running. The last
+    /// reading is kept after the whistle rather than cleared, so a finished
+    /// match can still say it ran to "90+3" — which means this field alone does
+    /// not tell a caller whether a match is live. Read <see cref="Status"/> for
+    /// that, as the clients do.
     /// </remarks>
     [JsonPropertyName("elapsed_minutes")] public int? ElapsedMinutes { get; set; }
 
@@ -91,6 +96,10 @@ public sealed class MatchAnalysis
     
     // Flattened Decisions
     public PredictionResponse? Prediction { get; init; }
+    [JsonPropertyName("match_prediction")]
+    public StringPrediction? MatchPrediction => Prediction?.MatchWinner;
+    [JsonPropertyName("combined_prediction")]
+    public CombinedPrediction? CombinedPrediction { get; init; }
     /// <remarks>
     /// Named explicitly because the global SnakeCaseLower policy renders `H2H`
     /// as "h2_h" — an unguessable key that no client was reading, which is why

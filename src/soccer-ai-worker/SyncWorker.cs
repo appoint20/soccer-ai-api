@@ -152,7 +152,7 @@ public sealed class SyncWorker(
         }
 
         if (times.Count == 0)
-            times.AddRange(Enumerable.Range(0, 8).Select(i => new TimeOnly(i * 3, 20)));
+            times.AddRange(Enumerable.Range(0, 12).Select(i => new TimeOnly(i * 2, 20)));
 
         times.Sort();
         return times;

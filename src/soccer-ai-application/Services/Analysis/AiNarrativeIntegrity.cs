@@ -27,9 +27,13 @@ public static class AiNarrativeIntegrity
         return null;
     }
 
-    public static bool NeedsSnapshotRefresh(MatchAnalysis? snapshot, FixtureAnalysis? row) =>
-        row is not null && !string.IsNullOrWhiteSpace(row.Analysis) &&
-        (snapshot?.Ai is not { } ai || ai.Analysis != row.Analysis || ai.GeneratedAtUtc != row.AiGeneratedAtUtc);
+    public static bool NeedsSnapshotRefresh(MatchAnalysis? snapshot, FixtureAnalysis? row)
+    {
+        if (snapshot?.CombinedPrediction is { } combined &&
+            (row?.AiGeneratedAtUtc is null || row.AiGeneratedAtUtc < combined.CapturedAtUtc)) return false;
+        return row is not null && !string.IsNullOrWhiteSpace(row.Analysis) &&
+            (snapshot?.Ai is not { } ai || ai.Analysis != row.Analysis || ai.GeneratedAtUtc != row.AiGeneratedAtUtc);
+    }
 
     public static string? InvalidResult(AiBilingualResult? result) => result switch
     {

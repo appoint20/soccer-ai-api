@@ -214,4 +214,51 @@ public class LiveScoreCaptureTests : IDisposable
 
         updated.Should().Be(0);
     }
+    /// <summary>
+    /// A finished match's statistics are finished too.
+    /// </summary>
+    /// <remarks>
+    /// Caught in production: the minute is deliberately kept after the whistle
+    /// so the final "90+3" survives, and this step read a non-null minute as
+    /// "in play". A picked fixture therefore kept earning a refetch every
+    /// LiveStatsRefreshMinutes until its kickoff aged out of the live window —
+    /// about two hours of re-reading numbers that had stopped moving.
+    /// </remarks>
+    [Fact]
+    public async Task AFinishedFixtureIsNotFollowedEvenThoughItKeptItsMinute()
+    {
+        var fixture = Kicked(hoursAgo: 2, status: "FT");
+        fixture.ElapsedMinutes = 90;
+        fixture.ExtraMinutes = 3;
+        fixture.StatisticsUpdatedAtUtc = Now.AddHours(-1);   // long stale
+        _db.Fixtures.Add(fixture);
+        await _db.SaveChangesAsync();
+        await PublishPickOn(fixture.Id);
+
+        var updated = await Sync().CaptureLiveStatsAsync(CancellationToken.None);
+
+        updated.Should().Be(0);
+        _api.Verify(x => x.GetFixtureDetailsBatchAsync(It.IsAny<IReadOnlyCollection<int>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An abandoned or postponed match is equally over, for our purposes.</summary>
+    [Theory]
+    [InlineData("PST")]
+    [InlineData("CANC")]
+    [InlineData("ABD")]
+    [InlineData("AET")]
+    [InlineData("PEN")]
+    public async Task AFixtureThatWillNotResumeIsNotFollowed(string status)
+    {
+        var fixture = Kicked(hoursAgo: 2, status: status);
+        fixture.ElapsedMinutes = 90;
+        _db.Fixtures.Add(fixture);
+        await _db.SaveChangesAsync();
+        await PublishPickOn(fixture.Id);
+
+        var updated = await Sync().CaptureLiveStatsAsync(CancellationToken.None);
+
+        updated.Should().Be(0);
+    }
 }

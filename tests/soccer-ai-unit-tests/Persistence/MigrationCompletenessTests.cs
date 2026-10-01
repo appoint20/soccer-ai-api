@@ -55,7 +55,9 @@ public class MigrationCompletenessTests
             [nameof(db.PredictionSnapshots)] = () => db.PredictionSnapshots.CountAsync(),
             [nameof(db.FixtureInjuries)] = () => db.FixtureInjuries.CountAsync(),
             [nameof(db.HeadToHeadMeetings)] = () => db.HeadToHeadMeetings.CountAsync(),
-            [nameof(db.FixturePredictions)] = () => db.FixturePredictions.CountAsync()
+            [nameof(db.FixturePredictions)] = () => db.FixturePredictions.CountAsync(),
+            [nameof(db.CombinedPredictionSnapshots)] = () => db.CombinedPredictionSnapshots.CountAsync(),
+            [nameof(db.CombinedPredictionAutomationAttempts)] = () => db.CombinedPredictionAutomationAttempts.CountAsync()
         };
 
         foreach (var (name, count) in counts)
@@ -63,6 +65,21 @@ public class MigrationCompletenessTests
             var act = async () => await count();
             await act.Should().NotThrowAsync($"{name} must have a table created by a migration");
         }
+
+        db.Teams.AddRange(new Team { ApiId = 90001, Name = "Home" }, new Team { ApiId = 90002, Name = "Away" });
+        var fixture = new Fixture { ApiId = 90003, HomeTeamId = 90001, AwayTeamId = 90002, Date = DateTimeOffset.UtcNow.AddDays(1) };
+        db.Fixtures.Add(fixture);
+        await db.SaveChangesAsync();
+        var captured = DateTimeOffset.UtcNow;
+        var combined = new CombinedPredictionSnapshot { FixtureId = fixture.Id, KickoffUtc = fixture.Date,
+            CapturedAtUtc = captured, PredictionJson = "{\"version\":\"test\"}", EvidenceJson = "{}" };
+        db.CombinedPredictionSnapshots.Add(combined);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        var savedCombined = await db.CombinedPredictionSnapshots.Where(row => row.KickoffUtc > captured)
+            .OrderByDescending(row => row.CapturedAtUtc).ThenByDescending(row => row.Id).SingleAsync();
+        savedCombined.CapturedAtUtc.Should().Be(captured);
+        savedCombined.PredictionJson.Should().Be(combined.PredictionJson);
 
         // Querying a count cannot detect missing columns. Round-trip AI provenance
         // through the migrated schema and an unrelated cache timestamp update.
@@ -97,7 +114,7 @@ public class MigrationCompletenessTests
 
         await using var db = new ApplicationDbContext(options);
 
-        db.Model.GetEntityTypes().Should().HaveCount(16,
+        db.Model.GetEntityTypes().Should().HaveCount(18,
             "every entity must also be asserted in EveryEntityHasATableAfterMigrating");
     }
 
@@ -111,6 +128,9 @@ public class MigrationCompletenessTests
         var script = db.GetService<IMigrator>().GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
         script.Should().Contain("CREATE TABLE \"PredictionSnapshots\"");
         script.Should().Contain("CREATE TABLE \"GoalRateModelGenerations\"");
+        script.Should().Contain("CREATE TABLE \"CombinedPredictionSnapshots\"");
+        script.Should().Contain("CREATE TABLE \"CombinedPredictionAutomationAttempts\"");
+        script.Should().Contain("\"PredictionJson\" text NOT NULL");
         script.Should().Contain("\"HomeModel\" bytea");
         script.Should().Contain("\"OddsUpdatedAtUtc\"");
         script.Should().Contain("\"OddsCheckedAtUtc\"");

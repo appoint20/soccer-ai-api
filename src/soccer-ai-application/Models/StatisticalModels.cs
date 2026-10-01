@@ -46,10 +46,13 @@ public sealed class PoissonModel
 }
 
 /// <summary>
-/// Statistical models container. Dixon-Coles is the only model.
+/// Statistical diagnostics and the optional frozen combined market vector.
 /// </summary>
 public sealed class StatisticalModels
 {
     public string ModelVersion { get; init; } = "unknown";
     public PoissonModel Poisson { get; init; } = PoissonModel.Empty;
+    public CombinedMarkets? CombinedMarkets { get; init; }
+    public double? EffectiveBttsAndOver25 => CombinedMarkets?.BttsAndOver25
+        ?? (Poisson.IsValid ? Poisson.BttsAndOver25 : null);
 }

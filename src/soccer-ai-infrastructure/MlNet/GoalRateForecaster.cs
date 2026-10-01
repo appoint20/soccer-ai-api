@@ -79,6 +79,12 @@ public sealed class GoalRateForecaster(
             var h = Math.Clamp(home[i] * state.Calibration.HomeScale, _opt.LambdaMin, _opt.LambdaMax);
             var a = Math.Clamp(away[i] * state.Calibration.AwayScale, _opt.LambdaMin, _opt.LambdaMax);
             var m = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(h, a, _dc.Rho, _dc.MaxGoals));
+            var rawMl = new PoissonProbabilities
+            {
+                HomeWin = m.HomeWin, Draw = m.Draw, AwayWin = m.AwayWin,
+                Over25 = m.Over25, BothTeamScoredGoal = m.Btts, TwoToThreeGoals = m.TwoToThreeGoals,
+                BttsAndOver25 = m.BttsAndOver25, HomeExpectedGoals = h, AwayExpectedGoals = a
+            };
             if (state.Manifest.PredictionRecipe == GoalRateEnsemble.Recipe && rows[i].DcLambdaSum > 0)
             {
                 var dc = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
@@ -92,7 +98,7 @@ public sealed class GoalRateForecaster(
                 HomeWin = m.HomeWin, Draw = m.Draw, AwayWin = m.AwayWin,
                 Over25 = m.Over25, BothTeamScoredGoal = m.Btts, TwoToThreeGoals = m.TwoToThreeGoals,
                 BttsAndOver25 = m.BttsAndOver25, HomeExpectedGoals = h, AwayExpectedGoals = a
-            }, $"{state.Manifest.SchemaVersion}:{state.Manifest.Generation}");
+            }, $"{state.Manifest.SchemaVersion}:{state.Manifest.Generation}") { RawMlProbabilities = rawMl };
         }
         return output;
     }

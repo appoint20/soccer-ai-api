@@ -95,51 +95,20 @@ services:
         fromDatabase:
           name: soccer-ai-db
           property: connectionString
-      # Hourly. One scalar replaces the 24 indexed SYNC__SCHEDULEUTC__n vars the
-      # same grid would otherwise need — and, because the binder APPENDS array
-      # entries instead of replacing them, a long indexed list is exactly the
-      # shape that produced the duplicated "03:30, 15:30, 03:30, 15:30" schedule
-      # this deployment has already been bitten by. A scalar cannot half-apply.
-      #
-      # IntervalMinutes takes precedence over SCHEDULEUTC, so the stale
-      # SYNC__SCHEDULEUTC__0..7 variables still sitting in the dashboard are
-      # ignored rather than merged. Delete them anyway to keep the dashboard
-      # honest about what is in effect.
-      #
-      # Measured cost: a full pipeline run — every step, narratives included —
-      # took 11.6 min in production (21:19:59 → 21:31:37 on 2026-09-09), so a
-      # half-hourly slot has ~18 min of headroom. Slots are absolute UTC times,
-      # so an over-running sync skips to the next free slot; it cannot overlap
-      # itself. Half-hourly is what the request budget affords: the per-run
-      # overhead alone is ~40 calls, so a 3-minute loop would spend 19,000 a day
-      # against a 7,500 plan and spend most of it on runs with nothing due.
       - key: SYNC__INTERVALMINUTES
-        value: "30"
-      # Minutes past the hour. Off the top of the hour on purpose — that is when
-      # the upstream provider is busiest.
+        value: "120"
       - key: SYNC__INTERVALANCHORMINUTE
         value: "20"
-      # Restart catch-up, matched to the cadence: with half-hourly slots a 1h
-      # threshold means a redeploy can leave the board unrefreshed for two
-      # slots before it decides anything is stale.
       - key: SYNC__STARTUPSYNCTHRESHOLDHOURS
-        value: "1"
-      # Odds cadence, sized against the 7,500-request daily plan. A fixture is
-      # re-priced once its newest quote is an hour old, and on every tick inside
-      # the last 6h, where lines actually move. Note the due check subtracts one
-      # ODDSCAPTUREINTERVALMINUTES tick of lookahead, so 60 − 15 = 45 min lands
-      # each fixture on the next half-hourly slot: one capture per hour, not two.
-      #
-      # Measured on 2026-09-17/18: ~144 fixtures inside the 72h horizon and ~40
-      # non-odds calls per run. Per day that is 144 × 24 ≈ 3,460 odds calls,
-      # ~580 for the final-approach captures, and 48 × 40 ≈ 1,920 of fixture,
-      # standings, injury and head-to-head traffic — about 5,950, leaving room
-      # for a catch-up day after an outage rather than running into the 429s
-      # that stop a sync dead.
+        value: "2"
       - key: SYNC__ODDSREFRESHINTERVALHOURS
-        value: "1"
+        value: "2"
       - key: SYNC__ODDSCAPTUREINTERVALMINUTES
-        value: "15"
+        value: "120"
+      - key: SYNC__LIVESCOREINTERVALSECONDS
+        value: "7200"
+      - key: SYNC__LIVESTATSREFRESHMINUTES
+        value: "120"
       - key: SYNC__ODDSCAPTUREHORIZONHOURS
         value: "72"
       - key: SYNC__ODDSFINALAPPROACHHOURS

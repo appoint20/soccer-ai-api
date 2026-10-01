@@ -38,6 +38,9 @@ public static class Program
         if (args[0].Equals("audit-ai-combined", StringComparison.OrdinalIgnoreCase))
             return await AuditAiCombinedCommand.RunAsync(args);
 
+        if (args[0].Equals("audit-source-goals", StringComparison.OrdinalIgnoreCase))
+            return await AuditSourceGoalsCommand.RunAsync(args);
+
         using var host = BuildHost(args);
 
         var command = args[0].ToLowerInvariant();
@@ -780,6 +783,9 @@ public static class Program
                            Read-only PostgreSQL export; no host or migrations.
               audit-ai-combined --input-dir=directory --output=report.json
                            Compare recorded pre-AI decisions and actual AI-assisted choices.
+              audit-source-goals --input=fixtures.json --output=goals.json --settings=appsettings.json
+                           --from=yyyy-MM-dd --until=yyyy-MM-dd [--allow-trainer-fallback]
+                           Offline historical/ML holdout; separate pre-period calibration, no model publication.
               backtest     [--weeks=10] [--stake=1.0] [--output=backtest_result.json]
                            Run the backtest pipeline and write the JSON report.
               train-ml     [--cutoff=yyyy-MM-dd]

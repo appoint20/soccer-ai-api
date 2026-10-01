@@ -8,8 +8,7 @@ using SoccerAi.Application.Interfaces;
 namespace SoccerAi.Worker;
 
 /// <summary>
-/// Independent odds capture loop: the configured three-hour refresh, with
-/// more frequent checks in the final approach to kickoff. All times UTC.
+/// Independent odds capture loop using the configured cadence. All times UTC.
 /// </summary>
 public sealed class OddsCaptureWorker(
     IServiceScopeFactory scopeFactory,

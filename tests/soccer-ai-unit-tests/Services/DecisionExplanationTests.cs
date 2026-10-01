@@ -40,12 +40,9 @@ public class DecisionExplanationTests
         m.Presentation!.AiGenerated.Should().BeTrue();
         m.Presentation.SummaryLines.Should().HaveCount(6);
         m.Presentation.SummaryLines[4].Should().Contain("selects: Both teams to score");
-        m.Presentation.SummaryLines[5].Should().Contain("70%").And.Contain("evidence checks")
+        m.Presentation.SummaryLines[5].Should().Contain("No specific match evidence")
             .And.NotContain("1.90", "the closing line states the case, not the price");
-        // Two, because this fixture's audit carries no fired evidence rules and
-        // no provider read: the AI's view and the verdict. The count follows the
-        // evidence rather than being padded to a fixed five.
-        m.Presentation.Markets.Single().Checks.Should().HaveCount(2);
+        m.Presentation.Markets.Single().Checks.Should().ContainSingle();
     }
 
     /// <summary>
@@ -97,7 +94,7 @@ public class DecisionExplanationTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ExistingHistoricalSummariesStayReadableButUpcomingOnesRequireTheNewContract(bool upcoming)
+    public void OldExplanationsAreReplacedByCurrentReadableEvidenceForEveryFixture(bool upcoming)
     {
         var m = Match(DateTimeOffset.UtcNow.AddDays(upcoming ? 1 : -1));
         m.DecisionExplanation = Explanation(m);
@@ -110,8 +107,8 @@ public class DecisionExplanationTests
         m.DecisionExplanation.InputHash = DecisionExplanationPolicy.Hash(oldInput);
         DecisionExplanationPolicy.IsCurrent(m, m.DecisionExplanation).Should().BeFalse();
         DecisionExplanationPolicy.Refresh(m);
-        m.Presentation!.AiGenerated.Should().Be(!upcoming);
-        m.Presentation.SummaryLines.Should().HaveCount(upcoming ? 2 : 6);
+        m.Presentation!.AiGenerated.Should().BeFalse();
+        m.Presentation.SummaryLines.Should().HaveCount(2);
 
         m.DecisionAudit = m.DecisionAudit! with { Markets = [m.DecisionAudit.Markets[0] with { Probability = .65 }] };
         DecisionExplanationPolicy.Refresh(m);
@@ -177,9 +174,7 @@ public class DecisionExplanationTests
     {
         var m = Match(); DecisionExplanationPolicy.Refresh(m, "de");
         var checks = m.Presentation!.Markets.Single().Checks;
-        // Counts, the AI's view and the verdict — the measured evidence is
-        // English until the writer has rewritten it.
-        checks.Should().HaveCount(4);
+        checks.Should().ContainSingle();
         string.Join(" ", checks).Should().NotContain("n/a").And.NotContain("Scored");
         m.Presentation.SummaryLines[0].Should().Contain("Das System wählt");
     }
@@ -196,6 +191,51 @@ public class DecisionExplanationTests
         m.Presentation.SummaryLines[0].Should().Contain("selects: Draw");
     }
 
+    [Theory]
+    [InlineData("1 Datencheck unterstützt die Auswahl.")]
+    [InlineData("2 Ausschlusskriterien wurden gefunden.")]
+    [InlineData("Direkter Vergleich: Home 50%, Away 50%.")]
+    public void AiCannotReintroduceOpaqueRatingsOrCounts(string text)
+    {
+        var match = Match();
+        var explanation = Explanation(match);
+        explanation.De.Markets[0].Checks[0] = text;
+        DecisionExplanationPolicy.Invalid(explanation, DecisionExplanationPolicy.Input(match)).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void OverlongAiListsAndStaleStoredListsNeverReachTheResponse()
+    {
+        var match = Match();
+        var explanation = Explanation(match);
+        explanation.En.Markets[0].Checks = Enumerable.Repeat("A repeated vague observation.", 6).ToList();
+        DecisionExplanationPolicy.Invalid(explanation, DecisionExplanationPolicy.Input(match)).Should().NotBeNull();
+        match.DecisionExplanation = explanation;
+        DecisionExplanationPolicy.Refresh(match);
+        match.DecisionExplanation.Should().BeNull();
+        match.Presentation!.AiGenerated.Should().BeFalse();
+        match.Presentation.Markets.Single().Checks.Count.Should().BeLessThanOrEqualTo(5);
+    }
+
+    [Fact]
+    public void AiMustPreserveMeasuredCountsAndTheirTeam()
+    {
+        var match = Match();
+        match.DecisionAudit = match.DecisionAudit! with
+        {
+            Markets = [match.DecisionAudit.Markets[0] with
+            {
+                Rules = [new("btts_confirm_both_score_venue", RuleResult.Confirm, true,
+                    "Home scored in 3 of their last 3 home matches")]
+            }]
+        };
+        var explanation = Explanation(match);
+        explanation.En.Markets[0].Checks[0] = "Home has often scored recently.";
+        DecisionExplanationPolicy.Invalid(explanation, DecisionExplanationPolicy.Input(match)).Should().Contain("removes measured evidence");
+        explanation.En.Markets[0].Checks[0] = "The team scored in 3 of their last 3 matches.";
+        DecisionExplanationPolicy.Invalid(explanation, DecisionExplanationPolicy.Input(match)).Should().Contain("removes the team name");
+    }
+
     [Fact]
     public void WrongMarketUnsupportedNumbersLongOrEmptyTextAreRejected()
     {
@@ -206,7 +246,7 @@ public class DecisionExplanationTests
         DecisionExplanationPolicy.Invalid(result, input).Should().Contain("unsupported number");
         result = Explanation(m); result.De.SummaryLines[0] = new string('x', 261);
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();
-        result = Explanation(m); result.De.Markets[0].Checks[1] = "n/a";
+        result = Explanation(m); result.De.Markets[0].Checks[0] = "n/a";
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();
         result = Explanation(m); result.En.SummaryLines[0] = "This is our selected bet.";
         DecisionExplanationPolicy.Invalid(result, input).Should().NotBeNull();

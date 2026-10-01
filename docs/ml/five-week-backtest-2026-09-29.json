@@ -1,0 +1,4428 @@
+{
+  "generated_at_utc": "2026-09-29T20:56:40.666597+00:00",
+  "from": "2026-08-25T00:00:00+02:00",
+  "until_exclusive": "2026-09-29T00:00:00+02:00",
+  "timezone": "Europe/Berlin",
+  "protocol": "Latest immutable snapshot at least one hour before actual kickoff; one per FT fixture. Both market probabilities must be finite in [0,1]. No historical forecasts regenerated. Classification uses p>=0.5. Qualified=false is an abstention, not a No prediction. Only pre-capture decision audits count for selections. ROI uses unit stakes on qualified selections with recorded fresh odds; no imputed odds.",
+  "input_provenance": {
+    "CapturedAtUtc": "2026-09-29T20:47:12.050421+00:00",
+    "Source": "configured_postgresql",
+    "ReadOnly": true,
+    "Isolation": "repeatable_read",
+    "Files": {
+      "fixtures": {
+        "Rows": 26426,
+        "Sha256": "1761519da4111940b41e24c567b628a91abfdd54175a0f9dda50392446d01c26"
+      },
+      "ai-analyses": {
+        "Rows": 1492,
+        "Sha256": "9b47e0ac01e36df92fb37077fef1fe066c1947e517ef5d410879fc0e59ca3758"
+      },
+      "prediction-snapshots": {
+        "Rows": 6949,
+        "Sha256": "134dd5140f81d6237db136aa4af983fe39e960dc0e4b71e797051a1fb8e4534e"
+      },
+      "model-forecasts": {
+        "Rows": 383,
+        "Sha256": "a3e4d76d934fa9e0ebe6e4b2a260d3a54a59da8af970c3db3f2280b6760b1b58"
+      },
+      "sync-state": {
+        "Rows": 1,
+        "Sha256": "c99f8b9a74a9c9da23c5a754b52c604b3ff60740497773aeff020564440666d6"
+      }
+    }
+  },
+  "finished_matches": 710,
+  "recorded_matches": 335,
+  "missing_pre_match_snapshot": 375,
+  "invalid_snapshot_probabilities": 0,
+  "model_versions": {
+    "dixon-coles": 150,
+    "dixon-coles-market-v1": 185
+  },
+  "markets": {
+    "btts": {
+      "matches": 335,
+      "correct": 204,
+      "accuracy": 0.608955223880597,
+      "accuracy_wilson95": [
+        0.5557469164894716,
+        0.6596930720351605
+      ],
+      "brier": 0.2395770323283582,
+      "log_loss": 0.672175028387407,
+      "mean_probability": 0.5802211940298507,
+      "actual_yes_rate": 0.6,
+      "yes_predictions": {
+        "picks": 320,
+        "wins": 195,
+        "losses": 125,
+        "hit_rate": 0.609375,
+        "wilson95": [
+          0.5549238624228489,
+          0.661231290332802
+        ]
+      },
+      "no_predictions": {
+        "picks": 15,
+        "wins": 9,
+        "losses": 6,
+        "hit_rate": 0.6,
+        "wilson95": [
+          0.357468301206246,
+          0.8017550385865841
+        ]
+      },
+      "recorded_decision_fixtures": 185,
+      "verified_ai_decision_fixtures": 86,
+      "qualified_selections": {
+        "picks": 36,
+        "wins": 21,
+        "losses": 15,
+        "hit_rate": 0.5833333333333334,
+        "wilson95": [
+          0.4220025157487166,
+          0.7285943794855394
+        ],
+        "coverage": 0.1945945945945946
+      },
+      "priced_qualified_selections": {
+        "count": 24,
+        "unit_stake": 1,
+        "profit_units": 1.2300000000000004,
+        "roi": 0.05125000000000002
+      }
+    },
+    "over25": {
+      "matches": 335,
+      "correct": 203,
+      "accuracy": 0.6059701492537314,
+      "accuracy_wilson95": [
+        0.5527265494648246,
+        0.6568109736207768
+      ],
+      "brier": 0.23626037549253734,
+      "log_loss": 0.6648917809977796,
+      "mean_probability": 0.5450068656716418,
+      "actual_yes_rate": 0.5582089552238806,
+      "yes_predictions": {
+        "picks": 227,
+        "wins": 141,
+        "losses": 86,
+        "hit_rate": 0.6211453744493393,
+        "wilson95": [
+          0.5565185654589123,
+          0.6817401956881536
+        ]
+      },
+      "no_predictions": {
+        "picks": 108,
+        "wins": 62,
+        "losses": 46,
+        "hit_rate": 0.5740740740740741,
+        "wilson95": [
+          0.4798518547874811,
+          0.6632077956204363
+        ]
+      },
+      "recorded_decision_fixtures": 185,
+      "verified_ai_decision_fixtures": 86,
+      "qualified_selections": {
+        "picks": 45,
+        "wins": 27,
+        "losses": 18,
+        "hit_rate": 0.6,
+        "wilson95": [
+          0.45451854590351387,
+          0.7297511343499083
+        ],
+        "coverage": 0.24324324324324326
+      },
+      "priced_qualified_selections": {
+        "count": 27,
+        "unit_stake": 1,
+        "profit_units": 1.17,
+        "roi": 0.04333333333333333
+      }
+    }
+  },
+  "fixture_statuses": {
+    "NS": 4,
+    "PST": 10,
+    "FT": 710
+  },
+  "weeks": [
+    {
+      "from": "2026-08-25",
+      "through": "2026-08-31",
+      "finished_matches": 159,
+      "recorded_matches": 0,
+      "markets": {
+        "btts": {
+          "matches": 0,
+          "correct": 0,
+          "accuracy": null,
+          "accuracy_wilson95": null,
+          "brier": null,
+          "log_loss": null,
+          "mean_probability": null,
+          "actual_yes_rate": null,
+          "yes_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "no_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        },
+        "over25": {
+          "matches": 0,
+          "correct": 0,
+          "accuracy": null,
+          "accuracy_wilson95": null,
+          "brier": null,
+          "log_loss": null,
+          "mean_probability": null,
+          "actual_yes_rate": null,
+          "yes_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "no_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        }
+      }
+    },
+    {
+      "from": "2026-09-01",
+      "through": "2026-09-07",
+      "finished_matches": 183,
+      "recorded_matches": 0,
+      "markets": {
+        "btts": {
+          "matches": 0,
+          "correct": 0,
+          "accuracy": null,
+          "accuracy_wilson95": null,
+          "brier": null,
+          "log_loss": null,
+          "mean_probability": null,
+          "actual_yes_rate": null,
+          "yes_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "no_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        },
+        "over25": {
+          "matches": 0,
+          "correct": 0,
+          "accuracy": null,
+          "accuracy_wilson95": null,
+          "brier": null,
+          "log_loss": null,
+          "mean_probability": null,
+          "actual_yes_rate": null,
+          "yes_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "no_predictions": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        }
+      }
+    },
+    {
+      "from": "2026-09-08",
+      "through": "2026-09-14",
+      "finished_matches": 154,
+      "recorded_matches": 133,
+      "markets": {
+        "btts": {
+          "matches": 133,
+          "correct": 77,
+          "accuracy": 0.5789473684210527,
+          "accuracy_wilson95": [
+            0.49397831561805383,
+            0.6594839477996192
+          ],
+          "brier": 0.2465669857142857,
+          "log_loss": 0.6861638580877291,
+          "mean_probability": 0.5697518796992481,
+          "actual_yes_rate": 0.556390977443609,
+          "yes_predictions": {
+            "picks": 128,
+            "wins": 73,
+            "losses": 55,
+            "hit_rate": 0.5703125,
+            "wilson95": [
+              0.48373932885040405,
+              0.6527882866736338
+            ]
+          },
+          "no_predictions": {
+            "picks": 5,
+            "wins": 4,
+            "losses": 1,
+            "hit_rate": 0.8,
+            "wilson95": [
+              0.37553462976252533,
+              0.9637758913675698
+            ]
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        },
+        "over25": {
+          "matches": 133,
+          "correct": 84,
+          "accuracy": 0.631578947368421,
+          "accuracy_wilson95": [
+            0.5469796589850541,
+            0.7087907800444008
+          ],
+          "brier": 0.23039506894736841,
+          "log_loss": 0.6525840162112682,
+          "mean_probability": 0.550503007518797,
+          "actual_yes_rate": 0.5488721804511278,
+          "yes_predictions": {
+            "picks": 88,
+            "wins": 56,
+            "losses": 32,
+            "hit_rate": 0.6363636363636364,
+            "wilson95": [
+              0.5321128870350564,
+              0.7292070038745184
+            ]
+          },
+          "no_predictions": {
+            "picks": 45,
+            "wins": 28,
+            "losses": 17,
+            "hit_rate": 0.6222222222222222,
+            "wilson95": [
+              0.47629934480889535,
+              0.7489191532786209
+            ]
+          },
+          "recorded_decision_fixtures": 0,
+          "verified_ai_decision_fixtures": 0,
+          "qualified_selections": {
+            "picks": 0,
+            "wins": 0,
+            "losses": 0,
+            "hit_rate": null,
+            "wilson95": null,
+            "coverage": null
+          },
+          "priced_qualified_selections": {
+            "count": 0,
+            "unit_stake": 1,
+            "profit_units": null,
+            "roi": null
+          }
+        }
+      }
+    },
+    {
+      "from": "2026-09-15",
+      "through": "2026-09-21",
+      "finished_matches": 176,
+      "recorded_matches": 164,
+      "markets": {
+        "btts": {
+          "matches": 164,
+          "correct": 102,
+          "accuracy": 0.6219512195121951,
+          "accuracy_wilson95": [
+            0.545748472106119,
+            0.6925716681086547
+          ],
+          "brier": 0.23468553414634147,
+          "log_loss": 0.66231011300056,
+          "mean_probability": 0.5899073170731707,
+          "actual_yes_rate": 0.6280487804878049,
+          "yes_predictions": {
+            "picks": 157,
+            "wins": 99,
+            "losses": 58,
+            "hit_rate": 0.6305732484076433,
+            "wilson95": [
+              0.5527994644956893,
+              0.7021099369771409
+            ]
+          },
+          "no_predictions": {
+            "picks": 7,
+            "wins": 3,
+            "losses": 4,
+            "hit_rate": 0.42857142857142855,
+            "wilson95": [
+              0.15821985525146975,
+              0.7495416354723428
+            ]
+          },
+          "recorded_decision_fixtures": 147,
+          "verified_ai_decision_fixtures": 83,
+          "qualified_selections": {
+            "picks": 29,
+            "wins": 18,
+            "losses": 11,
+            "hit_rate": 0.6206896551724138,
+            "wilson95": [
+              0.4400254420598852,
+              0.7731197789919015
+            ],
+            "coverage": 0.19727891156462585
+          },
+          "priced_qualified_selections": {
+            "count": 19,
+            "unit_stake": 1,
+            "profit_units": 3.04,
+            "roi": 0.16
+          }
+        },
+        "over25": {
+          "matches": 164,
+          "correct": 93,
+          "accuracy": 0.5670731707317073,
+          "accuracy_wilson95": [
+            0.4905630645455103,
+            0.6405130125726151
+          ],
+          "brier": 0.24241513890243901,
+          "log_loss": 0.6775989180493753,
+          "mean_probability": 0.5453853658536586,
+          "actual_yes_rate": 0.5609756097560976,
+          "yes_predictions": {
+            "picks": 115,
+            "wins": 68,
+            "losses": 47,
+            "hit_rate": 0.591304347826087,
+            "wilson95": [
+              0.49992055700149574,
+              0.6767854529077602
+            ]
+          },
+          "no_predictions": {
+            "picks": 49,
+            "wins": 25,
+            "losses": 24,
+            "hit_rate": 0.5102040816326531,
+            "wilson95": [
+              0.37467563740468035,
+              0.6442488968969421
+            ]
+          },
+          "recorded_decision_fixtures": 147,
+          "verified_ai_decision_fixtures": 83,
+          "qualified_selections": {
+            "picks": 40,
+            "wins": 25,
+            "losses": 15,
+            "hit_rate": 0.625,
+            "wilson95": [
+              0.47032439137301096,
+              0.7577702083276673
+            ],
+            "coverage": 0.272108843537415
+          },
+          "priced_qualified_selections": {
+            "count": 25,
+            "unit_stake": 1,
+            "profit_units": 0.10999999999999988,
+            "roi": 0.004399999999999995
+          }
+        }
+      }
+    },
+    {
+      "from": "2026-09-22",
+      "through": "2026-09-28",
+      "finished_matches": 38,
+      "recorded_matches": 38,
+      "markets": {
+        "btts": {
+          "matches": 38,
+          "correct": 25,
+          "accuracy": 0.6578947368421053,
+          "accuracy_wilson95": [
+            0.4989210355178308,
+            0.7878758482004058
+          ],
+          "brier": 0.23622287184210525,
+          "log_loss": 0.6657890224216189,
+          "mean_probability": 0.5750605263157894,
+          "actual_yes_rate": 0.631578947368421,
+          "yes_predictions": {
+            "picks": 35,
+            "wins": 23,
+            "losses": 12,
+            "hit_rate": 0.6571428571428571,
+            "wilson95": [
+              0.4915194951399626,
+              0.7916830501295105
+            ]
+          },
+          "no_predictions": {
+            "picks": 3,
+            "wins": 2,
+            "losses": 1,
+            "hit_rate": 0.6666666666666666,
+            "wilson95": [
+              0.2076596008020477,
+              0.9385080552796037
+            ]
+          },
+          "recorded_decision_fixtures": 38,
+          "verified_ai_decision_fixtures": 3,
+          "qualified_selections": {
+            "picks": 7,
+            "wins": 3,
+            "losses": 4,
+            "hit_rate": 0.42857142857142855,
+            "wilson95": [
+              0.15821985525146975,
+              0.7495416354723428
+            ],
+            "coverage": 0.18421052631578946
+          },
+          "priced_qualified_selections": {
+            "count": 5,
+            "unit_stake": 1,
+            "profit_units": -1.8099999999999998,
+            "roi": -0.362
+          }
+        },
+        "over25": {
+          "matches": 38,
+          "correct": 26,
+          "accuracy": 0.6842105263157895,
+          "accuracy_wilson95": [
+            0.5254424010939046,
+            0.8091539632440382
+          ],
+          "brier": 0.2302262852631579,
+          "log_loss": 0.6531276294226301,
+          "mean_probability": 0.5241368421052632,
+          "actual_yes_rate": 0.5789473684210527,
+          "yes_predictions": {
+            "picks": 24,
+            "wins": 17,
+            "losses": 7,
+            "hit_rate": 0.7083333333333334,
+            "wilson95": [
+              0.5083230633550337,
+              0.8508535180303913
+            ]
+          },
+          "no_predictions": {
+            "picks": 14,
+            "wins": 9,
+            "losses": 5,
+            "hit_rate": 0.6428571428571429,
+            "wilson95": [
+              0.38764423103907397,
+              0.8365526824644587
+            ]
+          },
+          "recorded_decision_fixtures": 38,
+          "verified_ai_decision_fixtures": 3,
+          "qualified_selections": {
+            "picks": 5,
+            "wins": 2,
+            "losses": 3,
+            "hit_rate": 0.4,
+            "wilson95": [
+              0.11762077423264783,
+              0.769275718723987
+            ],
+            "coverage": 0.13157894736842105
+          },
+          "priced_qualified_selections": {
+            "count": 2,
+            "unit_stake": 1,
+            "profit_units": 1.06,
+            "roi": 0.53
+          }
+        }
+      }
+    }
+  ],
+  "ai_forecasts": [
+    {
+      "model": "anthropic/claude-sonnet-5",
+      "records": 1,
+      "paired_matches": 0,
+      "excluded": {
+        "invalid_timing": 1
+      },
+      "markets": {
+        "btts": {
+          "statistical": {
+            "matches": 0,
+            "correct": 0,
+            "accuracy": null,
+            "accuracy_wilson95": null,
+            "brier": null,
+            "log_loss": null,
+            "mean_probability": null,
+            "actual_yes_rate": null,
+            "yes_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            },
+            "no_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            }
+          },
+          "ai": {
+            "matches": 0,
+            "correct": 0,
+            "accuracy": null,
+            "accuracy_wilson95": null,
+            "brier": null,
+            "log_loss": null,
+            "mean_probability": null,
+            "actual_yes_rate": null,
+            "yes_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            },
+            "no_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            }
+          }
+        },
+        "over25": {
+          "statistical": {
+            "matches": 0,
+            "correct": 0,
+            "accuracy": null,
+            "accuracy_wilson95": null,
+            "brier": null,
+            "log_loss": null,
+            "mean_probability": null,
+            "actual_yes_rate": null,
+            "yes_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            },
+            "no_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            }
+          },
+          "ai": {
+            "matches": 0,
+            "correct": 0,
+            "accuracy": null,
+            "accuracy_wilson95": null,
+            "brier": null,
+            "log_loss": null,
+            "mean_probability": null,
+            "actual_yes_rate": null,
+            "yes_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            },
+            "no_predictions": {
+              "picks": 0,
+              "wins": 0,
+              "losses": 0,
+              "hit_rate": null,
+              "wilson95": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "records": 109,
+      "paired_matches": 99,
+      "excluded": {
+        "invalid_timing": 9,
+        "not_finished": 1
+      },
+      "markets": {
+        "btts": {
+          "statistical": {
+            "matches": 99,
+            "correct": 57,
+            "accuracy": 0.5757575757575758,
+            "accuracy_wilson95": [
+              0.4773666401385342,
+              0.6684889337905829
+            ],
+            "brier": 0.24449260292929292,
+            "log_loss": 0.6823233368619301,
+            "mean_probability": 0.5710757575757576,
+            "actual_yes_rate": 0.5858585858585859,
+            "yes_predictions": {
+              "picks": 90,
+              "wins": 53,
+              "losses": 37,
+              "hit_rate": 0.5888888888888889,
+              "wilson95": [
+                0.48563237347145555,
+                0.684867959761553
+              ]
+            },
+            "no_predictions": {
+              "picks": 9,
+              "wins": 4,
+              "losses": 5,
+              "hit_rate": 0.4444444444444444,
+              "wilson95": [
+                0.18877852109766452,
+                0.733348706504507
+              ]
+            }
+          },
+          "ai": {
+            "matches": 99,
+            "correct": 51,
+            "accuracy": 0.5151515151515151,
+            "accuracy_wilson95": [
+              0.41799338272235786,
+              0.6111777320634655
+            ],
+            "brier": 0.32614444444444446,
+            "log_loss": 5.71506198181663,
+            "mean_probability": 0.6889898989898989,
+            "actual_yes_rate": 0.5858585858585859,
+            "yes_predictions": {
+              "picks": 80,
+              "wins": 45,
+              "losses": 35,
+              "hit_rate": 0.5625,
+              "wilson95": [
+                0.4534113429694972,
+                0.6658613908385618
+              ]
+            },
+            "no_predictions": {
+              "picks": 19,
+              "wins": 6,
+              "losses": 13,
+              "hit_rate": 0.3157894736842105,
+              "wilson95": [
+                0.1536437908779228,
+                0.5398959232467253
+              ]
+            }
+          }
+        },
+        "over25": {
+          "statistical": {
+            "matches": 99,
+            "correct": 56,
+            "accuracy": 0.5656565656565656,
+            "accuracy_wilson95": [
+              0.46737456653572673,
+              0.6590335975361747
+            ],
+            "brier": 0.23450714070707074,
+            "log_loss": 0.6611521128242245,
+            "mean_probability": 0.5363323232323232,
+            "actual_yes_rate": 0.5050505050505051,
+            "yes_predictions": {
+              "picks": 63,
+              "wins": 35,
+              "losses": 28,
+              "hit_rate": 0.5555555555555556,
+              "wilson95": [
+                0.43319638238682345,
+                0.671529039881082
+              ]
+            },
+            "no_predictions": {
+              "picks": 36,
+              "wins": 21,
+              "losses": 15,
+              "hit_rate": 0.5833333333333334,
+              "wilson95": [
+                0.4220025157487166,
+                0.7285943794855394
+              ]
+            }
+          },
+          "ai": {
+            "matches": 99,
+            "correct": 52,
+            "accuracy": 0.5252525252525253,
+            "accuracy_wilson95": [
+              0.42779308237779784,
+              0.6208254422652413
+            ],
+            "brier": 0.34737171717171716,
+            "log_loss": 6.740751028050447,
+            "mean_probability": 0.6791919191919191,
+            "actual_yes_rate": 0.5050505050505051,
+            "yes_predictions": {
+              "picks": 73,
+              "wins": 38,
+              "losses": 35,
+              "hit_rate": 0.5205479452054794,
+              "wilson95": [
+                0.40781596889792504,
+                0.6312254554326613
+              ]
+            },
+            "no_predictions": {
+              "picks": 26,
+              "wins": 14,
+              "losses": 12,
+              "hit_rate": 0.5384615384615384,
+              "wilson95": [
+                0.35457938746858797,
+                0.7124414646960878
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "z-ai/glm-5.2:free",
+      "records": 120,
+      "paired_matches": 117,
+      "excluded": {
+        "invalid_timing": 1,
+        "not_finished": 2
+      },
+      "markets": {
+        "btts": {
+          "statistical": {
+            "matches": 117,
+            "correct": 76,
+            "accuracy": 0.6495726495726496,
+            "accuracy_wilson95": [
+              0.5596196597083499,
+              0.7300160360335676
+            ],
+            "brier": 0.23341653675213675,
+            "log_loss": 0.6598999339675271,
+            "mean_probability": 0.5850410256410256,
+            "actual_yes_rate": 0.6410256410256411,
+            "yes_predictions": {
+              "picks": 108,
+              "wins": 71,
+              "losses": 37,
+              "hit_rate": 0.6574074074074074,
+              "wilson95": [
+                0.5638813982964374,
+                0.7401203588203874
+              ]
+            },
+            "no_predictions": {
+              "picks": 9,
+              "wins": 5,
+              "losses": 4,
+              "hit_rate": 0.5555555555555556,
+              "wilson95": [
+                0.26665129349549305,
+                0.8112214789023355
+              ]
+            }
+          },
+          "ai": {
+            "matches": 117,
+            "correct": 75,
+            "accuracy": 0.6410256410256411,
+            "accuracy_wilson95": [
+              0.5508968902261645,
+              0.7221881943305005
+            ],
+            "brier": 0.24060584615384617,
+            "log_loss": 1.7592670379345383,
+            "mean_probability": 0.6422735042735043,
+            "actual_yes_rate": 0.6410256410256411,
+            "yes_predictions": {
+              "picks": 103,
+              "wins": 68,
+              "losses": 35,
+              "hit_rate": 0.6601941747572816,
+              "wilson95": [
+                0.5644389490131616,
+                0.7444299148553299
+              ]
+            },
+            "no_predictions": {
+              "picks": 14,
+              "wins": 7,
+              "losses": 7,
+              "hit_rate": 0.5,
+              "wilson95": [
+                0.26799202452413634,
+                0.7320079754758637
+              ]
+            }
+          }
+        },
+        "over25": {
+          "statistical": {
+            "matches": 117,
+            "correct": 67,
+            "accuracy": 0.5726495726495726,
+            "accuracy_wilson95": [
+              0.4821082285158197,
+              0.6585719665588258
+            ],
+            "brier": 0.24394749572649574,
+            "log_loss": 0.6810771160131013,
+            "mean_probability": 0.5396444444444444,
+            "actual_yes_rate": 0.5811965811965812,
+            "yes_predictions": {
+              "picks": 82,
+              "wins": 50,
+              "losses": 32,
+              "hit_rate": 0.6097560975609756,
+              "wilson95": [
+                0.5015357010815031,
+                0.7081531864011577
+              ]
+            },
+            "no_predictions": {
+              "picks": 35,
+              "wins": 17,
+              "losses": 18,
+              "hit_rate": 0.4857142857142857,
+              "wilson95": [
+                0.32994236002509725,
+                0.6443119540413141
+              ]
+            }
+          },
+          "ai": {
+            "matches": 117,
+            "correct": 71,
+            "accuracy": 0.6068376068376068,
+            "accuracy_wilson95": [
+              0.5162863142404461,
+              0.690596325575209
+            ],
+            "brier": 0.25086621367521367,
+            "log_loss": 2.055306432396598,
+            "mean_probability": 0.6103333333333334,
+            "actual_yes_rate": 0.5811965811965812,
+            "yes_predictions": {
+              "picks": 86,
+              "wins": 54,
+              "losses": 32,
+              "hit_rate": 0.627906976744186,
+              "wilson95": [
+                0.5223383164148251,
+                0.7225374935818455
+              ]
+            },
+            "no_predictions": {
+              "picks": 31,
+              "wins": 17,
+              "losses": 14,
+              "hit_rate": 0.5483870967741935,
+              "wilson95": [
+                0.37772167637354503,
+                0.7083826401947998
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "scored_records": [
+    {
+      "fixture_id": 26422,
+      "snapshot_id": 459,
+      "kickoff": "2026-09-10T19:00:00+00:00",
+      "captured_at": "2026-09-10T12:26:02.22936+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5917,
+      "over25": 0.5287
+    },
+    {
+      "fixture_id": 26425,
+      "snapshot_id": 725,
+      "kickoff": "2026-09-11T16:30:00+00:00",
+      "captured_at": "2026-09-11T15:25:14.98118+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6538,
+      "over25": 0.6557
+    },
+    {
+      "fixture_id": 26426,
+      "snapshot_id": 726,
+      "kickoff": "2026-09-11T16:30:00+00:00",
+      "captured_at": "2026-09-11T15:25:15.294113+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5934,
+      "over25": 0.6122
+    },
+    {
+      "fixture_id": 26427,
+      "snapshot_id": 727,
+      "kickoff": "2026-09-11T17:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:15.642717+00:00",
+      "home_goals": 4,
+      "away_goals": 0,
+      "btts": 0.6516,
+      "over25": 0.6146
+    },
+    {
+      "fixture_id": 26429,
+      "snapshot_id": 728,
+      "kickoff": "2026-09-11T17:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:15.942016+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5218,
+      "over25": 0.4881
+    },
+    {
+      "fixture_id": 26433,
+      "snapshot_id": 729,
+      "kickoff": "2026-09-11T18:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:16.390606+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.522,
+      "over25": 0.5161
+    },
+    {
+      "fixture_id": 26434,
+      "snapshot_id": 731,
+      "kickoff": "2026-09-11T18:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:16.997677+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5914,
+      "over25": 0.5286
+    },
+    {
+      "fixture_id": 26435,
+      "snapshot_id": 732,
+      "kickoff": "2026-09-11T18:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:17.326571+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.4958,
+      "over25": 0.4355
+    },
+    {
+      "fixture_id": 26436,
+      "snapshot_id": 733,
+      "kickoff": "2026-09-11T18:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:17.687118+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5219,
+      "over25": 0.4875
+    },
+    {
+      "fixture_id": 26437,
+      "snapshot_id": 730,
+      "kickoff": "2026-09-11T18:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:16.691862+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5917,
+      "over25": 0.5528
+    },
+    {
+      "fixture_id": 26424,
+      "snapshot_id": 734,
+      "kickoff": "2026-09-11T18:30:00+00:00",
+      "captured_at": "2026-09-11T15:25:18.097847+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6148,
+      "over25": 0.6127
+    },
+    {
+      "fixture_id": 26545,
+      "snapshot_id": 735,
+      "kickoff": "2026-09-11T18:30:00+00:00",
+      "captured_at": "2026-09-11T15:25:18.500628+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5214,
+      "over25": 0.5287
+    },
+    {
+      "fixture_id": 26428,
+      "snapshot_id": 736,
+      "kickoff": "2026-09-11T18:45:00+00:00",
+      "captured_at": "2026-09-11T15:25:18.935031+00:00",
+      "home_goals": 2,
+      "away_goals": 4,
+      "btts": 0.5216,
+      "over25": 0.4871
+    },
+    {
+      "fixture_id": 26432,
+      "snapshot_id": 737,
+      "kickoff": "2026-09-11T18:45:00+00:00",
+      "captured_at": "2026-09-11T15:25:19.32921+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6507,
+      "over25": 0.6146
+    },
+    {
+      "fixture_id": 26423,
+      "snapshot_id": 739,
+      "kickoff": "2026-09-11T19:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:20.39536+00:00",
+      "home_goals": 6,
+      "away_goals": 0,
+      "btts": 0.5919,
+      "over25": 0.5538
+    },
+    {
+      "fixture_id": 26430,
+      "snapshot_id": 738,
+      "kickoff": "2026-09-11T19:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:19.842974+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.487
+    },
+    {
+      "fixture_id": 26431,
+      "snapshot_id": 740,
+      "kickoff": "2026-09-11T19:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:20.738716+00:00",
+      "home_goals": 1,
+      "away_goals": 4,
+      "btts": 0.5117,
+      "over25": 0.4641
+    },
+    {
+      "fixture_id": 26526,
+      "snapshot_id": 741,
+      "kickoff": "2026-09-11T19:00:00+00:00",
+      "captured_at": "2026-09-11T15:25:21.23706+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5215,
+      "over25": 0.4867
+    },
+    {
+      "fixture_id": 26490,
+      "snapshot_id": 1095,
+      "kickoff": "2026-09-12T11:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:33.692771+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5928,
+      "over25": 0.5845
+    },
+    {
+      "fixture_id": 26491,
+      "snapshot_id": 1097,
+      "kickoff": "2026-09-12T11:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:34.336601+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5931,
+      "over25": 0.6122
+    },
+    {
+      "fixture_id": 26492,
+      "snapshot_id": 1096,
+      "kickoff": "2026-09-12T11:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:34.029129+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6524,
+      "over25": 0.6571
+    },
+    {
+      "fixture_id": 26443,
+      "snapshot_id": 1100,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:35.733758+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5126,
+      "over25": 0.4497
+    },
+    {
+      "fixture_id": 26444,
+      "snapshot_id": 1099,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:35.241577+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5919,
+      "over25": 0.5528
+    },
+    {
+      "fixture_id": 26445,
+      "snapshot_id": 1101,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:36.235296+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5128,
+      "over25": 0.4498
+    },
+    {
+      "fixture_id": 26461,
+      "snapshot_id": 1098,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:34.694702+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5922,
+      "over25": 0.5534
+    },
+    {
+      "fixture_id": 26462,
+      "snapshot_id": 1102,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:36.729221+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5215,
+      "over25": 0.4872
+    },
+    {
+      "fixture_id": 26472,
+      "snapshot_id": 1103,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:37.141532+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.5223,
+      "over25": 0.5155
+    },
+    {
+      "fixture_id": 26473,
+      "snapshot_id": 1104,
+      "kickoff": "2026-09-12T11:30:00+00:00",
+      "captured_at": "2026-09-12T06:25:37.539219+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5918,
+      "over25": 0.5522
+    },
+    {
+      "fixture_id": 26453,
+      "snapshot_id": 1108,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:39.338638+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5929,
+      "over25": 0.5843
+    },
+    {
+      "fixture_id": 26454,
+      "snapshot_id": 1109,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:40.038674+00:00",
+      "home_goals": 6,
+      "away_goals": 2,
+      "btts": 0.5931,
+      "over25": 0.6551
+    },
+    {
+      "fixture_id": 26455,
+      "snapshot_id": 1113,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:41.55688+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5929,
+      "over25": 0.5835
+    },
+    {
+      "fixture_id": 26456,
+      "snapshot_id": 1110,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:40.436811+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6532,
+      "over25": 0.6602
+    },
+    {
+      "fixture_id": 26457,
+      "snapshot_id": 1111,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:40.851996+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6552,
+      "over25": 0.6597
+    },
+    {
+      "fixture_id": 26507,
+      "snapshot_id": 1112,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:41.236758+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5915,
+      "over25": 0.5285
+    },
+    {
+      "fixture_id": 26508,
+      "snapshot_id": 1106,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:38.353073+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5718,
+      "over25": 0.5283
+    },
+    {
+      "fixture_id": 26527,
+      "snapshot_id": 1107,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:38.834379+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5929,
+      "over25": 0.6121
+    },
+    {
+      "fixture_id": 26543,
+      "snapshot_id": 1105,
+      "kickoff": "2026-09-12T12:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:37.938611+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.5914,
+      "over25": 0.5291
+    },
+    {
+      "fixture_id": 26494,
+      "snapshot_id": 1116,
+      "kickoff": "2026-09-12T13:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:42.84951+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5221,
+      "over25": 0.5284
+    },
+    {
+      "fixture_id": 26497,
+      "snapshot_id": 1114,
+      "kickoff": "2026-09-12T13:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:41.952991+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5134,
+      "over25": 0.4644
+    },
+    {
+      "fixture_id": 26498,
+      "snapshot_id": 1115,
+      "kickoff": "2026-09-12T13:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:42.36919+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5119,
+      "over25": 0.4384
+    },
+    {
+      "fixture_id": 26499,
+      "snapshot_id": 1117,
+      "kickoff": "2026-09-12T13:00:00+00:00",
+      "captured_at": "2026-09-12T06:25:43.248463+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.5124
+    },
+    {
+      "fixture_id": 26484,
+      "snapshot_id": 1236,
+      "kickoff": "2026-09-12T13:30:00+00:00",
+      "captured_at": "2026-09-12T12:25:43.271467+00:00",
+      "home_goals": 5,
+      "away_goals": 0,
+      "btts": 0.5932,
+      "over25": 0.6557
+    },
+    {
+      "fixture_id": 26485,
+      "snapshot_id": 1235,
+      "kickoff": "2026-09-12T13:30:00+00:00",
+      "captured_at": "2026-09-12T12:25:42.756617+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6522,
+      "over25": 0.6572
+    },
+    {
+      "fixture_id": 26486,
+      "snapshot_id": 1234,
+      "kickoff": "2026-09-12T13:30:00+00:00",
+      "captured_at": "2026-09-12T12:25:42.256611+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5921,
+      "over25": 0.5569
+    },
+    {
+      "fixture_id": 26487,
+      "snapshot_id": 1233,
+      "kickoff": "2026-09-12T13:30:00+00:00",
+      "captured_at": "2026-09-12T12:25:41.754921+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.7638,
+      "over25": 0.7567
+    },
+    {
+      "fixture_id": 26488,
+      "snapshot_id": 1237,
+      "kickoff": "2026-09-12T13:30:00+00:00",
+      "captured_at": "2026-09-12T12:25:43.751184+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6138,
+      "over25": 0.6547
+    },
+    {
+      "fixture_id": 26438,
+      "snapshot_id": 1253,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:52.26641+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5927,
+      "over25": 0.5536
+    },
+    {
+      "fixture_id": 26439,
+      "snapshot_id": 1254,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:52.826753+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5914,
+      "over25": 0.553
+    },
+    {
+      "fixture_id": 26440,
+      "snapshot_id": 1255,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:53.371923+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5222,
+      "over25": 0.6136
+    },
+    {
+      "fixture_id": 26441,
+      "snapshot_id": 1251,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:51.334776+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5923,
+      "over25": 0.5564
+    },
+    {
+      "fixture_id": 26442,
+      "snapshot_id": 1252,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:51.830351+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5919,
+      "over25": 0.5293
+    },
+    {
+      "fixture_id": 26446,
+      "snapshot_id": 1257,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:54.372732+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5217,
+      "over25": 0.4872
+    },
+    {
+      "fixture_id": 26447,
+      "snapshot_id": 1258,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:54.87399+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.5923,
+      "over25": 0.5829
+    },
+    {
+      "fixture_id": 26448,
+      "snapshot_id": 1260,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:55.972997+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5916,
+      "over25": 0.5284
+    },
+    {
+      "fixture_id": 26449,
+      "snapshot_id": 1244,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:47.351821+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5131,
+      "over25": 0.4643
+    },
+    {
+      "fixture_id": 26450,
+      "snapshot_id": 1242,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:46.267062+00:00",
+      "home_goals": 4,
+      "away_goals": 3,
+      "btts": 0.5923,
+      "over25": 0.5534
+    },
+    {
+      "fixture_id": 26451,
+      "snapshot_id": 1243,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:46.865762+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5221,
+      "over25": 0.4881
+    },
+    {
+      "fixture_id": 26452,
+      "snapshot_id": 1239,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:44.748622+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5216,
+      "over25": 0.4654
+    },
+    {
+      "fixture_id": 26463,
+      "snapshot_id": 1256,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:53.874207+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5919,
+      "over25": 0.5658
+    },
+    {
+      "fixture_id": 26464,
+      "snapshot_id": 1259,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:55.427901+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5217,
+      "over25": 0.4873
+    },
+    {
+      "fixture_id": 26465,
+      "snapshot_id": 1261,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:56.529008+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5222,
+      "over25": 0.5285
+    },
+    {
+      "fixture_id": 26466,
+      "snapshot_id": 1262,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:57.043128+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.5129
+    },
+    {
+      "fixture_id": 26467,
+      "snapshot_id": 1268,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:26:00.634252+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5924,
+      "over25": 0.6118
+    },
+    {
+      "fixture_id": 26468,
+      "snapshot_id": 1264,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:58.149168+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5931,
+      "over25": 0.6136
+    },
+    {
+      "fixture_id": 26469,
+      "snapshot_id": 1247,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:48.775193+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5918,
+      "over25": 0.53
+    },
+    {
+      "fixture_id": 26470,
+      "snapshot_id": 1248,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:49.357157+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5932,
+      "over25": 0.5844
+    },
+    {
+      "fixture_id": 26471,
+      "snapshot_id": 1249,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:50.160588+00:00",
+      "home_goals": 3,
+      "away_goals": 4,
+      "btts": 0.5924,
+      "over25": 0.5653
+    },
+    {
+      "fixture_id": 26474,
+      "snapshot_id": 1250,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:50.731358+00:00",
+      "home_goals": 3,
+      "away_goals": 3,
+      "btts": 0.5916,
+      "over25": 0.513
+    },
+    {
+      "fixture_id": 26475,
+      "snapshot_id": 1246,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:48.256812+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5212,
+      "over25": 0.466
+    },
+    {
+      "fixture_id": 26476,
+      "snapshot_id": 1265,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:58.736526+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5918,
+      "over25": 0.5134
+    },
+    {
+      "fixture_id": 26477,
+      "snapshot_id": 1266,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:59.361335+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5219,
+      "over25": 0.4874
+    },
+    {
+      "fixture_id": 26478,
+      "snapshot_id": 1263,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:57.568847+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5115,
+      "over25": 0.4383
+    },
+    {
+      "fixture_id": 26479,
+      "snapshot_id": 1267,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:26:00.128272+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5131,
+      "over25": 0.4389
+    },
+    {
+      "fixture_id": 26480,
+      "snapshot_id": 1238,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:44.247854+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.522,
+      "over25": 0.4877
+    },
+    {
+      "fixture_id": 26481,
+      "snapshot_id": 1245,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:47.757294+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5916,
+      "over25": 0.5283
+    },
+    {
+      "fixture_id": 26482,
+      "snapshot_id": 1240,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:45.24962+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.592,
+      "over25": 0.6114
+    },
+    {
+      "fixture_id": 26483,
+      "snapshot_id": 1241,
+      "kickoff": "2026-09-12T14:00:00+00:00",
+      "captured_at": "2026-09-12T12:25:45.751778+00:00",
+      "home_goals": 4,
+      "away_goals": 0,
+      "btts": 0.5929,
+      "over25": 0.6123
+    },
+    {
+      "fixture_id": 26528,
+      "snapshot_id": 1269,
+      "kickoff": "2026-09-12T14:15:00+00:00",
+      "captured_at": "2026-09-12T12:26:01.249165+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5217,
+      "over25": 0.4881
+    },
+    {
+      "fixture_id": 26540,
+      "snapshot_id": 1270,
+      "kickoff": "2026-09-12T14:15:00+00:00",
+      "captured_at": "2026-09-12T12:26:01.932744+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5218,
+      "over25": 0.4871
+    },
+    {
+      "fixture_id": 26458,
+      "snapshot_id": 1271,
+      "kickoff": "2026-09-12T14:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:02.47352+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6562,
+      "over25": 0.6608
+    },
+    {
+      "fixture_id": 26500,
+      "snapshot_id": 1272,
+      "kickoff": "2026-09-12T15:15:00+00:00",
+      "captured_at": "2026-09-12T12:26:03.835344+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5915,
+      "over25": 0.5523
+    },
+    {
+      "fixture_id": 26502,
+      "snapshot_id": 1273,
+      "kickoff": "2026-09-12T15:15:00+00:00",
+      "captured_at": "2026-09-12T12:26:04.566015+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5933,
+      "over25": 0.6118
+    },
+    {
+      "fixture_id": 26547,
+      "snapshot_id": 1274,
+      "kickoff": "2026-09-12T16:00:00+00:00",
+      "captured_at": "2026-09-12T12:26:05.355774+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5135,
+      "over25": 0.4646
+    },
+    {
+      "fixture_id": 26459,
+      "snapshot_id": 1279,
+      "kickoff": "2026-09-12T16:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:09.153103+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.592,
+      "over25": 0.5525
+    },
+    {
+      "fixture_id": 26489,
+      "snapshot_id": 1278,
+      "kickoff": "2026-09-12T16:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:08.444123+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6532,
+      "over25": 0.6568
+    },
+    {
+      "fixture_id": 26529,
+      "snapshot_id": 1276,
+      "kickoff": "2026-09-12T16:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:06.749786+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.522,
+      "over25": 0.5562
+    },
+    {
+      "fixture_id": 26535,
+      "snapshot_id": 1277,
+      "kickoff": "2026-09-12T16:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:07.339578+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.593,
+      "over25": 0.5565
+    },
+    {
+      "fixture_id": 26537,
+      "snapshot_id": 1275,
+      "kickoff": "2026-09-12T16:30:00+00:00",
+      "captured_at": "2026-09-12T12:26:06.137948+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5211,
+      "over25": 0.4659
+    },
+    {
+      "fixture_id": 26501,
+      "snapshot_id": 1341,
+      "kickoff": "2026-09-12T17:30:00+00:00",
+      "captured_at": "2026-09-12T15:30:40.468503+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5216,
+      "over25": 0.4871
+    },
+    {
+      "fixture_id": 26509,
+      "snapshot_id": 1342,
+      "kickoff": "2026-09-12T18:00:00+00:00",
+      "captured_at": "2026-09-12T15:30:41.161161+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5221,
+      "over25": 0.5119
+    },
+    {
+      "fixture_id": 26493,
+      "snapshot_id": 1343,
+      "kickoff": "2026-09-12T18:30:00+00:00",
+      "captured_at": "2026-09-12T15:30:41.851845+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6147,
+      "over25": 0.6549
+    },
+    {
+      "fixture_id": 26496,
+      "snapshot_id": 1344,
+      "kickoff": "2026-09-12T18:45:00+00:00",
+      "captured_at": "2026-09-12T15:30:42.559202+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5133,
+      "over25": 0.4873
+    },
+    {
+      "fixture_id": 26503,
+      "snapshot_id": 1347,
+      "kickoff": "2026-09-12T18:45:00+00:00",
+      "captured_at": "2026-09-12T15:30:44.554293+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5925,
+      "over25": 0.5532
+    },
+    {
+      "fixture_id": 26504,
+      "snapshot_id": 1345,
+      "kickoff": "2026-09-12T18:45:00+00:00",
+      "captured_at": "2026-09-12T15:30:43.249546+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.522,
+      "over25": 0.488
+    },
+    {
+      "fixture_id": 26505,
+      "snapshot_id": 1348,
+      "kickoff": "2026-09-12T18:45:00+00:00",
+      "captured_at": "2026-09-12T15:30:45.142486+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5213,
+      "over25": 0.4659
+    },
+    {
+      "fixture_id": 26506,
+      "snapshot_id": 1346,
+      "kickoff": "2026-09-12T18:45:00+00:00",
+      "captured_at": "2026-09-12T15:30:43.949666+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5931,
+      "over25": 0.5671
+    },
+    {
+      "fixture_id": 26460,
+      "snapshot_id": 1351,
+      "kickoff": "2026-09-12T19:00:00+00:00",
+      "captured_at": "2026-09-12T15:30:47.348852+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5211,
+      "over25": 0.4867
+    },
+    {
+      "fixture_id": 26530,
+      "snapshot_id": 1350,
+      "kickoff": "2026-09-12T19:00:00+00:00",
+      "captured_at": "2026-09-12T15:30:46.640124+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.6128
+    },
+    {
+      "fixture_id": 26536,
+      "snapshot_id": 1349,
+      "kickoff": "2026-09-12T19:00:00+00:00",
+      "captured_at": "2026-09-12T15:30:45.877543+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5931,
+      "over25": 0.612
+    },
+    {
+      "fixture_id": 26511,
+      "snapshot_id": 1449,
+      "kickoff": "2026-09-13T11:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:16.530681+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.6537,
+      "over25": 0.6583
+    },
+    {
+      "fixture_id": 26513,
+      "snapshot_id": 1452,
+      "kickoff": "2026-09-13T11:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:18.435638+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6749,
+      "over25": 0.6606
+    },
+    {
+      "fixture_id": 26514,
+      "snapshot_id": 1453,
+      "kickoff": "2026-09-13T11:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:19.062965+00:00",
+      "home_goals": 0,
+      "away_goals": 3,
+      "btts": 0.6927,
+      "over25": 0.7119
+    },
+    {
+      "fixture_id": 26515,
+      "snapshot_id": 1450,
+      "kickoff": "2026-09-13T11:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:17.167568+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6536,
+      "over25": 0.6589
+    },
+    {
+      "fixture_id": 26516,
+      "snapshot_id": 1451,
+      "kickoff": "2026-09-13T11:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:17.750538+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6544,
+      "over25": 0.6559
+    },
+    {
+      "fixture_id": 26531,
+      "snapshot_id": 1454,
+      "kickoff": "2026-09-13T12:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:20.060968+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5217,
+      "over25": 0.4881
+    },
+    {
+      "fixture_id": 26541,
+      "snapshot_id": 1455,
+      "kickoff": "2026-09-13T12:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:20.658107+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5124,
+      "over25": 0.4647
+    },
+    {
+      "fixture_id": 26510,
+      "snapshot_id": 1458,
+      "kickoff": "2026-09-13T13:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:22.769602+00:00",
+      "home_goals": 0,
+      "away_goals": 5,
+      "btts": 0.5921,
+      "over25": 0.5531
+    },
+    {
+      "fixture_id": 26519,
+      "snapshot_id": 1456,
+      "kickoff": "2026-09-13T13:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:21.353444+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5213,
+      "over25": 0.4658
+    },
+    {
+      "fixture_id": 26522,
+      "snapshot_id": 1457,
+      "kickoff": "2026-09-13T13:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:22.128935+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5916,
+      "over25": 0.552
+    },
+    {
+      "fixture_id": 26512,
+      "snapshot_id": 1459,
+      "kickoff": "2026-09-13T13:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:23.537684+00:00",
+      "home_goals": 5,
+      "away_goals": 0,
+      "btts": 0.5926,
+      "over25": 0.6591
+    },
+    {
+      "fixture_id": 26532,
+      "snapshot_id": 1460,
+      "kickoff": "2026-09-13T14:15:00+00:00",
+      "captured_at": "2026-09-12T21:26:24.156275+00:00",
+      "home_goals": 2,
+      "away_goals": 4,
+      "btts": 0.5919,
+      "over25": 0.7035
+    },
+    {
+      "fixture_id": 26539,
+      "snapshot_id": 1461,
+      "kickoff": "2026-09-13T14:15:00+00:00",
+      "captured_at": "2026-09-12T21:26:24.868212+00:00",
+      "home_goals": 0,
+      "away_goals": 3,
+      "btts": 0.4931,
+      "over25": 0.4347
+    },
+    {
+      "fixture_id": 26517,
+      "snapshot_id": 1462,
+      "kickoff": "2026-09-13T14:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:25.632005+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.6538,
+      "over25": 0.6557
+    },
+    {
+      "fixture_id": 26521,
+      "snapshot_id": 1465,
+      "kickoff": "2026-09-13T15:15:00+00:00",
+      "captured_at": "2026-09-12T21:26:27.749403+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.4897
+    },
+    {
+      "fixture_id": 26548,
+      "snapshot_id": 1464,
+      "kickoff": "2026-09-13T15:15:00+00:00",
+      "captured_at": "2026-09-12T21:26:27.076861+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5216,
+      "over25": 0.4872
+    },
+    {
+      "fixture_id": 26549,
+      "snapshot_id": 1463,
+      "kickoff": "2026-09-13T15:15:00+00:00",
+      "captured_at": "2026-09-12T21:26:26.377999+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.593,
+      "over25": 0.5847
+    },
+    {
+      "fixture_id": 26523,
+      "snapshot_id": 1466,
+      "kickoff": "2026-09-13T15:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:28.564985+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5929,
+      "over25": 0.5848
+    },
+    {
+      "fixture_id": 26524,
+      "snapshot_id": 1467,
+      "kickoff": "2026-09-13T15:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:30.244084+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6539,
+      "over25": 0.7947
+    },
+    {
+      "fixture_id": 26546,
+      "snapshot_id": 1468,
+      "kickoff": "2026-09-13T16:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:32.046838+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5215,
+      "over25": 0.4873
+    },
+    {
+      "fixture_id": 26533,
+      "snapshot_id": 1470,
+      "kickoff": "2026-09-13T16:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:34.865333+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.495,
+      "over25": 0.4351
+    },
+    {
+      "fixture_id": 26542,
+      "snapshot_id": 1469,
+      "kickoff": "2026-09-13T16:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:33.543398+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.4925,
+      "over25": 0.4366
+    },
+    {
+      "fixture_id": 26525,
+      "snapshot_id": 1471,
+      "kickoff": "2026-09-13T17:30:00+00:00",
+      "captured_at": "2026-09-12T21:26:35.573936+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6508,
+      "over25": 0.6136
+    },
+    {
+      "fixture_id": 26495,
+      "snapshot_id": 1473,
+      "kickoff": "2026-09-13T18:45:00+00:00",
+      "captured_at": "2026-09-12T21:26:37.150441+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5212,
+      "over25": 0.4659
+    },
+    {
+      "fixture_id": 26550,
+      "snapshot_id": 1472,
+      "kickoff": "2026-09-13T18:45:00+00:00",
+      "captured_at": "2026-09-12T21:26:36.357421+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.6132,
+      "over25": 0.6556
+    },
+    {
+      "fixture_id": 26534,
+      "snapshot_id": 1474,
+      "kickoff": "2026-09-13T19:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:37.857844+00:00",
+      "home_goals": 0,
+      "away_goals": 3,
+      "btts": 0.5926,
+      "over25": 0.555
+    },
+    {
+      "fixture_id": 26538,
+      "snapshot_id": 1475,
+      "kickoff": "2026-09-13T19:00:00+00:00",
+      "captured_at": "2026-09-12T21:26:38.569271+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.493,
+      "over25": 0.4342
+    },
+    {
+      "fixture_id": 26518,
+      "snapshot_id": 1497,
+      "kickoff": "2026-09-14T16:30:00+00:00",
+      "captured_at": "2026-09-13T18:27:13.879631+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5226,
+      "over25": 0.5307
+    },
+    {
+      "fixture_id": 26520,
+      "snapshot_id": 1498,
+      "kickoff": "2026-09-14T16:30:00+00:00",
+      "captured_at": "2026-09-13T18:27:14.681022+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5152,
+      "over25": 0.4658
+    },
+    {
+      "fixture_id": 26544,
+      "snapshot_id": 1499,
+      "kickoff": "2026-09-14T18:30:00+00:00",
+      "captured_at": "2026-09-13T18:27:15.481691+00:00",
+      "home_goals": 0,
+      "away_goals": 4,
+      "btts": 0.5163,
+      "over25": 0.4651
+    },
+    {
+      "fixture_id": 26553,
+      "snapshot_id": 1501,
+      "kickoff": "2026-09-14T18:45:00+00:00",
+      "captured_at": "2026-09-13T18:27:17.153155+00:00",
+      "home_goals": 5,
+      "away_goals": 3,
+      "btts": 0.5948,
+      "over25": 0.662
+    },
+    {
+      "fixture_id": 26554,
+      "snapshot_id": 1500,
+      "kickoff": "2026-09-14T18:45:00+00:00",
+      "captured_at": "2026-09-13T18:27:16.188236+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5226,
+      "over25": 0.4881
+    },
+    {
+      "fixture_id": 26551,
+      "snapshot_id": 1502,
+      "kickoff": "2026-09-14T19:00:00+00:00",
+      "captured_at": "2026-09-13T18:27:17.98074+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.5228,
+      "over25": 0.5138
+    },
+    {
+      "fixture_id": 26552,
+      "snapshot_id": 1503,
+      "kickoff": "2026-09-14T19:00:00+00:00",
+      "captured_at": "2026-09-13T18:27:18.790286+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5951,
+      "over25": 0.6588
+    },
+    {
+      "fixture_id": 26555,
+      "snapshot_id": 1570,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:49.741111+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5942,
+      "over25": 0.5746
+    },
+    {
+      "fixture_id": 26556,
+      "snapshot_id": 1573,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:52.18509+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5933,
+      "over25": 0.6647
+    },
+    {
+      "fixture_id": 26557,
+      "snapshot_id": 1574,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:53.045088+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6591,
+      "over25": 0.6593
+    },
+    {
+      "fixture_id": 26558,
+      "snapshot_id": 1571,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:50.561322+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6593,
+      "over25": 0.6596
+    },
+    {
+      "fixture_id": 26559,
+      "snapshot_id": 1572,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:51.360447+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6602,
+      "over25": 0.6597
+    },
+    {
+      "fixture_id": 26560,
+      "snapshot_id": 1575,
+      "kickoff": "2026-09-15T17:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:54.007841+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5753,
+      "over25": 0.5137
+    },
+    {
+      "fixture_id": 26561,
+      "snapshot_id": 1576,
+      "kickoff": "2026-09-15T18:00:00+00:00",
+      "captured_at": "2026-09-15T15:26:54.959074+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.4882
+    },
+    {
+      "fixture_id": 26412,
+      "snapshot_id": 1578,
+      "kickoff": "2026-09-15T18:45:00+00:00",
+      "captured_at": "2026-09-15T15:26:56.659023+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5219,
+      "over25": 0.4668
+    },
+    {
+      "fixture_id": 26414,
+      "snapshot_id": 1577,
+      "kickoff": "2026-09-15T18:45:00+00:00",
+      "captured_at": "2026-09-15T15:26:55.781924+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.59,
+      "over25": 0.561
+    },
+    {
+      "fixture_id": 26562,
+      "snapshot_id": 1689,
+      "kickoff": "2026-09-15T19:30:00+00:00",
+      "captured_at": "2026-09-15T18:27:16.058319+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5938,
+      "over25": 0.615
+    },
+    {
+      "fixture_id": 26563,
+      "snapshot_id": 1725,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:26:01.9921+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6595,
+      "over25": 0.6611
+    },
+    {
+      "fixture_id": 26564,
+      "snapshot_id": 1722,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:26:00.584062+00:00",
+      "home_goals": 3,
+      "away_goals": 3,
+      "btts": 0.5956,
+      "over25": 0.5767
+    },
+    {
+      "fixture_id": 26565,
+      "snapshot_id": 1719,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:25:58.797169+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.661,
+      "over25": 0.666
+    },
+    {
+      "fixture_id": 26566,
+      "snapshot_id": 1723,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:26:01.069073+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5896,
+      "over25": 0.5143
+    },
+    {
+      "fixture_id": 26567,
+      "snapshot_id": 1724,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:26:01.467592+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6773,
+      "over25": 0.6633
+    },
+    {
+      "fixture_id": 26568,
+      "snapshot_id": 1720,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:25:59.370991+00:00",
+      "home_goals": 4,
+      "away_goals": 0,
+      "btts": 0.5753,
+      "over25": 0.553
+    },
+    {
+      "fixture_id": 26569,
+      "snapshot_id": 1721,
+      "kickoff": "2026-09-16T17:00:00+00:00",
+      "captured_at": "2026-09-16T12:26:00.173107+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5905,
+      "over25": 0.5592
+    },
+    {
+      "fixture_id": 26570,
+      "snapshot_id": 1870,
+      "kickoff": "2026-09-16T19:30:00+00:00",
+      "captured_at": "2026-09-16T16:10:13.541689+00:00",
+      "home_goals": 7,
+      "away_goals": 2,
+      "btts": 0.5689,
+      "over25": 0.7635
+    },
+    {
+      "fixture_id": 26573,
+      "snapshot_id": 2843,
+      "kickoff": "2026-09-17T17:00:00+00:00",
+      "captured_at": "2026-09-17T15:21:28.980535+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.4524,
+      "over25": 0.3874
+    },
+    {
+      "fixture_id": 26572,
+      "snapshot_id": 2844,
+      "kickoff": "2026-09-17T19:00:00+00:00",
+      "captured_at": "2026-09-17T15:21:29.294196+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5763,
+      "over25": 0.5216
+    },
+    {
+      "fixture_id": 26574,
+      "snapshot_id": 2845,
+      "kickoff": "2026-09-17T19:30:00+00:00",
+      "captured_at": "2026-09-17T15:21:30.081172+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.5493,
+      "over25": 0.4868
+    },
+    {
+      "fixture_id": 26578,
+      "snapshot_id": 3988,
+      "kickoff": "2026-09-18T16:30:00+00:00",
+      "captured_at": "2026-09-18T15:21:45.296607+00:00",
+      "home_goals": 5,
+      "away_goals": 1,
+      "btts": 0.6489,
+      "over25": 0.6362
+    },
+    {
+      "fixture_id": 26579,
+      "snapshot_id": 3989,
+      "kickoff": "2026-09-18T16:30:00+00:00",
+      "captured_at": "2026-09-18T15:21:45.683909+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6979,
+      "over25": 0.6527
+    },
+    {
+      "fixture_id": 26580,
+      "snapshot_id": 3990,
+      "kickoff": "2026-09-18T17:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:45.999582+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6781,
+      "over25": 0.6661
+    },
+    {
+      "fixture_id": 26586,
+      "snapshot_id": 3996,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:48.420235+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5377,
+      "over25": 0.4549
+    },
+    {
+      "fixture_id": 26587,
+      "snapshot_id": 3994,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:47.60512+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.489,
+      "over25": 0.3937
+    },
+    {
+      "fixture_id": 26588,
+      "snapshot_id": 3991,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:46.488743+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5038,
+      "over25": 0.4078
+    },
+    {
+      "fixture_id": 26589,
+      "snapshot_id": 3995,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:48.014303+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5958,
+      "over25": 0.5307
+    },
+    {
+      "fixture_id": 26590,
+      "snapshot_id": 3993,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:47.188703+00:00",
+      "home_goals": 3,
+      "away_goals": 4,
+      "btts": 0.5469,
+      "over25": 0.4682
+    },
+    {
+      "fixture_id": 26591,
+      "snapshot_id": 3992,
+      "kickoff": "2026-09-18T18:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:46.797424+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5393,
+      "over25": 0.4614
+    },
+    {
+      "fixture_id": 26577,
+      "snapshot_id": 3999,
+      "kickoff": "2026-09-18T18:30:00+00:00",
+      "captured_at": "2026-09-18T15:21:50.244826+00:00",
+      "home_goals": 7,
+      "away_goals": 0,
+      "btts": 0.5725,
+      "over25": 0.8167
+    },
+    {
+      "fixture_id": 26582,
+      "snapshot_id": 3998,
+      "kickoff": "2026-09-18T18:30:00+00:00",
+      "captured_at": "2026-09-18T15:21:49.409027+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6401,
+      "over25": 0.5755
+    },
+    {
+      "fixture_id": 26584,
+      "snapshot_id": 3997,
+      "kickoff": "2026-09-18T18:30:00+00:00",
+      "captured_at": "2026-09-18T15:21:48.919444+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5342,
+      "over25": 0.4593
+    },
+    {
+      "fixture_id": 26583,
+      "snapshot_id": 4002,
+      "kickoff": "2026-09-18T18:45:00+00:00",
+      "captured_at": "2026-09-18T15:21:51.620525+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6083,
+      "over25": 0.5379
+    },
+    {
+      "fixture_id": 26585,
+      "snapshot_id": 4001,
+      "kickoff": "2026-09-18T18:45:00+00:00",
+      "captured_at": "2026-09-18T15:21:51.213809+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6397,
+      "over25": 0.5898
+    },
+    {
+      "fixture_id": 26742,
+      "snapshot_id": 4000,
+      "kickoff": "2026-09-18T18:45:00+00:00",
+      "captured_at": "2026-09-18T15:21:50.715097+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.6067,
+      "over25": 0.5597
+    },
+    {
+      "fixture_id": 26575,
+      "snapshot_id": 4005,
+      "kickoff": "2026-09-18T19:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:53.224656+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.6584,
+      "over25": 0.6114
+    },
+    {
+      "fixture_id": 26576,
+      "snapshot_id": 4004,
+      "kickoff": "2026-09-18T19:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:52.622068+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5508,
+      "over25": 0.5054
+    },
+    {
+      "fixture_id": 26581,
+      "snapshot_id": 4003,
+      "kickoff": "2026-09-18T19:00:00+00:00",
+      "captured_at": "2026-09-18T15:21:52.107286+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.5771,
+      "over25": 0.5213
+    },
+    {
+      "fixture_id": 26632,
+      "snapshot_id": 4772,
+      "kickoff": "2026-09-19T11:00:00+00:00",
+      "captured_at": "2026-09-19T09:21:52.142104+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6443,
+      "over25": 0.6195
+    },
+    {
+      "fixture_id": 26633,
+      "snapshot_id": 4771,
+      "kickoff": "2026-09-19T11:00:00+00:00",
+      "captured_at": "2026-09-19T09:21:50.859771+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6388,
+      "over25": 0.593
+    },
+    {
+      "fixture_id": 26634,
+      "snapshot_id": 4773,
+      "kickoff": "2026-09-19T11:00:00+00:00",
+      "captured_at": "2026-09-19T09:21:52.664031+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.7246,
+      "over25": 0.7016
+    },
+    {
+      "fixture_id": 26592,
+      "snapshot_id": 4780,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:56.673958+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5854,
+      "over25": 0.5203
+    },
+    {
+      "fixture_id": 26596,
+      "snapshot_id": 4782,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:58.052134+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5643,
+      "over25": 0.5058
+    },
+    {
+      "fixture_id": 26597,
+      "snapshot_id": 4783,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:58.684832+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6051,
+      "over25": 0.5669
+    },
+    {
+      "fixture_id": 26598,
+      "snapshot_id": 4775,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:53.857611+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5713,
+      "over25": 0.4897
+    },
+    {
+      "fixture_id": 26605,
+      "snapshot_id": 4781,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:57.313996+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6622,
+      "over25": 0.6161
+    },
+    {
+      "fixture_id": 26606,
+      "snapshot_id": 4774,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:53.25348+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5584,
+      "over25": 0.4883
+    },
+    {
+      "fixture_id": 26616,
+      "snapshot_id": 4776,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:54.455352+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5856,
+      "over25": 0.5216
+    },
+    {
+      "fixture_id": 26617,
+      "snapshot_id": 4777,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:54.971187+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5374,
+      "over25": 0.4551
+    },
+    {
+      "fixture_id": 26743,
+      "snapshot_id": 4778,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:55.56486+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6109,
+      "over25": 0.5672
+    },
+    {
+      "fixture_id": 26744,
+      "snapshot_id": 4779,
+      "kickoff": "2026-09-19T11:30:00+00:00",
+      "captured_at": "2026-09-19T09:21:56.068341+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6449,
+      "over25": 0.6083
+    },
+    {
+      "fixture_id": 26635,
+      "snapshot_id": 4791,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:03.382615+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.6462,
+      "over25": 0.5989
+    },
+    {
+      "fixture_id": 26636,
+      "snapshot_id": 4790,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:02.878142+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6431,
+      "over25": 0.5861
+    },
+    {
+      "fixture_id": 26638,
+      "snapshot_id": 4789,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:02.373786+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6997,
+      "over25": 0.6604
+    },
+    {
+      "fixture_id": 26639,
+      "snapshot_id": 4787,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:01.36535+00:00",
+      "home_goals": 3,
+      "away_goals": 3,
+      "btts": 0.6955,
+      "over25": 0.6597
+    },
+    {
+      "fixture_id": 26641,
+      "snapshot_id": 4785,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:00.161735+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5479,
+      "over25": 0.4749
+    },
+    {
+      "fixture_id": 26643,
+      "snapshot_id": 4786,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:00.774476+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5255,
+      "over25": 0.4532
+    },
+    {
+      "fixture_id": 26650,
+      "snapshot_id": 4788,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:01.944378+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.5646,
+      "over25": 0.4944
+    },
+    {
+      "fixture_id": 26651,
+      "snapshot_id": 4792,
+      "kickoff": "2026-09-19T12:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:03.97814+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5373,
+      "over25": 0.4631
+    },
+    {
+      "fixture_id": 26645,
+      "snapshot_id": 4793,
+      "kickoff": "2026-09-19T13:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:04.685103+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.533,
+      "over25": 0.4561
+    },
+    {
+      "fixture_id": 26646,
+      "snapshot_id": 4794,
+      "kickoff": "2026-09-19T13:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:05.284943+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5352,
+      "over25": 0.46
+    },
+    {
+      "fixture_id": 26647,
+      "snapshot_id": 4795,
+      "kickoff": "2026-09-19T13:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:05.95311+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5212,
+      "over25": 0.4662
+    },
+    {
+      "fixture_id": 26648,
+      "snapshot_id": 4796,
+      "kickoff": "2026-09-19T13:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:06.484332+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5159,
+      "over25": 0.5082
+    },
+    {
+      "fixture_id": 26649,
+      "snapshot_id": 4797,
+      "kickoff": "2026-09-19T13:00:00+00:00",
+      "captured_at": "2026-09-19T09:22:07.138357+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5263,
+      "over25": 0.4529
+    },
+    {
+      "fixture_id": 26628,
+      "snapshot_id": 4799,
+      "kickoff": "2026-09-19T13:30:00+00:00",
+      "captured_at": "2026-09-19T09:22:09.188101+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.6878,
+      "over25": 0.6443
+    },
+    {
+      "fixture_id": 26629,
+      "snapshot_id": 4798,
+      "kickoff": "2026-09-19T13:30:00+00:00",
+      "captured_at": "2026-09-19T09:22:08.590775+00:00",
+      "home_goals": 3,
+      "away_goals": 4,
+      "btts": 0.6859,
+      "over25": 0.6342
+    },
+    {
+      "fixture_id": 26630,
+      "snapshot_id": 4801,
+      "kickoff": "2026-09-19T13:30:00+00:00",
+      "captured_at": "2026-09-19T09:22:10.788331+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6774,
+      "over25": 0.633
+    },
+    {
+      "fixture_id": 26631,
+      "snapshot_id": 4800,
+      "kickoff": "2026-09-19T13:30:00+00:00",
+      "captured_at": "2026-09-19T09:22:10.140823+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6511,
+      "over25": 0.6015
+    },
+    {
+      "fixture_id": 26593,
+      "snapshot_id": 4939,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:40.658414+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6067,
+      "over25": 0.5778
+    },
+    {
+      "fixture_id": 26594,
+      "snapshot_id": 4940,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:41.454991+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6097,
+      "over25": 0.5701
+    },
+    {
+      "fixture_id": 26595,
+      "snapshot_id": 4941,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:42.17227+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5574,
+      "over25": 0.5152
+    },
+    {
+      "fixture_id": 26599,
+      "snapshot_id": 4928,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:32.054272+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5744,
+      "over25": 0.5215
+    },
+    {
+      "fixture_id": 26600,
+      "snapshot_id": 4927,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:31.263038+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6128,
+      "over25": 0.5423
+    },
+    {
+      "fixture_id": 26601,
+      "snapshot_id": 4929,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:32.753349+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5695,
+      "over25": 0.5159
+    },
+    {
+      "fixture_id": 26602,
+      "snapshot_id": 4934,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:36.494121+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5123,
+      "over25": 0.4246
+    },
+    {
+      "fixture_id": 26603,
+      "snapshot_id": 4935,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:37.245509+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5365,
+      "over25": 0.4486
+    },
+    {
+      "fixture_id": 26604,
+      "snapshot_id": 4936,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:37.976521+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6453,
+      "over25": 0.5903
+    },
+    {
+      "fixture_id": 26607,
+      "snapshot_id": 4930,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:33.456089+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5837,
+      "over25": 0.542
+    },
+    {
+      "fixture_id": 26608,
+      "snapshot_id": 4931,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:34.164123+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5767,
+      "over25": 0.5077
+    },
+    {
+      "fixture_id": 26609,
+      "snapshot_id": 4933,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:35.6584+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.6302,
+      "over25": 0.5762
+    },
+    {
+      "fixture_id": 26610,
+      "snapshot_id": 4937,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:38.673885+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5782,
+      "over25": 0.5176
+    },
+    {
+      "fixture_id": 26611,
+      "snapshot_id": 4938,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:39.46064+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.6181,
+      "over25": 0.5553
+    },
+    {
+      "fixture_id": 26612,
+      "snapshot_id": 4926,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:30.415385+00:00",
+      "home_goals": 2,
+      "away_goals": 4,
+      "btts": 0.6314,
+      "over25": 0.5733
+    },
+    {
+      "fixture_id": 26613,
+      "snapshot_id": 4907,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:16.543162+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5599,
+      "over25": 0.4933
+    },
+    {
+      "fixture_id": 26614,
+      "snapshot_id": 4910,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:18.546311+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5262,
+      "over25": 0.4556
+    },
+    {
+      "fixture_id": 26615,
+      "snapshot_id": 4911,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:19.269971+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5767,
+      "over25": 0.5549
+    },
+    {
+      "fixture_id": 26618,
+      "snapshot_id": 4932,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:34.975629+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5135,
+      "over25": 0.4308
+    },
+    {
+      "fixture_id": 26619,
+      "snapshot_id": 4908,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:17.095298+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.6166,
+      "over25": 0.547
+    },
+    {
+      "fixture_id": 26620,
+      "snapshot_id": 4906,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:15.868119+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5784,
+      "over25": 0.5061
+    },
+    {
+      "fixture_id": 26621,
+      "snapshot_id": 4909,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:17.838334+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5865,
+      "over25": 0.5273
+    },
+    {
+      "fixture_id": 26622,
+      "snapshot_id": 4912,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:20.36902+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5794,
+      "over25": 0.5281
+    },
+    {
+      "fixture_id": 26623,
+      "snapshot_id": 4913,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:21.049987+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5197,
+      "over25": 0.4625
+    },
+    {
+      "fixture_id": 26624,
+      "snapshot_id": 4914,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:21.69095+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5312,
+      "over25": 0.4629
+    },
+    {
+      "fixture_id": 26625,
+      "snapshot_id": 4915,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:22.56216+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5688,
+      "over25": 0.5668
+    },
+    {
+      "fixture_id": 26626,
+      "snapshot_id": 4916,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:23.258334+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5801,
+      "over25": 0.5303
+    },
+    {
+      "fixture_id": 26627,
+      "snapshot_id": 4917,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:23.96346+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5725,
+      "over25": 0.5479
+    },
+    {
+      "fixture_id": 26745,
+      "snapshot_id": 4925,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:29.640999+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6312,
+      "over25": 0.5992
+    },
+    {
+      "fixture_id": 26746,
+      "snapshot_id": 4919,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:25.348791+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6108,
+      "over25": 0.5664
+    },
+    {
+      "fixture_id": 26747,
+      "snapshot_id": 4920,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:26.060642+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6341,
+      "over25": 0.6077
+    },
+    {
+      "fixture_id": 26748,
+      "snapshot_id": 4921,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:26.758617+00:00",
+      "home_goals": 1,
+      "away_goals": 6,
+      "btts": 0.5688,
+      "over25": 0.5636
+    },
+    {
+      "fixture_id": 26749,
+      "snapshot_id": 4922,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:27.461802+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.6612,
+      "over25": 0.6385
+    },
+    {
+      "fixture_id": 26750,
+      "snapshot_id": 4923,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:28.171647+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5999,
+      "over25": 0.5462
+    },
+    {
+      "fixture_id": 26751,
+      "snapshot_id": 4918,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:24.654581+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6165,
+      "over25": 0.6011
+    },
+    {
+      "fixture_id": 26752,
+      "snapshot_id": 4924,
+      "kickoff": "2026-09-19T14:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:28.866029+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6007,
+      "over25": 0.5425
+    },
+    {
+      "fixture_id": 26642,
+      "snapshot_id": 4943,
+      "kickoff": "2026-09-19T14:15:00+00:00",
+      "captured_at": "2026-09-19T12:52:43.877936+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5404,
+      "over25": 0.5037
+    },
+    {
+      "fixture_id": 26644,
+      "snapshot_id": 4942,
+      "kickoff": "2026-09-19T14:15:00+00:00",
+      "captured_at": "2026-09-19T12:52:43.051047+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.549,
+      "over25": 0.4902
+    },
+    {
+      "fixture_id": 26640,
+      "snapshot_id": 4944,
+      "kickoff": "2026-09-19T14:30:00+00:00",
+      "captured_at": "2026-09-19T12:52:44.665908+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6536,
+      "over25": 0.6161
+    },
+    {
+      "fixture_id": 26662,
+      "snapshot_id": 4946,
+      "kickoff": "2026-09-19T15:15:00+00:00",
+      "captured_at": "2026-09-19T12:52:46.342682+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.55,
+      "over25": 0.4835
+    },
+    {
+      "fixture_id": 26664,
+      "snapshot_id": 4945,
+      "kickoff": "2026-09-19T15:15:00+00:00",
+      "captured_at": "2026-09-19T12:52:45.48616+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6439,
+      "over25": 0.6005
+    },
+    {
+      "fixture_id": 26660,
+      "snapshot_id": 4947,
+      "kickoff": "2026-09-19T16:00:00+00:00",
+      "captured_at": "2026-09-19T12:52:47.155004+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.6072,
+      "over25": 0.5267
+    },
+    {
+      "fixture_id": 26652,
+      "snapshot_id": 5004,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:22:58.452453+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.528,
+      "over25": 0.4722
+    },
+    {
+      "fixture_id": 26653,
+      "snapshot_id": 5002,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:22:56.859381+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.707,
+      "over25": 0.6689
+    },
+    {
+      "fixture_id": 26655,
+      "snapshot_id": 5005,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:22:59.345358+00:00",
+      "home_goals": 5,
+      "away_goals": 0,
+      "btts": 0.6213,
+      "over25": 0.595
+    },
+    {
+      "fixture_id": 26657,
+      "snapshot_id": 5007,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:23:01.172636+00:00",
+      "home_goals": 5,
+      "away_goals": 0,
+      "btts": 0.5214,
+      "over25": 0.4976
+    },
+    {
+      "fixture_id": 26658,
+      "snapshot_id": 5003,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:22:57.567477+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5014,
+      "over25": 0.4058
+    },
+    {
+      "fixture_id": 26753,
+      "snapshot_id": 5006,
+      "kickoff": "2026-09-19T16:30:00+00:00",
+      "captured_at": "2026-09-19T15:23:00.3851+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6167,
+      "over25": 0.5521
+    },
+    {
+      "fixture_id": 26663,
+      "snapshot_id": 5008,
+      "kickoff": "2026-09-19T17:30:00+00:00",
+      "captured_at": "2026-09-19T15:23:01.984046+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5182,
+      "over25": 0.4201
+    },
+    {
+      "fixture_id": 26669,
+      "snapshot_id": 5009,
+      "kickoff": "2026-09-19T18:00:00+00:00",
+      "captured_at": "2026-09-19T15:23:03.006795+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5957,
+      "over25": 0.5335
+    },
+    {
+      "fixture_id": 26654,
+      "snapshot_id": 5010,
+      "kickoff": "2026-09-19T18:30:00+00:00",
+      "captured_at": "2026-09-19T15:23:03.960964+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6811,
+      "over25": 0.6283
+    },
+    {
+      "fixture_id": 26661,
+      "snapshot_id": 5012,
+      "kickoff": "2026-09-19T18:45:00+00:00",
+      "captured_at": "2026-09-19T15:23:05.971816+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5535,
+      "over25": 0.4877
+    },
+    {
+      "fixture_id": 26665,
+      "snapshot_id": 5014,
+      "kickoff": "2026-09-19T18:45:00+00:00",
+      "captured_at": "2026-09-19T15:23:08.450443+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5698,
+      "over25": 0.5013
+    },
+    {
+      "fixture_id": 26666,
+      "snapshot_id": 5013,
+      "kickoff": "2026-09-19T18:45:00+00:00",
+      "captured_at": "2026-09-19T15:23:06.889058+00:00",
+      "home_goals": 4,
+      "away_goals": 0,
+      "btts": 0.6589,
+      "over25": 0.6051
+    },
+    {
+      "fixture_id": 26667,
+      "snapshot_id": 5011,
+      "kickoff": "2026-09-19T18:45:00+00:00",
+      "captured_at": "2026-09-19T15:23:04.955803+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5724,
+      "over25": 0.5235
+    },
+    {
+      "fixture_id": 26668,
+      "snapshot_id": 5015,
+      "kickoff": "2026-09-19T18:45:00+00:00",
+      "captured_at": "2026-09-19T15:23:09.344494+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5836,
+      "over25": 0.5081
+    },
+    {
+      "fixture_id": 26656,
+      "snapshot_id": 5017,
+      "kickoff": "2026-09-19T19:00:00+00:00",
+      "captured_at": "2026-09-19T15:23:11.471047+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6147,
+      "over25": 0.6913
+    },
+    {
+      "fixture_id": 26659,
+      "snapshot_id": 5016,
+      "kickoff": "2026-09-19T19:00:00+00:00",
+      "captured_at": "2026-09-19T15:23:10.44781+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5263,
+      "over25": 0.4485
+    },
+    {
+      "fixture_id": 26685,
+      "snapshot_id": 5248,
+      "kickoff": "2026-09-20T10:30:00+00:00",
+      "captured_at": "2026-09-20T09:12:23.071038+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5569,
+      "over25": 0.4879
+    },
+    {
+      "fixture_id": 26673,
+      "snapshot_id": 5249,
+      "kickoff": "2026-09-20T11:00:00+00:00",
+      "captured_at": "2026-09-20T09:22:50.457346+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5537,
+      "over25": 0.5018
+    },
+    {
+      "fixture_id": 26676,
+      "snapshot_id": 5253,
+      "kickoff": "2026-09-20T11:30:00+00:00",
+      "captured_at": "2026-09-20T09:22:55.069947+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6152,
+      "over25": 0.5544
+    },
+    {
+      "fixture_id": 26677,
+      "snapshot_id": 5252,
+      "kickoff": "2026-09-20T11:30:00+00:00",
+      "captured_at": "2026-09-20T09:22:54.077986+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.647,
+      "over25": 0.5987
+    },
+    {
+      "fixture_id": 26678,
+      "snapshot_id": 5251,
+      "kickoff": "2026-09-20T11:30:00+00:00",
+      "captured_at": "2026-09-20T09:22:53.169006+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.7029,
+      "over25": 0.6753
+    },
+    {
+      "fixture_id": 26679,
+      "snapshot_id": 5250,
+      "kickoff": "2026-09-20T11:30:00+00:00",
+      "captured_at": "2026-09-20T09:22:52.146716+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6803,
+      "over25": 0.628
+    },
+    {
+      "fixture_id": 26681,
+      "snapshot_id": 5255,
+      "kickoff": "2026-09-20T12:00:00+00:00",
+      "captured_at": "2026-09-20T09:22:57.053369+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.4475,
+      "over25": 0.3615
+    },
+    {
+      "fixture_id": 26683,
+      "snapshot_id": 5254,
+      "kickoff": "2026-09-20T12:00:00+00:00",
+      "captured_at": "2026-09-20T09:22:56.050896+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.4595,
+      "over25": 0.3747
+    },
+    {
+      "fixture_id": 26674,
+      "snapshot_id": 5256,
+      "kickoff": "2026-09-20T12:30:00+00:00",
+      "captured_at": "2026-09-20T09:22:58.143927+00:00",
+      "home_goals": 3,
+      "away_goals": 4,
+      "btts": 0.594,
+      "over25": 0.5881
+    },
+    {
+      "fixture_id": 26670,
+      "snapshot_id": 5261,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:03.478614+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.6477,
+      "over25": 0.5957
+    },
+    {
+      "fixture_id": 26671,
+      "snapshot_id": 5264,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:06.479928+00:00",
+      "home_goals": 5,
+      "away_goals": 3,
+      "btts": 0.5096,
+      "over25": 0.5515
+    },
+    {
+      "fixture_id": 26672,
+      "snapshot_id": 5262,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:04.46533+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.5852,
+      "over25": 0.5475
+    },
+    {
+      "fixture_id": 26686,
+      "snapshot_id": 5263,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:05.475155+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5917,
+      "over25": 0.5762
+    },
+    {
+      "fixture_id": 26687,
+      "snapshot_id": 5259,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:01.45077+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.476,
+      "over25": 0.3723
+    },
+    {
+      "fixture_id": 26688,
+      "snapshot_id": 5258,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:00.373398+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5811,
+      "over25": 0.5419
+    },
+    {
+      "fixture_id": 26689,
+      "snapshot_id": 5257,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:22:59.045024+00:00",
+      "home_goals": 1,
+      "away_goals": 4,
+      "btts": 0.5296,
+      "over25": 0.4519
+    },
+    {
+      "fixture_id": 26690,
+      "snapshot_id": 5260,
+      "kickoff": "2026-09-20T13:00:00+00:00",
+      "captured_at": "2026-09-20T09:23:02.449993+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5848,
+      "over25": 0.5086
+    },
+    {
+      "fixture_id": 26675,
+      "snapshot_id": 5294,
+      "kickoff": "2026-09-20T13:30:00+00:00",
+      "captured_at": "2026-09-20T12:23:07.045299+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.7041,
+      "over25": 0.6879
+    },
+    {
+      "fixture_id": 26682,
+      "snapshot_id": 5295,
+      "kickoff": "2026-09-20T14:15:00+00:00",
+      "captured_at": "2026-09-20T12:23:08.87504+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6397,
+      "over25": 0.5968
+    },
+    {
+      "fixture_id": 26684,
+      "snapshot_id": 5296,
+      "kickoff": "2026-09-20T14:15:00+00:00",
+      "captured_at": "2026-09-20T12:23:10.172163+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5278,
+      "over25": 0.4424
+    },
+    {
+      "fixture_id": 26680,
+      "snapshot_id": 5297,
+      "kickoff": "2026-09-20T14:30:00+00:00",
+      "captured_at": "2026-09-20T12:23:11.169834+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.6702,
+      "over25": 0.6253
+    },
+    {
+      "fixture_id": 26703,
+      "snapshot_id": 5298,
+      "kickoff": "2026-09-20T15:15:00+00:00",
+      "captured_at": "2026-09-20T12:23:12.161729+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5758,
+      "over25": 0.4959
+    },
+    {
+      "fixture_id": 26705,
+      "snapshot_id": 5299,
+      "kickoff": "2026-09-20T15:15:00+00:00",
+      "captured_at": "2026-09-20T12:23:13.168419+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5554,
+      "over25": 0.4835
+    },
+    {
+      "fixture_id": 26691,
+      "snapshot_id": 5301,
+      "kickoff": "2026-09-20T15:30:00+00:00",
+      "captured_at": "2026-09-20T12:23:15.168782+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.6448,
+      "over25": 0.6019
+    },
+    {
+      "fixture_id": 26692,
+      "snapshot_id": 5300,
+      "kickoff": "2026-09-20T15:30:00+00:00",
+      "captured_at": "2026-09-20T12:23:14.157981+00:00",
+      "home_goals": 0,
+      "away_goals": 0,
+      "btts": 0.6841,
+      "over25": 0.6453
+    },
+    {
+      "fixture_id": 26701,
+      "snapshot_id": 5302,
+      "kickoff": "2026-09-20T16:00:00+00:00",
+      "captured_at": "2026-09-20T12:23:16.166032+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5199,
+      "over25": 0.4768
+    },
+    {
+      "fixture_id": 26695,
+      "snapshot_id": 5319,
+      "kickoff": "2026-09-20T16:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:19.742905+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.6024,
+      "over25": 0.6088
+    },
+    {
+      "fixture_id": 26696,
+      "snapshot_id": 5318,
+      "kickoff": "2026-09-20T16:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:18.667787+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5957,
+      "over25": 0.5353
+    },
+    {
+      "fixture_id": 26698,
+      "snapshot_id": 5317,
+      "kickoff": "2026-09-20T16:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:17.662264+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.4716,
+      "over25": 0.3961
+    },
+    {
+      "fixture_id": 26699,
+      "snapshot_id": 5320,
+      "kickoff": "2026-09-20T16:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:20.658067+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.5714,
+      "over25": 0.5735
+    },
+    {
+      "fixture_id": 26693,
+      "snapshot_id": 5321,
+      "kickoff": "2026-09-20T17:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:21.671415+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.6821,
+      "over25": 0.6643
+    },
+    {
+      "fixture_id": 26694,
+      "snapshot_id": 5322,
+      "kickoff": "2026-09-20T17:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:22.802858+00:00",
+      "home_goals": 1,
+      "away_goals": 4,
+      "btts": 0.6172,
+      "over25": 0.5632
+    },
+    {
+      "fixture_id": 26704,
+      "snapshot_id": 5323,
+      "kickoff": "2026-09-20T17:30:00+00:00",
+      "captured_at": "2026-09-20T15:23:23.891907+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5095,
+      "over25": 0.4669
+    },
+    {
+      "fixture_id": 26702,
+      "snapshot_id": 5325,
+      "kickoff": "2026-09-20T18:45:00+00:00",
+      "captured_at": "2026-09-20T15:23:25.966624+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.4567,
+      "over25": 0.4876
+    },
+    {
+      "fixture_id": 26706,
+      "snapshot_id": 5324,
+      "kickoff": "2026-09-20T18:45:00+00:00",
+      "captured_at": "2026-09-20T15:23:24.965372+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.6624,
+      "over25": 0.667
+    },
+    {
+      "fixture_id": 26697,
+      "snapshot_id": 5326,
+      "kickoff": "2026-09-20T19:00:00+00:00",
+      "captured_at": "2026-09-20T15:23:26.880454+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5801,
+      "over25": 0.508
+    },
+    {
+      "fixture_id": 26700,
+      "snapshot_id": 5327,
+      "kickoff": "2026-09-20T19:00:00+00:00",
+      "captured_at": "2026-09-20T15:23:27.95734+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5048,
+      "over25": 0.4192
+    },
+    {
+      "fixture_id": 26637,
+      "snapshot_id": 6194,
+      "kickoff": "2026-09-25T17:00:00+00:00",
+      "captured_at": "2026-09-25T15:21:48.456808+00:00",
+      "home_goals": 1,
+      "away_goals": 3,
+      "btts": 0.6563,
+      "over25": 0.6033
+    },
+    {
+      "fixture_id": 26707,
+      "snapshot_id": 6195,
+      "kickoff": "2026-09-25T18:30:00+00:00",
+      "captured_at": "2026-09-25T15:21:49.042793+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.558,
+      "over25": 0.5311
+    },
+    {
+      "fixture_id": 26709,
+      "snapshot_id": 6451,
+      "kickoff": "2026-09-26T12:00:00+00:00",
+      "captured_at": "2026-09-26T09:10:59.717615+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5822,
+      "over25": 0.5058
+    },
+    {
+      "fixture_id": 26715,
+      "snapshot_id": 6519,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:09.391453+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5749,
+      "over25": 0.5507
+    },
+    {
+      "fixture_id": 26716,
+      "snapshot_id": 6500,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:57.741475+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.608,
+      "over25": 0.5497
+    },
+    {
+      "fixture_id": 26718,
+      "snapshot_id": 6497,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:56.455328+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.544,
+      "over25": 0.4973
+    },
+    {
+      "fixture_id": 26721,
+      "snapshot_id": 6510,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:02.977662+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.6127,
+      "over25": 0.6497
+    },
+    {
+      "fixture_id": 26722,
+      "snapshot_id": 6501,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:58.277098+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.575,
+      "over25": 0.5059
+    },
+    {
+      "fixture_id": 26723,
+      "snapshot_id": 6517,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:06.60407+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.5305,
+      "over25": 0.4843
+    },
+    {
+      "fixture_id": 26724,
+      "snapshot_id": 6518,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:07.112425+00:00",
+      "home_goals": 1,
+      "away_goals": 2,
+      "btts": 0.5124,
+      "over25": 0.4548
+    },
+    {
+      "fixture_id": 26726,
+      "snapshot_id": 6520,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:10.312233+00:00",
+      "home_goals": 2,
+      "away_goals": 2,
+      "btts": 0.5255,
+      "over25": 0.4458
+    },
+    {
+      "fixture_id": 26727,
+      "snapshot_id": 6521,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:10.840526+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5905,
+      "over25": 0.5363
+    },
+    {
+      "fixture_id": 26728,
+      "snapshot_id": 6513,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:04.98048+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.5703,
+      "over25": 0.5134
+    },
+    {
+      "fixture_id": 26729,
+      "snapshot_id": 6514,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:05.387689+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6073,
+      "over25": 0.5501
+    },
+    {
+      "fixture_id": 26730,
+      "snapshot_id": 6515,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:05.777421+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5638,
+      "over25": 0.4989
+    },
+    {
+      "fixture_id": 26731,
+      "snapshot_id": 6516,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:06.18515+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.5801,
+      "over25": 0.5594
+    },
+    {
+      "fixture_id": 26754,
+      "snapshot_id": 6509,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:02.177749+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.5845,
+      "over25": 0.541
+    },
+    {
+      "fixture_id": 26755,
+      "snapshot_id": 6502,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:58.740297+00:00",
+      "home_goals": 2,
+      "away_goals": 4,
+      "btts": 0.5937,
+      "over25": 0.5654
+    },
+    {
+      "fixture_id": 26756,
+      "snapshot_id": 6503,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:59.169554+00:00",
+      "home_goals": 2,
+      "away_goals": 5,
+      "btts": 0.6025,
+      "over25": 0.5781
+    },
+    {
+      "fixture_id": 26757,
+      "snapshot_id": 6504,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:59.642108+00:00",
+      "home_goals": 5,
+      "away_goals": 1,
+      "btts": 0.6625,
+      "over25": 0.6226
+    },
+    {
+      "fixture_id": 26758,
+      "snapshot_id": 6505,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:00.372297+00:00",
+      "home_goals": 0,
+      "away_goals": 3,
+      "btts": 0.6829,
+      "over25": 0.6919
+    },
+    {
+      "fixture_id": 26759,
+      "snapshot_id": 6506,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:00.879884+00:00",
+      "home_goals": 3,
+      "away_goals": 3,
+      "btts": 0.5692,
+      "over25": 0.5044
+    },
+    {
+      "fixture_id": 26760,
+      "snapshot_id": 6507,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:01.381907+00:00",
+      "home_goals": 4,
+      "away_goals": 1,
+      "btts": 0.6034,
+      "over25": 0.588
+    },
+    {
+      "fixture_id": 26761,
+      "snapshot_id": 6508,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:01.776779+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.536,
+      "over25": 0.473
+    },
+    {
+      "fixture_id": 26762,
+      "snapshot_id": 6511,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:03.386143+00:00",
+      "home_goals": 3,
+      "away_goals": 0,
+      "btts": 0.6007,
+      "over25": 0.5445
+    },
+    {
+      "fixture_id": 26763,
+      "snapshot_id": 6512,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:22:03.879413+00:00",
+      "home_goals": 2,
+      "away_goals": 1,
+      "btts": 0.6128,
+      "over25": 0.5533
+    },
+    {
+      "fixture_id": 26764,
+      "snapshot_id": 6498,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:56.862248+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.6541,
+      "over25": 0.6006
+    },
+    {
+      "fixture_id": 26765,
+      "snapshot_id": 6499,
+      "kickoff": "2026-09-26T14:00:00+00:00",
+      "captured_at": "2026-09-26T12:21:57.291697+00:00",
+      "home_goals": 4,
+      "away_goals": 0,
+      "btts": 0.5998,
+      "over25": 0.5739
+    },
+    {
+      "fixture_id": 26732,
+      "snapshot_id": 6522,
+      "kickoff": "2026-09-26T14:15:00+00:00",
+      "captured_at": "2026-09-26T12:22:11.202978+00:00",
+      "home_goals": 2,
+      "away_goals": 3,
+      "btts": 0.5664,
+      "over25": 0.4931
+    },
+    {
+      "fixture_id": 26733,
+      "snapshot_id": 6542,
+      "kickoff": "2026-09-26T16:30:00+00:00",
+      "captured_at": "2026-09-26T15:22:14.986953+00:00",
+      "home_goals": 1,
+      "away_goals": 4,
+      "btts": 0.5512,
+      "over25": 0.4832
+    },
+    {
+      "fixture_id": 26734,
+      "snapshot_id": 6544,
+      "kickoff": "2026-09-26T16:30:00+00:00",
+      "captured_at": "2026-09-26T15:22:15.807627+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.485,
+      "over25": 0.421
+    },
+    {
+      "fixture_id": 26735,
+      "snapshot_id": 6543,
+      "kickoff": "2026-09-26T16:30:00+00:00",
+      "captured_at": "2026-09-26T15:22:15.395989+00:00",
+      "home_goals": 1,
+      "away_goals": 1,
+      "btts": 0.5373,
+      "over25": 0.4604
+    },
+    {
+      "fixture_id": 26736,
+      "snapshot_id": 6658,
+      "kickoff": "2026-09-27T12:00:00+00:00",
+      "captured_at": "2026-09-27T09:22:12.942264+00:00",
+      "home_goals": 3,
+      "away_goals": 1,
+      "btts": 0.5835,
+      "over25": 0.5121
+    },
+    {
+      "fixture_id": 26737,
+      "snapshot_id": 6676,
+      "kickoff": "2026-09-27T14:15:00+00:00",
+      "captured_at": "2026-09-27T12:22:17.540589+00:00",
+      "home_goals": 0,
+      "away_goals": 1,
+      "btts": 0.5543,
+      "over25": 0.4788
+    },
+    {
+      "fixture_id": 26738,
+      "snapshot_id": 6694,
+      "kickoff": "2026-09-27T16:30:00+00:00",
+      "captured_at": "2026-09-27T15:22:16.206184+00:00",
+      "home_goals": 3,
+      "away_goals": 2,
+      "btts": 0.5491,
+      "over25": 0.4875
+    },
+    {
+      "fixture_id": 26739,
+      "snapshot_id": 6693,
+      "kickoff": "2026-09-27T16:30:00+00:00",
+      "captured_at": "2026-09-27T15:22:15.713069+00:00",
+      "home_goals": 1,
+      "away_goals": 0,
+      "btts": 0.4873,
+      "over25": 0.4211
+    },
+    {
+      "fixture_id": 26740,
+      "snapshot_id": 6695,
+      "kickoff": "2026-09-27T19:00:00+00:00",
+      "captured_at": "2026-09-27T15:22:16.741287+00:00",
+      "home_goals": 2,
+      "away_goals": 0,
+      "btts": 0.4664,
+      "over25": 0.3812
+    },
+    {
+      "fixture_id": 26741,
+      "snapshot_id": 6801,
+      "kickoff": "2026-09-28T18:30:00+00:00",
+      "captured_at": "2026-09-28T15:22:13.041933+00:00",
+      "home_goals": 0,
+      "away_goals": 2,
+      "btts": 0.5782,
+      "over25": 0.5056
+    }
+  ],
+  "limitations": [
+    "Coverage is limited to fixtures and genuine pre-match records in the exported database.",
+    "Versions and selection rules changed during the period; these are recorded-system results, not validation of one fixed new model.",
+    "AI comparisons use the same fixtures within each model, but different models may have different fixture cohorts.",
+    "AI saw statistical probabilities, so it is not an independent voter; the forecast ledger lacks prompt/input hashes.",
+    "Nominal Wilson intervals do not account for dependence between fixtures.",
+    "Priced selections are a subset; their ROI cannot establish profitability across unpriced selections."
+  ]
+}

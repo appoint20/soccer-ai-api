@@ -62,4 +62,9 @@ public class AiBatchItem
 
     public double? HomeElo { get; set; }
     public double? AwayElo { get; set; }
+
+    [JsonPropertyName("providerPrediction")]
+    public ProviderPrediction? ProviderPrediction { get; set; }
+    [JsonPropertyName("combinedPrediction")]
+    public CombinedPrediction? CombinedPrediction { get; set; }
 }

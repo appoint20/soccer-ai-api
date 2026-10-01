@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; init; }
     public DbSet<HeadToHeadMeeting> HeadToHeadMeetings { get; init; }
     public DbSet<FixturePrediction> FixturePredictions { get; init; }
+    public DbSet<CombinedPredictionSnapshot> CombinedPredictionSnapshots { get; init; }
+    public DbSet<CombinedPredictionAutomationAttempt> CombinedPredictionAutomationAttempts { get; init; }
     public DbSet<PublishedTicket> PublishedTickets { get; init; }
     public DbSet<PublishedTicketLeg> PublishedTicketLegs { get; init; }
     public DbSet<ModelForecast> ModelForecasts { get; init; }
@@ -65,6 +67,22 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<CombinedPredictionAutomationAttempt>(entity =>
+        {
+            entity.HasKey(attempt => attempt.Id);
+            entity.Property(attempt => attempt.Window).HasMaxLength(64).IsRequired();
+            entity.Property(attempt => attempt.Status).HasMaxLength(32).IsRequired();
+            entity.HasIndex(attempt => new { attempt.FixtureId, attempt.KickoffUtc, attempt.Window }).IsUnique()
+                .HasDatabaseName("IX_CombinedAutomation_Fixture_Kickoff_Window");
+            entity.HasIndex(attempt => attempt.StartedAtUtc);
+            entity.HasOne<Fixture>().WithMany().HasForeignKey(attempt => attempt.FixtureId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<CombinedPredictionSnapshot>(entity =>
+        {
+            entity.HasKey(snapshot => snapshot.Id);
+            entity.HasIndex(snapshot => new { snapshot.FixtureId, snapshot.CapturedAtUtc });
+            entity.HasOne<Fixture>().WithMany().HasForeignKey(snapshot => snapshot.FixtureId).OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Entity<GoalRateModelGeneration>(entity =>
         {
             entity.HasKey(m => m.Generation);

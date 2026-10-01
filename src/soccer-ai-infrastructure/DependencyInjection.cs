@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
 using SoccerAi.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,26 @@ public static class DependencyInjection
             configuration.GetSection(SoccerAi.Application.Options.HistoricalOddsOptions.SectionName));
         services.Configure<SoccerAi.Application.Options.HybridModelOptions>(
             configuration.GetSection(SoccerAi.Application.Options.HybridModelOptions.SectionName));
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddOptions<SoccerAi.Application.Options.CombinedPredictionAutomationOptions>()
+            .Bind(configuration.GetSection(SoccerAi.Application.Options.CombinedPredictionAutomationOptions.SectionName))
+            .Validate(options => options.PollIntervalMinutes is >= 1 and <= 1440
+                && double.IsFinite(options.HorizonHours) && options.HorizonHours is > 0 and <= 168
+                && double.IsFinite(options.FinalWindowHours) && options.FinalWindowHours > 0 && options.FinalWindowHours <= options.HorizonHours
+                && options.MinimumLeadMinutes > 0 && options.MinimumLeadMinutes < options.FinalWindowHours * 60
+                && options.MaxRefreshesPerRun is >= 1 and <= 100 && options.MaxRefreshesPerDay is >= 1 and <= 1000
+                && options.RefreshTimeoutMinutes is >= 1 and <= 30,
+                "Invalid combined prediction automation schedule, limits or timeout.")
+            .ValidateOnStart();
+        services.AddOptions<SoccerAi.Application.Options.CombinedPredictionOptions>()
+            .Bind(configuration.GetSection(SoccerAi.Application.Options.CombinedPredictionOptions.SectionName))
+            .Validate(options => new[] { options.HistoricalWeight, options.MlWeight, options.ProviderWeight, options.AiWeight }
+                .All(weight => double.IsFinite(weight) && weight >= 0)
+                && double.IsFinite(options.HistoricalWeight + options.MlWeight + options.ProviderWeight + options.AiWeight)
+                && options.HistoricalWeight + options.MlWeight + options.ProviderWeight + options.AiWeight > 0,
+                "Combined prediction weights must be finite, non-negative and not all zero.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.AiModel) && options.AiModel.EndsWith(":free", StringComparison.Ordinal),
+                "Combined prediction AI model must use an explicit :free endpoint.");
 
         services.AddPersistence(configuration);
         services.AddExternalApis(configuration);
@@ -62,6 +83,11 @@ public static class DependencyInjection
         services.AddScoped<IOddsBackfillService, OddsBackfillService>();
         services.AddScoped<IHistoricalOddsImportService, HistoricalOddsImportService>();
         services.AddScoped<IAiSyncService, AiSyncService>();
+        services.AddScoped<ICombinedPredictionService, SoccerAi.Application.Services.Forecasts.CombinedPredictionService>();
+        services.AddScoped<ICombinedPredictionRefreshService, CombinedPredictionRefreshService>();
+        services.AddScoped<ICombinedPredictionAutomation, CombinedPredictionAutomationService>();
+        services.AddScoped<ICombinedPredictionAutomationStore, CombinedPredictionAutomationStore>();
+        services.AddScoped<ICombinedPredictionAutomationReadiness, CombinedPredictionAutomationReadiness>();
         services.AddScoped<ITeamSyncService, TeamSyncService>();
         
         // Mathematical Engines
@@ -150,7 +176,18 @@ public static class DependencyInjection
         // unconditionally: the service reports IsEnabled=false without a key or
         // models, so the sync step degrades to a no-op instead of failing.
         services.AddOptions<OpenRouterOptions>()
-            .Bind(configuration.GetSection(OpenRouterOptions.SectionName));
+            .Bind(configuration.GetSection(OpenRouterOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (!string.IsNullOrWhiteSpace(options.ApiKey)) return;
+                if (Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var target) && target.Host == "openrouter.ai")
+                    options.ApiKey = new[] { configuration["OPENROUTER_API_KEY"], Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") }
+                        .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? "";
+                var narrativeUrl = configuration["AiService:BaseUrl"] ?? "https://openrouter.ai/api/v1";
+                if (string.IsNullOrWhiteSpace(options.ApiKey) && Uri.TryCreate(narrativeUrl, UriKind.Absolute, out var narrative)
+                    && target is not null && narrative.Authority == target.Authority)
+                    options.ApiKey = configuration["AiService:ApiKey"] ?? "";
+            });
 
         services.AddHttpClient(OpenRouterForecastService.HttpClientName, (provider, client) =>
         {

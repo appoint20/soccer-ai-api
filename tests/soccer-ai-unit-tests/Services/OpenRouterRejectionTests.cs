@@ -11,6 +11,20 @@ namespace soccer_ai_unit_tests.Services;
 /// </summary>
 public class OpenRouterRejectionTests
 {
+    [Theory]
+    [InlineData("{\"error\":{\"message\":\"Provider busy\",\"metadata\":{\"provider_name\":\"Nvidia\"}}}", true)]
+    [InlineData("{\"error\":{\"metadata\":{\"provider_code\":429}}}", true)]
+    [InlineData("{\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day\",\"metadata\":{\"provider_name\":\"Nvidia\"}}}", false)]
+    [InlineData("{\"error\":{\"message\":\"Rate limit exceeded\"}}", false)]
+    [InlineData("{\"error\":{\"metadata\":null}}", false)]
+    [InlineData("<html>429</html>", false)]
+    [InlineData("[]", false)]
+    [InlineData(null, false)]
+    public void OnlyAnIdentifiedUpstreamRateLimitPermitsModelFallback(string? body, bool expected)
+    {
+        OpenRouterErrors.IsProviderRateLimit(body).Should().Be(expected);
+    }
+
     [Fact]
     public void AFreeSlugExplainsTheDailyCap()
     {
@@ -18,7 +32,7 @@ public class OpenRouterRejectionTests
 
         reason.Should().Contain("free tier");
         reason.Should().Contain("50 per day");
-        reason.Should().Contain("one request per fixture");
+        reason.Should().Contain("two requests per fixture");
     }
 
     /// <summary>A paid slug has no daily cap, so the advice must not appear.</summary>

@@ -172,6 +172,51 @@ public sealed class GoalRateTrainingService(
             throw new InvalidDataException("Saved model failed prediction parity");
     }
 
+    public GoalRateHoldout ForecastHoldout(IReadOnlyCollection<Fixture> fixtures,
+        DateTimeOffset forecastFrom, DateTimeOffset forecastUntil, CancellationToken ct = default)
+    {
+        if (forecastUntil <= forecastFrom || _opt.ValidationFraction is <= 0 or >= .5)
+            throw new ArgumentException("Invalid holdout dates or calibration fraction.");
+        _trainer = new GoalRateTrainerPolicy(publish: false, _opt.AllowOfflineTrainerFallback);
+        var rows = featureBuilder.Build(fixtures.Where(fixture => fixture.Date < forecastUntil));
+        var history = rows.Where(row => row.IsFinished && row.Date < forecastFrom.UtcDateTime).ToList();
+        if (history.Count < _opt.MinTrainingRows)
+            throw new InvalidOperationException("Insufficient historical rows for the holdout audit.");
+        var (fit, calibrationRows) = SplitCalibration(history, _opt.ValidationFraction);
+        ct.ThrowIfCancellationRequested();
+        var fitView = _ml.Data.LoadFromEnumerable(fit);
+        var home = TrainOne(fitView, nameof(GoalRateRow.GoalsHome));
+        var away = TrainOne(fitView, nameof(GoalRateRow.GoalsAway));
+        var calibration = FitCalibration(home, away, _ml.Data.LoadFromEnumerable(calibrationRows), calibrationRows);
+        var targets = rows.Where(row => row.Date >= forecastFrom.UtcDateTime && row.Date < forecastUntil.UtcDateTime).ToList();
+        var targetView = _ml.Data.LoadFromEnumerable(targets);
+        var homeScores = home.Transform(targetView).GetColumn<float>("Score").ToArray();
+        var awayScores = away.Transform(targetView).GetColumn<float>("Score").ToArray();
+        if (homeScores.Length != targets.Count || awayScores.Length != targets.Count)
+            throw new InvalidDataException("Holdout prediction row mismatch.");
+        var predictions = new List<GoalRateHoldoutRow>();
+        var settings = featureBuilder.DixonColesSettings;
+        for (var index = 0; index < targets.Count; index++)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!float.IsFinite(homeScores[index]) || !float.IsFinite(awayScores[index]))
+                throw new InvalidDataException("Non-finite holdout prediction.");
+            var row = targets[index];
+            var homeRate = Math.Clamp(homeScores[index] * calibration.HomeScale, _opt.LambdaMin, _opt.LambdaMax);
+            var awayRate = Math.Clamp(awayScores[index] * calibration.AwayScale, _opt.LambdaMin, _opt.LambdaMax);
+            var mlMarkets = DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                homeRate, awayRate, settings.Rho, settings.MaxGoals));
+            MatrixMarkets? baseline = row.DcLambdaSum > 0
+                ? DixonColesMath.ComputeMarkets(DixonColesMath.BuildScoreMatrix(
+                    row.DcLambdaHome, row.DcLambdaAway, settings.Rho, settings.MaxGoals)) : null;
+            var mixed = baseline is { } valid ? GoalRateEnsemble.Mix(mlMarkets, valid, calibration.MlWeight) : mlMarkets;
+            predictions.Add(new GoalRateHoldoutRow((int)row.FixtureId, row.Date, row.IsFinished,
+                homeRate, awayRate, mlMarkets, baseline, mixed));
+        }
+        return new GoalRateHoldout(TrainerUsed, fit.Count, calibrationRows.Count, fit[^1].Date,
+            calibrationRows[0].Date, calibrationRows[^1].Date, forecastFrom, forecastUntil, calibration, predictions);
+    }
+
     public static (List<GoalRateRow> Fit, List<GoalRateRow> Calibration) SplitCalibration(
         IReadOnlyList<GoalRateRow> rows, double fraction)
     {
@@ -482,6 +527,13 @@ public sealed class GoalRateTrainingService(
         return Math.Max(0, centre - half);
     }
 }
+
+public sealed record GoalRateHoldoutRow(int FixtureId, DateTime KickoffUtc, bool IsFinished,
+    double MlHomeGoals, double MlAwayGoals, MatrixMarkets Ml, MatrixMarkets? Historical, MatrixMarkets HistoricalMl);
+
+public sealed record GoalRateHoldout(string Trainer, int TrainingRows, int CalibrationRows, DateTime TrainingThroughUtc,
+    DateTime CalibrationFromUtc, DateTime CalibrationThroughUtc, DateTimeOffset ForecastFromUtc,
+    DateTimeOffset ForecastUntilUtc, GoalRateCalibration Calibration, List<GoalRateHoldoutRow> Predictions);
 
 public sealed record GoalRateEvaluation
 {

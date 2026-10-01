@@ -3,8 +3,8 @@ using SoccerAi.Application.Models;
 namespace SoccerAi.Application.Interfaces;
 
 /// <summary>
-/// One model's forecast of a fixture's goals outcome. Deliberately narrow:
-/// goals markets only, because those settle objectively and can be scored.
+/// One model's goals forecast, with a complete market vector when requested
+/// explicitly by the combined-prediction workflow.
 /// </summary>
 public sealed record GoalsForecast
 {
@@ -25,13 +25,15 @@ public sealed record GoalsForecast
     public required double Confidence { get; init; }
 
     public required string Rationale { get; init; }
+    public CombinedMarkets? Markets { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? RawResponseJson { get; init; }
+    public string? InputHash { get; init; }
 }
 
 /// <summary>
-/// Produces independent language-model forecasts to run alongside the
-/// statistical pipeline. Never consulted when choosing or pricing a bet — the
-/// point is to measure these against the pipeline, which only works if they
-/// stay out of it.
+/// Produces comparison forecasts alongside the statistical pipeline, or an
+/// explicitly requested full-market forecast for the combined workflow.
+/// Existing comparison-ledger records are never repurposed as fresh inputs.
 /// </summary>
 public interface IMatchForecastService
 {
@@ -49,4 +51,7 @@ public interface IMatchForecastService
     /// </summary>
     Task<IReadOnlyList<GoalsForecast>> ForecastAsync(
         MatchAnalysis analysis, CancellationToken cancellationToken = default);
+
+    Task<GoalsForecast?> ForecastCombinedAsync(MatchAnalysis analysis, string model,
+        CancellationToken cancellationToken = default) => Task.FromResult<GoalsForecast?>(null);
 }

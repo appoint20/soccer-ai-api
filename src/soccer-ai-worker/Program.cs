@@ -50,6 +50,7 @@ builder.Services.Configure<SyncOptions>(builder.Configuration.GetSection(SyncOpt
 builder.Services.AddHostedService<SyncWorker>();
 builder.Services.AddHostedService<OddsCaptureWorker>();
 builder.Services.AddHostedService<LiveScoreWorker>();
+builder.Services.AddHostedService<CombinedPredictionWorker>();
 
 var host = builder.Build();
 

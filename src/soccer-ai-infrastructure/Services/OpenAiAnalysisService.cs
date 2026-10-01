@@ -18,8 +18,7 @@ namespace SoccerAi.Infrastructure.Services;
 
 /// <summary>
 /// Professional implementation of IAiAnalysisService using OpenRouter.
-/// Uses Anthropic Claude 3.5 Sonnet as the primary engine with automatic
-/// fallback to NVIDIA (e.g. llama-3.1-nemotron-70b-instruct).
+/// Uses the configured primary model with automatic provider-aware fallback.
 /// </summary>
 public sealed class OpenAiAnalysisService : IAiAnalysisService
 {
@@ -126,7 +125,8 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         model.EndsWith(":free", StringComparison.OrdinalIgnoreCase)
             ? $"OpenRouter rate limit exceeded on the free tier ({model}). Free models allow 20 requests per "
               + "minute, and 50 per day until $10 of credits have been purchased (1,000 per day after that). "
-              + "The sync spends one request per fixture, so a full matchday needs the higher cap or a paid model."
+              + "New narration and its final-decision explanation normally use two requests per fixture; "
+              + "separate forecasts and repair attempts use more. Retry after the applicable quota resets."
             : "OpenRouter rate limit exceeded; retry on the next sync.";
 
     /// <summary>
@@ -288,8 +288,7 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
 
         if (modelsToTry.Count == 0)
         {
-            modelsToTry.Add("anthropic/claude-sonnet-5");
-            modelsToTry.Add("anthropic/claude-haiku-4.5");
+            throw new ExternalApiException("AI narratives", "No AI models are configured.", System.Net.HttpStatusCode.ServiceUnavailable);
         }
 
         var baseMessages = new List<ChatMessage>
@@ -497,12 +496,17 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
         These context sentences must contain NO betting recommendation. Never mention odds, prices or value.
 
         For EVERY supplied market, return EXACTLY one check per supplied fact — the same number of
-        checks as that market has facts, never five unless it has five — maximum 260 characters each.
+        checks as that market has facts, with an absolute maximum of FIVE checks per market and 260 characters each.
+        Never pad the list to five. The server has already prioritized the actual rejection reasons, then
+        supporting evidence. Keep that priority. Use plain language, measured match counts and goals per game.
+        Never output percentage ratings, data-check counts, veto counts, unnamed exclusion criteria, or
+        provider comparisons such as attack 60% or head-to-head 50/50. Explain what happened and why it matters.
         Check 1 rewrites Facts[0], check 2 Facts[1], and so on, in exactly the same order.
         A fact naming a team keeps that team's name: "Barnsley scored in 3 of their last 3 home
         matches" may be reworded but may not become "the home side" or lose the 3. Write each one as
         a statement a supporter would recognise, not a label.
-        Preserve each fact's meaning, numbers, negation and missing-data status. Do not add evidence.
+        Preserve each fact's meaning, numbers, negation and missing-data status. Keep measured counts as
+        numerals (3, not three) and retain the sample size. Do not add evidence or repeat the same check.
         Explain a failed check just as clearly as a passed one. AI agreement is an opinion, not a measured
         success rate. The joint GG + Over 2.5 probability is supplied by the score model; never multiply
         the individual probabilities or prices. 2–3 goals means exactly two or three total goals in 90 minutes.
@@ -671,6 +675,14 @@ public sealed class OpenAiAnalysisService : IAiAnalysisService
             Do not endorse both Over and Under 2.5, or both Home and Away Win; check your own flags before returning.
             Confidence is your assessment of evidence (0–100), not a measured hit rate or a replacement for a
             supplied model probability.
+            combinedPrediction, when present, contains the final numerical blend and its source weights.
+            Explain those fixed final probabilities, including home/draw/away and goals markets; do not replace
+            them with your own numbers. Missing sources are explicitly marked; do not claim all four contributed.
+            providerPrediction, when present, is API-Football's separate assessment. Its home/draw/away
+            percentages refer only to match winner. Its form, attack, defence, poisson, goals and total
+            comparisons are relative team ratings, never BTTS or Over 2.5 probabilities. Its underOver
+            value is a goals-line recommendation, not a probability. Explain agreement or disagreement
+            using only supplied evidence; missing provider fields remain unknown.
 
             WRITING — a reader decides from this text whether the match is worth their money, and which market
             to take. Write plain English and German; the German is a full translation of the same content, never

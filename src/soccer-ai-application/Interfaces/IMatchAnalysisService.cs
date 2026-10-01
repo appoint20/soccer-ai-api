@@ -32,6 +32,7 @@ public sealed class FixtureAnalysisResult
     /// <summary>The provider's own read of the fixture, when it publishes one.</summary>
     public ProviderPrediction? Provider { get; init; }
     public WeightedPrediction? Prediction { get; init; }
+    public CombinedPrediction? CombinedPrediction { get; init; }
 
     /// <summary>Pre-isotonic probabilities (what the math cache stores — training data).</summary>
     public WeightedPrediction? RawPrediction { get; init; }

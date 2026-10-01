@@ -54,7 +54,7 @@ public sealed class SyncOptions
     /// On startup, sync immediately ONLY if the last successful sync is older
     /// than this many hours (persisted in the SyncStates table).
     /// </summary>
-    public double StartupSyncThresholdHours { get; set; } = 3;
+    public double StartupSyncThresholdHours { get; set; } = 2;
 
     /// <summary>How far ahead to forecast fixtures with the language models.</summary>
     public int ForecastDaysAhead { get; set; } = 3;
@@ -78,7 +78,7 @@ public sealed class SyncOptions
     /// tick rate — <see cref="OddsRefreshIntervalHours"/> decides whether a
     /// given fixture is actually re-priced on that tick.
     /// </summary>
-    public int OddsCaptureIntervalMinutes { get; set; } = 30;
+    public int OddsCaptureIntervalMinutes { get; set; } = 120;
 
     /// <summary>
     /// How far ahead of kickoff a fixture becomes eligible for odds capture.
@@ -101,7 +101,7 @@ public sealed class SyncOptions
     /// edge never existed. Re-pricing on a fixed cadence is what makes the gate
     /// reflect a price someone could still take.
     /// </remarks>
-    public double OddsRefreshIntervalHours { get; set; } = 3;
+    public double OddsRefreshIntervalHours { get; set; } = 2;
 
     /// <summary>
     /// Inside this many hours of kickoff, re-price on every tick instead of
@@ -122,9 +122,6 @@ public sealed class SyncOptions
     /// empty responses. 30h leaves margin for the provider publishing early
     /// without wasting a request per fixture per cycle on silence.
     ///
-    /// Cost is modest — one request per fixture per capture, on the same loop
-    /// that already walks upcoming fixtures — against a 7,500/day budget
-    /// currently running at well under 1%.
     /// </remarks>
     public double InjuryCaptureHorizonHours { get; set; } = 30;
 
@@ -155,12 +152,10 @@ public sealed class SyncOptions
     /// How often the live loop wakes. 0 disables it.
     /// </summary>
     /// <remarks>
-    /// One request covers every match in play, so the cost is the tick rate and
-    /// nothing else: a minute apart is about 60 requests an hour, and only in
-    /// the hours our own fixtures are actually being played. Overnight the loop
+    /// One request covers every match in play. Outside match hours the loop
     /// asks the database, finds nothing running and spends no request at all.
     /// </remarks>
-    public int LiveScoreIntervalSeconds { get; set; } = 60;
+    public int LiveScoreIntervalSeconds { get; set; } = 7200;
 
     /// <summary>
     /// How stale a picked fixture's statistics may get while it is being
@@ -173,7 +168,7 @@ public sealed class SyncOptions
     /// the fixtures we published a pick on — two to ten on a normal day — costs
     /// a single call each time this comes due.
     /// </remarks>
-    public int LiveStatsRefreshMinutes { get; set; } = 5;
+    public int LiveStatsRefreshMinutes { get; set; } = 120;
 
     /// <summary>How far ahead the provider's prediction is fetched. 0 disables it.</summary>
     public double PredictionHorizonHours { get; set; } = 120;

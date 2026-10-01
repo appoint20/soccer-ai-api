@@ -42,6 +42,24 @@ public class FixtureSyncService(IApiFootballService apiService,
     private static readonly TimeSpan NegativeCoverageTtl = TimeSpan.FromHours(6);
 
     /// <summary>
+    /// Statuses that mean a fixture is no longer in play, so the live loops stop
+    /// looking at it.
+    /// </summary>
+    /// <remarks>
+    /// Shared by the score and statistics steps because they must agree on what
+    /// "in play" means. They previously disagreed: the score step tested the
+    /// status, while the statistics step took a non-null match minute as its
+    /// proxy — and the minute is deliberately kept after the whistle so the
+    /// final "90+3" survives. A picked fixture therefore stayed eligible for a
+    /// statistics refetch every LiveStatsRefreshMinutes until its kickoff fell
+    /// out of the live window, re-reading numbers that stopped changing at full
+    /// time. The last word on a finished match belongs to the post-match path in
+    /// the sync pipeline, which reads it once.
+    /// </remarks>
+    private static readonly string[] NotInPlayStatuses =
+        ["FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO"];
+
+    /// <summary>
     /// Get current football season (starts in July)
     /// </summary>
     private static int GetCurrentSeason() => DateTimeOffset.UtcNow.Month >= 7 
@@ -718,7 +736,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         return captured;
     }
 
-    private static void Apply(FixturePrediction row, ProviderPrediction source, DateTimeOffset at)
+    internal static void Apply(FixturePrediction row, ProviderPrediction source, DateTimeOffset at)
     {
         row.PercentHome = source.PercentHome;
         row.PercentDraw = source.PercentDraw;
@@ -759,8 +777,7 @@ public class FixtureSyncService(IApiFootballService apiService,
         var candidates = await dbContext.Fixtures
             .Where(f => scopedLeagueIds.Contains(f.LeagueId) &&
                         f.Date <= now && f.Date > now.AddHours(-Application.Services.Sync.SyncOptions.LiveWindowHours) &&
-                        f.Status != "FT" && f.Status != "AET" && f.Status != "PEN" &&
-                        f.Status != "PST" && f.Status != "CANC" && f.Status != "ABD" && f.Status != "AWD" && f.Status != "WO")
+                        !NotInPlayStatuses.Contains(f.Status))
             .ToListAsync(ct);
 
         if (candidates.Count == 0) return 0;
@@ -837,7 +854,7 @@ public class FixtureSyncService(IApiFootballService apiService,
 
         var due = await dbContext.Fixtures
             .Where(f => scopedLeagueIds.Contains(f.LeagueId) && picked.Contains(f.Id) &&
-                        f.ElapsedMinutes != null &&
+                        f.ElapsedMinutes != null && !NotInPlayStatuses.Contains(f.Status) &&
                         f.Date <= now && f.Date > now.AddHours(-Application.Services.Sync.SyncOptions.LiveWindowHours) &&
                         (f.StatisticsUpdatedAtUtc == null || f.StatisticsUpdatedAtUtc < stale))
             .ToListAsync(ct);
@@ -930,9 +947,7 @@ public class FixtureSyncService(IApiFootballService apiService,
             var interval = (fixture.Date - now).TotalHours <= opt.OddsFinalApproachHours
                 ? TimeSpan.FromMinutes(Math.Max(1, opt.OddsCaptureIntervalMinutes))
                 : TimeSpan.FromHours(opt.OddsRefreshIntervalHours);
-            // One tick of lookahead prevents a 3h cadence slipping to 3h30m.
-            var due = lastAttempt is null || now - lastAttempt.Value >=
-                interval - TimeSpan.FromMinutes(Math.Max(1, opt.OddsCaptureIntervalMinutes));
+            var due = lastAttempt is null || now - lastAttempt.Value >= interval;
             if (!due) continue;
             if (!await HasOddsCoverageCachedAsync(fixture.LeagueId,
                     fixture.Date.Month >= 7 ? fixture.Date.Year : fixture.Date.Year - 1, ct)) continue;

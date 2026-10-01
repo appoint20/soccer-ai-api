@@ -13,7 +13,10 @@ public sealed record GoalRateForecast(
     double LambdaHome,
     double LambdaAway,
     PoissonProbabilities Probabilities,
-    string? ModelVersion = null);
+    string? ModelVersion = null)
+{
+    public PoissonProbabilities? RawMlProbabilities { get; init; }
+}
 
 /// <summary>
 /// Scores fixtures with the trained goal-rate models.

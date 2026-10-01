@@ -22,6 +22,40 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations.Postgres
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.CombinedPredictionAutomationAttempt", builder =>
+                {
+                    builder.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    builder.Property<int>("FixtureId").HasColumnType("integer");
+                    builder.Property<DateTimeOffset>("KickoffUtc").HasColumnType("timestamp with time zone");
+                    builder.Property<string>("Window").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                    builder.Property<DateTimeOffset>("StartedAtUtc").HasColumnType("timestamp with time zone");
+                    builder.Property<DateTimeOffset?>("FinishedAtUtc").HasColumnType("timestamp with time zone");
+                    builder.Property<string>("Status").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+                    builder.Property<Guid?>("SnapshotId").HasColumnType("uuid");
+                    builder.Property<string>("Error").HasColumnType("text");
+                    builder.HasKey("Id");
+                    builder.HasIndex("FixtureId", "KickoffUtc", "Window").IsUnique().HasDatabaseName("IX_CombinedAutomation_Fixture_Kickoff_Window");
+                    builder.HasIndex("StartedAtUtc");
+                    builder.ToTable("CombinedPredictionAutomationAttempts");
+                    builder.HasOne("SoccerAi.Application.Entities.Fixture", null).WithMany()
+                        .HasForeignKey("FixtureId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.CombinedPredictionSnapshot", builder =>
+                {
+                    builder.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    builder.Property<int>("FixtureId").HasColumnType("integer");
+                    builder.Property<DateTimeOffset>("KickoffUtc").HasColumnType("timestamp with time zone");
+                    builder.Property<DateTimeOffset>("CapturedAtUtc").HasColumnType("timestamp with time zone");
+                    builder.Property<string>("PredictionJson").IsRequired().HasColumnType("text");
+                    builder.Property<string>("EvidenceJson").IsRequired().HasColumnType("text");
+                    builder.HasKey("Id");
+                    builder.HasIndex("FixtureId", "CapturedAtUtc");
+                    builder.ToTable("CombinedPredictionSnapshots");
+                    builder.HasOne("SoccerAi.Application.Entities.Fixture", null).WithMany()
+                        .HasForeignKey("FixtureId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.BacktestReport", b =>
                 {
                     b.Property<int>("Id")

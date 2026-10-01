@@ -3,6 +3,7 @@ using Mediator.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using SoccerAi.Api.Automation;
 using SoccerAi.Api.Security;
 using SoccerAi.Application.Features.Automation;
@@ -20,6 +21,45 @@ namespace SoccerAi.Api.Controllers;
 [Authorize(Policy = "CombinedPolicy")]
 public class AutomationController(IMediator mediator, IHostApplicationLifetime lifetime, ILogger<AutomationController> logger) : ControllerBase
 {
+    [HttpGet("predictions/scheduled")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    public async Task<IActionResult> GetScheduledPredictionAttempts([FromServices] IApplicationDbContext db, CancellationToken ct = default)
+    {
+        var attempts = await db.CombinedPredictionAutomationAttempts.AsNoTracking()
+            .OrderByDescending(attempt => attempt.StartedAtUtc).ThenByDescending(attempt => attempt.Id).Take(25).ToListAsync(ct);
+        return Ok(ApiResponse<object>.Ok(new { attempts }));
+    }
+    [HttpPost("predictions/{fixtureId:int}/refresh")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RefreshPrediction(int fixtureId,
+        [FromServices] IApplicationDbContext db, [FromServices] CombinedPredictionJobs jobs,
+        [FromQuery(Name = "refresh_narration")] bool refreshNarration = true, CancellationToken ct = default)
+    {
+        var fixture = await db.Fixtures.AsNoTracking().SingleOrDefaultAsync(value => value.Id == fixtureId, ct);
+        if (fixture is null) return NotFound(ApiResponse<object>.Fail($"Fixture {fixtureId} not found."));
+        if (fixture.Status != "NS" || fixture.Date <= DateTimeOffset.UtcNow)
+            return BadRequest(ApiResponse<object>.Fail("Only not-started future fixtures can be refreshed."));
+        var job = jobs.TryStart(fixtureId, refreshNarration);
+        if (job is null) return Conflict(ApiResponse<object>.Fail("Another automation job is running. Retry after it finishes."));
+        var poll = $"/api/automation/predictions/jobs/{job.Id}";
+        return Accepted(poll, ApiResponse<object>.Ok(new
+        {
+            job_id = job.Id, fixture_id = fixtureId, poll,
+            analysis = $"/api/analyze/{fixtureId}", started_at = job.StartedAtUtc,
+            message = "Fresh historical, ML, provider and AI combination started. Available-source probabilities and optional fresh narration will be persisted."
+        }));
+    }
+
+    [HttpGet("predictions/jobs/{jobId:guid}")]
+    [Authorize(Policy = AdminApiKeyAuthenticationDefaults.PolicyName)]
+    public IActionResult GetPredictionRefreshJob(Guid jobId, [FromServices] CombinedPredictionJobs jobs) =>
+        jobs.Get(jobId) is { } job ? Ok(ApiResponse<CombinedPredictionJob>.Ok(job))
+            : NotFound(ApiResponse<object>.Fail("Job not found. Job status is held in memory; saved predictions survive restarts."));
+
     /// <summary>
     /// Executes the full daily synchronization job:
     /// Standings -> Fixtures -> ML retraining -> AI analysis.

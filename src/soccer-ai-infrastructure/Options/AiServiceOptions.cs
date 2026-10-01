@@ -25,13 +25,13 @@ public sealed class AiServiceOptions
     /// set AISERVICE__DEFAULTMODEL on the service that should spend, and only
     /// that service will. <c>ShippedAiDefaultsCostNothingTests</c> holds this.
     /// </remarks>
-    public string DefaultModel { get; set; } = "z-ai/glm-5.2:free";
+    public string DefaultModel { get; set; } = "nvidia/nemotron-3-super-120b-a12b:free";
 
     /// <summary>
     /// Used when the primary model is unavailable. A different provider, so an
     /// outage on the primary does not stop narratives.
     /// </summary>
-    public string FallbackModel { get; set; } = "deepseek/deepseek-v4-flash-0731:free";
+    public string FallbackModel { get; set; } = "google/gemma-4-31b-it:free";
 
     /// <summary>
     /// HTTP timeout in seconds for inference calls. Applied to the client
@@ -90,7 +90,7 @@ public sealed class AiReasoningOptions
     public bool Send { get; set; } = true;
 
     /// <summary>Value of `reasoning.enabled`.</summary>
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; } = false;
 
     /// <summary>`low`, `medium` or `high`. Null leaves it to the provider.</summary>
     public string? Effort { get; set; }

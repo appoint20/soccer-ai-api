@@ -10,11 +10,11 @@ namespace SoccerAi.Infrastructure.Services;
 /// <summary>
 /// Decision layer v2 — thin adapter around the transparent ConfluenceRuleEngine.
 ///
-/// Input: calibrated DC probabilities (the ONLY probability source) plus the
+/// Input: the final statistical or explicitly combined probability vector plus the
 /// strategic signal catalog. Output: per-market qualifications with a full
 /// audit trail of which confirm/veto rules fired.
 ///
-/// The LLM can confirm/veto a selection under the configured policy; it never changes probabilities.
+/// Narration can confirm/veto a selection under the configured policy; this layer never changes probabilities.
 /// </summary>
 public sealed class DecisionService(
     ILeagueTierService leagueTiers,
@@ -58,7 +58,7 @@ public sealed class DecisionService(
 
         var audit = ConfluenceRuleEngine.Evaluate(
             prediction, signals, prices, tierExtra, opt, strategyOptions.Value, aiContext,
-            stats.Poisson.IsValid ? stats.Poisson.BttsAndOver25 : null);
+            stats.EffectiveBttsAndOver25);
 
         var drawAudit = audit.Markets.First(m => m.Market == ConfluenceRuleEngine.Markets.Draw);
         var markets = new QualificationDecisions

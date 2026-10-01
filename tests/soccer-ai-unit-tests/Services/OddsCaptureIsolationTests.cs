@@ -75,6 +75,26 @@ public class OddsCaptureIsolationTests
     /// Provider-level failures still stop the run: continuing through a rate
     /// limit or a rejected key would only repeat the same failure fixture by fixture.
     /// </summary>
+    [Theory]
+    [InlineData(3)]
+    [InlineData(24)]
+    public async Task TwoHourMinimumAppliesInsideAndOutsideFinalApproach(int kickoffHours)
+    {
+        var (db, api, sut) = Build();
+        var now = DateTimeOffset.UtcNow;
+        var fixtures = await db.Fixtures.OrderBy(fixture => fixture.Id).ToListAsync();
+        fixtures[0].OddsCheckedAtUtc = now.AddMinutes(-119);
+        fixtures[1].OddsCheckedAtUtc = now.AddMinutes(-121);
+        foreach (var fixture in fixtures) fixture.Date = now.AddHours(kickoffHours);
+        await db.SaveChangesAsync();
+
+        await sut.CaptureUpcomingOddsAsync(CancellationToken.None);
+        await sut.CaptureUpcomingOddsAsync(CancellationToken.None);
+
+        api.Verify(service => service.GetFixtureOddsQuotesAsync(101), Times.Never);
+        api.Verify(service => service.GetFixtureOddsQuotesAsync(102), Times.Once);
+    }
+
     [Fact]
     public async Task AProviderRejectionStillStopsTheRun()
     {

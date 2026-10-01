@@ -17,18 +17,18 @@ public class SyncWorkerScheduleTests
     }
 
     /// <summary>
-    /// Unparseable configuration falls back to the built-in three-hourly grid,
+    /// Unparseable configuration falls back to the built-in two-hourly grid,
     /// not to a single daily slot. A worker that silently drops to one run a day
     /// leaves prices up to 24h stale, which is the failure the cadence exists to
     /// prevent — so the fallback has to be the safe-by-default schedule.
     /// </summary>
     [Fact]
-    public void ParseSchedule_InvalidEntries_FallBackToTheThreeHourlyGrid()
+    public void ParseSchedule_InvalidEntries_FallBackToTheTwoHourlyGrid()
     {
         var times = SyncWorker.ParseSchedule(["banana", "25:99"]);
 
-        times.Should().HaveCount(8);
-        times.Should().Equal(Enumerable.Range(0, 8).Select(i => new TimeOnly(i * 3, 20)));
+        times.Should().HaveCount(12);
+        times.Should().Equal(Enumerable.Range(0, 12).Select(i => new TimeOnly(i * 2, 20)));
     }
 
     [Fact]

@@ -135,6 +135,7 @@ public sealed class AnalysisPrecomputeService(
                 schema = 2,
                 league = fixture.LeagueId,
                 ai = analysis.Ai,
+                combined_prediction = analysis.CombinedPrediction,
                 audit = analysis.Decisions.Audit,
                 odds_updated_at = fixture.OddsUpdatedAtUtc,
                 live_odds = SoccerAi.Application.Services.LiveOddsPolicy.IsFresh(fixture, DateTimeOffset.UtcNow),

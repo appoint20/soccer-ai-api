@@ -16,6 +16,40 @@ namespace SoccerAi.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
+            modelBuilder.Entity("SoccerAi.Application.Entities.CombinedPredictionAutomationAttempt", builder =>
+                {
+                    builder.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("TEXT");
+                    builder.Property<int>("FixtureId").HasColumnType("INTEGER");
+                    builder.Property<long>("KickoffUtc").HasColumnType("INTEGER");
+                    builder.Property<string>("Window").IsRequired().HasMaxLength(64).HasColumnType("TEXT");
+                    builder.Property<long>("StartedAtUtc").HasColumnType("INTEGER");
+                    builder.Property<long?>("FinishedAtUtc").HasColumnType("INTEGER");
+                    builder.Property<string>("Status").IsRequired().HasMaxLength(32).HasColumnType("TEXT");
+                    builder.Property<Guid?>("SnapshotId").HasColumnType("TEXT");
+                    builder.Property<string>("Error").HasColumnType("TEXT");
+                    builder.HasKey("Id");
+                    builder.HasIndex("FixtureId", "KickoffUtc", "Window").IsUnique().HasDatabaseName("IX_CombinedAutomation_Fixture_Kickoff_Window");
+                    builder.HasIndex("StartedAtUtc");
+                    builder.ToTable("CombinedPredictionAutomationAttempts");
+                    builder.HasOne("SoccerAi.Application.Entities.Fixture", null).WithMany()
+                        .HasForeignKey("FixtureId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("SoccerAi.Application.Entities.CombinedPredictionSnapshot", builder =>
+                {
+                    builder.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("TEXT");
+                    builder.Property<int>("FixtureId").HasColumnType("INTEGER");
+                    builder.Property<long>("KickoffUtc").HasColumnType("INTEGER");
+                    builder.Property<long>("CapturedAtUtc").HasColumnType("INTEGER");
+                    builder.Property<string>("PredictionJson").IsRequired().HasColumnType("TEXT");
+                    builder.Property<string>("EvidenceJson").IsRequired().HasColumnType("TEXT");
+                    builder.HasKey("Id");
+                    builder.HasIndex("FixtureId", "CapturedAtUtc");
+                    builder.ToTable("CombinedPredictionSnapshots");
+                    builder.HasOne("SoccerAi.Application.Entities.Fixture", null).WithMany()
+                        .HasForeignKey("FixtureId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
             modelBuilder.Entity("SoccerAi.Application.Entities.BacktestReport", b =>
                 {
                     b.Property<int>("Id")

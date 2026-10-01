@@ -1,0 +1,476 @@
+{
+  "PredictionRecipe": "dc-ml-score-mixture-v1",
+  "Winner": {
+    "Samples": 17471,
+    "Accuracy": 48.08,
+    "BrierScore": 0.621554,
+    "LogLoss": 1.034887
+  },
+  "DixonColesWinner": {
+    "Samples": 17471,
+    "Accuracy": 46.7,
+    "BrierScore": 0.629979,
+    "LogLoss": 1.046455
+  },
+  "Goals23": {
+    "Samples": 17471,
+    "BaseRate": 45.83,
+    "BrierScore": 0.2482,
+    "LogLoss": 0.689575,
+    "AccuracyAtHalf": 54.17,
+    "PublishThreshold": 0.5,
+    "Published": 0,
+    "PublishedShare": 0,
+    "PublishedHitRate": 0,
+    "PublishedHitRateLowerBound": 0
+  },
+  "DixonColesGoals23": {
+    "Samples": 17471,
+    "BaseRate": 45.83,
+    "BrierScore": 0.2482,
+    "LogLoss": 0.689479,
+    "AccuracyAtHalf": 54.17,
+    "PublishThreshold": 0.5,
+    "Published": 0,
+    "PublishedShare": 0,
+    "PublishedHitRate": 0,
+    "PublishedHitRateLowerBound": 0
+  },
+  "Over25DifferenceVsDc": {
+    "Samples": 17471,
+    "WeekClusters": 138,
+    "Difference": -0.0009678970559906003,
+    "Lower95": -0.0014859281799599025,
+    "Upper95": -0.0004637288590965668
+  },
+  "BttsDifferenceVsDc": {
+    "Samples": 17471,
+    "WeekClusters": 138,
+    "Difference": -0.000511073001366304,
+    "Lower95": -0.0008953232264005882,
+    "Upper95": -0.0001277340530297269
+  },
+  "UnmixedMlOver25": {
+    "Samples": 17471,
+    "BaseRate": 52.13,
+    "BrierScore": 0.2493,
+    "LogLoss": 0.692296,
+    "AccuracyAtHalf": 54.22,
+    "PublishThreshold": 0.6,
+    "Published": 3371,
+    "PublishedShare": 19.29,
+    "PublishedHitRate": 61.76,
+    "PublishedHitRateLowerBound": 60.11
+  },
+  "UnmixedMlBtts": {
+    "Samples": 17471,
+    "BaseRate": 54.24,
+    "BrierScore": 0.2498,
+    "LogLoss": 0.692979,
+    "AccuracyAtHalf": 53.28,
+    "PublishThreshold": 0.58,
+    "Published": 4758,
+    "PublishedShare": 27.23,
+    "PublishedHitRate": 58.93,
+    "PublishedHitRateLowerBound": 57.53
+  },
+  "GeneratedAtUtc": "2026-10-01T16:44:33.4043684+00:00",
+  "EvaluationProtocol": "Chronological UTC-day folds; disjoint fit/calibration/test; thresholds descriptive only; no odds/EV qualification",
+  "FeatureSchema": "goal-rate-causal-v2",
+  "PublicationGatePassed": false,
+  "PublicationGate": "LightGbm training without algorithm fallback; at least 500 OOF forecasts and both market Brier/log-loss no worse than prefix frequency prior AND Dixon-Coles baseline; winner/goals23 Brier and log-loss also no worse than DC; does not prove profitability or 80%",
+  "Folds": [
+    {
+      "FitRows": 6967,
+      "CalibrationRows": 1509,
+      "TestRows": 2202,
+      "FitThroughUtc": "2023-04-19T19:00:00Z",
+      "CalibrationFromUtc": "2023-04-21T16:30:00Z",
+      "CalibrationThroughUtc": "2023-09-17T19:00:00Z",
+      "TestFromUtc": "2023-09-18T16:30:00Z",
+      "TestThroughUtc": "2024-01-21T20:00:00Z",
+      "HomeScale": 1.080557,
+      "AwayScale": 1.050325,
+      "MlWeight": 0.3836459674238849
+    },
+    {
+      "FitRows": 8509,
+      "CalibrationRows": 2169,
+      "TestRows": 2288,
+      "FitThroughUtc": "2023-09-22T19:00:00Z",
+      "CalibrationFromUtc": "2023-09-23T11:00:00Z",
+      "CalibrationThroughUtc": "2024-01-21T20:00:00Z",
+      "TestFromUtc": "2024-01-22T19:30:00Z",
+      "TestThroughUtc": "2024-05-18T19:00:00Z",
+      "HomeScale": 1.024981,
+      "AwayScale": 1.006133,
+      "MlWeight": 0.2539636370208102
+    },
+    {
+      "FitRows": 10464,
+      "CalibrationRows": 2502,
+      "TestRows": 1921,
+      "FitThroughUtc": "2024-01-05T19:45:00Z",
+      "CalibrationFromUtc": "2024-01-06T11:30:00Z",
+      "CalibrationThroughUtc": "2024-05-18T19:00:00Z",
+      "TestFromUtc": "2024-05-19T10:30:00Z",
+      "TestThroughUtc": "2024-11-07T20:00:00Z",
+      "HomeScale": 0.96849,
+      "AwayScale": 1.080309,
+      "MlWeight": 0.22028281359629534
+    },
+    {
+      "FitRows": 12514,
+      "CalibrationRows": 2373,
+      "TestRows": 2223,
+      "FitThroughUtc": "2024-04-21T19:00:00Z",
+      "CalibrationFromUtc": "2024-04-22T16:30:00Z",
+      "CalibrationThroughUtc": "2024-11-07T20:00:00Z",
+      "TestFromUtc": "2024-11-08T17:30:00Z",
+      "TestThroughUtc": "2025-02-27T20:00:00Z",
+      "HomeScale": 1.016664,
+      "AwayScale": 1.018256,
+      "MlWeight": 0.32721976076951736
+    },
+    {
+      "FitRows": 14007,
+      "CalibrationRows": 3103,
+      "TestRows": 1764,
+      "FitThroughUtc": "2024-09-24T19:00:00Z",
+      "CalibrationFromUtc": "2024-09-25T17:00:00Z",
+      "CalibrationThroughUtc": "2025-02-27T20:00:00Z",
+      "TestFromUtc": "2025-02-28T17:30:00Z",
+      "TestThroughUtc": "2025-07-24T18:30:00Z",
+      "HomeScale": 0.987156,
+      "AwayScale": 1.007219,
+      "MlWeight": 0.3306096166322654
+    },
+    {
+      "FitRows": 15966,
+      "CalibrationRows": 2908,
+      "TestRows": 2284,
+      "FitThroughUtc": "2024-12-30T20:00:00Z",
+      "CalibrationFromUtc": "2024-12-31T15:00:00Z",
+      "CalibrationThroughUtc": "2025-07-24T18:30:00Z",
+      "TestFromUtc": "2025-07-29T15:00:00Z",
+      "TestThroughUtc": "2025-11-17T19:30:00Z",
+      "HomeScale": 0.967099,
+      "AwayScale": 0.990247,
+      "MlWeight": 0.4132224487623134
+    },
+    {
+      "FitRows": 17788,
+      "CalibrationRows": 3370,
+      "TestRows": 2536,
+      "FitThroughUtc": "2025-04-01T19:00:00Z",
+      "CalibrationFromUtc": "2025-04-02T18:45:00Z",
+      "CalibrationThroughUtc": "2025-11-17T19:30:00Z",
+      "TestFromUtc": "2025-11-18T19:45:00Z",
+      "TestThroughUtc": "2026-03-07T20:05:00Z",
+      "HomeScale": 1.042129,
+      "AwayScale": 1.043818,
+      "MlWeight": 0.31098658587692674
+    },
+    {
+      "FitRows": 19051,
+      "CalibrationRows": 4643,
+      "TestRows": 2253,
+      "FitThroughUtc": "2025-08-14T19:00:00Z",
+      "CalibrationFromUtc": "2025-08-15T17:00:00Z",
+      "CalibrationThroughUtc": "2026-03-07T20:05:00Z",
+      "TestFromUtc": "2026-03-08T12:00:00Z",
+      "TestThroughUtc": "2026-09-30T18:45:00Z",
+      "HomeScale": 0.993363,
+      "AwayScale": 1.015116,
+      "MlWeight": 0.4140382465361054
+    }
+  ],
+  "ErrorsAtHalf": {
+    "BttsFalsePositives": 5822,
+    "BttsPickedButNoBttsOver25": 1332,
+    "BttsPickedButNeither": 4490,
+    "Under25PickedButOver25": 4236
+  },
+  "PriorOver25": {
+    "Samples": 17471,
+    "BaseRate": 52.13,
+    "BrierScore": 0.2503,
+    "LogLoss": 0.693709,
+    "AccuracyAtHalf": 49.14,
+    "PublishThreshold": 0.6,
+    "Published": 0,
+    "PublishedShare": 0,
+    "PublishedHitRate": 0,
+    "PublishedHitRateLowerBound": 0
+  },
+  "PriorBtts": {
+    "Samples": 17471,
+    "BaseRate": 54.24,
+    "BrierScore": 0.2486,
+    "LogLoss": 0.690258,
+    "AccuracyAtHalf": 54.24,
+    "PublishThreshold": 0.58,
+    "Published": 0,
+    "PublishedShare": 0,
+    "PublishedHitRate": 0,
+    "PublishedHitRateLowerBound": 0
+  },
+  "DixonColesOver25": {
+    "Samples": 17471,
+    "BaseRate": 52.13,
+    "BrierScore": 0.2467,
+    "LogLoss": 0.686495,
+    "AccuracyAtHalf": 54.9,
+    "PublishThreshold": 0.6,
+    "Published": 2241,
+    "PublishedShare": 12.83,
+    "PublishedHitRate": 63.72,
+    "PublishedHitRateLowerBound": 61.71
+  },
+  "DixonColesBtts": {
+    "Samples": 17471,
+    "BaseRate": 54.24,
+    "BrierScore": 0.2472,
+    "LogLoss": 0.687601,
+    "AccuracyAtHalf": 54,
+    "PublishThreshold": 0.58,
+    "Published": 5324,
+    "PublishedShare": 30.47,
+    "PublishedHitRate": 58.56,
+    "PublishedHitRateLowerBound": 57.24
+  },
+  "TrainRows": 25947,
+  "EvaluatedRows": 17471,
+  "HeldOutFrom": "2023-09-18T16:30:00Z",
+  "Trainer": "LightGbm",
+  "LambdaHomeMean": 1.4670533328349784,
+  "LambdaAwayMean": 1.2427621779743032,
+  "ActualHomeGoalsMean": 1.5072405700875737,
+  "ActualAwayGoalsMean": 1.2273481769789938,
+  "HomeScale": 0,
+  "AwayScale": 0,
+  "Over25": {
+    "Samples": 17471,
+    "BaseRate": 52.13,
+    "BrierScore": 0.2457,
+    "LogLoss": 0.684504,
+    "AccuracyAtHalf": 55.07,
+    "PublishThreshold": 0.6,
+    "Published": 2313,
+    "PublishedShare": 13.24,
+    "PublishedHitRate": 63.94,
+    "PublishedHitRateLowerBound": 61.96
+  },
+  "Btts": {
+    "Samples": 17471,
+    "BaseRate": 54.24,
+    "BrierScore": 0.2467,
+    "LogLoss": 0.686558,
+    "AccuracyAtHalf": 54.62,
+    "PublishThreshold": 0.58,
+    "Published": 4766,
+    "PublishedShare": 27.28,
+    "PublishedHitRate": 59.3,
+    "PublishedHitRateLowerBound": 57.89
+  },
+  "Over25Thresholds": [
+    {
+      "Threshold": 0.5,
+      "Published": 8486,
+      "PublishedShare": 48.57,
+      "HitRate": 57.41,
+      "HitRateLowerBound": 56.36
+    },
+    {
+      "Threshold": 0.54,
+      "Published": 5518,
+      "PublishedShare": 31.58,
+      "HitRate": 60.57,
+      "HitRateLowerBound": 59.27
+    },
+    {
+      "Threshold": 0.56,
+      "Published": 4286,
+      "PublishedShare": 24.53,
+      "HitRate": 61.92,
+      "HitRateLowerBound": 60.46
+    },
+    {
+      "Threshold": 0.58,
+      "Published": 3224,
+      "PublishedShare": 18.45,
+      "HitRate": 63,
+      "HitRateLowerBound": 61.32
+    },
+    {
+      "Threshold": 0.6,
+      "Published": 2313,
+      "PublishedShare": 13.24,
+      "HitRate": 63.94,
+      "HitRateLowerBound": 61.96
+    },
+    {
+      "Threshold": 0.62,
+      "Published": 1590,
+      "PublishedShare": 9.1,
+      "HitRate": 66.1,
+      "HitRateLowerBound": 63.74
+    },
+    {
+      "Threshold": 0.64,
+      "Published": 1033,
+      "PublishedShare": 5.91,
+      "HitRate": 66.89,
+      "HitRateLowerBound": 63.96
+    },
+    {
+      "Threshold": 0.66,
+      "Published": 599,
+      "PublishedShare": 3.43,
+      "HitRate": 69.45,
+      "HitRateLowerBound": 65.65
+    },
+    {
+      "Threshold": 0.68,
+      "Published": 310,
+      "PublishedShare": 1.77,
+      "HitRate": 72.58,
+      "HitRateLowerBound": 67.36
+    },
+    {
+      "Threshold": 0.7,
+      "Published": 171,
+      "PublishedShare": 0.98,
+      "HitRate": 71.35,
+      "HitRateLowerBound": 64.16
+    },
+    {
+      "Threshold": 0.75,
+      "Published": 17,
+      "PublishedShare": 0.1,
+      "HitRate": 82.35,
+      "HitRateLowerBound": 58.97
+    },
+    {
+      "Threshold": 0.8,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    },
+    {
+      "Threshold": 0.85,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    },
+    {
+      "Threshold": 0.9,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    }
+  ],
+  "BttsThresholds": [
+    {
+      "Threshold": 0.5,
+      "Published": 13193,
+      "PublishedShare": 75.51,
+      "HitRate": 55.87,
+      "HitRateLowerBound": 55.02
+    },
+    {
+      "Threshold": 0.54,
+      "Published": 8673,
+      "PublishedShare": 49.64,
+      "HitRate": 57.7,
+      "HitRateLowerBound": 56.65
+    },
+    {
+      "Threshold": 0.56,
+      "Published": 6557,
+      "PublishedShare": 37.53,
+      "HitRate": 58.75,
+      "HitRateLowerBound": 57.55
+    },
+    {
+      "Threshold": 0.58,
+      "Published": 4766,
+      "PublishedShare": 27.28,
+      "HitRate": 59.3,
+      "HitRateLowerBound": 57.89
+    },
+    {
+      "Threshold": 0.6,
+      "Published": 3236,
+      "PublishedShare": 18.52,
+      "HitRate": 60.82,
+      "HitRateLowerBound": 59.12
+    },
+    {
+      "Threshold": 0.62,
+      "Published": 2006,
+      "PublishedShare": 11.48,
+      "HitRate": 62.56,
+      "HitRateLowerBound": 60.42
+    },
+    {
+      "Threshold": 0.64,
+      "Published": 1110,
+      "PublishedShare": 6.35,
+      "HitRate": 64.41,
+      "HitRateLowerBound": 61.55
+    },
+    {
+      "Threshold": 0.66,
+      "Published": 539,
+      "PublishedShare": 3.09,
+      "HitRate": 65.31,
+      "HitRateLowerBound": 61.19
+    },
+    {
+      "Threshold": 0.68,
+      "Published": 221,
+      "PublishedShare": 1.26,
+      "HitRate": 65.16,
+      "HitRateLowerBound": 58.67
+    },
+    {
+      "Threshold": 0.7,
+      "Published": 75,
+      "PublishedShare": 0.43,
+      "HitRate": 62.67,
+      "HitRateLowerBound": 51.35
+    },
+    {
+      "Threshold": 0.75,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    },
+    {
+      "Threshold": 0.8,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    },
+    {
+      "Threshold": 0.85,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    },
+    {
+      "Threshold": 0.9,
+      "Published": 0,
+      "PublishedShare": 0,
+      "HitRate": 0,
+      "HitRateLowerBound": 0
+    }
+  ]
+}

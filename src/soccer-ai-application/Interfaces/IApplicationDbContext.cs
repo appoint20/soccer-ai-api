@@ -15,6 +15,8 @@ public interface IApplicationDbContext
     DbSet<FixtureOddsQuote> FixtureOddsQuotes { get; }
     DbSet<HeadToHeadMeeting> HeadToHeadMeetings { get; }
     DbSet<FixturePrediction> FixturePredictions { get; }
+    DbSet<CombinedPredictionSnapshot> CombinedPredictionSnapshots { get; }
+    DbSet<CombinedPredictionAutomationAttempt> CombinedPredictionAutomationAttempts { get; }
     DbSet<PublishedTicket> PublishedTickets { get; }
     DbSet<PublishedTicketLeg> PublishedTicketLegs { get; }
     DbSet<ModelForecast> ModelForecasts { get; }

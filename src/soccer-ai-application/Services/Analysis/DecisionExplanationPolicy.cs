@@ -11,7 +11,8 @@ namespace SoccerAi.Application.Services.Analysis;
 /// <summary>Grounds presentation in the final audit and invalidates text after evidence or decision changes.</summary>
 public static class DecisionExplanationPolicy
 {
-    public const int Version = 2;
+    public const int Version = 3;
+    public const int MaximumChecks = 5;
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
     public static AiDecisionExplanation? Read(string? json)
     {
@@ -36,23 +37,20 @@ public static class DecisionExplanationPolicy
         explanation is not null && explanation.FixtureId == match.Id &&
         explanation.InputHash == Hash(Input(match)) && Invalid(explanation, Input(match)) is null;
 
-    public static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input) => Invalid(result, input, false);
-
-    private static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input, bool legacy)
+    public static string? Invalid(AiDecisionExplanation? result, DecisionExplanationInput input)
     {
         if (result is null || result.FixtureId != input.FixtureId) return "wrong or missing fixture";
         foreach (var block in new[] { result.En, result.De })
         {
             if (block?.SummaryLines is not { Count: >= 4 and <= 6 } || block.Markets is null)
                 return "four to six context sentences required before the two final decision sentences";
-            if (legacy && block.SummaryLines.Count != 4) return "legacy summary must have four context sentences";
             if (!block.Markets.Select(m => m.Market).Order().SequenceEqual(input.Markets.Select(m => m.Market).Order()))
                 return "market list differs from final audit";
             if (block.SummaryLines.Any(s => !ShortSentence(s, 260) ||
-                (!legacy && (!AiNarrativeIntegrity.IsCompleteSentence(s) || AiNarrativeIntegrity.SentenceCount(s) != 1)) ||
+                (!AiNarrativeIntegrity.IsCompleteSentence(s) || AiNarrativeIntegrity.SentenceCount(s) != 1) ||
                 Regex.IsMatch(s, @"\b(bet|bets|pick|picks|recommend|selected|wette|wetten|empfehlen|empfehlung)\b", RegexOptions.IgnoreCase)))
                 return "summary must contain complete context sentences without betting advice";
-            if (!legacy && AiNarrativeIntegrity.WordCount(string.Join(" ", block.SummaryLines)) < 50)
+            if (AiNarrativeIntegrity.WordCount(string.Join(" ", block.SummaryLines)) < 50)
                 return "summary needs at least 50 words of match context, not terse labels";
             var supportedNumbers = Numbers(JsonSerializer.Serialize(input)).ToHashSet();
             if (block.SummaryLines.SelectMany(Numbers).Except(supportedNumbers).Any())
@@ -60,13 +58,20 @@ public static class DecisionExplanationPolicy
             foreach (var market in block.Markets)
             {
                 var facts = input.Markets.Single(m => m.Market == market.Market).Facts;
-                // One rewrite per supplied fact. The count follows the evidence
-                // that actually fired, so it varies by market and by fixture.
-                if (market.Checks is null || market.Checks.Count != facts.Count ||
+                if (market.Checks is null || market.Checks.Count != facts.Count || market.Checks.Count > MaximumChecks ||
+                    market.Checks.Distinct(StringComparer.OrdinalIgnoreCase).Count() != market.Checks.Count ||
                     market.Checks.Any(s => !ShortSentence(s, 260)))
-                    return $"one short check required per supplied fact ({facts.Count} for {market.Market})";
+                    return $"one clear check required per supplied fact, at most {MaximumChecks} for {market.Market}";
                 for (var i = 0; i < facts.Count; i++)
+                {
                     if (Numbers(market.Checks[i]).Except(Numbers(facts[i])).Any()) return "check introduces an unsupported number";
+                    if (Numbers(facts[i]).Except(Numbers(market.Checks[i])).Any()) return "check removes measured evidence";
+                    if (IsOpaqueCheck(market.Checks[i])) return "check contains opaque ratings or check counts";
+                    foreach (var team in new[] { input.HomeTeam, input.AwayTeam }.Where(team => !string.IsNullOrWhiteSpace(team)))
+                        if (facts[i].Contains(team, StringComparison.OrdinalIgnoreCase) &&
+                            !market.Checks[i].Contains(team, StringComparison.OrdinalIgnoreCase))
+                            return "check removes the team name";
+                }
             }
         }
         return null;
@@ -84,7 +89,8 @@ public static class DecisionExplanationPolicy
     {
         match.PresentationLanguage = lang ?? match.PresentationLanguage;
         var de = match.PresentationLanguage == "de";
-        var current = IsCurrent(match, match.DecisionExplanation) || IsHistoricalLegacyCurrent(match);
+        var current = IsCurrent(match, match.DecisionExplanation);
+        if (!current) match.DecisionExplanation = null;
         var block = de ? match.DecisionExplanation?.De : match.DecisionExplanation?.En;
         var lines = current ? block!.SummaryLines.ToList() : new List<string>();
         var markets = (match.DecisionAudit?.Markets ?? []).Where(m => m.Probability >= .5).ToList();
@@ -99,11 +105,9 @@ public static class DecisionExplanationPolicy
         {
             lines.Add(de ? $"Das System wählt: {string.Join(", ", selected.Select(m => Label(m, true)))}."
                 : $"The system selects: {string.Join(", ", selected.Select(m => Label(m, false)))}.");
-            lines.Add(de
-                ? $"{Label(best, true)} besteht alle Checks: {Pct(best.Probability)} Chance bei benötigten {Pct(best.Threshold)}, "
-                  + $"{Plural(best.ConfirmationsFired, "bestätigender Datencheck", "bestätigende Datenchecks")}, kein Ausschlusskriterium."
-                : $"{Label(best, false)} passes every check: {Pct(best.Probability)} chance against the required {Pct(best.Threshold)}, "
-                  + $"{Plural(best.ConfirmationsFired, "supporting evidence check", "supporting evidence checks")}, nothing ruling it out.");
+            var reason = Checks(best, match.PresentationLanguage, match).Text.FirstOrDefault();
+            lines.Add(reason ?? (de ? "Die verfügbaren Spieldaten sprechen für diese Auswahl; der Ausgang bleibt offen."
+                : "The available match evidence supports this selection; the outcome remains uncertain."));
         }
         else
         {
@@ -111,11 +115,11 @@ public static class DecisionExplanationPolicy
             var top = markets.OrderByDescending(m => m.Probability).FirstOrDefault();
             lines.Add(top is null
                 ? (de ? "Kein Markt erreicht die benötigte Wahrscheinlichkeit." : "No market reaches the required probability.")
-                : $"{Label(top, de)}: {GateReason(top, de)}.");
+                : Sentence($"{Label(top, de)}: {GateReason(top, de)}"));
         }
         match.Presentation = new(current, lines, markets.Select(m =>
         {
-            var (text, outcomes) = Checks(m, match.PresentationLanguage, match);
+            var (text, outcomes) = Checks(m, current ? "en" : match.PresentationLanguage, match);
             return new AiMarketExplanation
             {
                 Market = m.Market,
@@ -125,26 +129,6 @@ public static class DecisionExplanationPolicy
                 CheckOutcomes = outcomes.ToList()
             };
         }).ToList());
-    }
-
-    // A completed fixture cannot get a new pre-match explanation. Preserve its
-    // existing text only when the original v1 input hash still matches exactly.
-    // Upcoming fixtures use v2 and are regenerated by the normal AI sync.
-    private static bool IsHistoricalLegacyCurrent(MatchAnalysis match)
-    {
-        if (match.Date > DateTimeOffset.UtcNow || match.DecisionExplanation is not { } explanation)
-            return false;
-        var input = Input(match);
-        var legacyInput = input with
-        {
-            Version = 1,
-            Markets = input.Markets.Select(m => m with
-            {
-                Odds = match.DecisionAudit!.Markets.Single(a => a.Market == m.Market).Odds,
-                Bookmaker = match.OddsBookmaker
-            }).ToList()
-        };
-        return explanation.InputHash == Hash(legacyInput) && Invalid(explanation, legacyInput, true) is null;
     }
 
     /// <summary>
@@ -157,12 +141,6 @@ public static class DecisionExplanationPolicy
     private static string Goals(double value, bool de) =>
         value.ToString("0.0", de ? new CultureInfo("de-DE") : CultureInfo.InvariantCulture);
 
-    private static string Num(double? n) => n?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—";
-
-    /// <summary>"1 Ausschlusskriterien" read as a typo, because it was one.</summary>
-    private static string Plural(int count, string one, string many) =>
-        $"{count} {(count == 1 ? one : many)}";
-    private static string Pct(double n) => (n * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
     public static string Label(MarketRuleAudit m, bool de) => m.Market switch
     {
         "btts" => de ? "Beide Teams treffen" : "Both teams to score",
@@ -187,78 +165,63 @@ public static class DecisionExplanationPolicy
     /// </remarks>
     public static string GateReason(MarketRuleAudit m, bool de) => m.GateOutcome switch
     {
-        GateOutcome.Qualified => de ? "Wahrscheinlichkeit und Daten bestehen alle Checks" : "probability and evidence pass all checks",
+        GateOutcome.Qualified => de ? "die Spieldaten sprechen für diese Auswahl, ohne den Ausgang zu garantieren" : "the match evidence supports this selection, without guaranteeing the outcome",
         GateOutcome.BelowProbabilityFloor => de ? "die Wahrscheinlichkeit ist zu niedrig" : "the estimated probability is too low",
-        GateOutcome.Vetoed => de ? "die Daten enthalten ein Ausschlusskriterium" : "an evidence check rules this out",
+        GateOutcome.Vetoed => m.Rules.Where(r => r.Fired && r.Kind == RuleResult.Veto)
+            .Select(r => DecisionEvidenceFormatter.Format(r, null, de)).FirstOrDefault(s => s is not null)
+            ?? (de ? "die gespeicherte Analyse enthält keinen näher beschriebenen Ablehnungsgrund" : "the saved analysis does not describe the reason for rejecting this market"),
         GateOutcome.AiDisagrees => de ? "die KI unterstützt die Auswahl nicht" : "the AI does not support this selection",
         GateOutcome.InformationalOnly => de ? "dieser Markt ist in den Einstellungen ausgeschlossen" : "this market is excluded by configuration",
         _ => de ? "es gibt zu wenige bestätigende Hinweise" : "there is not enough supporting evidence"
     };
 
-    /// <summary>
-    /// The checks behind one market: what the data actually says, in the order
-    /// a reader works through it.
-    /// </summary>
-    /// <remarks>
-    /// This used to report counts — "4 evidence checks support this selection"
-    /// — which tells the reader a number and nothing about the match. Every
-    /// rule that fired now speaks for itself, naming its team: "Barnsley scored
-    /// in 3 of their last 3 home matches". The measured evidence is written in
-    /// English; the writer rewrites each line into both languages, and the
-    /// localised counts below survive only as the offline fallback.
-    ///
-    /// The list length varies with how many rules fired, so nothing downstream
-    /// may assume five.
-    /// </remarks>
+    public static bool IsOpaqueCheck(string text) => Regex.IsMatch(text,
+        @"%|Datencheck|Ausschlusskriteri|evidence checks? support|exclusion criteri|Angriffswert|attacking strength|attack rating|head to head favours",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
     private static (IReadOnlyList<string> Text, IReadOnlyList<bool?> Outcomes) Checks(
-        MarketRuleAudit m, string lang, MatchAnalysis? match = null)
+        MarketRuleAudit market, string lang, MatchAnalysis? match = null)
     {
         var de = lang == "de";
-        var text = new List<string>();
-        var outcomes = new List<bool?>();
-
-        void Add(string line, bool? outcome)
+        var checks = new List<(string Text, bool? Outcome)>();
+        void Add(string? text, bool? outcome)
         {
-            text.Add(line);
-            outcomes.Add(outcome);
+            if (string.IsNullOrWhiteSpace(text) || text.Length > 260 || checks.Count >= MaximumChecks) return;
+            var sentence = Sentence(text);
+            if (!IsOpaqueCheck(sentence) && !checks.Any(check => check.Text == sentence))
+                checks.Add((sentence, outcome));
         }
 
-        foreach (var (line, _) in ComparisonLines(match, de))
-            Add(line, null);
+        if (market.GateOutcome is GateOutcome.BelowProbabilityFloor or GateOutcome.InformationalOnly or GateOutcome.AiDisagrees)
+            Add(GateReason(market, de), false);
 
-        // Measured evidence, one line each. English only — the writer produces
-        // the German. Without it the fallback below keeps the reader informed.
-        var fired = m.Rules
-            .Where(r => r.Fired && !r.RuleId.Contains("ai_agrees") && !string.IsNullOrWhiteSpace(r.Evidence))
-            .ToList();
+        var fired = market.Rules.Where(rule => rule.Fired &&
+            !rule.RuleId.Contains("_ai_") && !string.IsNullOrWhiteSpace(rule.Evidence))
+            .OrderByDescending(rule => rule.Kind == RuleResult.Veto);
+        foreach (var rule in fired)
+            Add(DecisionEvidenceFormatter.Format(rule, match, de), rule.Kind == RuleResult.Confirm);
 
-        if (!de)
-            foreach (var rule in fired)
-                Add(Sentence(rule.Evidence!), rule.Kind == RuleResult.Confirm);
-        else
+        if (market.GateOutcome == GateOutcome.InsufficientConfirms)
+            Add(de ? "Heim-/Auswärtsform und direkte Duelle liefern noch kein ausreichend übereinstimmendes Bild für diese Auswahl."
+                : "Home and away form and past meetings do not yet provide a consistent enough case for this selection.", false);
+
+        if (match?.Provider is { } provider)
         {
-            Add(m.ConfirmationsFired == 1 ? "1 Datencheck unterstützt die Auswahl."
-                    : $"{m.ConfirmationsFired} Datenchecks unterstützen die Auswahl.",
-                m.ConfirmationsFired > 0);
-            Add(m.VetoesFired == 0 ? "Kein Ausschlusskriterium wurde gefunden."
-                    : m.VetoesFired == 1 ? "1 Ausschlusskriterium wurde gefunden."
-                    : $"{m.VetoesFired} Ausschlusskriterien wurden gefunden.",
-                m.VetoesFired == 0);
+            foreach (var (recent, team) in new[] { (provider.Home, match.HomeTeam), (provider.Away, match.AwayTeam) })
+                if (recent is { Played: > 0, GoalsForAverage: { } scored, GoalsAgainstAverage: { } conceded }
+                    && double.IsFinite(scored) && double.IsFinite(conceded) && scored >= 0 && conceded >= 0)
+                    Add(de
+                        ? $"{team} erzielte {Goals(scored, true)} und kassierte {Goals(conceded, true)} Tore pro Spiel in den letzten {recent.Played} Spielen."
+                        : $"{team} scored {Goals(scored, false)} and conceded {Goals(conceded, false)} goals per game in their last {recent.Played} matches.", null);
         }
 
-        Add(m.AiAgrees is true ? (de ? "Die KI unterstützt diesen Markt." : "The AI supports this market.")
-            : m.AiAgrees is false ? (de ? "Die KI unterstützt diesen Markt nicht." : "The AI does not support this market.")
-            : (de ? "Für diesen Markt liegt keine KI-Einschätzung vor." : "No AI opinion is available for this market."),
-            m.AiAgrees);
+        if (checks.Count == 0)
+            Add(de ? "Für diesen Markt fehlen konkrete gespeicherte Spielbelege; die Prognose allein reicht nicht als Begründung."
+                : "No specific match evidence is stored for this market; the prediction alone does not explain the decision.", null);
 
-        // The verdict, in terms of the match. The bookmaker's price belongs to
-        // the odds row above, not to the reasons a market was chosen.
-        Add(Sentence(GateReason(m, de)), m.Qualified);
-
-        return (text, outcomes);
+        return (checks.Select(check => check.Text).ToList(), checks.Select(check => check.Outcome).ToList());
     }
 
-    /// <summary>A measured label as a sentence: capitalised, full-stopped.</summary>
     private static string Sentence(string text)
     {
         var trimmed = text.Trim();
@@ -267,61 +230,6 @@ public static class DecisionExplanationPolicy
         return ".!?".Contains(capitalised[^1]) ? capitalised : capitalised + ".";
     }
 
-    private static IReadOnlyList<string> Facts(MarketRuleAudit m, string lang, MatchAnalysis? match = null) =>
-        Checks(m, lang, match).Text;
-
-    /// <summary>
-    /// The head-to-head and expected-goals comparisons, in both languages.
-    /// </summary>
-    /// <remarks>
-    /// These come from the provider's own read of the fixture, so they are
-    /// available where a bookmaker price is not, and they answer the two
-    /// questions a reader asks first: who has the history, and who is expected
-    /// to score. Unlike the measured evidence they are numbers rather than
-    /// English sentences, so both languages are written here and neither waits
-    /// on the writer.
-    /// </remarks>
-    private static IEnumerable<(string Line, bool? Outcome)> ComparisonLines(MatchAnalysis? match, bool de)
-    {
-        if (match is null) yield break;
-        var p = match.Provider ?? new ProviderPrediction();
-        var home = string.IsNullOrWhiteSpace(match.HomeTeam) ? (de ? "Heim" : "Home") : match.HomeTeam;
-        var away = string.IsNullOrWhiteSpace(match.AwayTeam) ? (de ? "Auswärts" : "Away") : match.AwayTeam;
-
-        if (p.HeadToHead is { } h2h)
-            yield return (de
-                ? $"Direkter Vergleich: {home} {Pct(h2h)}, {away} {Pct(1 - h2h)}."
-                : $"Head to head favours {home} {Pct(h2h)} to {Pct(1 - h2h)}.", null);
-
-        if (p.Home?.Attack is { } homeAttack && p.Away?.Attack is { } awayAttack)
-            yield return (de
-                ? $"{home} zu Hause mit {Pct(homeAttack)} Angriffswert, {away} auswärts mit {Pct(awayAttack)}."
-                : $"{home} at home rates {Pct(homeAttack)} in attack, {away} away {Pct(awayAttack)}.", null);
-        else if (match.HomeStats.AttackStrength > 0 || match.AwayStats.AttackStrength > 0)
-            // Our own figure, and a different quantity: goals a game, not a
-            // rating out of 100. Labelled as what it is rather than dressed up
-            // as the provider's percentage.
-            yield return (de
-                ? $"{home} erzielt zu Hause {Goals(match.HomeStats.AttackStrength, true)} Tore pro Spiel, {away} auswärts {Goals(match.AwayStats.AttackStrength, true)}."
-                : $"{home} score {Goals(match.HomeStats.AttackStrength, false)} goals a game at home, {away} {Goals(match.AwayStats.AttackStrength, false)} away.", null);
-
-        if (p.Goals is { } goals)
-            yield return (de
-                ? $"Erwartete Tore: {home} {Pct(goals)}, {away} {Pct(1 - goals)}."
-                : $"Expected goals favour {home} {Pct(goals)} to {Pct(1 - goals)}.", null);
-
-        if (p.Attack is { } att)
-            yield return (de
-                ? $"Angriff: {home} {Pct(att)}, {away} {Pct(1 - att)}."
-                : $"Attacking strength: {home} {Pct(att)}, {away} {Pct(1 - att)}.", null);
-
-        foreach (var (side, name) in new[] { (p.Home, home), (p.Away, away) })
-        {
-            if (side is not { Played: > 0 } recent) continue;
-            if (recent.GoalsForAverage is not { } scored || recent.GoalsAgainstAverage is not { } conceded) continue;
-            yield return (de
-                ? $"{name} erzielte {Goals(scored, true)} und kassierte {Goals(conceded, true)} Tore pro Spiel in den letzten {recent.Played}."
-                : $"{name} scored {Goals(scored, false)} and conceded {Goals(conceded, false)} a game in their last {recent.Played}.", null);
-        }
-    }
+    private static IReadOnlyList<string> Facts(MarketRuleAudit market, string lang, MatchAnalysis? match = null) =>
+        Checks(market, lang, match).Text;
 }

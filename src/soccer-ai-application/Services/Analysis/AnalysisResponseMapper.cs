@@ -61,13 +61,12 @@ public class AnalysisResponseMapper
             OddsBookmaker = fixture.OddsBookmaker,
             // Same-match doubles are priced off the joint, and Models is not
             // serialized into the snapshot — so carry the joint explicitly.
-            BttsAndOver25Probability = analysis.Models.Poisson is { IsValid: true } poisson
-                ? poisson.BttsAndOver25
-                : null,
+            BttsAndOver25Probability = analysis.Models.EffectiveBttsAndOver25,
             HomeStats = analysis.TeamStats.Home,
             AwayStats = analysis.TeamStats.Away,
             Models = includeModels ? analysis.Models : null,
             Prediction = prediction,
+            CombinedPrediction = analysis.CombinedPrediction,
             H2H = analysis.H2H,
             Provider = analysis.Provider,
             Ai = (aiAnalysis == null || (string.IsNullOrWhiteSpace(aiAnalysis.Recommendation) && aiAnalysis.Confidence == 0))
@@ -143,8 +142,8 @@ public class AnalysisResponseMapper
             {
                 Prediction = wp.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase),
                 Probability = wp.DrawProb,
-                IsQualified = d.Markets.MatchWinner.IsQualified && wp.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase),
-                Reason = d.Markets.MatchWinner.Reason
+                IsQualified = d.Markets.Draw.IsQualified && wp.MatchWinner.Equals("draw", StringComparison.OrdinalIgnoreCase),
+                Reason = d.Markets.Draw.Label
             },
             AwayWin = new BoolPrediction
             {
@@ -157,8 +156,8 @@ public class AnalysisResponseMapper
             {
                 Prediction = wp.MatchWinner,
                 Confidence = wp.Confidence,
-                IsQualified = d.Markets.MatchWinner.IsQualified,
-                Reason = GetWinnerReason(ai, wp.MatchWinner, d.Markets.MatchWinner.Reason)
+                IsQualified = wp.MatchWinner == "draw" ? d.Markets.Draw.IsQualified : d.Markets.MatchWinner.IsQualified,
+                Reason = GetWinnerReason(ai, wp.MatchWinner, wp.MatchWinner == "draw" ? d.Markets.Draw.Label : d.Markets.MatchWinner.Reason)
             }
         };
     }
